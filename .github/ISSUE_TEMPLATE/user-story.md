@@ -1,21 +1,9 @@
----
-name: User story
-about: Template for creating user stories
-title: ''
-labels: ''
-assignees: ''
-
----
-
 # User Story Title
-
-## As a
-[Role or persona]
 
 ## I want
 [Goal or feature]
 
-## So that
+## For what?
 [Benefit or reason]
 
 ## Acceptance Criteria
@@ -24,4 +12,4 @@ assignees: ''
 - [ ] Criterion 3
 
 ## Additional Context
-Any further details, mockups, or references.
+Any further details, images, mockups, or references.
