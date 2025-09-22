@@ -1,3 +1,12 @@
+---
+name: Epic
+about: Create an epic to group related issues and stories
+title: ''
+labels: epic
+assignees: ''
+---
+
+
 # Epic Title
 
 ## Description

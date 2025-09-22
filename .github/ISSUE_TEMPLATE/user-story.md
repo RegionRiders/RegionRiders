@@ -1,3 +1,11 @@
+---
+name: User Story
+about: Create a user story for the project
+title: ''
+labels: user-story
+assignees: ''
+---
+
 # User Story Title
 
 ## I want
