@@ -2,7 +2,7 @@
 name: User Story
 about: Create a user story for the project
 title: ''
-labels: user story
+labels: user-story
 assignees: ''
 ---
 
