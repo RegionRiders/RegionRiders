@@ -1,12 +1,3 @@
----
-name: Epic
-about: Template for creating epics
-title: "[Epic]"
-labels: ''
-assignees: ''
-
----
-
 # Epic Title
 
 ## Description
