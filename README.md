@@ -66,6 +66,6 @@ Champion simple importing, fast browsing, and satisfying summaries that are easy
 
 ---
 
-## License 📄
+## License
 
-License text will be added with the first public release once the core feature set stabilizes.
+This project is licensed under the PolyForm Noncommercial License 1.0.0 - see the [LICENSE](LICENSE) file for details.
