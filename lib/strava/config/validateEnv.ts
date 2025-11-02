@@ -6,8 +6,8 @@ export function validateStravaEnv(): void {
   const requiredVars = [
     'STRAVA_CLIENT_ID',
     'STRAVA_CLIENT_SECRET',
+    'STRAVA_CLIENT_ACCESS_TOKEN',
     'STRAVA_REDIRECT_URI',
-    'STRAVA_ACCESS_TOKEN',
   ];
 
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);

@@ -11,8 +11,8 @@ export function getStravaClient() {
   strava.config({
     client_id: process.env.STRAVA_CLIENT_ID!,
     client_secret: process.env.STRAVA_CLIENT_SECRET!,
+    access_token: process.env.STRAVA_CLIENT_ACCESS_TOKEN!,
     redirect_uri: process.env.STRAVA_REDIRECT_URI!,
-    access_token: process.env.STRAVA_ACCESS_TOKEN!,
   });
 
   return strava;
