@@ -20,7 +20,7 @@ describe('validateStravaEnv', () => {
     process.env.STRAVA_CLIENT_ID = 'test_id';
     process.env.STRAVA_CLIENT_SECRET = 'test_secret';
     process.env.STRAVA_REDIRECT_URI = 'http://test.com/callback';
-    process.env.STRAVA_ACCESS_TOKEN = 'test_token';
+    process.env.STRAVA_CLIENT_ACCESS_TOKEN = 'test_token';
 
     expect(() => validateStravaEnv()).not.toThrow();
   });
