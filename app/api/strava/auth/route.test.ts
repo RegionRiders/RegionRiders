@@ -1,13 +1,15 @@
+;
 /**
  * @jest-environment node
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { handle500Error } from '@/lib/api';
+import { getAuthorizationUrl } from '@/lib/strava';
+import { GET } from './route';
+
 
 jest.mock('@/lib/strava');
-
-import { GET } from './route';
-import { getAuthorizationUrl, handleStravaError } from '@/lib/strava';
 
 describe('GET /api/strava/auth', () => {
   const mockUrl = 'https://strava.com/oauth/authorize?client_id=123';
@@ -40,12 +42,15 @@ describe('GET /api/strava/auth', () => {
     const errorResponse = NextResponse.json({ error: 'API error' }, { status: 500 });
 
     (getAuthorizationUrl as jest.Mock).mockRejectedValue(error);
-    (handleStravaError as jest.Mock).mockReturnValue(errorResponse);
+    (function(error: unknown, context: string): NextResponse {
+      return handle500Error(error, `Strava API: ${context}`);
+    } as jest.Mock).mockReturnValue(errorResponse);
 
     const req = new NextRequest('http://localhost/api/strava/auth');
     await GET(req);
 
-    expect(handleStravaError).toHaveBeenCalledWith(error, 'Authorization Request');
+    expect((error: unknown, context: string): NextResponse => {
+      return handle500Error(error, `Strava API: ${context}`);
+    }).toHaveBeenCalledWith(error, 'Authorization Request');
   });
 });
-

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exchangeToken, handleStravaError } from '@/lib/strava';
+import { handle500Error } from '@/lib/api';
+import { exchangeToken } from '@/lib/strava';
+
 
 /**
  * GET /api/strava/callback
@@ -37,7 +39,6 @@ export async function GET(request: NextRequest) {
       athlete_id: tokenData.athlete.id,
     });
   } catch (error) {
-    return handleStravaError(error, 'Token Exchange');
+    return handle500Error(error, `Strava API: ${'Token Exchange'}`);
   }
 }
-

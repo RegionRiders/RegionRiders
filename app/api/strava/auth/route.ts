@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthorizationUrl, handleStravaError } from '@/lib/strava';
+import { handle500Error } from '@/lib/api';
+import { getAuthorizationUrl } from '@/lib/strava';
+
 
 /**
  * GET /api/strava/auth
@@ -14,7 +16,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    return handleStravaError(error, 'Authorization Request');
+    return handle500Error(error, `Strava API: ${'Authorization Request'}`);
   }
 }
-
