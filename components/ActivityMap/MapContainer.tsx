@@ -66,8 +66,8 @@ export function MapContainer({
     if (!map || tracks.size === 0) return;
 
     const L = require('leaflet');
-    const THICKNESS = 4;
-    const PIXEL_DENSITY = 2; // Higher = better quality but slower
+    const PIXEL_DENSITY = 1; // Higher = better quality but slower
+    const THICKNESS = (4 * PIXEL_DENSITY);
 
     const renderHeatmap = () => {
       renderAbortRef.current = true;
@@ -85,8 +85,8 @@ export function MapContainer({
           const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
           const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-          const canvasWidth = Math.round(bottomRight.x - topLeft.x);
-          const canvasHeight = Math.round(bottomRight.y - topLeft.y);
+          const canvasWidth = Math.round((bottomRight.x - topLeft.x) * PIXEL_DENSITY);
+          const canvasHeight = Math.round((bottomRight.y - topLeft.y) * PIXEL_DENSITY);
 
           const canvas = document.createElement('canvas');
           canvas.width = canvasWidth;
@@ -99,8 +99,8 @@ export function MapContainer({
           const latlngToPixel = (lat: number, lon: number) => {
             const point = map.project({ lat, lng: lon }, map.getZoom());
             return {
-              x: point.x - topLeft.x,
-              y: point.y - topLeft.y,
+              x: (point.x - topLeft.x) * PIXEL_DENSITY,
+              y: (point.y - topLeft.y) * PIXEL_DENSITY,
             };
           };
 
@@ -122,7 +122,7 @@ export function MapContainer({
               for (let i = 0; i < points.length - 1; i++) {
                 const p1 = latlngToPixel(points[i].lat, points[i].lon);
                 const p2 = latlngToPixel(points[i + 1].lat, points[i + 1].lon);
-                drawLineToAccumulatorWu(accumulator, visited, canvasWidth, canvasHeight, p1.x, p1.y, p2.x, p2.y, 4);
+                drawLineToAccumulatorWu(accumulator, visited, canvasWidth, canvasHeight, p1.x, p1.y, p2.x, p2.y, THICKNESS);
               }
 
               trackIndex++;
@@ -144,7 +144,7 @@ export function MapContainer({
               const count = accumulator[i];
               if (count === 0) continue;
 
-              const [r, g, b] = getColorForCount(count);
+              const [r, g, b] = getColorForCount(count, THICKNESS);
               const pixelIndex = i * 4;
 
               data[pixelIndex] = r;
