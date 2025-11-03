@@ -22,4 +22,3 @@ export async function exchangeToken(code: string): Promise<StravaTokenResponse> 
 
   return tokenResponse as StravaTokenResponse;
 }
-

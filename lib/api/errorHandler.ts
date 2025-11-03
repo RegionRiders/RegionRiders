@@ -38,12 +38,8 @@ export function handle404Error(path?: string): NextResponse<ApiErrorResponse> {
  * @param context - Additional context for logging
  * @returns NextResponse with 500 status
  */
-export function handle500Error(
-  error: unknown,
-  context?: string
-): NextResponse<ApiErrorResponse> {
-  const errorMessage =
-    error instanceof Error ? error.message : 'An unexpected error occurred';
+export function handle500Error(error: unknown, context?: string): NextResponse<ApiErrorResponse> {
+  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
 
   console.error('[API Error]', {
     context,
@@ -70,10 +66,7 @@ export function handle500Error(
  * @param context - Additional context for logging
  * @returns NextResponse with appropriate status code
  */
-export function handleApiError(
-  error: unknown,
-  context?: string
-): NextResponse<ApiErrorResponse> {
+export function handleApiError(error: unknown, context?: string): NextResponse<ApiErrorResponse> {
   if (
     error &&
     typeof error === 'object' &&
@@ -82,9 +75,7 @@ export function handleApiError(
   ) {
     const statusCode = error.statusCode;
     const message =
-      'message' in error && typeof error.message === 'string'
-        ? error.message
-        : 'An error occurred';
+      'message' in error && typeof error.message === 'string' ? error.message : 'An error occurred';
 
     return NextResponse.json(
       {
@@ -100,4 +91,3 @@ export function handleApiError(
 
   return handle500Error(error, context);
 }
-

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { exchangeToken } from '@/lib/strava';
 
-
 /**
  * GET /api/strava/callback
  * Handles OAuth callback from Strava
@@ -15,19 +14,12 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Authorization denied', details: error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Authorization denied', details: error }, { status: 400 });
     }
 
     if (!code) {
-      return NextResponse.json(
-        { error: 'No authorization code received' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No authorization code received' }, { status: 400 });
     }
-
 
     const tokenData = await exchangeToken(code);
 

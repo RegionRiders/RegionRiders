@@ -31,7 +31,9 @@ describe('validateStravaEnv', () => {
     process.env.STRAVA_REDIRECT_URI = 'http://test.com/callback';
     process.env.STRAVA_ACCESS_TOKEN = 'test_token';
 
-    expect(() => validateStravaEnv()).toThrow('Missing required Strava environment variables: STRAVA_CLIENT_ID');
+    expect(() => validateStravaEnv()).toThrow(
+      'Missing required Strava environment variables: STRAVA_CLIENT_ID'
+    );
   });
 
   it('should throw listing all missing variables', () => {
@@ -45,4 +47,3 @@ describe('validateStravaEnv', () => {
     );
   });
 });
-

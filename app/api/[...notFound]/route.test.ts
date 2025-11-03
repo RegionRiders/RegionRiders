@@ -1,6 +1,10 @@
+/**
+ * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
+ */
+
 import { NextRequest } from 'next/server';
-import { GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS } from './route';
 import type { ApiErrorResponse } from '@/lib/api';
+import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from './route';
 
 describe('API Catch-all 404 Handler', () => {
   const createRequest = (path: string, method: string = 'GET') => {
@@ -134,4 +138,3 @@ describe('API Catch-all 404 Handler', () => {
     });
   });
 });
-

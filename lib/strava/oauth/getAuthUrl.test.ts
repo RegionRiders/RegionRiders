@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-import { getAuthorizationUrl } from './getAuthUrl';
 import { getStravaClient } from '../config';
+import { getAuthorizationUrl } from './getAuthUrl';
 
 // Mock the config module
 jest.mock('../config', () => ({
@@ -23,7 +23,8 @@ describe('getAuthorizationUrl', () => {
   });
 
   it('should return authorization URL with default scope', async () => {
-    const expectedUrl = 'https://www.strava.com/oauth/authorize?client_id=123&redirect_uri=http://localhost&response_type=code&scope=read,activity:read_all';
+    const expectedUrl =
+      'https://www.strava.com/oauth/authorize?client_id=123&redirect_uri=http://localhost&response_type=code&scope=read,activity:read_all';
     mockGetRequestAccessURL.mockResolvedValue(expectedUrl);
 
     const result = await getAuthorizationUrl();
@@ -71,4 +72,3 @@ describe('getAuthorizationUrl', () => {
     }
   });
 });
-

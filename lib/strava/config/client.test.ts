@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 
-import { getStravaClient } from './client';
-import { validateStravaEnv } from '@/lib/strava';
 import strava from 'strava-v3';
+import { validateStravaEnv } from '@/lib/strava';
+import { getStravaClient } from './client';
 
 jest.mock('./validateEnv');
 jest.mock('strava-v3');
@@ -43,4 +43,3 @@ describe('getStravaClient', () => {
     expect(() => getStravaClient()).toThrow('Missing vars');
   });
 });
-

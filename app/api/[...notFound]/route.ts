@@ -39,4 +39,3 @@ export async function OPTIONS(request: NextRequest) {
   const path = new URL(request.url).pathname;
   return handle404Error(path);
 }
-

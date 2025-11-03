@@ -13,9 +13,6 @@ export function validateStravaEnv(): void {
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required Strava environment variables: ${missingVars.join(', ')}`
-    );
+    throw new Error(`Missing required Strava environment variables: ${missingVars.join(', ')}`);
   }
 }
-

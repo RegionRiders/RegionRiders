@@ -1,3 +1,7 @@
+/**
+ * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
+ */
+
 import {
   handle404Error,
   handle500Error,
@@ -164,4 +168,3 @@ describe('API Error Handler', () => {
     });
   });
 });
-

@@ -17,4 +17,3 @@ export function getStravaClient() {
 
   return strava;
 }
-

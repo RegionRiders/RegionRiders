@@ -1,6 +1,5 @@
 import { getStravaClient } from '../config';
 
-
 /**
  * Generates the Strava OAuth authorization URL
  * @param scope - OAuth scope (default: 'read,activity:read_all')
