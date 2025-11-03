@@ -1,11 +1,13 @@
+;
 /**
  * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
 import { GET } from './route';
+
 
 jest.mock('@/lib/strava');
 jest.mock('@/lib/api');
@@ -17,23 +19,14 @@ describe('GET /api/strava/auth', () => {
     jest.clearAllMocks();
   });
 
-  it('should redirect with default scope', async () => {
+  it('should redirect with hardcoded scope read,activity:read_all', async () => {
     (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
 
-    const req = new NextRequest('http://localhost/api/strava/auth');
-    const res = await GET(req);
+    const res = await GET();
 
     expect(getAuthorizationUrl).toHaveBeenCalledWith('read,activity:read_all');
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toBe(mockUrl);
-  });
-
-  it('should redirect with custom scope', async () => {
-    (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
-
-    const req = new NextRequest('http://localhost/api/strava/auth?scope=read,activity:write');
-    await GET(req);
-    expect(getAuthorizationUrl).toHaveBeenCalledWith('read,activity:write');
   });
 
   it('should handle errors', async () => {
@@ -43,8 +36,7 @@ describe('GET /api/strava/auth', () => {
     (getAuthorizationUrl as jest.Mock).mockRejectedValue(error);
     (handle500Error as jest.Mock).mockReturnValue(errorResponse);
 
-    const req = new NextRequest('http://localhost/api/strava/auth');
-    const res = await GET(req);
+    const res = await GET();
 
     expect(handle500Error).toHaveBeenCalledWith(error, 'Strava API: Authorization Request');
     expect(res).toBe(errorResponse);

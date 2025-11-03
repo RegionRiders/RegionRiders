@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
+
 
 /**
  * GET /api/strava/auth
  * Initiates Strava OAuth flow by redirecting to Strava authorization page
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const scope = searchParams.get('scope') || 'read,activity:read_all';
+    const scope = 'read,activity:read_all';
 
     const authUrl = await getAuthorizationUrl(scope);
 
