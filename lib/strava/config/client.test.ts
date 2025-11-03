@@ -1,3 +1,4 @@
+;
 /**
  * @jest-environment node
  */
@@ -5,6 +6,7 @@
 import strava from 'strava-v3';
 import { validateStravaEnv } from '@/lib/strava';
 import { getStravaClient } from './client';
+
 
 jest.mock('./validateEnv');
 jest.mock('strava-v3');
@@ -15,7 +17,7 @@ describe('getStravaClient', () => {
     process.env.STRAVA_CLIENT_ID = 'test_id';
     process.env.STRAVA_CLIENT_SECRET = 'test_secret';
     process.env.STRAVA_REDIRECT_URI = 'http://test.com';
-    process.env.STRAVA_ACCESS_TOKEN = 'test_token';
+    process.env.STRAVA_CLIENT_ACCESS_TOKEN = 'test_token';
   });
 
   it('should validate env before configuring', () => {

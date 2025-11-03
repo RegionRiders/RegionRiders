@@ -1,8 +1,10 @@
+;
 /**
  * @jest-environment node
  */
 
 import { validateStravaEnv } from '@/lib/strava';
+
 
 describe('validateStravaEnv', () => {
   const originalEnv = process.env;
@@ -29,7 +31,7 @@ describe('validateStravaEnv', () => {
     delete process.env.STRAVA_CLIENT_ID;
     process.env.STRAVA_CLIENT_SECRET = 'test_secret';
     process.env.STRAVA_REDIRECT_URI = 'http://test.com/callback';
-    process.env.STRAVA_ACCESS_TOKEN = 'test_token';
+    process.env.STRAVA_CLIENT_ACCESS_TOKEN = 'test_token';
 
     expect(() => validateStravaEnv()).toThrow(
       'Missing required Strava environment variables: STRAVA_CLIENT_ID'
@@ -40,7 +42,7 @@ describe('validateStravaEnv', () => {
     delete process.env.STRAVA_CLIENT_ID;
     delete process.env.STRAVA_CLIENT_SECRET;
     process.env.STRAVA_REDIRECT_URI = 'http://test.com/callback';
-    process.env.STRAVA_ACCESS_TOKEN = 'test_token';
+    process.env.STRAVA_CLIENT_ACCESS_TOKEN = 'test_token';
 
     expect(() => validateStravaEnv()).toThrow(
       'Missing required Strava environment variables: STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET'
