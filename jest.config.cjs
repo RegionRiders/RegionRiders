@@ -14,9 +14,7 @@ const customJestConfig = {
     '^@/app/(.*)$': '<rootDir>/app/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
-  testMatch: [
-    '**/?(*.)+(spec|test).[jt]s?(x)',
-  ],
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },

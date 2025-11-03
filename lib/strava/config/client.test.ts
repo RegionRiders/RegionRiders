@@ -1,4 +1,3 @@
-;
 /**
  * @jest-environment node
  */
@@ -6,7 +5,6 @@
 import strava from 'strava-v3';
 import { validateStravaEnv } from '@/lib/strava';
 import { getStravaClient } from './client';
-
 
 jest.mock('./validateEnv');
 jest.mock('strava-v3');

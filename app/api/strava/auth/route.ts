@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
 
-
 /**
  * GET /api/strava/auth
  * Initiates Strava OAuth flow by redirecting to Strava authorization page

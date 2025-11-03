@@ -1,10 +1,8 @@
-;
 /**
  * @jest-environment node
  */
 
 import { validateStravaEnv } from '@/lib/strava';
-
 
 describe('validateStravaEnv', () => {
   const originalEnv = process.env;

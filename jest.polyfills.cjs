@@ -24,7 +24,3 @@ global.Request = Request;
 global.Response = Response;
 global.Headers = Headers;
 global.FormData = FormData;
-
-
-
-

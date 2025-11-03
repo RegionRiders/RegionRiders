@@ -1,4 +1,3 @@
-;
 /**
  * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
  */
@@ -7,7 +6,6 @@ import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
 import { GET } from './route';
-
 
 jest.mock('@/lib/strava');
 jest.mock('@/lib/api');
