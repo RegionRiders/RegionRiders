@@ -13,8 +13,7 @@ export default function MapPage() {
 
     return (
         <div style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ backgroundColor: '#2563eb', color: 'white', padding: '1rem', flexShrink: 0 }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Activity Map Viewer</h1>
+            <header style={{ backgroundColor: '#000000', color: 'white', padding: '1rem', flexShrink: 0 }}>
                 <p style={{ fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
                     {isReady && tracksLoading ? (
                         'Loading activities...'

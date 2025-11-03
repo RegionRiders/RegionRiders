@@ -1,12 +1,11 @@
 // Hardcoded color thresholds to be replaced by user config later
 const COLOR_THRESHOLDS = [
     { count: 1, color: [139, 0, 0] },       // 1: Dark red
-    { count: 5, color: [220, 20, 20] },     // 5: Red
-    { count: 10, color: [255, 100, 0] },    // 10: Orange-red
-    { count: 20, color: [255, 165, 0] },    // 20: Orange
-    { count: 50, color: [255, 255, 0] },    // 50: Yellow
-    { count: 100, color: [255, 255, 150] }, // 100: Light yellow
-    { count: 200, color: [255, 255, 255] }, // 200+: White
+    { count: 50, color: [220, 20, 20] },     // 5: Red
+    { count: 100, color: [255, 100, 0] },    // 10: Orange-red
+    { count: 500, color: [255, 165, 0] },    // 20: Orange
+    { count: 1000, color: [255, 255, 0] },    // 50: Yellow
+    { count: 2500, color: [255, 255, 255] }, // 200+: White
 ];
 
 // Fill colors between two colors
