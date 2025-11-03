@@ -5,6 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
+  setupFiles: ['<rootDir>/jest.polyfills.cjs'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   moduleNameMapper: {
     '^@/components/(.*)$': '<rootDir>/components/$1',
@@ -16,6 +17,9 @@ const customJestConfig = {
   testMatch: [
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
+  testEnvironmentOptions: {
+    customExportConditions: ['node', 'node-addons'],
+  },
 };
 
 module.exports = createJestConfig(customJestConfig);

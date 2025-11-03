@@ -9016,6 +9016,7 @@ __metadata:
     ts-jest: "npm:^29.4.4"
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:^8.46.0"
+    undici: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -12377,6 +12378,13 @@ __metadata:
   version: 7.16.0
   resolution: "undici-types@npm:7.16.0"
   checksum: 10c0/3033e2f2b5c9f1504bdc5934646cb54e37ecaca0f9249c983f7b1fc2e87c6d18399ebb05dc7fd5419e02b2e915f734d872a65da2e3eeed1813951c427d33cc9a
+  languageName: node
+  linkType: hard
+
+"undici@npm:^6.0.0":
+  version: 6.22.0
+  resolution: "undici@npm:6.22.0"
+  checksum: 10c0/47903c489d73e26bd47960cf2f04d63282ed050818b672cb05f8dfb6403381b850cf1b1751832654fd3af22aacd9d780e5e61aff563cd97943f5c4f10d5b3e23
   languageName: node
   linkType: hard
 
