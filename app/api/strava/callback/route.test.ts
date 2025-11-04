@@ -54,7 +54,11 @@ describe('GET /api/strava/callback', () => {
     expect(res.status).toBe(400);
 
     const data = await res.json();
-    expect(data.error).toBe('No authorization code received');
+    expect(data.statusCode).toBe(400);
+    expect(data.message).toBe('No authorization code received');
+    expect(data.error).toBe('Error');
+    expect(data.timestamp).toBeDefined();
+    expect(data.context).toBe('Strava API: Authorization Callback');
   });
 
   it('should return 400 on error param', async () => {
@@ -65,7 +69,10 @@ describe('GET /api/strava/callback', () => {
     expect(res.status).toBe(400);
 
     const data = await res.json();
-    expect(data.error).toBe('Authorization denied');
-    expect(data.details).toBe('access_denied');
+    expect(data.statusCode).toBe(400);
+    expect(data.message).toBe('Authorization denied: access_denied');
+    expect(data.error).toBe('Error');
+    expect(data.timestamp).toBeDefined();
+    expect(data.context).toBe('Strava API: Authorization Callback');
   });
 });
