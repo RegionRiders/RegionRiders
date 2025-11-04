@@ -26,7 +26,8 @@
     "@tabler/icons-react": "^3.35.0",
     "next": "16.0.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "strava-v3": "^2.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
@@ -61,7 +62,8 @@
     "stylelint-config-standard-scss": "^16.0.0",
     "ts-jest": "^29.4.4",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.46.0"
+    "typescript-eslint": "^8.46.0",
+    "undici": "^6.0.0"
   },
   "packageManager": "yarn@4.10.3"
 }

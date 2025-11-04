@@ -135,3 +135,6 @@ dist
 .vscode/
 *.sublime-workspace
 *.sublime-project
+
+# copilot
+/.github/instructions/
