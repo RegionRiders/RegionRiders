@@ -1,6 +1,10 @@
 # RegionRiders • GPX Atlas for Cyclists 🚴‍♂️🗺️
 
 A GPX data visualization website to show, share, and inspire bike trips by compiling activities into sharable trip summaries and mapping all past rides to reveal explored versus yet‑to‑see regions. ✨
+[![npm test](https://github.com/Danrejk/RegionRiders/actions/workflows/npm_test.yml/badge.svg)](https://github.com/Danrejk/RegionRiders/actions/workflows/npm_test.yml)
+[![Coverage](https://github.com/Danrejk/RegionRiders/actions/workflows/coverage.yml/badge.svg)](https://github.com/Danrejk/RegionRiders/actions/workflows/coverage.yml)
+[![codecov](https://codecov.io/gh/Danrejk/RegionRiders/branch/main/graph/badge.svg)](https://codecov.io/gh/Danrejk/RegionRiders)
+
 
 ---
 
