@@ -1,0 +1,45 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: no
+  require_base: no
+  require_head: yes
+
+ignore:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/*.story.tsx"
+  - "**/*.stories.tsx"
+  - "test-utils/**"
+  - "jest.*.cjs"
+  - ".storybook/**"
+  - "next.config.mjs"
+  - "postcss.config.cjs"
+  - "eslint.config.mjs"
+  - ".prettierrc.mjs"
+

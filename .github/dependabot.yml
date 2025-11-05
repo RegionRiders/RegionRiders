@@ -1,0 +1,116 @@
+version: 2
+updates:
+  # Enable version updates for npm (handles yarn as well)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "4fra"
+      - "Danrejk"
+    assignees:
+      - "4fra"
+      - "Danrejk"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group updates by type to reduce PR noise
+    groups:
+      # Group all development/tooling dependencies
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "@babel/*"
+          - "@eslint/*"
+          - "eslint*"
+          - "prettier*"
+          - "stylelint*"
+          - "jest*"
+          - "@testing-library/*"
+          - "@storybook/*"
+          - "storybook"
+          - "postcss*"
+          - "ts-jest"
+          - "typescript"
+          - "typescript-eslint"
+          - "babel-loader"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group React ecosystem updates
+      react-dependencies:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group Next.js ecosystem updates
+      nextjs-dependencies:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+          - "@next/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group Mantine UI framework updates
+      mantine-dependencies:
+        patterns:
+          - "@mantine/*"
+          - "postcss-preset-mantine"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group all other production dependencies
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "@babel/*"
+          - "@eslint/*"
+          - "eslint*"
+          - "prettier*"
+          - "stylelint*"
+          - "jest*"
+          - "@testing-library/*"
+          - "@storybook/*"
+          - "storybook"
+          - "postcss*"
+          - "ts-jest"
+          - "typescript"
+          - "typescript-eslint"
+          - "babel-loader"
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "next"
+          - "eslint-config-next"
+          - "@next/*"
+          - "@mantine/*"
+          - "postcss-preset-mantine"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+
