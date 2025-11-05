@@ -1,7 +1,5 @@
-// Fast Bresenham with antialiased edges - solid inside + no self-overlap
 export function drawLineToAccumulatorWu(
-    accumulator: Uint32Array,
-    visited: Map<number, number>,  // Track count, not just existence
+    accumulator: Uint32Array<any>,
     width: number,
     height: number,
     x0: number,
@@ -40,18 +38,15 @@ export function drawLineToAccumulatorWu(
 
                     if (px >= 0 && px < width && py >= 0 && py < height) {
                         const idx = py * width + px;
-                        const visitCount = visited.get(idx) || 0;
 
-                        // Core (solid) - always add, count visits
+                        // Core (solid)
                         if (distSq <= coreThicknessSq) {
                             accumulator[idx]++;
-                            visited.set(idx, visitCount + 1);
                         }
-                        // Edge (antialiased) - only add if not visited from THIS TRACK yet
-                        else if (visitCount === 0) {
+                        // Edge (antialiased)
+                        else {
                             const alpha = Math.max(0, 1 - (dist - core));
                             accumulator[idx] += alpha;
-                            visited.set(idx, visitCount + 0.1); // Mark as visited but track it
                         }
                     }
                 }
