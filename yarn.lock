@@ -2828,14 +2828,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/addon-themes@npm:^9.1.10":
-  version: 9.1.16
-  resolution: "@storybook/addon-themes@npm:9.1.16"
+"@storybook/addon-themes@npm:^10.0.5":
+  version: 10.0.5
+  resolution: "@storybook/addon-themes@npm:10.0.5"
   dependencies:
     ts-dedent: "npm:^2.0.0"
   peerDependencies:
-    storybook: ^9.1.16
-  checksum: 10c0/4d7d4185cbed9ec3e0a755cc6bb15acecae8a8822121624bd8ff1208001e239b2ad40b09e1afe3a1a6004f62d2b4ad81ff4c3f77638baf1f83c10ded8430428e
+    storybook: ^10.0.5
+  checksum: 10c0/4296a9275882232db303e0c9af3475deb1192df22797d1c350a02117c4b20a952b721b1e176451238fc4acc640767234648ea0dc5221d5ceb9085b63808a2ab2
   languageName: node
   linkType: hard
 
@@ -8982,7 +8982,7 @@ __metadata:
     "@mantine/core": "npm:8.3.5"
     "@mantine/hooks": "npm:8.3.5"
     "@next/bundle-analyzer": "npm:^16.0.0"
-    "@storybook/addon-themes": "npm:^9.1.10"
+    "@storybook/addon-themes": "npm:^10.0.5"
     "@storybook/nextjs": "npm:^9.1.10"
     "@storybook/react": "npm:^9.1.10"
     "@tabler/icons-react": "npm:^3.35.0"
