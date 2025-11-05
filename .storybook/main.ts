@@ -8,6 +8,7 @@ const config: StorybookConfig = {
   },
   stories: ['../components/**/*.(stories|story).@(js|jsx|ts|tsx)'],
   addons: ['@storybook/addon-themes'],
+  staticDirs: ['../public/assets/'],
   framework: {
     name: '@storybook/nextjs',
     options: {},
