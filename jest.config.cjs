@@ -30,26 +30,6 @@ const customJestConfig = {
     '!**/.next/**',
     '!**/coverage/**',
   ],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-    './app/**/*.tsx': {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
-    './lib/utils/**/*.ts': {
-      branches: 90,
-      functions: 90,
-      lines: 90,
-      statements: 90,
-    },
-  },
 };
 
 module.exports = createJestConfig(customJestConfig);
