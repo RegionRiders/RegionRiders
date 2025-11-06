@@ -1,11 +1,26 @@
 // Set up TextEncoder/TextDecoder first - undici needs these
 const { ReadableStream, TransformStream } = require('node:stream/web');
 const { TextEncoder, TextDecoder } = require('node:util');
+const { MessageChannel: NodeMessageChannel, MessagePort } = require('node:worker_threads');
+
+// Track all MessagePorts globally for cleanup
+global.__messagePorts__ = new Set();
+
+// Wrap MessageChannel to track all ports created (including by React scheduler)
+class TrackedMessageChannel extends NodeMessageChannel {
+  constructor() {
+    super();
+    global.__messagePorts__.add(this.port1);
+    global.__messagePorts__.add(this.port2);
+  }
+}
 
 globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder;
 globalThis.ReadableStream = ReadableStream;
 globalThis.TransformStream = TransformStream;
+globalThis.MessageChannel = TrackedMessageChannel;
+globalThis.MessagePort = MessagePort;
 
 // Now import fetch polyfills from undici (used internally by Node.js)
 const { fetch, Request, Response, Headers, FormData } = require('undici');
