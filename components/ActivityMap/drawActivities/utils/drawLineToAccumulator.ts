@@ -1,4 +1,4 @@
-export function drawLineToAccumulatorWu(
+export function drawLineToAccumulator(
     accumulator: Uint32Array<any>,
     width: number,
     height: number,
@@ -8,16 +8,11 @@ export function drawLineToAccumulatorWu(
     y1: number,
     thickness: number
 ) {
-    x0 = Math.round(x0);
-    y0 = Math.round(y0);
-    x1 = Math.round(x1);
-    y1 = Math.round(y1);
-
-    const dx = x1 - x0;
-    const dy = y1 - y0;
+    const dx = Math.round(x1) - Math.round(x0);
+    const dy = Math.round(y1) - Math.round(y0);
     const steps = Math.max(Math.abs(dx), Math.abs(dy));
 
-    if (steps === 0) return;
+    if (steps === 0) {return;}
 
     const core = Math.floor(thickness * 0.7);
     const coreThicknessSq = core * core;

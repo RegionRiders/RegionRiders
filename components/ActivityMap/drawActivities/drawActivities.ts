@@ -1,13 +1,12 @@
-import { drawLineToAccumulatorWu } from './utils/bresenham';
-import { getColorForCount } from './utils/gradientActivityFunctions';
+import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
+import { getColorForCount } from './utils/getColorForCount';
+import {GPXTrack} from "@/lib/types/types";
+import L from 'leaflet';
 
 export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentImageLayerRef: any, renderAbortRef: any, renderTimeoutRef: any) {
 
-    console.log(tracks)
-
-    const L = require('leaflet');
     const PIXEL_DENSITY = 1; // Higher = better quality but slower
-    const THICKNESS = (4 * PIXEL_DENSITY);
+    const THICKNESS = 4 * PIXEL_DENSITY;
 
     const renderHeatmap = () => {
         renderAbortRef.current = true;
@@ -20,7 +19,6 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
 
             try {
                 const bounds = map.getBounds();
-                const L = require('leaflet');
 
                 const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
                 const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
@@ -32,7 +30,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
                 canvas.width = canvasWidth;
                 canvas.height = canvasHeight;
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return;
+                if (!ctx) {return;}
 
                 const accumulator = new Uint32Array(canvasWidth * canvasHeight);
 
@@ -49,7 +47,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
 
                 // Define processChunk INSIDE the timeout
                 const processChunk = () => {
-                    if (renderAbortRef.current) return;
+                    if (renderAbortRef.current) {return;}
 
                     const startTime = performance.now();
                     const chunkTime = 8;
@@ -61,7 +59,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
                         for (let i = 0; i < points.length - 1; i++) {
                             const p1 = latlngToPixel(points[i].lat, points[i].lon);
                             const p2 = latlngToPixel(points[i + 1].lat, points[i + 1].lon);
-                            drawLineToAccumulatorWu(accumulator, canvasWidth, canvasHeight, p1.x, p1.y, p2.x, p2.y, THICKNESS);
+                            drawLineToAccumulator(accumulator, canvasWidth, canvasHeight, p1.x, p1.y, p2.x, p2.y, THICKNESS);
                         }
 
                         trackIndex++;
@@ -81,7 +79,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
 
                     for (let i = 0; i < accumulator.length; i++) {
                         const count = accumulator[i];
-                        if (count === 0) continue;
+                        if (count === 0) {continue;}
 
                         const [r, g, b] = getColorForCount(count, THICKNESS);
                         const pixelIndex = i * 4;
@@ -97,7 +95,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
                     if (currentImageLayerRef.current) {
                         try {
                             map.removeLayer(currentImageLayerRef.current);
-                        } catch (e) {}
+                        } catch (e) { /* empty */ }
                     }
 
                     const imageUrl = canvas.toDataURL();
@@ -137,7 +135,7 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
         if (currentImageLayerRef.current) {
             try {
                 map.removeLayer(currentImageLayerRef.current);
-            } catch (e) {}
+            } catch (e) { /* empty */ }
         }
     };
 }
