@@ -2,13 +2,14 @@
 
 import { drawSubdivisions } from './drawSubdivisions/drawSubdivisions';
 import { drawActivities } from './drawActivities/drawActivities';
-import { useEffect, useRef, useState } from 'react';
-import {GPXTrack, Subdivision} from "@/lib/types/types";
-import {DataLoader} from "@/lib/services/dataLoader";
+import { RegionVisitAnalyzer } from '@/lib/utils/regionVisitAnalyzer';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { GPXTrack, Subdivision } from "@/lib/types/types";
+import { DataLoader } from "@/lib/services/dataLoader";
 import L from 'leaflet';
 
 interface MapContainerProps {
-    map: any;
+    map: L.Map | null;
     tracks: Map<string, GPXTrack>;
     showHeatmap?: boolean;
     showBorders?: boolean;
@@ -21,64 +22,22 @@ export default function MapContainer({
                                          showBorders = true,
                                      }: MapContainerProps) {
     const [subdivisions, setSubdivisions] = useState<Subdivision[]>([]);
+    const [visitData, setVisitData] = useState<Map<string, any>>(new Map());
     const currentImageLayerRef = useRef<any>(null);
     const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const renderAbortRef = useRef(false);
     const subdivisionLayersRef = useRef<any[]>([]);
-    const popupRef = useRef<L.Popup | null>(null);
 
-    const handleRegionClick = (subdivision: Subdivision, layer: any) => {
-        const props = subdivision.properties;
+    // Track last analysis to prevent duplicates
+    const lastAnalysisRef = useRef<{ tracksSize: number; subdivisionsSize: number } | null>(null);
+    const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-        let content = `<div style="min-width: 200px;">`;
-
-        if (props.name || subdivision.name) {
-            content += `<h3 style="margin: 0 0 8px 0;">${props.name || subdivision.name}</h3>`;
-        }
-
-        if (props.admin_level) {
-            content += `<p style="margin: 4px 0;"><strong>Admin Level:</strong> ${props.admin_level}</p>`;
-        }
-
-        if (props['ISO3166-2']) {
-            content += `<p style="margin: 4px 0;"><strong>ISO Code:</strong> ${props['ISO3166-2']}</p>`;
-        }
-
-        if (props.population) {
-            content += `<p style="margin: 4px 0;"><strong>Population:</strong> ${parseInt(props.population).toLocaleString()}</p>`;
-        }
-
-        if (props.type) {
-            content += `<p style="margin: 4px 0;"><strong>Type:</strong> ${props.type}</p>`;
-        }
-
-        if (props['name:en'] && props['name:en'] !== props.name) {
-            content += `<p style="margin: 4px 0;"><strong>English Name:</strong> ${props['name:en']}</p>`;
-        }
-
-        if (props.wikidata) {
-            content += `<p style="margin: 4px 0;"><strong>Wikidata:</strong> <a href="https://www.wikidata.org/wiki/${props.wikidata}" target="_blank">${props.wikidata}</a></p>`;
-        }
-
-        content += `</div>`;
-
-        if (popupRef.current && map) {
-            map.closePopup(popupRef.current);
-        }
-
-        const bounds = layer.getBounds();
-        const center = bounds.getCenter();
-
-        const popup = L.popup()
-            .setLatLng(center)
-            .setContent(content)
-            .openOn(map);
-
-        popupRef.current = popup;
-    };
-
-    const loadSubdivisionsForViewport = async () => {
+    // Debounce map movements to avoid excessive reloads
+    const loadSubdivisionsForViewport = useCallback(async () => {
         if (!map) return;
+
+        const startTime = performance.now();
+        console.log('🗺️ [MapContainer] Loading subdivisions for viewport...');
 
         const bounds = map.getBounds();
         const zoom = map.getZoom();
@@ -91,35 +50,104 @@ export default function MapContainer({
         };
 
         const subs = await DataLoader.loadSubdivisions(viewportBounds, zoom);
-        setSubdivisions(subs);
-    };
+        const duration = (performance.now() - startTime).toFixed(2);
 
+        console.log(`✅ [MapContainer] Loaded ${subs.length} subdivisions (${duration}ms)`);
+        setSubdivisions(subs);
+    }, [map]);
+
+    // Setup map event listeners with debouncing
     useEffect(() => {
         if (!map) return;
 
-        // Create custom pane for heatmap with higher z-index than overlayPane (400)
-        if (!map.getPane('heatmapPane')) {
-            const heatmapPane = map.createPane('heatmapPane');
-            heatmapPane.style.zIndex = 450; // Higher than overlayPane (400) but below popups (600)
-        }
+        console.log('📌 [MapContainer] Attaching map event listeners');
 
         loadSubdivisionsForViewport();
 
+        let moveTimeout: NodeJS.Timeout;
         const handleMoveEnd = () => {
-            loadSubdivisionsForViewport();
+            // Debounce: only reload after 500ms of no movement
+            clearTimeout(moveTimeout);
+            moveTimeout = setTimeout(() => {
+                console.log('🔄 [MapContainer] Map moved, reloading subdivisions');
+                loadSubdivisionsForViewport();
+            }, 500);
         };
 
         map.on('moveend', handleMoveEnd);
 
         return () => {
+            console.log('🧹 [MapContainer] Removing map event listeners');
+            clearTimeout(moveTimeout);
             map.off('moveend', handleMoveEnd);
         };
-    }, [map]);
+    }, [map, loadSubdivisionsForViewport]);
 
+    // Analyze region visits - but ONLY when needed
     useEffect(() => {
-        if (!map || subdivisions.length === 0) return;
+        if (subdivisions.length === 0 || tracks.size === 0) return;
 
-        // Remove existing layers
+        // Skip if nothing changed
+        if (
+            lastAnalysisRef.current?.tracksSize === tracks.size &&
+            lastAnalysisRef.current?.subdivisionsSize === subdivisions.length
+        ) {
+            console.log('⏭️ [MapContainer] Skipping analysis - data unchanged');
+            return;
+        }
+
+        console.log(`🔍 [MapContainer] Analyzing ${tracks.size} tracks against ${subdivisions.length} regions...`);
+
+        // Clear existing timeout
+        if (analysisTimeoutRef.current) {
+            clearTimeout(analysisTimeoutRef.current);
+        }
+
+        const startTime = performance.now();
+        analysisTimeoutRef.current = setTimeout(() => {
+            const tracksArray = Array.from(tracks.values());
+            const visitMap = RegionVisitAnalyzer.analyzeRegionVisits(tracksArray, subdivisions);
+            const duration = (performance.now() - startTime).toFixed(2);
+            const visitedCount = Array.from(visitMap.values()).filter(v => v.visited).length;
+
+            console.log(`✅ [MapContainer] Analysis complete: ${visitedCount} regions visited (${duration}ms)`);
+            setVisitData(visitMap);
+
+            // Remember we analyzed this combination
+            lastAnalysisRef.current = {
+                tracksSize: tracks.size,
+                subdivisionsSize: subdivisions.length,
+            };
+        }, 500); // Wait 500ms to batch updates
+
+        return () => {
+            if (analysisTimeoutRef.current) {
+                clearTimeout(analysisTimeoutRef.current);
+            }
+        };
+    }, [tracks, subdivisions]);
+
+    // Draw activities heatmap - render ONCE
+    useEffect(() => {
+        if (!map || !showHeatmap || tracks.size === 0) {
+            return;
+        }
+
+        console.log(`🎨 [MapContainer] Rendering heatmap for ${tracks.size} tracks`);
+        const cleanup = drawActivities(map, tracks, currentImageLayerRef, renderAbortRef, renderTimeoutRef);
+        return cleanup;
+    }, [map, tracks, showHeatmap]);
+
+    // Draw subdivisions - CACHE the layers
+    useEffect(() => {
+        if (!map || subdivisions.length === 0) {
+            return;
+        }
+
+        const startTime = performance.now();
+        console.log(`🖍️ [MapContainer] Drawing ${subdivisions.length} subdivision borders...`);
+
+        // Clear old layers
         if (subdivisionLayersRef.current && Array.isArray(subdivisionLayersRef.current)) {
             subdivisionLayersRef.current.forEach((layer: any) => {
                 if (map.hasLayer(layer)) {
@@ -130,20 +158,17 @@ export default function MapContainer({
         subdivisionLayersRef.current = [];
 
         if (showBorders) {
-            /**
-             * Calculate stroke width that maintains constant real-world distance
-             */
             const calculateWeightForZoom = (zoom: number): number => {
-                // Scale: makes borders appear proportional to map scale
-                // At zoom 10: ~1px, at zoom 15: ~5.6px, at zoom 20: ~32px
                 return Math.pow(2, (zoom - 10) / 2.5);
             };
 
             const initialWeight = calculateWeightForZoom(map.getZoom());
-            const layers = drawSubdivisions(map, subdivisions, handleRegionClick, initialWeight);
+            const layers = drawSubdivisions(map, subdivisions, visitData, () => {}, initialWeight);
             subdivisionLayersRef.current = layers;
 
-            // Update borders on zoom
+            const duration = (performance.now() - startTime).toFixed(2);
+            console.log(`✅ [MapContainer] Drawn ${layers.length} subdivision layers (${duration}ms)`);
+
             const handleZoom = () => {
                 const zoom = map.getZoom();
                 const weight = calculateWeightForZoom(zoom);
@@ -168,15 +193,7 @@ export default function MapContainer({
                 }
             };
         }
-    }, [map, subdivisions, showBorders]);
-
-
-    // Draw activities SECOND (higher z-index via custom pane)
-    useEffect(() => {
-        if (!map || !showHeatmap || tracks.size === 0) return;
-        const cleanup = drawActivities(map, tracks, currentImageLayerRef, renderAbortRef, renderTimeoutRef);
-        return cleanup;
-    }, [map, tracks, showHeatmap]);
+    }, [map, subdivisions, showBorders, visitData]);
 
     return null;
 }

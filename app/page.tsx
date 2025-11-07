@@ -1,64 +1,67 @@
 'use client';
-import { useGPXData } from '@/hooks/useGPXData';
-import { useLeafletMap } from '@/hooks/useLeafletMap';
-import 'leaflet/dist/leaflet.css';
-import dynamic from "next/dynamic";
-import { useState } from 'react';
 
-const MapContainer = dynamic(() => import("@/components/ActivityMap/MapContainer"), { ssr: false });
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { debugLogger } from '@/lib/utils/debugLogger';
 
-export default function MapPage() {
-    const { map, isReady, error: mapError } = useLeafletMap('map-container');
-    const { tracks, loading: tracksLoading, error: tracksError } = useGPXData();
-    const [showHeatmap, setShowHeatmap] = useState(true);
-    const [showBorders, setShowBorders] = useState(true);
+const ActivityMapComponent = dynamic(
+    () => import('@/components/ActivityMap/ActivityMapComponent'),
+    { ssr: false }
+);
+
+interface LogEntry {
+    message: string;
+    timestamp: number;
+}
+
+export default function Home() {
+    const [debugLogs, setDebugLogs] = useState<LogEntry[]>([]);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    useEffect(() => {
+        // Subscribe to logger instead of intercepting console
+        const unsubscribe = debugLogger.subscribe((logs) => {
+            setDebugLogs(logs);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    if (!isClient) {
+        return (
+            <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+                <div>🗺️ Loading map...</div>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ backgroundColor: '#000000', color: 'white', padding: '1rem', flexShrink: 0 }}>
-                <p style={{ fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
-                    {!isReady && tracksLoading ? 'Loading activities...' :
-                        isReady && !tracksLoading ? `Displaying ${tracks.size} activities` :
-                            'Initializing map...'}
-                </p>
-                {isReady && (
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={showHeatmap}
-                                onChange={(e) => setShowHeatmap(e.target.checked)}
-                                style={{ marginRight: '0.25rem' }}
-                            />
-                            Show Heatmap
-                        </label>
-                        <label style={{ fontSize: '0.875rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={showBorders}
-                                onChange={(e) => setShowBorders(e.target.checked)}
-                                style={{ marginRight: '0.25rem' }}
-                            />
-                            Show Borders
-                        </label>
+        <div style={{ display: 'flex', height: '100vh' }}>
+            <div style={{ flex: 1 }}>
+                <ActivityMapComponent />
+            </div>
+            <div
+                style={{
+                    width: '300px',
+                    backgroundColor: '#1e1e1e',
+                    color: '#00ff00',
+                    padding: '10px',
+                    overflowY: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    borderLeft: '1px solid #333',
+                }}
+            >
+                <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>📊 Debug Logs</div>
+                {debugLogs.map((log, i) => (
+                    <div key={i} style={{ marginBottom: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {log.message}
                     </div>
-                )}
-            </header>
-
-            {mapError && (
-                <div style={{ backgroundColor: '#fee', border: '1px solid #f88', color: '#c00', padding: '1rem' }}>
-                    Map Error: {mapError}
-                </div>
-            )}
-            {tracksError && (
-                <div style={{ backgroundColor: '#ffc', border: '1px solid #cc0', color: '#660', padding: '1rem' }}>
-                    Data Loading Warning: {tracksError}
-                </div>
-            )}
-
-            <div style={{ flex: 1, position: 'relative' }}>
-                <div id="map-container" style={{ width: '100%', height: '100%' }}></div>
-                {isReady && <MapContainer map={map} tracks={tracks} showHeatmap={showHeatmap} showBorders={showBorders} />}
+                ))}
             </div>
         </div>
     );

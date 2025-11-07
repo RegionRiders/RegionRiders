@@ -1,4 +1,4 @@
-import { GPXTrack, Subdivision } from '../types';
+import { GPXTrack, Subdivision } from '../types/types';
 import { parseGPXFile } from '../utils/gpxParser';
 
 export class DataLoader {
@@ -6,6 +6,9 @@ export class DataLoader {
         source: 'local' | 'api' = 'local',
         files?: string[]
     ): Promise<GPXTrack[]> {
+        const startTime = performance.now();
+        console.log(`📂 [DataLoader] Loading GPX tracks from ${source}...`);
+
         if (source === 'api') {
             return this.loadFromAPI();
         }
@@ -17,113 +20,55 @@ export class DataLoader {
         const tracks: GPXTrack[] = [];
         const errors: string[] = [];
 
+        console.log(`📄 [DataLoader] Found ${files.length} GPX files to load`);
+
         for (const file of files) {
             try {
                 const track = await parseGPXFile(`/data/gpx/${file}`);
                 tracks.push(track);
+                console.log(`✅ [DataLoader] Loaded: ${file} (${track.points.length} points)`);
             } catch (error) {
-                errors.push(`Failed to load ${file}: ${error}`);
+                const errorMsg = `Failed to load ${file}: ${error}`;
+                errors.push(errorMsg);
+                console.error(`❌ [DataLoader] ${errorMsg}`);
             }
         }
 
+        const duration = (performance.now() - startTime).toFixed(2);
+        console.log(`✅ [DataLoader] Loaded ${tracks.length} tracks in ${duration}ms`);
+
         if (errors.length > 0) {
-            console.warn('Some GPX files failed to load:', errors);
+            console.warn('⚠️ [DataLoader] Some files failed:', errors);
         }
 
         return tracks;
     }
 
-    /**
-     * Load subdivisions visible in the current map viewport
-     * @param bounds - Map bounds { north, south, east, west }
-     * @param zoom - Current zoom level (for level-of-detail)
-     */
     static async loadSubdivisions(
         bounds?: { north: number; south: number; east: number; west: number },
         zoom?: number
     ): Promise<Subdivision[]> {
+        const startTime = performance.now();
+        console.log(`🗺️ [DataLoader] Loading subdivisions (zoom=${zoom})`);
+
         try {
-            // For now: load from local mock file
-            // Later: call API with bounds and zoom
-            const response = await this.loadSubdivisionsLocal(bounds, zoom);
-            return response;
+            const response = await fetch('/data/subdivisions.geojson');
+            const geojson = await response.json();
+
+            const subs = geojson.features.map((feature: any) => ({
+                id: feature.id,
+                name: feature.properties?.name || 'Unknown',
+                country: feature.properties?.country || '',
+                geometry: feature.geometry,
+                properties: feature.properties || {},
+            }));
+
+            const duration = (performance.now() - startTime).toFixed(2);
+            console.log(`✅ [DataLoader] Loaded ${subs.length} subdivisions (${duration}ms)`);
+
+            return subs;
         } catch (error) {
-            console.error('Failed to load subdivisions:', error);
-            return [];
-        }
-    }
-
-    /**
-     * MOCK: Load from local file
-     * In production, this will be replaced by API call
-     */
-    private static async loadSubdivisionsLocal(
-        bounds?: { north: number; south: number; east: number; west: number },
-        zoom?: number
-    ): Promise<Subdivision[]> {
-        const response = await fetch('/data/subdivisions.geojson');
-        const geojson = await response.json();
-
-        let features = geojson.features;
-
-        // Mock viewport filtering (remove in production - server will handle this)
-        if (bounds) {
-            features = features.filter((feature: any) => {
-                // Simple bounding box check
-                const coords = this.getFeatureCoords(feature.geometry);
-                return coords.some(([lon, lat]) =>
-                    lat >= bounds.south && lat <= bounds.north &&
-                    lon >= bounds.west && lon <= bounds.east
-                );
-            });
-        }
-
-        return features.map((feature: any) => ({
-            id: feature.properties.id || feature.id,
-            name: feature.properties.name || '',
-            country: feature.properties.country || '',
-            geometry: feature.geometry,
-            properties: feature.properties,
-        }));
-    }
-
-    /**
-     * PRODUCTION: Load from API (not yet implemented)
-     * Replace loadSubdivisionsLocal with this when backend is ready
-     */
-    private static async loadSubdivisionsFromAPI(
-        bounds: { north: number; south: number; east: number; west: number },
-        zoom: number
-    ): Promise<Subdivision[]> {
-        const params = new URLSearchParams({
-            north: bounds.north.toString(),
-            south: bounds.south.toString(),
-            east: bounds.east.toString(),
-            west: bounds.west.toString(),
-            zoom: zoom.toString(),
-        });
-
-        const response = await fetch(`/api/subdivisions?${params}`);
-        const result = await response.json();
-        return result.data || [];
-    }
-
-    private static getFeatureCoords(geometry: any): [number, number][] {
-        if (geometry.type === 'Polygon') {
-            return geometry.coordinates[0];
-        } else if (geometry.type === 'MultiPolygon') {
-            return geometry.coordinates.flatMap((polygon: any) => polygon[0]);
-        }
-        return [];
-    }
-
-    private static async loadFromAPI(): Promise<GPXTrack[]> {
-        try {
-            const response = await fetch('/api/activities');
-            const result = await response.json();
-            return result.data || [];
-        } catch (error) {
-            console.error('Failed to load from API:', error);
+            console.error('❌ [DataLoader] Error loading subdivisions:', error);
             return [];
         }
     }
@@ -131,10 +76,16 @@ export class DataLoader {
     private static async getLocalGPXFileList(): Promise<string[]> {
         try {
             const response = await fetch('/api/gpx-files');
-            const result = await response.json();
-            return result.files || [];
+            const data = await response.json();
+            return data.files || [];
         } catch {
+            console.warn('⚠️ [DataLoader] Could not load GPX file list');
             return [];
         }
+    }
+
+    private static async loadFromAPI(): Promise<GPXTrack[]> {
+        console.log('📡 [DataLoader] Loading from API...');
+        return [];
     }
 }
