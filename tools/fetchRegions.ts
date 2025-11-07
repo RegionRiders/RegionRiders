@@ -1,17 +1,26 @@
 #!/usr/bin/env ts-node
+
 /**
  * Fetch administrative regions from OpenStreetMap Overpass API
- * and save them as GeoJSON files with topology-preserving simplification.
+ * Each country gets its own file with custom admin level
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { TopologySimplifier } from './utils/topologySimplifier';
 
+interface CountryConfig {
+    name: string;
+    countryCode: string;
+    osmName: string; // Name as it appears in OSM
+    adminLevel: number; // Which admin level to fetch (e.g., 6 for voivodeships in Poland, 4 for states in USA)
+    fileName: string; // e.g., "poland.geojson"
+}
+
 interface OverpassElement {
     type: string;
     id: number;
-    tags?: Record<string, string>;
+    tags?: Record<string, any>;
     members?: Array<{
         type: string;
         ref: number;
@@ -24,7 +33,7 @@ interface OverpassResponse {
     elements: OverpassElement[];
 }
 
-class OverpassRegionFetcher {
+class MultiCountryFetcher {
     private readonly OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
     private readonly timeout: number;
 
@@ -32,14 +41,46 @@ class OverpassRegionFetcher {
         this.timeout = timeout;
     }
 
-    async fetchAdminLevelInRegion(
-        regionName: string,
-        adminLevel: number
-    ): Promise<GeoJSON.FeatureCollection> {
-        const query = this.buildQuery(regionName, adminLevel);
+    async fetchAllCountries(countries: CountryConfig[]): Promise<void> {
+        console.log(`📍 Starting to fetch regions for ${countries.length} countries...\n`);
 
-        console.log(`Fetching admin_level=${adminLevel} regions in '${regionName}'...`);
-        console.log(`Query:\n${query}\n`);
+        for (const country of countries) {
+            console.log(`\n${'='.repeat(60)}`);
+            console.log(`🌍 Country: ${country.name} (${country.countryCode})`);
+            console.log(`📋 Admin Level: ${country.adminLevel}`);
+            console.log(`${'='.repeat(60)}`);
+
+            try {
+                const geojson = await this.fetchCountryRegions(country.osmName, country.adminLevel, country.countryCode);
+
+                if (geojson.features.length === 0) {
+                    console.log(`⚠️  No regions found for ${country.name}`);
+                    continue;
+                }
+
+                const outputPath = `public/data/regions/${country.fileName}`;
+                this.saveGeoJSON(geojson, outputPath, true);
+
+                console.log(`✅ Completed: ${geojson.features.length} regions saved`);
+            } catch (error) {
+                console.error(`❌ Error fetching ${country.name}:`, error);
+            }
+
+            // Rate limiting: wait between requests
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+
+        console.log(`\n${'='.repeat(60)}`);
+        console.log('✅ All countries processed!');
+    }
+
+    private async fetchCountryRegions(
+        osmName: string,
+        adminLevel: number,
+        countryCode: string
+    ): Promise<GeoJSON.FeatureCollection> {
+        const query = this.buildQuery(osmName, adminLevel);
+        console.log(`📡 Querying Overpass API for admin_level=${adminLevel}...`);
 
         try {
             const response = await fetch(this.OVERPASS_URL, {
@@ -54,30 +95,32 @@ class OverpassRegionFetcher {
             }
 
             const osmData: OverpassResponse = await response.json();
-            const geojson = this.convertToGeoJSON(osmData);
+            const geojson = this.convertToGeoJSON(osmData, countryCode);
 
-            console.log(`✓ Found ${geojson.features.length} regions`);
+            console.log(`📊 Found ${geojson.features.length} regions`);
             return geojson;
         } catch (error) {
-            console.error('✗ Request failed:', error);
+            console.error('❌ Request failed:', error);
             throw error;
         }
     }
 
-    private buildQuery(regionName: string, adminLevel: number): string {
-        const query = `
+    private buildQuery(osmName: string, adminLevel: number): string {
+        return `
 [out:json][timeout:${this.timeout}];
-// Find the parent area by name
-area[name="${regionName}"]->.searchArea;
-// Select relations with admin_level in that area
+// Find the country by name
+area[name="${osmName}"]->.searchArea;
+// Select administrative regions at the specified level
 relation(area.searchArea)["boundary"="administrative"]["admin_level"="${adminLevel}"];
-// Output with geometry
+// Output with full geometry
 out body geom;
 `;
-        return query;
     }
 
-    private convertToGeoJSON(osmData: OverpassResponse): GeoJSON.FeatureCollection {
+    private convertToGeoJSON(
+        osmData: OverpassResponse,
+        countryCode: string
+    ): GeoJSON.FeatureCollection {
         const features: GeoJSON.Feature[] = [];
 
         for (const element of osmData.elements) {
@@ -90,6 +133,7 @@ out body geom;
                 ...element.tags,
                 osm_id: element.id,
                 osm_type: element.type,
+                country_code: countryCode,
             };
 
             features.push({
@@ -112,7 +156,6 @@ out body geom;
         const outerWaysByRef = new Map<number, number[][]>();
         const innerWaysByRef = new Map<number, number[][]>();
 
-        // Map each way by its ref, keeping coords
         for (const member of element.members) {
             if (member.type !== 'way' || !member.geometry) continue;
 
@@ -127,13 +170,11 @@ out body geom;
 
         if (outerWaysByRef.size === 0) return null;
 
-        // Chain ways together to form complete rings
         const outerRings = this.chainWays(Array.from(outerWaysByRef.values()));
         const innerRings = this.chainWays(Array.from(innerWaysByRef.values()));
 
         if (outerRings.length === 0) return null;
 
-        // Single polygon
         if (outerRings.length === 1) {
             return {
                 type: 'Polygon',
@@ -141,17 +182,12 @@ out body geom;
             };
         }
 
-        // MultiPolygon
         return {
             type: 'MultiPolygon',
             coordinates: outerRings.map((ring) => [ring]),
         };
     }
 
-    /**
-     * Chain ways together to form continuous rings
-     * Ways in OSM are individual line segments that need to be connected end-to-end
-     */
     private chainWays(ways: number[][][]): number[][][] {
         if (ways.length === 0) return [];
         if (ways.length === 1) return ways;
@@ -167,7 +203,6 @@ out body geom;
             let currentWay = ways[currentIdx];
             ring.push(...currentWay);
 
-            // Chain ways until ring closes
             while (
                 ring[0][0] !== ring[ring.length - 1][0] ||
                 ring[0][1] !== ring[ring.length - 1][1]
@@ -180,15 +215,13 @@ out body geom;
                     const wayStart = way[0];
                     const wayEnd = way[way.length - 1];
 
-                    // Way starts where ring ends
                     if (wayStart[0] === ringEnd[0] && wayStart[1] === ringEnd[1]) {
-                        ring.push(...way.slice(1)); // Skip first point (already added)
+                        ring.push(...way.slice(1));
                         remaining.delete(idx);
                         found = true;
                         break;
                     }
 
-                    // Way ends where ring ends (reverse it)
                     if (wayEnd[0] === ringEnd[0] && wayEnd[1] === ringEnd[1]) {
                         ring.push(...way.reverse().slice(1));
                         remaining.delete(idx);
@@ -197,13 +230,9 @@ out body geom;
                     }
                 }
 
-                if (!found) {
-                    // Ring closed or no more ways to connect
-                    break;
-                }
+                if (!found) break;
             }
 
-            // Only add if ring is closed (first and last point match)
             if (
                 ring.length > 2 &&
                 ring[0][0] === ring[ring.length - 1][0] &&
@@ -216,94 +245,127 @@ out body geom;
         return rings;
     }
 
-    saveGeoJSON(geojson: GeoJSON.FeatureCollection, outputPath: string, simplify: boolean = true): void {
+    private saveGeoJSON(geojson: GeoJSON.FeatureCollection, outputPath: string, simplify: boolean = true): void {
         const dir = path.dirname(outputPath);
+
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
 
         let finalGeoJSON = geojson;
 
-        // Apply topology-preserving simplification
         if (simplify && geojson.features.length > 0) {
-            console.log('Simplifying geometries while preserving topology...');
-            const simplifier = new TopologySimplifier(0.001); // ~50m tolerance
+            console.log('🔧 Simplifying geometries...');
+            const simplifier = new TopologySimplifier(0.001);
             finalGeoJSON = {
                 ...geojson,
-                features: simplifier.simplifyFeatureCollection(geojson.features)
+                features: simplifier.simplifyFeatureCollection(geojson.features),
             };
 
-            // Calculate reduction
             const originalPoints = this.countPoints(geojson);
             const simplifiedPoints = this.countPoints(finalGeoJSON);
             const reduction = ((1 - simplifiedPoints / originalPoints) * 100).toFixed(1);
-            console.log(`✓ Reduced from ${originalPoints} to ${simplifiedPoints} points (${reduction}% reduction)`);
+
+            console.log(`📉 Reduced from ${originalPoints} to ${simplifiedPoints} points (${reduction}% reduction)`);
         }
 
         fs.writeFileSync(outputPath, JSON.stringify(finalGeoJSON, null, 2), 'utf-8');
-        console.log(`✓ Saved to ${outputPath}`);
+        console.log(`💾 Saved to ${outputPath}`);
     }
 
     private countPoints(geojson: GeoJSON.FeatureCollection): number {
         let count = 0;
+
         for (const feature of geojson.features) {
             const geometry = feature.geometry as GeoJSON.Geometry;
+
             if (geometry.type === 'Polygon') {
                 count += geometry.coordinates.reduce((sum, ring: number[][]) => sum + ring.length, 0);
             } else if (geometry.type === 'MultiPolygon') {
-                count += geometry.coordinates.reduce((sum, polygon: number[][][]) =>
-                    sum + polygon.reduce((s, ring: number[][]) => s + ring.length, 0), 0
+                count += geometry.coordinates.reduce(
+                    (sum, polygon: number[][][]) =>
+                        sum + polygon.reduce((s, ring: number[][]) => s + ring.length, 0),
+                    0
                 );
             }
         }
+
         return count;
     }
 }
 
+// Define countries and their admin levels
+const COUNTRIES: CountryConfig[] = [
+    // Poland - gminy (level 7)
+    {
+        name: 'Poland',
+        countryCode: 'PL',
+        osmName: 'Polska',
+        adminLevel: 7, // Gminy
+        fileName: 'poland.geojson',
+    },
+
+    // Slovakia - municipalities (level 8)
+    {
+        name: 'Slovakia',
+        countryCode: 'SK',
+        osmName: 'Slovensko',
+        adminLevel: 9, // Municipalități
+        fileName: 'slovakia.geojson',
+    },
+
+    // Hungary - municipalities (level 8)
+    {
+        name: 'Hungary',
+        countryCode: 'HU',
+        osmName: 'Magyarorszag',
+        adminLevel: 7, // Municipalități
+        fileName: 'hungary.geojson',
+    },
+
+    // Germany - gemeinden (level 8)
+    {
+        name: 'Germany',
+        countryCode: 'DE',
+        osmName: 'Deutschland',
+        adminLevel: 8, // Gemeinden
+        fileName: 'germany.geojson',
+    },
+
+    // Belgium - municipalities/communes (level 8)
+    {
+        name: 'Belgium',
+        countryCode: 'BE',
+        osmName: 'Belgie',
+        adminLevel: 8, // Communes/Gemeentes
+        fileName: 'belgium.geojson',
+    },
+
+    // France - communes (level 8)
+    {
+        name: 'France',
+        countryCode: 'FR',
+        osmName: 'France',
+        adminLevel: 7,
+        fileName: 'france.geojson',
+    },
+
+    // // Netherlands - municipalities (level 8)
+    {
+        name: 'Netherlands',
+        countryCode: 'NL',
+        osmName: 'Nederland',
+        adminLevel: 8, // Gemeenten
+        fileName: 'netherlands.geojson',
+    },
+];
+
+
 async function main() {
-    const fetcher = new OverpassRegionFetcher(180);
-
-    // Try different name variations
-    let geojson: GeoJSON.FeatureCollection | null = null;
-
-    const nameVariations = [
-        'Polska',
-    ];
-
-    for (const name of nameVariations) {
-        try {
-            console.log(`\nTrying region name: "${name}"`);
-            geojson = await fetcher.fetchAdminLevelInRegion(name, 7);
-            if (geojson.features.length > 0) {
-                console.log(`✓ Success with name: "${name}"`);
-                break;
-            }
-        } catch (error) {
-            console.log(`✗ Failed with name: "${name}"`);
-        }
-    }
-
-    if (!geojson || geojson.features.length === 0) {
-        console.error('\n✗ Could not fetch regions with any name variation');
-        process.exit(1);
-    }
-
-    // Save to public/data directory (with simplification enabled)
-    const outputPath = 'public/data/subdivisions.geojson';
-    fetcher.saveGeoJSON(geojson, outputPath, true);
-
-    // Print summary
-    console.log('\n' + '='.repeat(50));
-    console.log(`Total regions fetched: ${geojson.features.length}`);
-    console.log('\nRegions:');
-    for (const feature of geojson.features) {
-        const name = feature.properties?.name || 'Unknown';
-        const adminLevel = feature.properties?.admin_level || '?';
-        const osmId = feature.properties?.osm_id || '?';
-        console.log(`  - ${name} (admin_level=${adminLevel}, osm_id=${osmId})`);
-    }
+    const fetcher = new MultiCountryFetcher(180);
+    await fetcher.fetchAllCountries(COUNTRIES);
 }
 
 main().catch(console.error);
 
-export { OverpassRegionFetcher };
+export { MultiCountryFetcher, CountryConfig };

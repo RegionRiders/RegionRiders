@@ -23,24 +23,37 @@ export default function MapContainer({
                                      }: MapContainerProps) {
     const [subdivisions, setSubdivisions] = useState<Subdivision[]>([]);
     const [visitData, setVisitData] = useState<Map<string, any>>(new Map());
+
     const currentImageLayerRef = useRef<any>(null);
     const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const renderAbortRef = useRef(false);
     const subdivisionLayersRef = useRef<any[]>([]);
 
-    // Track last analysis to prevent duplicates
     const lastAnalysisRef = useRef<{ tracksSize: number; subdivisionsSize: number } | null>(null);
     const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastBoundsRef = useRef<any>(null);
 
-    // Debounce map movements to avoid excessive reloads
+    // Optimized: Only load regions in viewport (MAJOR improvement)
     const loadSubdivisionsForViewport = useCallback(async () => {
         if (!map) return;
 
         const startTime = performance.now();
-        console.log('🗺️ [MapContainer] Loading subdivisions for viewport...');
-
         const bounds = map.getBounds();
-        const zoom = map.getZoom();
+
+        // Check if bounds actually changed significantly (debounce small movements)
+        if (lastBoundsRef.current) {
+            const lastBounds = lastBoundsRef.current;
+            const latDiff = Math.abs(bounds.getNorth() - lastBounds.getNorth());
+            const lonDiff = Math.abs(bounds.getEast() - lastBounds.getEast());
+
+            // Skip if movement is less than 0.5 degrees (debounce)
+            if (latDiff < 0.5 && lonDiff < 0.5) {
+                console.log('⏭️ [MapContainer] Skipping load - bounds changed minimally');
+                return;
+            }
+        }
+
+        lastBoundsRef.current = bounds;
 
         const viewportBounds = {
             north: bounds.getNorth(),
@@ -49,14 +62,19 @@ export default function MapContainer({
             west: bounds.getWest(),
         };
 
-        const subs = await DataLoader.loadSubdivisions(viewportBounds, zoom);
+        const zoom = map.getZoom();
+
+        console.log(`🗺️ [MapContainer] Loading regions for viewport (zoom=${zoom})...`);
+
+        // Load only regions that overlap the viewport
+        const subs = await DataLoader.loadSubdivisionsInViewport(viewportBounds, zoom);
         const duration = (performance.now() - startTime).toFixed(2);
 
-        console.log(`✅ [MapContainer] Loaded ${subs.length} subdivisions (${duration}ms)`);
+        console.log(`✅ [MapContainer] Loaded ${subs.length} subdivisions in viewport (${duration}ms)`);
         setSubdivisions(subs);
     }, [map]);
 
-    // Setup map event listeners with debouncing
+    // Setup map event listeners with aggressive debouncing
     useEffect(() => {
         if (!map) return;
 
@@ -66,12 +84,12 @@ export default function MapContainer({
 
         let moveTimeout: NodeJS.Timeout;
         const handleMoveEnd = () => {
-            // Debounce: only reload after 500ms of no movement
             clearTimeout(moveTimeout);
+            // Increased debounce: 800ms to avoid repeated reloads
             moveTimeout = setTimeout(() => {
                 console.log('🔄 [MapContainer] Map moved, reloading subdivisions');
                 loadSubdivisionsForViewport();
-            }, 500);
+            }, 800);
         };
 
         map.on('moveend', handleMoveEnd);
@@ -83,11 +101,13 @@ export default function MapContainer({
         };
     }, [map, loadSubdivisionsForViewport]);
 
-    // Analyze region visits - but ONLY when needed
+    // Analyze region visits - only when subdivisions change
     useEffect(() => {
-        if (subdivisions.length === 0 || tracks.size === 0) return;
+        if (subdivisions.length === 0 || tracks.size === 0) {
+            return;
+        }
 
-        // Skip if nothing changed
+        // Skip if nothing meaningful changed
         if (
             lastAnalysisRef.current?.tracksSize === tracks.size &&
             lastAnalysisRef.current?.subdivisionsSize === subdivisions.length
@@ -98,29 +118,43 @@ export default function MapContainer({
 
         console.log(`🔍 [MapContainer] Analyzing ${tracks.size} tracks against ${subdivisions.length} regions...`);
 
-        // Clear existing timeout
         if (analysisTimeoutRef.current) {
             clearTimeout(analysisTimeoutRef.current);
         }
 
+        let isMounted = true;
         const startTime = performance.now();
+
         analysisTimeoutRef.current = setTimeout(() => {
-            const tracksArray = Array.from(tracks.values());
-            const visitMap = RegionVisitAnalyzer.analyzeRegionVisits(tracksArray, subdivisions);
-            const duration = (performance.now() - startTime).toFixed(2);
-            const visitedCount = Array.from(visitMap.values()).filter(v => v.visited).length;
+            RegionVisitAnalyzer.analyzeRegionVisitsAsync(
+                Array.from(tracks.values()),
+                subdivisions,
+                (progress, message) => {
+                    if (isMounted && progress % 25 === 0) {
+                        console.log(`📊 ${progress}% - ${message}`);
+                    }
+                }
+            )
+                .then((visitData) => {
+                    if (isMounted) {
+                        setVisitData(visitData);
+                        const duration = (performance.now() - startTime).toFixed(2);
+                        const visitedCount = Array.from(visitData.values()).filter(v => v.visited).length;
+                        console.log(`✅ Analysis complete: ${visitedCount} regions visited (${duration}ms)`);
 
-            console.log(`✅ [MapContainer] Analysis complete: ${visitedCount} regions visited (${duration}ms)`);
-            setVisitData(visitMap);
-
-            // Remember we analyzed this combination
-            lastAnalysisRef.current = {
-                tracksSize: tracks.size,
-                subdivisionsSize: subdivisions.length,
-            };
-        }, 500); // Wait 500ms to batch updates
+                        lastAnalysisRef.current = {
+                            tracksSize: tracks.size,
+                            subdivisionsSize: subdivisions.length,
+                        };
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Analysis failed:', error);
+                });
+        }, 500);
 
         return () => {
+            isMounted = false;
             if (analysisTimeoutRef.current) {
                 clearTimeout(analysisTimeoutRef.current);
             }
@@ -138,7 +172,7 @@ export default function MapContainer({
         return cleanup;
     }, [map, tracks, showHeatmap]);
 
-    // Draw subdivisions - CACHE the layers
+    // Draw subdivisions only when they change
     useEffect(() => {
         if (!map || subdivisions.length === 0) {
             return;

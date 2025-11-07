@@ -1,7 +1,26 @@
 import { GPXTrack, Subdivision } from '../types/types';
 import { parseGPXFile } from '../utils/gpxParser';
 
+interface CountryData {
+    code: string;
+    name: string;
+    fileName: string;
+    data?: Subdivision[];
+    cachedAt?: number;
+}
+
+/**
+ * Ultra-optimized data loader with:
+ * - Viewport-based region culling (only load visible regions)
+ * - Country file caching (avoid re-fetching)
+ * - Efficient bounding box checks
+ * - Progress tracking
+ */
 export class DataLoader {
+    private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    private static countryCache = new Map<string, CountryData>();
+    private static loadingPromises = new Map<string, Promise<Subdivision[]>>();
+
     static async loadGPXTracks(
         source: 'local' | 'api' = 'local',
         files?: string[]
@@ -44,35 +63,245 @@ export class DataLoader {
         return tracks;
     }
 
-    static async loadSubdivisions(
-        bounds?: { north: number; south: number; east: number; west: number },
+    /**
+     * Load ONLY regions visible in viewport (key optimization!)
+     */
+    static async loadSubdivisionsInViewport(
+        bounds: { north: number; south: number; east: number; west: number },
         zoom?: number
     ): Promise<Subdivision[]> {
         const startTime = performance.now();
-        console.log(`🗺️ [DataLoader] Loading subdivisions (zoom=${zoom})`);
+        console.log(`🗺️ [DataLoader] Loading subdivisions in viewport (zoom=${zoom})...`);
 
         try {
-            const response = await fetch('/data/subdivisions.geojson');
-            const geojson = await response.json();
+            const countryFiles = await this.getAvailableCountries();
+            const allSubdivisions: Subdivision[] = [];
+            const errors: string[] = [];
 
-            const subs = geojson.features.map((feature: any) => ({
-                id: feature.id,
-                name: feature.properties?.name || 'Unknown',
-                country: feature.properties?.country || '',
-                geometry: feature.geometry,
-                properties: feature.properties || {},
-            }));
+            for (const country of countryFiles) {
+                try {
+                    // Load or use cached country data
+                    const subs = await this.loadCountryRegions(country.fileName, country);
+
+                    if (!subs || subs.length === 0) continue;
+
+                    // Filter to only regions in viewport - MAJOR optimization!
+                    const filtered = subs.filter((sub) => this.isInBounds(sub, bounds));
+
+                    allSubdivisions.push(...filtered);
+
+                    if (filtered.length > 0) {
+                        console.log(`✅ ${country.name}: ${filtered.length}/${subs.length} in viewport`);
+                    }
+                } catch (error) {
+                    const errorMsg = `Failed to load ${country.name}`;
+                    errors.push(errorMsg);
+                    console.error(`❌ [DataLoader] ${errorMsg}:`, error);
+                }
+            }
 
             const duration = (performance.now() - startTime).toFixed(2);
-            console.log(`✅ [DataLoader] Loaded ${subs.length} subdivisions (${duration}ms)`);
+            console.log(`✅ [DataLoader] Loaded ${allSubdivisions.length} regions in viewport (${duration}ms)`);
 
-            return subs;
+            if (errors.length > 0) {
+                console.warn(`⚠️ [DataLoader] ${errors.length} countries failed to load`);
+            }
+
+            return allSubdivisions;
         } catch (error) {
             console.error('❌ [DataLoader] Error loading subdivisions:', error);
             return [];
         }
     }
 
+    /**
+     * Load all subdivisions (for initial map state)
+     */
+    static async loadSubdivisions(
+        bounds?: { north: number; south: number; east: number; west: number },
+        zoom?: number,
+        countries?: string[]
+    ): Promise<Subdivision[]> {
+        const startTime = performance.now();
+        console.log(
+            `🗺️ [DataLoader] Loading subdivisions (zoom=${zoom}, countries=${countries?.join(',')})`
+        );
+
+        try {
+            const countryFiles = await this.getAvailableCountries();
+
+            // Filter by requested countries if specified
+            let filesToLoad = countries
+                ? countryFiles.filter((f) => countries.includes(f.code))
+                : countryFiles;
+
+            if (filesToLoad.length === 0) {
+                console.warn('⚠️ [DataLoader] No matching country files found');
+                return [];
+            }
+
+            const allSubdivisions: Subdivision[] = [];
+            const errors: string[] = [];
+
+            console.log(`📍 Loading ${filesToLoad.length} country files...`);
+
+            for (const country of filesToLoad) {
+                try {
+                    const subs = await this.loadCountryRegions(country.fileName, country);
+                    allSubdivisions.push(...subs);
+                    console.log(`✅ Loaded ${country.name}: ${subs.length} subdivisions`);
+                } catch (error) {
+                    const errorMsg = `Failed to load ${country.name}`;
+                    errors.push(errorMsg);
+                    console.error(`❌ [DataLoader] ${errorMsg}:`, error);
+                }
+            }
+
+            // Optional: Filter by bounds if provided
+            if (bounds) {
+                const filteredSubs = allSubdivisions.filter((sub) => this.isInBounds(sub, bounds));
+                console.log(`🔍 Filtered to ${filteredSubs.length} subdivisions within bounds`);
+                const duration = (performance.now() - startTime).toFixed(2);
+                console.log(`✅ [DataLoader] Loaded ${filteredSubs.length} subdivisions (${duration}ms)`);
+                return filteredSubs;
+            }
+
+            const duration = (performance.now() - startTime).toFixed(2);
+            console.log(
+                `✅ [DataLoader] Loaded ${allSubdivisions.length} total subdivisions (${duration}ms)`
+            );
+
+            if (errors.length > 0) {
+                console.warn(`⚠️ [DataLoader] ${errors.length} countries failed to load`);
+            }
+
+            return allSubdivisions;
+        } catch (error) {
+            console.error('❌ [DataLoader] Error loading subdivisions:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get available countries configuration
+     */
+    private static async getAvailableCountries(): Promise<CountryData[]> {
+        return [
+            { code: 'PL', name: 'Poland', fileName: 'poland.geojson' },
+            { code: 'SK', name: 'Slovakia', fileName: 'slovakia.geojson' },
+            { code: 'HU', name: 'Hungary', fileName: 'hungary.geojson' },
+            { code: 'DE', name: 'Germany', fileName: 'germany.geojson' },
+            { code: 'FR', name: 'France', fileName: 'france.geojson' },
+            { code: 'NL', name: 'Netherlands', fileName: 'netherlands.geojson' },
+        ];
+    }
+
+    /**
+     * Load country regions with caching to avoid re-fetching
+     */
+    private static async loadCountryRegions(
+        fileName: string,
+        country: CountryData
+    ): Promise<Subdivision[]> {
+        // Check if already loading (avoid duplicate requests)
+        if (this.loadingPromises.has(fileName)) {
+            console.log(`⏳ [DataLoader] Already loading ${country.name}, waiting...`);
+            return this.loadingPromises.get(fileName)!;
+        }
+
+        // Check if cached and not expired
+        const cached = this.countryCache.get(fileName);
+        if (cached && cached.data && cached.cachedAt) {
+            const age = Date.now() - cached.cachedAt;
+            if (age < this.CACHE_TTL) {
+                console.log(`📦 [DataLoader] Using cached ${country.name} (${(age / 1000).toFixed(1)}s old)`);
+                return cached.data;
+            }
+        }
+
+        // Fetch and cache
+        const promise = (async () => {
+            try {
+                const response = await fetch(`/data/regions/${fileName}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const geojson = await response.json();
+
+                const subdivisions: Subdivision[] = geojson.features.map((feature: any) => ({
+                    id: feature.id,
+                    name: feature.properties?.name || 'Unknown',
+                    country: feature.properties?.country_code || '',
+                    adminLevel: feature.properties?.admin_level || 0,
+                    geometry: feature.geometry,
+                    properties: feature.properties || {},
+                }));
+
+                // Cache it
+                this.countryCache.set(fileName, {
+                    code: country.code,
+                    name: country.name,
+                    fileName,
+                    data: subdivisions,
+                    cachedAt: Date.now(),
+                });
+
+                console.log(`💾 [DataLoader] Cached ${country.name}: ${subdivisions.length} regions`);
+
+                return subdivisions;
+            } catch (error) {
+                console.error(`❌ [DataLoader] Error loading ${fileName}:`, error);
+                return [];
+            } finally {
+                this.loadingPromises.delete(fileName);
+            }
+        })();
+
+        this.loadingPromises.set(fileName, promise);
+        return promise;
+    }
+
+    /**
+     * Fast bounding box check (O(1) - just check first few points)
+     */
+    private static isInBounds(
+        sub: Subdivision,
+        bounds: { north: number; south: number; east: number; west: number }
+    ): boolean {
+        const geometry = sub.geometry as any;
+
+        if (!geometry || !geometry.coordinates) return false;
+
+        // Get first ring coordinates
+        const coords =
+            geometry.type === 'Polygon'
+                ? geometry.coordinates[0]
+                : geometry.type === 'MultiPolygon'
+                    ? geometry.coordinates[0][0]
+                    : [];
+
+        if (coords.length === 0) return false;
+
+        // Check only first 10 points for speed (good enough for viewport check)
+        const sampleSize = Math.min(10, coords.length);
+        const step = Math.max(1, Math.floor(coords.length / sampleSize));
+
+        for (let i = 0; i < coords.length; i += step) {
+            const [lon, lat] = coords[i];
+
+            if (lat >= bounds.south && lat <= bounds.north && lon >= bounds.west && lon <= bounds.east) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get local GPX file list from API
+     */
     private static async getLocalGPXFileList(): Promise<string[]> {
         try {
             const response = await fetch('/api/gpx-files');
@@ -84,8 +313,20 @@ export class DataLoader {
         }
     }
 
+    /**
+     * Load from API (placeholder)
+     */
     private static async loadFromAPI(): Promise<GPXTrack[]> {
         console.log('📡 [DataLoader] Loading from API...');
         return [];
+    }
+
+    /**
+     * Clear all caches (call on app refresh)
+     */
+    static clearCache(): void {
+        console.log('🧹 [DataLoader] Clearing all caches');
+        this.countryCache.clear();
+        this.loadingPromises.clear();
     }
 }
