@@ -1,4 +1,4 @@
-import { GPXTrack, GPXPoint } from '../types';
+import {GPXPoint, GPXTrack} from "@/lib/types/types";
 
 export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
   let xmlString: string;

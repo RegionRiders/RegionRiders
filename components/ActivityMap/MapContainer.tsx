@@ -3,19 +3,17 @@
 import { drawSubdivisions } from './drawSubdivisions/drawSubdivisions';
 import { drawActivities } from './drawActivities/drawActivities';
 
-import React, { useEffect, useRef, useState } from 'react';
-import {Subdivision} from "@/lib/types/types";
+import { useEffect, useRef, useState } from 'react';
+import {GPXTrack, Subdivision} from "@/lib/types/types";
 import {DataLoader} from "@/lib/services/dataLoader";
 
 interface MapContainerProps {
   map: any;
   tracks: Map<string, GPXTrack>;
-  heatmapSegments: any[];
-  intersections: any[];
   onFeatureClick?: (feature: any) => void;
 }
 
-export function MapContainer({
+export default function MapContainer({
                                map,
                                tracks,
                                onFeatureClick,

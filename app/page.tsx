@@ -2,14 +2,15 @@
 
 import { useGPXData } from '@/hooks/useGPXData';
 import { useLeafletMap } from '@/hooks/useLeafletMap';
-import { useIntersectionCalculator } from '@/hooks/useIntersectionCalculator';
-import { ActivityMapViewer } from '@/components/ActivityMap/ActivityMapViewer';
 import 'leaflet/dist/leaflet.css';
+import dynamic from "next/dynamic";
+
+const MapContainer = dynamic(() => import("@/components/ActivityMap/MapContainer"), { ssr: false });
+
 
 export default function MapPage() {
     const { map, isReady, error: mapError } = useLeafletMap('map-container');
     const { tracks, loading: tracksLoading, error: tracksError } = useGPXData();
-    const { intersections, heatmapSegments } = useIntersectionCalculator(tracks);
 
     return (
         <div style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -18,7 +19,7 @@ export default function MapPage() {
                     {isReady && tracksLoading ? (
                         'Loading activities...'
                     ) : isReady && !tracksLoading ? (
-                        `Displaying ${tracks.size} activities with ${intersections.length} intersections`
+                        `Displaying ${tracks.size} activities`
                     ) : (
                         'Initializing map...'
                     )}
@@ -41,11 +42,9 @@ export default function MapPage() {
                 <div id="map-container" style={{ width: '100%', height: '100%', position: 'absolute' }} />
 
                 {isReady && !tracksLoading && (
-                    <ActivityMapViewer
+                    <MapContainer
                         map={map}
                         tracks={tracks}
-                        intersections={intersections}
-                        heatmapSegments={heatmapSegments}
                     />
                 )}
             </div>
