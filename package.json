@@ -17,7 +17,8 @@
     "prettier:write": "prettier --write \"**/*.{ts,tsx}\"",
     "test": "npm run prettier:check && npm run lint && npm run typecheck && npm run jest",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "storybook:build": "storybook build",
+    "fetch:regions": "tsx tools/fetchRegions.ts"
   },
   "dependencies": {
     "@deck.gl/layers": "^9.2.2",
@@ -30,7 +31,8 @@
     "leaflet": "^1.9.4",
     "next": "16.0.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "tsx": "^4.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

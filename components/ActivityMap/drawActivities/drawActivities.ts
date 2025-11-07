@@ -1,5 +1,5 @@
-import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
-import { getColorForCount } from './utils/getColorForCount';
+import {drawLineToAccumulator} from './utils/drawLineToAccumulator';
+import {getColorForCount} from './utils/getColorForCount';
 import {GPXTrack} from "@/lib/types/types";
 import L from 'leaflet';
 
@@ -104,20 +104,16 @@ export function drawActivities(map: any, tracks: Map<string, GPXTrack>, currentI
                         bounds.getNorthEast(),
                     ];
 
-                    const imageLayer = L.imageOverlay(imageUrl, imageBounds, {
-                        opacity: 0.85,
-                        zIndex: 10,
-                    });
-
-                    imageLayer.addTo(map);
-                    currentImageLayerRef.current = imageLayer;
+                    currentImageLayerRef.current = L.imageOverlay(imageUrl, imageBounds, {
+                        pane: 'heatmapPane',
+                    }).addTo(map);
                 };
 
                 processChunk();
             } catch (error) {
                 console.error('Error rendering heatmap:', error);
             }
-        }, 200);
+        }, 0);
     };
 
 

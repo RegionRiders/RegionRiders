@@ -1,21 +1,36 @@
-export function drawSubdivisions(map: any, subdivisions: Subdivision[], onFeatureClick?: (feature: any) => void) {
-    const L = require('leaflet');
+import L from 'leaflet';
+import { Subdivision } from '@/lib/types/types';
 
-    subdivisions.forEach((sub) => {
-        try {
-            const geoJSON = L.geoJSON(sub.geometry as any, {
-                style: { color: '#333', weight: 1, opacity: 0.6, fillOpacity: 0.05 },
-                renderer: L.canvas({ padding: 0.5 }),
-                onEachFeature: (feature: any, layer: any) => {
-                    layer.on('click', () => {
-                        if (onFeatureClick) onFeatureClick({ type: 'subdivision', data: sub });
+export function drawSubdivisions(
+    map: any,
+    subdivisions: Subdivision[],
+    onRegionClick?: (subdivision: Subdivision, layer: any) => void,
+    initialWeight: number = 2
+): any[] {
+    const layers: any[] = [];
+
+    subdivisions.forEach((subdivision) => {
+        const layer = L.geoJSON(subdivision.geometry, {
+            style: {
+                fillColor: 'transparent',
+                weight: initialWeight,
+                opacity: 1,
+                color: '#666',
+                fillOpacity: 0,
+                lineCap: 'round',
+                lineJoin: 'round',
+            },
+            onEachFeature: (feature, leafletLayer) => {
+                if (onRegionClick) {
+                    leafletLayer.on('click', () => {
+                        onRegionClick(subdivision, leafletLayer);
                     });
-                    layer.bindPopup(`<strong>${sub.name}</strong><br>${sub.country}`);
-                },
-            });
-            geoJSON.addTo(map);
-        } catch (error) {
-            console.error(`Error rendering subdivision ${sub.name}:`, error);
-        }
+                }
+            },
+        }).addTo(map);
+
+        layers.push(layer);
     });
+
+    return layers;
 }
