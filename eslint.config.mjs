@@ -4,19 +4,22 @@ import tseslint from 'typescript-eslint';
 
 // @ts-check
 export default defineConfig(
-  tseslint.configs.recommended,
-  ...mantine,
-  { ignores: ['**/*.{mjs,cjs,js,d.ts,d.mts}', '.next'] },
-  {
+    tseslint.configs.recommended,
+    ...mantine,
+    { ignores: ['**/*.{mjs,cjs,js,d.ts,d.mts}', '.next'] },
+    {
     files: ['**/*.story.tsx'],
     rules: { 'no-console': 'off' },
-  },
-  {
-    languageOptions: {
-      parserOptions: {
-        tsconfigRootDir: process.cwd(),
-        project: ['./tsconfig.json'],
-      },
     },
-  }
+    {
+    rules: { 'no-console': 'off' },
+    },
+    {
+    languageOptions: {
+        parserOptions: {
+            tsconfigRootDir: process.cwd(),
+            project: ['./tsconfig.json'],
+        },
+    },
+    }
 );
