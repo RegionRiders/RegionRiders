@@ -4,3 +4,5 @@ export {
   handleApiError,
   type ApiErrorResponse,
 } from './errorHandler';
+
+export { logApiRequestMiddleware, withLogging } from './middleware';
