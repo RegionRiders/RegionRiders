@@ -1,3 +1,4 @@
+import { stravaLogger } from '@/lib/logger';
 import { getStravaClient } from '../config';
 
 export interface StravaTokenResponse {
@@ -18,7 +19,25 @@ export interface StravaTokenResponse {
 export async function exchangeToken(code: string): Promise<StravaTokenResponse> {
   const strava = getStravaClient();
 
-  const tokenResponse = await strava.oauth.getToken(code);
+  stravaLogger.info({ codeLength: code.length }, 'Exchanging authorization code for tokens');
 
-  return tokenResponse as StravaTokenResponse;
+  try {
+    const tokenResponse = await strava.oauth.getToken(code);
+
+    stravaLogger.info(
+      {
+        athleteId: tokenResponse.athlete?.id,
+        expiresAt: tokenResponse.expires_at,
+      },
+      'Successfully exchanged authorization code for tokens'
+    );
+
+    return tokenResponse as StravaTokenResponse;
+  } catch (error) {
+    stravaLogger.error(
+      { error: error instanceof Error ? error.message : error },
+      'Failed to exchange authorization code'
+    );
+    throw error;
+  }
 }

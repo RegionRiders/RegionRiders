@@ -5,4 +5,4 @@ export {
   type ApiErrorResponse,
 } from './errorHandler';
 
-export { logApiRequestMiddleware, withLogging } from './middleware';
+export { logApiRequestProxy, withLogging } from './proxy';
