@@ -1,11 +1,11 @@
-import { GPXTrack, Subdivision } from '../types/types';
+import { GPXTrack, Regions } from '../types/types';
 import { parseGPXFile } from '../utils/gpxParser';
 
 interface CountryData {
     code: string;
     name: string;
     fileName: string;
-    data?: Subdivision[];
+    data?: Regions[];
     cachedAt?: number;
 }
 
@@ -19,7 +19,7 @@ interface CountryData {
 export class DataLoader {
     private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
     private static countryCache = new Map<string, CountryData>();
-    private static loadingPromises = new Map<string, Promise<Subdivision[]>>();
+    private static loadingPromises = new Map<string, Promise<Regions[]>>();
 
     static async loadGPXTracks(
         source: 'local' | 'api' = 'local',
@@ -66,16 +66,16 @@ export class DataLoader {
     /**
      * Load ONLY regions visible in viewport (key optimization!)
      */
-    static async loadSubdivisionsInViewport(
+    static async loadregionsInViewport(
         bounds: { north: number; south: number; east: number; west: number },
         zoom?: number
-    ): Promise<Subdivision[]> {
+    ): Promise<Regions[]> {
         const startTime = performance.now();
-        console.log(`🗺️ [DataLoader] Loading subdivisions in viewport (zoom=${zoom})...`);
+        console.log(`🗺️ [DataLoader] Loading regions in viewport (zoom=${zoom})...`);
 
         try {
             const countryFiles = await this.getAvailableCountries();
-            const allSubdivisions: Subdivision[] = [];
+            const allregions: Regions[] = [];
             const errors: string[] = [];
 
             for (const country of countryFiles) {
@@ -88,7 +88,7 @@ export class DataLoader {
                     // Filter to only regions in viewport - MAJOR optimization!
                     const filtered = subs.filter((sub) => this.isInBounds(sub, bounds));
 
-                    allSubdivisions.push(...filtered);
+                    allregions.push(...filtered);
 
                     if (filtered.length > 0) {
                         console.log(`✅ ${country.name}: ${filtered.length}/${subs.length} in viewport`);
@@ -101,30 +101,30 @@ export class DataLoader {
             }
 
             const duration = (performance.now() - startTime).toFixed(2);
-            console.log(`✅ [DataLoader] Loaded ${allSubdivisions.length} regions in viewport (${duration}ms)`);
+            console.log(`✅ [DataLoader] Loaded ${allregions.length} regions in viewport (${duration}ms)`);
 
             if (errors.length > 0) {
                 console.warn(`⚠️ [DataLoader] ${errors.length} countries failed to load`);
             }
 
-            return allSubdivisions;
+            return allregions;
         } catch (error) {
-            console.error('❌ [DataLoader] Error loading subdivisions:', error);
+            console.error('❌ [DataLoader] Error loading regions:', error);
             return [];
         }
     }
 
     /**
-     * Load all subdivisions (for initial map state)
+     * Load all regions (for initial map state)
      */
-    static async loadSubdivisions(
+    static async loadregions(
         bounds?: { north: number; south: number; east: number; west: number },
         zoom?: number,
         countries?: string[]
-    ): Promise<Subdivision[]> {
+    ): Promise<Regions[]> {
         const startTime = performance.now();
         console.log(
-            `🗺️ [DataLoader] Loading subdivisions (zoom=${zoom}, countries=${countries?.join(',')})`
+            `🗺️ [DataLoader] Loading regions (zoom=${zoom}, countries=${countries?.join(',')})`
         );
 
         try {
@@ -140,7 +140,7 @@ export class DataLoader {
                 return [];
             }
 
-            const allSubdivisions: Subdivision[] = [];
+            const allregions: Regions[] = [];
             const errors: string[] = [];
 
             console.log(`📍 Loading ${filesToLoad.length} country files...`);
@@ -148,8 +148,8 @@ export class DataLoader {
             for (const country of filesToLoad) {
                 try {
                     const subs = await this.loadCountryRegions(country.fileName, country);
-                    allSubdivisions.push(...subs);
-                    console.log(`✅ Loaded ${country.name}: ${subs.length} subdivisions`);
+                    allregions.push(...subs);
+                    console.log(`✅ Loaded ${country.name}: ${subs.length} regions`);
                 } catch (error) {
                     const errorMsg = `Failed to load ${country.name}`;
                     errors.push(errorMsg);
@@ -159,25 +159,25 @@ export class DataLoader {
 
             // Optional: Filter by bounds if provided
             if (bounds) {
-                const filteredSubs = allSubdivisions.filter((sub) => this.isInBounds(sub, bounds));
-                console.log(`🔍 Filtered to ${filteredSubs.length} subdivisions within bounds`);
+                const filteredSubs = allregions.filter((sub) => this.isInBounds(sub, bounds));
+                console.log(`🔍 Filtered to ${filteredSubs.length} regions within bounds`);
                 const duration = (performance.now() - startTime).toFixed(2);
-                console.log(`✅ [DataLoader] Loaded ${filteredSubs.length} subdivisions (${duration}ms)`);
+                console.log(`✅ [DataLoader] Loaded ${filteredSubs.length} regions (${duration}ms)`);
                 return filteredSubs;
             }
 
             const duration = (performance.now() - startTime).toFixed(2);
             console.log(
-                `✅ [DataLoader] Loaded ${allSubdivisions.length} total subdivisions (${duration}ms)`
+                `✅ [DataLoader] Loaded ${allregions.length} total regions (${duration}ms)`
             );
 
             if (errors.length > 0) {
                 console.warn(`⚠️ [DataLoader] ${errors.length} countries failed to load`);
             }
 
-            return allSubdivisions;
+            return allregions;
         } catch (error) {
-            console.error('❌ [DataLoader] Error loading subdivisions:', error);
+            console.error('❌ [DataLoader] Error loading regions:', error);
             return [];
         }
     }
@@ -202,7 +202,7 @@ export class DataLoader {
     private static async loadCountryRegions(
         fileName: string,
         country: CountryData
-    ): Promise<Subdivision[]> {
+    ): Promise<Regions[]> {
         // Check if already loading (avoid duplicate requests)
         if (this.loadingPromises.has(fileName)) {
             console.log(`⏳ [DataLoader] Already loading ${country.name}, waiting...`);
@@ -230,7 +230,7 @@ export class DataLoader {
 
                 const geojson = await response.json();
 
-                const subdivisions: Subdivision[] = geojson.features.map((feature: any) => ({
+                const regions: Regions[] = geojson.features.map((feature: any) => ({
                     id: feature.id,
                     name: feature.properties?.name || 'Unknown',
                     country: feature.properties?.country_code || '',
@@ -244,13 +244,13 @@ export class DataLoader {
                     code: country.code,
                     name: country.name,
                     fileName,
-                    data: subdivisions,
+                    data: regions,
                     cachedAt: Date.now(),
                 });
 
-                console.log(`💾 [DataLoader] Cached ${country.name}: ${subdivisions.length} regions`);
+                console.log(`💾 [DataLoader] Cached ${country.name}: ${regions.length} regions`);
 
-                return subdivisions;
+                return regions;
             } catch (error) {
                 console.error(`❌ [DataLoader] Error loading ${fileName}:`, error);
                 return [];
@@ -267,7 +267,7 @@ export class DataLoader {
      * Fast bounding box check (O(1) - just check first few points)
      */
     private static isInBounds(
-        sub: Subdivision,
+        sub: Regions,
         bounds: { north: number; south: number; east: number; west: number }
     ): boolean {
         const geometry = sub.geometry as any;

@@ -2,23 +2,23 @@
 'use client';
 
 import L from 'leaflet';
-import { Subdivision } from '@/lib/types/types';
+import { Regions } from '@/lib/types/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer/regionVisitAnalyzer';
 import {getRegionColorForCount} from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
 
 export function drawRegions(
     map: any,
-    subdivisions: Subdivision[],
+    regions: Regions[],
     visitData: Map<string, RegionVisitData>,
-    onRegionClick?: (subdivision: Subdivision, visitInfo: RegionVisitData | undefined, layer: any) => void,
+    onRegionClick?: (subdivision: Regions, visitInfo: RegionVisitData | undefined, layer: any) => void,
     initialWeight: number = 2
 ): any[] {
     const startTime = performance.now();
-    console.log(`🖍️ [drawSubdivisions] Drawing ${subdivisions.length} regions with weight=${initialWeight.toFixed(2)}`);
+    console.log(`🖍️ [drawregions] Drawing ${regions.length} regions with weight=${initialWeight.toFixed(2)}`);
 
     const layers: any[] = [];
 
-    subdivisions.forEach((subdivision) => {
+    regions.forEach((subdivision) => {
         const visit = visitData.get(subdivision.id);
         const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
@@ -56,7 +56,7 @@ export function drawRegions(
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-    console.log(`✅ [drawSubdivisions] Complete (${layers.length} layers, ${visitedCount} visited, ${duration}ms)`);
+    console.log(`✅ [drawregions] Complete (${layers.length} layers, ${visitedCount} visited, ${duration}ms)`);
 
     return layers;
 }

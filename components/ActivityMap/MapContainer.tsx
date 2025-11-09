@@ -4,7 +4,7 @@ import { drawRegions } from '@/components/ActivityMap/drawRegions/drawRegions';
 import { drawActivities } from './drawActivities/drawActivities';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { GPXTrack, Subdivision } from "@/lib/types/types";
+import { GPXTrack, Regions } from "@/lib/types/types";
 import { DataLoader } from "@/lib/services/dataLoader";
 import L from 'leaflet';
 
@@ -21,18 +21,18 @@ export default function MapContainer({
                                          showHeatmap = true,
                                          showBorders = true,
                                      }: MapContainerProps) {
-    const [subdivisions, setSubdivisions] = useState<Subdivision[]>([]);
+    const [regions, setregions] = useState<Regions[]>([]);
     const [visitData, setVisitData] = useState<Map<string, RegionVisitData>>(new Map());
     const currentImageLayerRef = useRef<any>(null);
     const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const renderAbortRef = useRef(false);
     const subdivisionLayersRef = useRef<any[]>([]);
-    const lastAnalysisRef = useRef<{ tracksSize: number; subdivisionsSize: number } | null>(null);
+    const lastAnalysisRef = useRef<{ tracksSize: number; regionsSize: number } | null>(null);
     const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastBoundsRef = useRef<L.LatLngBounds | null>(null);
 
     // Optimized: Only load regions in viewport (MAJOR improvement)
-    const loadSubdivisionsForViewport = useCallback(async () => {
+    const loadregionsForViewport = useCallback(async () => {
         if (!map) return;
 
         const startTime = performance.now();
@@ -64,12 +64,12 @@ export default function MapContainer({
         console.log(`🗺️ [MapContainer] Loading regions for viewport (zoom=${zoom})...`);
 
         // Load only regions that overlap the viewport
-        const subs = await DataLoader.loadSubdivisionsInViewport(viewportBounds, zoom);
+        const subs = await DataLoader.loadregionsInViewport(viewportBounds, zoom);
 
         const duration = (performance.now() - startTime).toFixed(2);
-        console.log(`✅ [MapContainer] Loaded ${subs.length} subdivisions in viewport (${duration}ms)`);
+        console.log(`✅ [MapContainer] Loaded ${subs.length} regions in viewport (${duration}ms)`);
 
-        setSubdivisions(subs);
+        setregions(subs);
     }, [map]);
 
     // Setup map event listeners with aggressive debouncing
@@ -77,7 +77,7 @@ export default function MapContainer({
         if (!map) return;
 
         console.log('📌 [MapContainer] Attaching map event listeners');
-        loadSubdivisionsForViewport();
+        loadregionsForViewport();
 
         let moveTimeout: NodeJS.Timeout;
 
@@ -85,8 +85,8 @@ export default function MapContainer({
             clearTimeout(moveTimeout);
             // Increased debounce: 800ms to avoid repeated reloads
             moveTimeout = setTimeout(() => {
-                console.log('🔄 [MapContainer] Map moved, reloading subdivisions');
-                loadSubdivisionsForViewport();
+                console.log('🔄 [MapContainer] Map moved, reloading regions');
+                loadregionsForViewport();
             }, 800);
         };
 
@@ -97,24 +97,24 @@ export default function MapContainer({
             clearTimeout(moveTimeout);
             map.off('moveend', handleMoveEnd);
         };
-    }, [map, loadSubdivisionsForViewport]);
+    }, [map, loadregionsForViewport]);
 
-    // Analyze region visits - only when subdivisions change
+    // Analyze region visits - only when regions change
     useEffect(() => {
-        if (subdivisions.length === 0 || tracks.size === 0) {
+        if (regions.length === 0 || tracks.size === 0) {
             return;
         }
 
         // Skip if nothing meaningful changed
         if (
             lastAnalysisRef.current?.tracksSize === tracks.size &&
-            lastAnalysisRef.current?.subdivisionsSize === subdivisions.length
+            lastAnalysisRef.current?.regionsSize === regions.length
         ) {
             console.log('⏭️ [MapContainer] Skipping analysis - data unchanged');
             return;
         }
 
-        console.log(`🔍 [MapContainer] Analyzing ${tracks.size} tracks against ${subdivisions.length} regions...`);
+        console.log(`🔍 [MapContainer] Analyzing ${tracks.size} tracks against ${regions.length} regions...`);
 
         if (analysisTimeoutRef.current) {
             clearTimeout(analysisTimeoutRef.current);
@@ -127,7 +127,7 @@ export default function MapContainer({
             // Updated function call - now imported directly from barrel
             analyzeRegionVisitsAsync(
                 Array.from(tracks.values()),
-                subdivisions,
+                regions,
                 (progress, message) => {
                     if (isMounted && progress % 25 === 0) {
                         console.log(`📊 ${progress}% - ${message}`);
@@ -143,7 +143,7 @@ export default function MapContainer({
 
                         lastAnalysisRef.current = {
                             tracksSize: tracks.size,
-                            subdivisionsSize: subdivisions.length,
+                            regionsSize: regions.length,
                         };
                     }
                 })
@@ -158,7 +158,7 @@ export default function MapContainer({
                 clearTimeout(analysisTimeoutRef.current);
             }
         };
-    }, [tracks, subdivisions]);
+    }, [tracks, regions]);
 
     // Draw activities heatmap - render ONCE
     useEffect(() => {
@@ -172,14 +172,14 @@ export default function MapContainer({
         return cleanup;
     }, [map, tracks, showHeatmap]);
 
-    // Draw subdivisions only when they change
+    // Draw regions only when they change
     useEffect(() => {
-        if (!map || subdivisions.length === 0) {
+        if (!map || regions.length === 0) {
             return;
         }
 
         const startTime = performance.now();
-        console.log(`🖍️ [MapContainer] Drawing ${subdivisions.length} subdivision borders...`);
+        console.log(`🖍️ [MapContainer] Drawing ${regions.length} subdivision borders...`);
 
         // Clear old layers
         if (subdivisionLayersRef.current && Array.isArray(subdivisionLayersRef.current)) {
@@ -199,7 +199,7 @@ export default function MapContainer({
 
             const initialWeight = calculateWeightForZoom(map.getZoom());
 
-            const layers = drawRegions(map, subdivisions, visitData, () => {}, initialWeight);
+            const layers = drawRegions(map, regions, visitData, () => {}, initialWeight);
             subdivisionLayersRef.current = layers;
 
             const duration = (performance.now() - startTime).toFixed(2);
@@ -229,7 +229,7 @@ export default function MapContainer({
                 }
             };
         }
-    }, [map, subdivisions, showBorders, visitData]);
+    }, [map, regions, showBorders, visitData]);
 
     return null;
 }

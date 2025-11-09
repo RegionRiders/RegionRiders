@@ -1,4 +1,4 @@
-import { GPXTrack, Subdivision } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types/types';
 import { RegionVisitData, AnalysisConfig } from './types';
 import { buildSpatialGrid } from './spatial';
 import { getBoundingBox } from './spatial/boundingBox';
@@ -6,20 +6,20 @@ import { processTrack } from './processing';
 
 const DEFAULT_CONFIG: AnalysisConfig = {
     gridSize: 0.1, // ~11km cells
-    pointSkipRatio: 500,
 };
 
+// main analysis: which regions did tracks visit?
 export function analyzeRegionVisits(
     tracks: GPXTrack[],
-    subdivisions: Subdivision[],
+    regions: Regions[],
     onProgress?: (progress: number, message: string) => void,
     config: AnalysisConfig = DEFAULT_CONFIG
 ): Map<string, RegionVisitData> {
     const startTime = performance.now();
     const visitMap = new Map<string, RegionVisitData>();
 
-    // Initialize
-    subdivisions.forEach((region) => {
+    // setup: create empty visit records
+    regions.forEach((region) => {
         visitMap.set(region.id, {
             regionId: region.id,
             regionName: region.name,
@@ -30,26 +30,26 @@ export function analyzeRegionVisits(
         });
     });
 
-    // Build spatial index
-    onProgress?.(10, 'Building spatial index...');
-    const grid = buildSpatialGrid(subdivisions, config.gridSize);
+    // build spatial index for fast lookups
+    onProgress?.(10, 'building spatial index...');
+    const grid = buildSpatialGrid(regions, config.gridSize);
     const regionBounds = new Map();
-    subdivisions.forEach((r) => regionBounds.set(r.id, getBoundingBox(r.id, r.geometry)));
+    regions.forEach((r) => regionBounds.set(r.id, getBoundingBox(r.id, r.geometry)));
 
-    // Process tracks
-    onProgress?.(20, `Processing ${tracks.length} tracks...`);
+    // process each track
+    onProgress?.(20, `processing ${tracks.length} tracks...`);
     const validTracks = tracks.filter((t) => t.points?.length > 0);
 
     for (let i = 0; i < validTracks.length; i++) {
-        processTrack(validTracks[i], grid, regionBounds, visitMap, subdivisions, config);
+        processTrack(validTracks[i], grid, regionBounds, visitMap, regions, config);
         if (i % Math.max(1, Math.floor(validTracks.length / 10)) === 0) {
             const progress = Math.floor((i / validTracks.length) * 60) + 20;
-            onProgress?.(progress, `Processed ${i + 1}/${validTracks.length} tracks`);
+            onProgress?.(progress, `processed ${i + 1}/${validTracks.length} tracks`);
         }
     }
 
-    // Finalize
-    onProgress?.(85, 'Finalizing...');
+    // finalize: mark visited regions
+    onProgress?.(85, 'finalizing...');
     let visitedCount = 0;
     visitMap.forEach((d) => {
         if (d.visitCount > 0) {
@@ -59,17 +59,18 @@ export function analyzeRegionVisits(
     });
 
     const duration = (performance.now() - startTime).toFixed(2);
-    onProgress?.(100, `Analysis complete: ${visitedCount} regions in ${duration}ms`);
+    onProgress?.(100, `complete: ${visitedCount} regions in ${duration}ms`);
     return visitMap;
 }
 
+// async version
 export function analyzeRegionVisitsAsync(
     tracks: GPXTrack[],
-    subdivisions: Subdivision[],
+    regions: Regions[],
     onProgress?: (progress: number, message: string) => void,
     config?: AnalysisConfig
 ): Promise<Map<string, RegionVisitData>> {
     return new Promise((resolve) => {
-        setTimeout(() => resolve(analyzeRegionVisits(tracks, subdivisions, onProgress, config)), 0);
+        setTimeout(() => resolve(analyzeRegionVisits(tracks, regions, onProgress, config)), 0);
     });
 }

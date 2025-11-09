@@ -1,14 +1,16 @@
-import { SpatialCell, BoundingBox } from '../types';
-import { Subdivision } from '@/lib/types/types';
+import { SpatialCell } from '../types';
+import { Regions } from '@/lib/types/types';
 import { getBoundingBox } from './boundingBox';
 
+// build grid index: divide a map into cells, track which regions overlap each cell
+// makes lookups O(1) instead of checking every region for every point
 export function buildSpatialGrid(
-    subdivisions: Subdivision[],
+    regions: Regions[],
     gridSize: number
 ): Map<string, SpatialCell> {
     const grid = new Map<string, SpatialCell>();
 
-    for (const region of subdivisions) {
+    for (const region of regions) {
         const bbox = getBoundingBox(region.id, region.geometry);
         const minGridLat = Math.floor(bbox.minLat / gridSize);
         const maxGridLat = Math.floor(bbox.maxLat / gridSize);
@@ -18,7 +20,7 @@ export function buildSpatialGrid(
         for (let lat = minGridLat; lat <= maxGridLat; lat++) {
             for (let lon = minGridLon; lon <= maxGridLon; lon++) {
                 const key = `${lat},${lon}`;
-                if (!grid.has(key)) grid.set(key, { regionIds: [] });
+                if (!grid.has(key)) {grid.set(key, { regionIds: [] });}
                 grid.get(key)!.regionIds.push(region.id);
             }
         }
@@ -27,12 +29,14 @@ export function buildSpatialGrid(
     return grid;
 }
 
+// get grid cell key for given lat/lon
 export function getGridKey(lat: number, lon: number, gridSize: number): string {
     const glat = Math.floor(lat / gridSize);
     const glon = Math.floor(lon / gridSize);
     return `${glat},${glon}`;
 }
 
+// check current cell + 3 adjacent cells for edge cases
 export function getAdjacentCells(lat: number, lon: number, gridSize: number): string[] {
     const glat = Math.floor(lat / gridSize);
     const glon = Math.floor(lon / gridSize);

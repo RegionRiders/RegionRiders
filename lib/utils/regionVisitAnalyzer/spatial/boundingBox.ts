@@ -1,20 +1,21 @@
-// lib/utils/regionVisitAnalyzer/spatial/boundingBox.ts
 import { BoundingBox } from '../types';
 import { GPXPoint } from '@/lib/types/types';
+import {GeoJSON} from "geojson";
 
 const cache = new Map<string, BoundingBox>();
 
+// calculate rectangle around region for fast pre-filtering
 export function getBoundingBox(
     regionId: string,
     geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
 ): BoundingBox {
     const cached = cache.get(regionId);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     let minLat = Infinity, maxLat = -Infinity;
     let minLon = Infinity, maxLon = -Infinity;
 
-    const processRing = (ring: [number, number][]) => {
+    const processRing = (ring: GeoJSON.Position[]) => {
         for (const [lon, lat] of ring) {
             minLat = Math.min(minLat, lat);
             maxLat = Math.max(maxLat, lat);
@@ -34,6 +35,7 @@ export function getBoundingBox(
     return bbox;
 }
 
+// quick check: is point inside rectangle?
 export function pointInBoundingBox(point: GPXPoint, bbox: BoundingBox): boolean {
     return (
         point.lat >= bbox.minLat &&

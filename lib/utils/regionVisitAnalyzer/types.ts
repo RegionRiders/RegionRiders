@@ -1,3 +1,5 @@
+import {GeoJSON} from "geojson";
+
 export interface RegionVisitData {
     regionId: string;
     regionName: string;
@@ -15,10 +17,9 @@ export interface BoundingBox {
 }
 
 export interface SpatialCell {
-    regionIds: string[];
+    regionIds: string[]; // which regions overlap this grid cell
 }
 
 export interface AnalysisConfig {
-    gridSize: number;
-    pointSkipRatio: number;
+    gridSize: number; // in degrees, ~0.1 = 11km cells
 }

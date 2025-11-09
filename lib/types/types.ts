@@ -16,7 +16,7 @@ export interface GPXTrack {
   };
 }
 
-export interface Subdivision {
+export interface Regions {
   id: string;
   name: string;
   country: string;
