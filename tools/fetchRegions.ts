@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { TopologySimplifier } from './utils/topologySimplifier';
+import logger from '@/lib/utils/logger';
 
 interface CountryConfig {
     name: string;
@@ -42,36 +43,36 @@ class MultiCountryFetcher {
     }
 
     async fetchAllCountries(countries: CountryConfig[]): Promise<void> {
-        console.log(`📍 Starting to fetch regions for ${countries.length} countries...\n`);
+        logger.info(`Starting to fetch regions for ${countries.length} countries...\n`);
 
         for (const country of countries) {
-            console.log(`\n${'='.repeat(60)}`);
-            console.log(`🌍 Country: ${country.name} (${country.countryCode})`);
-            console.log(`📋 Admin Level: ${country.adminLevel}`);
-            console.log(`${'='.repeat(60)}`);
+            logger.info(`\n${'='.repeat(60)}`);
+            logger.info(`Country: ${country.name} (${country.countryCode})`);
+            logger.info(`Admin Level: ${country.adminLevel}`);
+            logger.info(`${'='.repeat(60)}`);
 
             try {
                 const geojson = await this.fetchCountryRegions(country.osmName, country.adminLevel, country.countryCode);
 
                 if (geojson.features.length === 0) {
-                    console.log(`⚠️  No regions found for ${country.name}`);
+                    logger.warn(`No regions found for ${country.name}`);
                     continue;
                 }
 
                 const outputPath = `public/data/regions/${country.fileName}`;
                 this.saveGeoJSON(geojson, outputPath, true);
 
-                console.log(`✅ Completed: ${geojson.features.length} regions saved`);
+                logger.info(`Completed: ${geojson.features.length} regions saved`);
             } catch (error) {
-                console.error(`❌ Error fetching ${country.name}:`, error);
+                logger.error(`Error fetching ${country.name}:`, error);
             }
 
             // Rate limiting: wait between requests
             await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
-        console.log(`\n${'='.repeat(60)}`);
-        console.log('✅ All countries processed!');
+        logger.info(`\n${'='.repeat(60)}`);
+        logger.info('All countries processed!');
     }
 
     private async fetchCountryRegions(
@@ -80,7 +81,7 @@ class MultiCountryFetcher {
         countryCode: string
     ): Promise<GeoJSON.FeatureCollection> {
         const query = this.buildQuery(osmName, adminLevel);
-        console.log(`📡 Querying Overpass API for admin_level=${adminLevel}...`);
+        logger.info(`Querying Overpass API for admin_level=${adminLevel}...`);
 
         try {
             const response = await fetch(this.OVERPASS_URL, {
@@ -97,24 +98,27 @@ class MultiCountryFetcher {
             const osmData: OverpassResponse = await response.json();
             const geojson = this.convertToGeoJSON(osmData, countryCode);
 
-            console.log(`📊 Found ${geojson.features.length} regions`);
+            logger.info(`Found ${geojson.features.length} regions`);
             return geojson;
         } catch (error) {
-            console.error('❌ Request failed:', error);
+            logger.error('Request failed:', error);
             throw error;
         }
     }
 
     private buildQuery(osmName: string, adminLevel: number): string {
         return `
-[out:json][timeout:${this.timeout}];
-// Find the country by name
-area[name="${osmName}"]->.searchArea;
-// Select administrative regions at the specified level
-relation(area.searchArea)["boundary"="administrative"]["admin_level"="${adminLevel}"];
-// Output with full geometry
-out body geom;
-`;
+        [out:json][timeout:${this.timeout}];
+        
+        // Find the country by name
+        area[name="${osmName}"]->.searchArea;
+        
+        // Select administrative regions at the specified level
+        relation(area.searchArea)["boundary"="administrative"]["admin_level"="${adminLevel}"];
+        
+        // Output with full geometry
+        out body geom;
+        `;
     }
 
     private convertToGeoJSON(
@@ -255,7 +259,7 @@ out body geom;
         let finalGeoJSON = geojson;
 
         if (simplify && geojson.features.length > 0) {
-            console.log('🔧 Simplifying geometries...');
+            logger.info('Simplifying geometries...');
             const simplifier = new TopologySimplifier(0.001);
             finalGeoJSON = {
                 ...geojson,
@@ -266,11 +270,11 @@ out body geom;
             const simplifiedPoints = this.countPoints(finalGeoJSON);
             const reduction = ((1 - simplifiedPoints / originalPoints) * 100).toFixed(1);
 
-            console.log(`📉 Reduced from ${originalPoints} to ${simplifiedPoints} points (${reduction}% reduction)`);
+            logger.info(`Reduced from ${originalPoints} to ${simplifiedPoints} points (${reduction}% reduction)`);
         }
 
         fs.writeFileSync(outputPath, JSON.stringify(finalGeoJSON, null, 2), 'utf-8');
-        console.log(`💾 Saved to ${outputPath}`);
+        logger.info(`Saved to ${outputPath}`);
     }
 
     private countPoints(geojson: GeoJSON.FeatureCollection): number {
@@ -366,6 +370,6 @@ async function main() {
     await fetcher.fetchAllCountries(COUNTRIES);
 }
 
-main().catch(console.error);
+main().catch(logger.error);
 
 export { MultiCountryFetcher, CountryConfig };

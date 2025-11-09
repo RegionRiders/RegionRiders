@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { Regions } from '@/lib/types/types';
 import {getRegionColorForCount} from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
 import {RegionVisitData} from "@/lib/utils/regionVisitAnalyzer";
+import logger from "@/lib/utils/logger";
 
 export function drawRegions(
     map: any,
@@ -14,7 +15,6 @@ export function drawRegions(
     initialWeight: number = 2
 ): any[] {
     const startTime = performance.now();
-    console.log(`🖍️ [drawregions] Drawing ${regions.length} regions with weight=${initialWeight.toFixed(2)}`);
 
     const layers: any[] = [];
 
@@ -56,7 +56,7 @@ export function drawRegions(
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-    console.log(`✅ [drawregions] Complete (${layers.length} layers, ${visitedCount} visited, ${duration}ms)`);
+    logger.debug(`[drawRegions] Complete (${layers.length} layers, ${visitedCount} visited, ${duration}ms)`);
 
     return layers;
 }

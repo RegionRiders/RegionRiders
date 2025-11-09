@@ -1,6 +1,6 @@
 import { GPXTrack, Regions } from '@/lib/types/types';
 import { GPXLoader } from './gpxLoader';
-import { RegionLoader } from './regionLoader';
+import { RegionLoader } from './RegionLoader';
 
 /**
  * main data loading service - facade for gpx and region loaders

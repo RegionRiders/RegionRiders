@@ -5,6 +5,7 @@ import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import logger from '@/lib/utils/logger';
 
 const MapContainerMemo = memo(MapContainer);
 
@@ -20,7 +21,7 @@ export default function ActivityMapComponent() {
         }
 
         initializedRef.current = true;
-        console.log('🗺️ [ActivityMapComponent] Initializing map...');
+        logger.info('[ActivityMapComponent] Initializing map...');
 
         try {
             mapRef.current = L.map(mapContainerRef.current, {
@@ -34,9 +35,9 @@ export default function ActivityMapComponent() {
                 maxZoom: 19,
             }).addTo(mapRef.current);
 
-            console.log('✅ [ActivityMapComponent] Map initialized');
+            logger.info('[ActivityMapComponent] Map initialized');
         } catch (error) {
-            console.error('❌ [ActivityMapComponent] Error:', error);
+            logger.error('[ActivityMapComponent] Error:', error);
             initializedRef.current = false;
         }
     }, []);
@@ -58,8 +59,8 @@ export default function ActivityMapComponent() {
                 <MapContainerMemo
                     map={mapRef.current}
                     tracks={memoizedTracks}
-                    showHeatmap={true}
-                    showBorders={true}
+                    showHeatmap
+                    showBorders
                 />
             )}
         </div>

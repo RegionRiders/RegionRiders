@@ -1,5 +1,6 @@
 import { GPXTrack } from '@/lib/types/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
+import logger from '@/lib/utils/logger';
 
 interface GPXCacheEntry {
     track: GPXTrack;
@@ -32,7 +33,6 @@ export class GPXCache {
         if (cached) {
             const age = Date.now() - cached.cachedAt;
             if (age < GPXCache.CACHE_TTL) {
-                console.log(`[GPXCache] Using cached ${fileName} (${(age / 1000).toFixed(1)}s old)`);
                 return cached.track;
             }
         }
@@ -60,11 +60,11 @@ export class GPXCache {
                 cachedAt: Date.now(),
             });
 
-            console.log(`[GPXCache] Cached ${fileName}: ${track.points.length} points`);
+            logger.debug(`[GPXCache] Cached ${fileName}: ${track.points.length} points`);
 
             return track;
         } catch (error) {
-            console.error(`[GPXCache] Error loading ${fileName}:`, error);
+            logger.error(`[GPXCache] Error loading ${fileName}:`, error);
             throw error;
         } finally {
             this.loadingPromises.delete(fileName);
@@ -85,7 +85,7 @@ export class GPXCache {
      * clears all cached track data and in-flight requests
      */
     clear(): void {
-        console.log('[GPXCache] Clearing cache');
+        logger.debug('[GPXCache] Clearing cache');
         this.trackCache.clear();
         this.loadingPromises.clear();
     }

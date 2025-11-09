@@ -4,6 +4,7 @@ import {drawLineToAccumulator} from './utils/drawLineToAccumulator';
 import {getHeatmapColorForCount} from './utils/getHeatmapColorForCount';
 import {GPXTrack} from "@/lib/types/types";
 import L from 'leaflet';
+import logger from "@/lib/utils/logger";
 
 interface HeatmapCache {
     imageUrl: string;
@@ -22,28 +23,25 @@ export function drawActivities(
 ) {
     const PIXEL_DENSITY = 1;
     const THICKNESS = 4 * PIXEL_DENSITY;
-    let hasInitialRender = false;
     let lastZoom = map?.getZoom?.() ?? 11;
     let zoomChangeTimeout: NodeJS.Timeout | null = null;
 
     const ensurePane = () => {
-        if (!map?.getPane) return;
+        if (!map?.getPane) {return;}
         if (!map.getPane('heatmapPane')) {
             const pane = map.createPane('heatmapPane');
             pane.style.zIndex = 450;
-            console.log('🎨 [drawActivities] Created heatmapPane with z-index 450');
         }
     };
 
     const renderHeatmap = () => {
         if (!map?.getBounds) {
-            console.warn('⚠️ [drawActivities] Map not available');
+            logger.warn('[drawActivities] Map not available');
             return;
         }
 
         const renderStartTime = performance.now();
         const currentZoom = map.getZoom();
-        console.log(`⏳ [drawActivities] Starting heatmap render at zoom ${currentZoom}...`);
 
         renderAbortRef.current = true;
 
@@ -64,15 +62,13 @@ export function drawActivities(
                 const canvasWidth = Math.round((bottomRight.x - topLeft.x) * PIXEL_DENSITY);
                 const canvasHeight = Math.round((bottomRight.y - topLeft.y) * PIXEL_DENSITY);
 
-                console.log(`📐 [drawActivities] Canvas size: ${canvasWidth}x${canvasHeight}px`);
-
                 const canvas = document.createElement('canvas');
                 canvas.width = canvasWidth;
                 canvas.height = canvasHeight;
 
                 const ctx = canvas.getContext('2d');
                 if (!ctx) {
-                    console.error('❌ [drawActivities] Failed to get canvas context');
+                    logger.error('[drawActivities] Failed to get canvas context');
                     return;
                 }
 
@@ -88,7 +84,6 @@ export function drawActivities(
 
                 let trackIndex = 0;
                 const tracksArray = Array.from(tracks.values());
-                const chunkStartTime = performance.now();
 
                 const processChunk = () => {
                     if (renderAbortRef.current) return;
@@ -120,14 +115,9 @@ export function drawActivities(
                         trackIndex++;
                     }
 
-                    const progress = ((trackIndex / tracksArray.length) * 100).toFixed(1);
-                    console.log(`📊 [drawActivities] Processing: ${progress}% (${trackIndex}/${tracksArray.length} tracks)`);
-
                     if (trackIndex < tracksArray.length) {
                         requestAnimationFrame(processChunk);
                     } else {
-                        const chunkDuration = (performance.now() - chunkStartTime).toFixed(2);
-                        console.log(`✅ [drawActivities] Processing complete (${chunkDuration}ms)`);
                         finishRender();
                     }
                 };
@@ -136,7 +126,6 @@ export function drawActivities(
                     if (renderAbortRef.current) return;
 
                     const finishStartTime = performance.now();
-                    console.log('🎨 [drawActivities] Rendering pixels to canvas...');
 
                     const imageData = ctx.createImageData(canvasWidth, canvasHeight);
                     const data = imageData.data;
@@ -173,18 +162,17 @@ export function drawActivities(
                             const totalDuration = (performance.now() - renderStartTime).toFixed(2);
                             const finishDuration = (performance.now() - finishStartTime).toFixed(2);
 
-                            console.log(`🎉 [drawActivities] Heatmap rendered! (finish: ${finishDuration}ms, total: ${totalDuration}ms)`);
-                            hasInitialRender = true;
+                            logger.info(`[drawActivities] Heatmap rendered rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`);
                             lastZoom = currentZoom;
                         } catch (error) {
-                            console.error('❌ [drawActivities] Error adding image overlay:', error);
+                            logger.error('[drawActivities] Error adding image overlay:', error);
                         }
                     }
                 };
 
                 processChunk();
             } catch (error) {
-                console.error('❌ [drawActivities] Error rendering heatmap:', error);
+                logger.error('[drawActivities] Error rendering heatmap:', error);
             }
         }, 0);
     };
@@ -201,7 +189,6 @@ export function drawActivities(
         }
 
         zoomChangeTimeout = setTimeout(() => {
-            console.log(`🔄 [drawActivities] Zoom changed: ${lastZoom} → ${newZoom}, re-rendering heatmap`);
             renderHeatmap();
         });
     };
@@ -212,7 +199,7 @@ export function drawActivities(
     }
 
     return () => {
-        console.log('🧹 [drawActivities] Cleanup');
+        logger.info('[drawActivities] Cleanup');
         renderAbortRef.current = true;
 
         if (renderTimeoutRef.current) {

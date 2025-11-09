@@ -1,4 +1,5 @@
 import { Regions } from '@/lib/types/types';
+import logger from "@/lib/utils/logger";
 
 export interface CountryData {
     code: string;
@@ -28,7 +29,7 @@ export class RegionCache {
 
         // check if already loading to avoid duplicate requests
         if (this.loadingPromises.has(fileName)) {
-            console.log(`[RegionCache] Already loading ${country.name}, waiting...`);
+            logger.info(`[RegionCache] Already loading ${country.name}, waiting...`);
             return this.loadingPromises.get(fileName)!;
         }
 
@@ -37,7 +38,6 @@ export class RegionCache {
         if (cached && cached.data && cached.cachedAt) {
             const age = Date.now() - cached.cachedAt;
             if (age < RegionCache.CACHE_TTL) {
-                console.log(`[RegionCache] Using cached ${country.name} (${(age / 1000).toFixed(1)}s old)`);
                 return cached.data;
             }
         }
@@ -62,7 +62,7 @@ export class RegionCache {
             const response = await fetch(`/data/regions/${fileName}`);
 
             if (!response.ok) {
-                console.error(`[RegionCache] HTTP ${response.status} for ${fileName}`)
+                logger.info(`[RegionCache] HTTP ${response.status} for ${fileName}`)
                 return [];
             }
 
@@ -86,11 +86,11 @@ export class RegionCache {
                 cachedAt: Date.now(),
             });
 
-            console.log(`[RegionCache] Cached ${country.name}: ${regions.length} regions`);
+            logger.debug(`[RegionCache] Cached ${country.name}: ${regions.length} regions`);
 
             return regions;
         } catch (error) {
-            console.error(`[RegionCache] Error loading ${fileName}:`, error);
+            logger.error(`[RegionCache] Error loading ${fileName}:`, error);
             return [];
         } finally {
             this.loadingPromises.delete(fileName);

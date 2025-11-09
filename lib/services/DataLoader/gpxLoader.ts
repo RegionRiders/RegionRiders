@@ -1,5 +1,6 @@
 import { GPXTrack } from '@/lib/types/types';
 import { GPXCache } from '../cache/gpxCache';
+import logger from "@/lib/utils/logger";
 
 /**
  * handles loading and parsing of gpx track files with caching
@@ -19,14 +20,14 @@ export class GPXLoader {
         files?: string[]
     ): Promise<GPXTrack[]> {
         const startTime = performance.now();
-        console.log(`[GPXLoader] Loading GPX tracks from ${source}...`);
+        logger.info(`[GPXLoader] Loading GPX tracks from ${source}...`);
 
         const tracks = source === 'local'
             ? await this.loadFromLocal(files)
             : await this.loadFromAPI();
 
         const duration = (performance.now() - startTime).toFixed(2);
-        console.log(`[GPXLoader] Loaded ${tracks.length} tracks in ${duration}ms`);
+        logger.info(`[GPXLoader] Loaded ${tracks.length} tracks in ${duration}ms`);
 
         return tracks;
     }
@@ -44,7 +45,7 @@ export class GPXLoader {
             filesToLoad = await this.getLocalFileList();
         }
 
-        console.log(`[GPXLoader] Found ${filesToLoad.length} GPX files to load`);
+        logger.info(`[GPXLoader] Found ${filesToLoad.length} GPX files to load`);
 
         // load all tracks in parallel with caching
         const promises = filesToLoad.map(async (file) => {
@@ -65,21 +66,20 @@ export class GPXLoader {
         for (const result of results) {
             if (result.success) {
                 tracks.push(result.track);
-                console.log(`[GPXLoader] Loaded: ${result.file} (${result.track.points.length} points)`);
             } else {
                 const errorMsg = `Failed to load ${result.file}: ${result.error}`;
                 errors.push(errorMsg);
-                console.error(`[GPXLoader] ${errorMsg}`);
+                logger.error(`[GPXLoader] ${errorMsg}`);
             }
         }
 
         if (errors.length > 0) {
-            console.warn(`[GPXLoader] ${errors.length} files failed:`, errors);
+            logger.warn(`[GPXLoader] ${errors.length} files failed:`, errors);
         }
 
         // log cache stats
         const stats = this.cache.getStats();
-        console.log(`[GPXLoader] Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
+        logger.debug(`[GPXLoader] Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
         return tracks;
     }
 
@@ -90,7 +90,7 @@ export class GPXLoader {
      * @internal
      */
     private static async loadFromAPI(): Promise<GPXTrack[]> {
-        console.log('[GPXLoader] Loading from API...');
+        logger.info('[GPXLoader] Loading from API...');
         // TODO: implement strava api integration
         return [];
     }
@@ -107,7 +107,7 @@ export class GPXLoader {
             const data = await response.json();
             return data.files || [];
         } catch {
-            console.warn('[GPXLoader] Could not load GPX file list');
+            logger.warn('[GPXLoader] Could not load GPX file list');
             return [];
         }
     }

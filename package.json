@@ -28,11 +28,13 @@
     "@next/bundle-analyzer": "^16.0.0",
     "@tabler/icons-react": "^3.35.0",
     "@types/leaflet": "^1.9.21",
+    "fs": "^0.0.1-security",
     "leaflet": "^1.9.4",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

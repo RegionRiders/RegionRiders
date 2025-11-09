@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataLoader } from '@/lib/services/DataLoader';
 import {GPXTrack} from "@/lib/types/types";
+import logger from '@/lib/utils/logger';
 
 export function useGPXData(autoLoad: boolean = true) {
   const [tracks, setTracks] = useState<Map<string, GPXTrack>>(new Map());
@@ -28,7 +29,7 @@ export function useGPXData(autoLoad: boolean = true) {
     };
 
     loadTracks().catch((err) => {
-        console.error('Unexpected error loading GPX data:', err);
+        logger.error('Unexpected error loading GPX data:', err);
     });
   }, [autoLoad]);
 
