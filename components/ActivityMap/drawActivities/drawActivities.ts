@@ -193,7 +193,7 @@ export function drawActivities(
     renderHeatmap();
 
     // Re-render on zoom changes (debounced)
-    const handleZoomEnd = () => {
+    const handleMapChange = () => {
         const newZoom = map.getZoom();
 
         if (zoomChangeTimeout) {
@@ -203,11 +203,12 @@ export function drawActivities(
         zoomChangeTimeout = setTimeout(() => {
             console.log(`🔄 [drawActivities] Zoom changed: ${lastZoom} → ${newZoom}, re-rendering heatmap`);
             renderHeatmap();
-        }, 300); // Wait 300ms after zoom ends before re-rendering
+        });
     };
 
     if (map) {
-        map.on('zoomend', handleZoomEnd);
+        map.on('zoomend', handleMapChange);
+        map.on('moveend', handleMapChange);
     }
 
     return () => {
@@ -223,7 +224,8 @@ export function drawActivities(
         }
 
         if (map) {
-            map.off('zoomend', handleZoomEnd);
+            map.off('zoomend', handleMapChange);
+            map.off('moveend', handleMapChange);
         }
 
         if (currentImageLayerRef.current && map?.hasLayer?.(currentImageLayerRef.current)) {

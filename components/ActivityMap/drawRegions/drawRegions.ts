@@ -3,14 +3,14 @@
 
 import L from 'leaflet';
 import { Regions } from '@/lib/types/types';
-import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer/regionVisitAnalyzer';
 import {getRegionColorForCount} from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
+import {RegionVisitData} from "@/lib/utils/regionVisitAnalyzer";
 
 export function drawRegions(
     map: any,
     regions: Regions[],
     visitData: Map<string, RegionVisitData>,
-    onRegionClick?: (subdivision: Regions, visitInfo: RegionVisitData | undefined, layer: any) => void,
+    onRegionClick?: (region: Regions, visitInfo: RegionVisitData | undefined, layer: any) => void,
     initialWeight: number = 2
 ): any[] {
     const startTime = performance.now();
@@ -18,8 +18,8 @@ export function drawRegions(
 
     const layers: any[] = [];
 
-    regions.forEach((subdivision) => {
-        const visit = visitData.get(subdivision.id);
+    regions.forEach((region) => {
+        const visit = visitData.get(region.id);
         const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
         // Derive colors from visit count when visited, otherwise use neutral stroke
@@ -32,7 +32,7 @@ export function drawRegions(
             strokeColor = `rgba(${r},${g},${b},1)`;   // colored outline
         }
 
-        const layer = L.geoJSON(subdivision.geometry, {
+        const layer = L.geoJSON(region.geometry, {
             style: {
                 fillColor: visited ? fillColor : 'transparent',
                 weight: initialWeight,
@@ -45,7 +45,7 @@ export function drawRegions(
             onEachFeature: (_feature, leafletLayer) => {
                 if (onRegionClick) {
                     leafletLayer.on('click', () => {
-                        onRegionClick(subdivision, visit, leafletLayer);
+                        onRegionClick(region, visit, leafletLayer);
                     });
                 }
             },

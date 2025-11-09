@@ -5,7 +5,7 @@ import { drawActivities } from './drawActivities/drawActivities';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { GPXTrack, Regions } from "@/lib/types/types";
-import { DataLoader } from "@/lib/services/dataLoader";
+import { DataLoader } from "@/lib/services/DataLoader";
 import L from 'leaflet';
 
 interface MapContainerProps {
@@ -26,7 +26,7 @@ export default function MapContainer({
     const currentImageLayerRef = useRef<any>(null);
     const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const renderAbortRef = useRef(false);
-    const subdivisionLayersRef = useRef<any[]>([]);
+    const regionLayersRef = useRef<any[]>([]);
     const lastAnalysisRef = useRef<{ tracksSize: number; regionsSize: number } | null>(null);
     const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastBoundsRef = useRef<L.LatLngBounds | null>(null);
@@ -38,19 +38,6 @@ export default function MapContainer({
         const startTime = performance.now();
         const bounds = map.getBounds();
 
-        // Check if bounds actually changed significantly (debounce small movements)
-        if (lastBoundsRef.current) {
-            const lastBounds = lastBoundsRef.current;
-            const latDiff = Math.abs(bounds.getNorth() - lastBounds.getNorth());
-            const lonDiff = Math.abs(bounds.getEast() - lastBounds.getEast());
-
-            // Skip if movement is less than 0.5 degrees (debounce)
-            if (latDiff < 0.5 && lonDiff < 0.5) {
-                console.log('⏭️ [MapContainer] Skipping load - bounds changed minimally');
-                return;
-            }
-        }
-
         lastBoundsRef.current = bounds;
 
         const viewportBounds = {
@@ -60,11 +47,10 @@ export default function MapContainer({
             west: bounds.getWest(),
         };
 
-        const zoom = map.getZoom();
-        console.log(`🗺️ [MapContainer] Loading regions for viewport (zoom=${zoom})...`);
+        console.log(`🗺️ [MapContainer] Loading regions for viewport...`);
 
         // Load only regions that overlap the viewport
-        const subs = await DataLoader.loadregionsInViewport(viewportBounds, zoom);
+        const subs = await DataLoader.loadRegions(viewportBounds);
 
         const duration = (performance.now() - startTime).toFixed(2);
         console.log(`✅ [MapContainer] Loaded ${subs.length} regions in viewport (${duration}ms)`);
@@ -179,18 +165,18 @@ export default function MapContainer({
         }
 
         const startTime = performance.now();
-        console.log(`🖍️ [MapContainer] Drawing ${regions.length} subdivision borders...`);
+        console.log(`🖍️ [MapContainer] Drawing ${regions.length} region borders...`);
 
         // Clear old layers
-        if (subdivisionLayersRef.current && Array.isArray(subdivisionLayersRef.current)) {
-            subdivisionLayersRef.current.forEach((layer: any) => {
+        if (regionLayersRef.current && Array.isArray(regionLayersRef.current)) {
+            regionLayersRef.current.forEach((layer: any) => {
                 if (map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
             });
         }
 
-        subdivisionLayersRef.current = [];
+        regionLayersRef.current = [];
 
         if (showBorders) {
             const calculateWeightForZoom = (zoom: number): number => {
@@ -200,17 +186,17 @@ export default function MapContainer({
             const initialWeight = calculateWeightForZoom(map.getZoom());
 
             const layers = drawRegions(map, regions, visitData, () => {}, initialWeight);
-            subdivisionLayersRef.current = layers;
+            regionLayersRef.current = layers;
 
             const duration = (performance.now() - startTime).toFixed(2);
-            console.log(`✅ [MapContainer] Drawn ${layers.length} subdivision layers (${duration}ms)`);
+            console.log(`✅ [MapContainer] Drawn ${layers.length} region layers (${duration}ms)`);
 
             const handleZoom = () => {
                 const zoom = map.getZoom();
                 const weight = calculateWeightForZoom(zoom);
 
-                if (Array.isArray(subdivisionLayersRef.current)) {
-                    subdivisionLayersRef.current.forEach((layer: any) => {
+                if (Array.isArray(regionLayersRef.current)) {
+                    regionLayersRef.current.forEach((layer: any) => {
                         layer.setStyle({ weight });
                     });
                 }
@@ -220,8 +206,8 @@ export default function MapContainer({
 
             return () => {
                 map.off('zoomend', handleZoom);
-                if (Array.isArray(subdivisionLayersRef.current)) {
-                    subdivisionLayersRef.current.forEach((layer: any) => {
+                if (Array.isArray(regionLayersRef.current)) {
+                    regionLayersRef.current.forEach((layer: any) => {
                         if (map.hasLayer(layer)) {
                             map.removeLayer(layer);
                         }
