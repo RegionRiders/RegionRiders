@@ -1,7 +1,7 @@
 'use client';
 
 import {drawLineToAccumulator} from './utils/drawLineToAccumulator';
-import {getColorForCount} from './utils/getColorForCount';
+import {getHeatmapColorForCount} from './utils/getHeatmapColorForCount';
 import {GPXTrack} from "@/lib/types/types";
 import L from 'leaflet';
 
@@ -145,7 +145,7 @@ export function drawActivities(
                         const count = accumulator[i];
                         if (count === 0) continue;
 
-                        const [r, g, b] = getColorForCount(count, THICKNESS);
+                        const [r, g, b] = getHeatmapColorForCount(count, THICKNESS);
                         const pixelIndex = i * 4;
                         data[pixelIndex] = r;
                         data[pixelIndex + 1] = g;

@@ -15,7 +15,7 @@ function fadeColor(c1: number[], c2: number[], t: number): number[] {
     ];
 }
 
-export function getColorForCount(count: number, lineThickness= 1): number[] {
+export function getHeatmapColorForCount(count: number, lineThickness= 1): number[] {
     // account for thickness on both sides of the line
     const uniqueActivities = count / (lineThickness * 2);
 

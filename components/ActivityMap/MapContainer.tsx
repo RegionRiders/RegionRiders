@@ -1,8 +1,8 @@
 'use client';
 
-import { drawSubdivisions } from './drawSubdivisions/drawSubdivisions';
+import { drawRegions } from '@/components/ActivityMap/drawRegions/drawRegions';
 import { drawActivities } from './drawActivities/drawActivities';
-import { RegionVisitAnalyzer } from '@/lib/utils/regionVisitAnalyzer';
+import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { GPXTrack, Subdivision } from "@/lib/types/types";
 import { DataLoader } from "@/lib/services/dataLoader";
@@ -22,16 +22,14 @@ export default function MapContainer({
                                          showBorders = true,
                                      }: MapContainerProps) {
     const [subdivisions, setSubdivisions] = useState<Subdivision[]>([]);
-    const [visitData, setVisitData] = useState<Map<string, any>>(new Map());
-
+    const [visitData, setVisitData] = useState<Map<string, RegionVisitData>>(new Map());
     const currentImageLayerRef = useRef<any>(null);
     const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const renderAbortRef = useRef(false);
     const subdivisionLayersRef = useRef<any[]>([]);
-
     const lastAnalysisRef = useRef<{ tracksSize: number; subdivisionsSize: number } | null>(null);
     const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const lastBoundsRef = useRef<any>(null);
+    const lastBoundsRef = useRef<L.LatLngBounds | null>(null);
 
     // Optimized: Only load regions in viewport (MAJOR improvement)
     const loadSubdivisionsForViewport = useCallback(async () => {
@@ -63,14 +61,14 @@ export default function MapContainer({
         };
 
         const zoom = map.getZoom();
-
         console.log(`🗺️ [MapContainer] Loading regions for viewport (zoom=${zoom})...`);
 
         // Load only regions that overlap the viewport
         const subs = await DataLoader.loadSubdivisionsInViewport(viewportBounds, zoom);
-        const duration = (performance.now() - startTime).toFixed(2);
 
+        const duration = (performance.now() - startTime).toFixed(2);
         console.log(`✅ [MapContainer] Loaded ${subs.length} subdivisions in viewport (${duration}ms)`);
+
         setSubdivisions(subs);
     }, [map]);
 
@@ -79,10 +77,10 @@ export default function MapContainer({
         if (!map) return;
 
         console.log('📌 [MapContainer] Attaching map event listeners');
-
         loadSubdivisionsForViewport();
 
         let moveTimeout: NodeJS.Timeout;
+
         const handleMoveEnd = () => {
             clearTimeout(moveTimeout);
             // Increased debounce: 800ms to avoid repeated reloads
@@ -126,7 +124,8 @@ export default function MapContainer({
         const startTime = performance.now();
 
         analysisTimeoutRef.current = setTimeout(() => {
-            RegionVisitAnalyzer.analyzeRegionVisitsAsync(
+            // Updated function call - now imported directly from barrel
+            analyzeRegionVisitsAsync(
                 Array.from(tracks.values()),
                 subdivisions,
                 (progress, message) => {
@@ -169,6 +168,7 @@ export default function MapContainer({
 
         console.log(`🎨 [MapContainer] Rendering heatmap for ${tracks.size} tracks`);
         const cleanup = drawActivities(map, tracks, currentImageLayerRef, renderAbortRef, renderTimeoutRef);
+
         return cleanup;
     }, [map, tracks, showHeatmap]);
 
@@ -189,6 +189,7 @@ export default function MapContainer({
                 }
             });
         }
+
         subdivisionLayersRef.current = [];
 
         if (showBorders) {
@@ -197,7 +198,8 @@ export default function MapContainer({
             };
 
             const initialWeight = calculateWeightForZoom(map.getZoom());
-            const layers = drawSubdivisions(map, subdivisions, visitData, () => {}, initialWeight);
+
+            const layers = drawRegions(map, subdivisions, visitData, () => {}, initialWeight);
             subdivisionLayersRef.current = layers;
 
             const duration = (performance.now() - startTime).toFixed(2);
