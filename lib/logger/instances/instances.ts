@@ -9,7 +9,7 @@ const isServer = typeof window === 'undefined';
 /**
  * Cached logger instance
  */
-let cachedLogger: pino.Logger | null = null;
+let cachedLogger: pino.Logger | BrowserLogger | null = null;
 
 /**
  * Create the appropriate logger based on environment
@@ -46,7 +46,7 @@ function createServerLogger(): pino.Logger {
 /**
  * Get or create the logger instance
  */
-function getLogger(): pino.Logger {
+function getLogger(): pino.Logger | BrowserLogger {
   if (!cachedLogger) {
     cachedLogger = isServer ? createServerLogger() : createBrowserLogger();
   }
@@ -60,7 +60,8 @@ function getLogger(): pino.Logger {
  */
 export const logger = new Proxy({} as pino.Logger, {
   get(_target, prop) {
-    return getLogger()[prop as keyof pino.Logger];
+    const loggerInstance = getLogger();
+    return (loggerInstance as any)[prop];
   },
 });
 
@@ -85,10 +86,24 @@ export const authLogger = logger.child({ context: 'auth' });
 export const dbLogger = logger.child({ context: 'database' });
 
 /**
+ * Type definition for browser-safe logger
+ * Implements a subset of pino.Logger interface using console methods
+ */
+export interface BrowserLogger {
+  trace: (...args: unknown[]) => void;
+  debug: (...args: unknown[]) => void;
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+  fatal: (...args: unknown[]) => void;
+  child: (bindings: Record<string, unknown>) => BrowserLogger;
+}
+
+/**
  * Browser-safe logger that prevents errors when running client-side
  * Uses console methods as fallback in browser environment
  */
-export function createBrowserLogger(): any {
+export function createBrowserLogger(): BrowserLogger {
   return {
     trace: (...args: unknown[]) => console.trace(...args),
     debug: (...args: unknown[]) => console.debug(...args),
