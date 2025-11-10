@@ -35,6 +35,11 @@ export function drawActivities(
 ) {
     const PIXEL_DENSITY = 1;
     const THICKNESS = 4 * PIXEL_DENSITY;
+
+    const DEBOUNCE_DELAY = 150;
+    const CHUNK_TIME = 8;
+    const RENDER_DELAY = 0;
+
     let lastZoom = map?.getZoom?.() ?? 11;
     let zoomChangeTimeout: NodeJS.Timeout | null = null;
 
@@ -73,6 +78,17 @@ export function drawActivities(
                 const canvasWidth = Math.round((bottomRight.x - topLeft.x) * PIXEL_DENSITY);
                 const canvasHeight = Math.round((bottomRight.y - topLeft.y) * PIXEL_DENSITY);
 
+                if (!isFinite(canvasWidth) || !isFinite(canvasHeight) || canvasWidth <= 0 || canvasHeight <= 0) {
+                    logger.warn('[drawActivities] Invalid canvas dimensions, aborting render:', {
+                        canvasWidth,
+                        canvasHeight,
+                        topLeft,
+                        bottomRight,
+                        zoom: map.getZoom()
+                    });
+                    return;
+                }
+
                 const canvas = document.createElement('canvas');
                 canvas.width = canvasWidth;
                 canvas.height = canvasHeight;
@@ -101,9 +117,8 @@ export function drawActivities(
                     if (renderAbortRef.current) {return;}
 
                     const startTime = performance.now();
-                    const chunkTime = 8; // ms per chunk
 
-                    while (trackIndex < tracksArray.length && performance.now() - startTime < chunkTime) {
+                    while (trackIndex < tracksArray.length && performance.now() - startTime < CHUNK_TIME) {
                         const track = tracksArray[trackIndex];
                         const points = track.points;
 
@@ -140,6 +155,15 @@ export function drawActivities(
 
                     const finishStartTime = performance.now();
 
+                    if (!ctx || !isFinite(canvasWidth) || !isFinite(canvasHeight) || canvasWidth <= 0 || canvasHeight <= 0) {
+                        logger.error('[drawActivities] Invalid state in finishRender:', {
+                            hasCtx: !!ctx,
+                            canvasWidth,
+                            canvasHeight
+                        });
+                        return;
+                    }
+
                     // convert accumulator to colored pixels
                     const imageData = ctx.createImageData(canvasWidth, canvasHeight);
                     const data = imageData.data;
@@ -158,9 +182,9 @@ export function drawActivities(
 
                     ctx.putImageData(imageData, 0, 0);
 
-                    // create leaflet image overlay
                     const imageUrl = canvas.toDataURL();
                     const imageBounds: any = [bounds.getSouthWest(), bounds.getNorthEast()];
+
                     heatmapCache = { imageUrl, bounds: imageBounds, zoomLevel: map.getZoom() };
 
                     if (currentImageLayerRef.current && map.hasLayer?.(currentImageLayerRef.current)) {
@@ -172,6 +196,10 @@ export function drawActivities(
                             currentImageLayerRef.current = L.imageOverlay(imageUrl, imageBounds, {
                                 pane: 'heatmapPane',
                             }).addTo(map);
+
+                            if (renderAbortRef.current) {
+                                return;
+                            }
 
                             const totalDuration = (performance.now() - renderStartTime).toFixed(2);
                             const finishDuration = (performance.now() - finishStartTime).toFixed(2);
@@ -187,7 +215,7 @@ export function drawActivities(
             } catch (error) {
                 logger.error('[drawActivities] Error rendering heatmap:', error);
             }
-        }, 0);
+        }, RENDER_DELAY);
     };
 
     renderHeatmap();
@@ -202,7 +230,7 @@ export function drawActivities(
 
         zoomChangeTimeout = setTimeout(() => {
             renderHeatmap();
-        });
+        }, DEBOUNCE_DELAY);
     };
 
     if (map) {
