@@ -15,7 +15,7 @@ describe('Logger Config - Additional Coverage', () => {
       expect(config.level).toBe('silent'); // We're in test environment
     });
 
-    it('should return config with level propertyn', () => {
+    it('should return config with level property', () => {
       const config = getLoggerConfig();
 
       expect(config).toHaveProperty('level');
