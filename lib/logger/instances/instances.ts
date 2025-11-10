@@ -1,7 +1,6 @@
 import pino from 'pino';
 import { getLoggerConfig, isProduction, isServer, isTest } from '../config';
 
-
 /**
  * Cached logger instance
  */
@@ -139,7 +138,7 @@ export function createBrowserLogger(
  * @param context - Context object to add to all logs
  * @returns A child logger with the given context
  */
-export function createLogger(context: Record<string, unknown>): pino.Logger {
+export function createLogger(context: Record<string, unknown>): pino.Logger | BrowserLogger {
   return logger.child(context);
 }
 
@@ -152,7 +151,7 @@ export function createLogger(context: Record<string, unknown>): pino.Logger {
 export function createRequestLogger(
   requestId: string,
   additionalContext?: Record<string, unknown>
-): pino.Logger {
+): pino.Logger | BrowserLogger {
   return logger.child({ requestId, ...additionalContext });
 }
 
