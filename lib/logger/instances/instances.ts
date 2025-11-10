@@ -102,28 +102,38 @@ export interface BrowserLogger {
 /**
  * Browser-safe logger that prevents errors when running client-side
  * Uses console methods as fallback in browser environment
+ * @param accumulatedBindings - Bindings accumulated from parent loggers
  */
-export function createBrowserLogger(): BrowserLogger {
+export function createBrowserLogger(
+  accumulatedBindings: Record<string, unknown> = {}
+): BrowserLogger {
+  // Create context string from accumulated bindings (empty string if no bindings)
+  const contextStr =
+    Object.keys(accumulatedBindings).length > 0 ? JSON.stringify(accumulatedBindings) : '';
+
   return {
-    trace: (...args: unknown[]) => console.trace(...args),
-    debug: (...args: unknown[]) => console.debug(...args),
-    info: (...args: unknown[]) => console.info(...args),
-    warn: (...args: unknown[]) => console.warn(...args),
-    error: (...args: unknown[]) => console.error(...args),
-    fatal: (...args: unknown[]) => console.error('[FATAL]', ...args),
+    trace: (...args: unknown[]) =>
+      contextStr ? console.trace(contextStr, ...args) : console.trace(...args),
+    debug: (...args: unknown[]) =>
+      contextStr ? console.debug(contextStr, ...args) : console.debug(...args),
+    info: (...args: unknown[]) =>
+      contextStr ? console.info(contextStr, ...args) : console.info(...args),
+    warn: (...args: unknown[]) =>
+      contextStr ? console.warn(contextStr, ...args) : console.warn(...args),
+    error: (...args: unknown[]) =>
+      contextStr ? console.error(contextStr, ...args) : console.error(...args),
+    fatal: (...args: unknown[]) =>
+      contextStr
+        ? console.error('[FATAL]', contextStr, ...args)
+        : console.error('[FATAL]', ...args),
     child: (bindings: Record<string, unknown>) => {
-      const childLogger = createBrowserLogger();
-      // Prefix all logs with the child context
-      const contextStr = JSON.stringify(bindings);
-      return {
-        ...childLogger,
-        trace: (...args: unknown[]) => console.trace(contextStr, ...args),
-        debug: (...args: unknown[]) => console.debug(contextStr, ...args),
-        info: (...args: unknown[]) => console.info(contextStr, ...args),
-        warn: (...args: unknown[]) => console.warn(contextStr, ...args),
-        error: (...args: unknown[]) => console.error(contextStr, ...args),
-        fatal: (...args: unknown[]) => console.error('[FATAL]', contextStr, ...args),
-      };
+      // Merge parent bindings with new bindings (shallow merge)
+      // New bindings override parent bindings with same keys
+      const mergedBindings = { ...accumulatedBindings, ...bindings };
+
+      // Create a new child logger with merged bindings
+      // This ensures nested children preserve all accumulated bindings
+      return createBrowserLogger(mergedBindings);
     },
   };
 }

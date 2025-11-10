@@ -162,6 +162,88 @@ describe('Logger Instances', () => {
       );
     });
 
+    it('should accumulate bindings across multiple nested child loggers', () => {
+      const browserLogger = createBrowserLogger();
+      const child1 = browserLogger.child({ level1: 'parent' });
+      const child2 = child1.child({ level2: 'child' });
+      const child3 = child2.child({ level3: 'grandchild' });
+
+      // Child1 should have only level1
+      jest.clearAllMocks();
+      child1.info('child1 message');
+      expect(console.info).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent' }),
+        'child1 message'
+      );
+
+      // Child2 should have level1 and level2
+      jest.clearAllMocks();
+      child2.info('child2 message');
+      expect(console.info).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child' }),
+        'child2 message'
+      );
+
+      // Child3 should have level1, level2, and level3
+      jest.clearAllMocks();
+      child3.info('child3 message');
+      expect(console.info).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'child3 message'
+      );
+
+      // Verify all log levels work with accumulated bindings
+      jest.clearAllMocks();
+      child3.trace('trace');
+      expect(console.trace).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'trace'
+      );
+
+      jest.clearAllMocks();
+      child3.debug('debug');
+      expect(console.debug).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'debug'
+      );
+
+      jest.clearAllMocks();
+      child3.warn('warn');
+      expect(console.warn).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'warn'
+      );
+
+      jest.clearAllMocks();
+      child3.error('error');
+      expect(console.error).toHaveBeenCalledWith(
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'error'
+      );
+
+      jest.clearAllMocks();
+      child3.fatal('fatal');
+      expect(console.error).toHaveBeenCalledWith(
+        '[FATAL]',
+        JSON.stringify({ level1: 'parent', level2: 'child', level3: 'grandchild' }),
+        'fatal'
+      );
+    });
+
+    it('should override parent bindings with same keys in child logger', () => {
+      const browserLogger = createBrowserLogger();
+      const child1 = browserLogger.child({ context: 'parent', userId: 123 });
+      const child2 = child1.child({ context: 'child', requestId: 'abc' });
+
+      // Child2 should override context but keep userId and add requestId
+      jest.clearAllMocks();
+      child2.info('message');
+      expect(console.info).toHaveBeenCalledWith(
+        JSON.stringify({ context: 'child', userId: 123, requestId: 'abc' }),
+        'message'
+      );
+    });
+
     it('should handle multiple arguments in log methods', () => {
       const browserLogger = createBrowserLogger();
 
