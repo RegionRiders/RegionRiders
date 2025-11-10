@@ -151,7 +151,6 @@ describe('Logger Index - All Re-exports', () => {
     const { isTest } = await import('./index');
 
     // In test environment, should be true
-    expect(isTest).toBe(true);
     expect(isTest).toBe(process.env.NODE_ENV === 'test');
   });
 

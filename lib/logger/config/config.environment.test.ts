@@ -8,18 +8,16 @@ import { createChildLogger, getLoggerConfig, LOG_DIR } from './config';
 
 describe('Logger Config - Additional Coverage', () => {
   describe('Configuration formatters', () => {
-    it('should have level formatter in config', () => {
+    it('should return config with silent level in test environment', () => {
       const config = getLoggerConfig();
 
-      // Config should have formatter (in dev/prod, not test)
       expect(config).toBeDefined();
       expect(config.level).toBe('silent'); // We're in test environment
     });
 
-    it('should test timestamp configuration', () => {
+    it('should return config with level propertyn', () => {
       const config = getLoggerConfig();
 
-      // May or may not have timestamp depending on environment
       expect(config).toHaveProperty('level');
     });
   });
