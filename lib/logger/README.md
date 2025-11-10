@@ -52,18 +52,7 @@ try {
 }
 ```
 
-### API Route Logging Middleware
-
-```typescript
-import {withLogging} from '@/lib/api';
-import {NextRequest, NextResponse} from 'next/server';
-
-export const GET = withLogging(async (request: NextRequest) => {
-    // Your API logic
-    return NextResponse.json({success: true});
-});
-```
-
+# (Section removed: API Route Logging Middleware)
 ### Browser-Safe Logging
 
 For components that may render on both server and client:
