@@ -1,6 +1,6 @@
 # Pino Logging Setup
 
-# AI Generated Documentation
+## AI Generated Documentation
 
 This project uses [Pino](https://github.com/pinojs/pino) for structured logging with environment-specific
 configurations.
@@ -53,6 +53,7 @@ try {
 ```
 
 # (Section removed: API Route Logging Middleware)
+
 ### Browser-Safe Logging
 
 For components that may render on both server and client:
