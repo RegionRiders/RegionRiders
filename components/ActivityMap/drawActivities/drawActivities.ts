@@ -83,7 +83,7 @@ export function drawActivities(
                     return;
                 }
 
-                const accumulator = new Uint32Array(canvasWidth * canvasHeight);
+                const accumulator = new Float32Array(canvasWidth * canvasHeight);
 
                 const latlngToPixel = (lat: number, lon: number) => {
                     const point = map.project({ lat, lng: lon }, map.getZoom());

@@ -10,7 +10,7 @@ export async function GET() {
         const gpxFiles = files.filter((f) => f.endsWith('.gpx'));
         return Response.json({ files: gpxFiles });
     } catch (error) {
-        logger.info('Error reading GPX directory:', error);
+        logger.error('Error reading GPX directory:', error);
         return Response.json({ files: [], error: String(error) }, { status: 500 });
     }
 }

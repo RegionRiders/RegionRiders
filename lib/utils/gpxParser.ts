@@ -25,13 +25,13 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
         throw new Error('Invalid GPX file');
     }
 
-    const tracks = xmlDoc.getElementsByTagName('track');
+    const tracks = xmlDoc.getElementsByTagName('trk');
     const nameElement = tracks[0]?.getElementsByTagName('name')[0];
     const trackName = nameElement?.textContent ||
         (file instanceof File ? file.name : 'Unknown Track');
 
     const points: GPXPoint[] = [];
-    const trackPoints = xmlDoc.getElementsByTagName('trackPoint');
+    const trackPoints = xmlDoc.getElementsByTagName('trkpt');
 
     for (let i = 0; i < trackPoints.length; i++) {
         const trackPoint = trackPoints[i];
@@ -44,7 +44,7 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
         const timeElement = trackPoint.getElementsByTagName('time')[0];
         const time = timeElement?.textContent;
 
-        if (lat && lon) {
+        if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
             points.push({ lat, lon, ele, time });
         }
     }

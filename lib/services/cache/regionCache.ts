@@ -58,12 +58,13 @@ export class RegionCache {
     private async fetchAndCache(country: CountryData): Promise<Regions[]> {
         const { fileName } = country;
 
+        const existing = this.countryCache.get(fileName);
         try {
             const response = await fetch(`/data/regions/${fileName}`);
 
             if (!response.ok) {
-                logger.info(`[RegionCache] HTTP ${response.status} for ${fileName}`)
-                return [];
+                logger.info(`[RegionCache] HTTP ${response.status} for ${fileName}`);
+                return existing?.data ?? [];
             }
 
             const geojson = await response.json();
@@ -91,7 +92,7 @@ export class RegionCache {
             return regions;
         } catch (error) {
             logger.error(`[RegionCache] Error loading ${fileName}:`, error);
-            return [];
+            return existing?.data ?? [];
         } finally {
             this.loadingPromises.delete(fileName);
         }

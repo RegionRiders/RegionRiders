@@ -12,7 +12,7 @@
  * @param thickness - line thickness radius in pixels
  */
 export function drawLineToAccumulator(
-    accumulator: Uint32Array,
+    accumulator: Float32Array,
     width: number,
     height: number,
     x0: number,
@@ -38,14 +38,14 @@ export function drawLineToAccumulator(
         const y = Math.round(y0 + dy * t);
 
         // draw circular brush at this point
-        for (let dx = -thickness; dx <= thickness; dx++) {
-            for (let dy = -thickness; dy <= thickness; dy++) {
-                const distSq = dx * dx + dy * dy;
+        for (let offsetX = -thickness; offsetX <= thickness; offsetX++) {
+            for (let offsetY = -thickness; offsetY <= thickness; offsetY++){
+                const distSq = offsetX * offsetX + offsetY * offsetY;
                 const dist = Math.sqrt(distSq);
 
                 if (dist <= thickness) {
-                    const px = x + dx;
-                    const py = y + dy;
+                    const px = x + offsetX;
+                    const py = y + offsetY;
 
                     if (px >= 0 && px < width && py >= 0 && py < height) {
                         const idx = py * width + px;
