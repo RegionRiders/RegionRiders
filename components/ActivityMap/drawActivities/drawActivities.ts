@@ -1,8 +1,8 @@
 'use client';
 
-import {drawLineToAccumulator} from './utils/drawLineToAccumulator';
-import {getHeatmapColorForCount} from './utils/getHeatmapColorForCount';
-import {GPXTrack} from "@/lib/types/types";
+import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
+import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
+import { GPXTrack } from "@/lib/types/types";
 import L from 'leaflet';
 import logger from "@/lib/utils/logger";
 
@@ -14,6 +14,18 @@ interface HeatmapCache {
 
 let heatmapCache: HeatmapCache | null = null;
 
+/**
+ * renders gpx track heatmap as canvas overlay on a leaflet map
+ * uses accumulator buffer for overlapping tracks, then converts to colored image
+ * processes tracks in chunks to avoid blocking ui thread
+ *
+ * @param map - leaflet map instance
+ * @param tracks - map of gpx tracks to render
+ * @param currentImageLayerRef - ref to current overlay layer for cleanup
+ * @param renderAbortRef - ref to abort flag for canceling renders
+ * @param renderTimeoutRef - ref to timeout for debouncing
+ * @returns cleanup function
+ */
 export function drawActivities(
     map: any,
     tracks: Map<string, GPXTrack>,
@@ -30,7 +42,7 @@ export function drawActivities(
         if (!map?.getPane) {return;}
         if (!map.getPane('heatmapPane')) {
             const pane = map.createPane('heatmapPane');
-            pane.style.zIndex = 450;
+            pane.style.zIndex = '450';
         }
     };
 
@@ -44,7 +56,6 @@ export function drawActivities(
         const currentZoom = map.getZoom();
 
         renderAbortRef.current = true;
-
         if (renderTimeoutRef.current) {
             clearTimeout(renderTimeoutRef.current);
         }
@@ -55,10 +66,10 @@ export function drawActivities(
             try {
                 ensurePane();
 
+                // create a canvas matching viewport
                 const bounds = map.getBounds();
                 const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
                 const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
-
                 const canvasWidth = Math.round((bottomRight.x - topLeft.x) * PIXEL_DENSITY);
                 const canvasHeight = Math.round((bottomRight.y - topLeft.y) * PIXEL_DENSITY);
 
@@ -85,17 +96,19 @@ export function drawActivities(
                 let trackIndex = 0;
                 const tracksArray = Array.from(tracks.values());
 
+                // process tracks in chunks to avoid blocking ui
                 const processChunk = () => {
-                    if (renderAbortRef.current) return;
+                    if (renderAbortRef.current) {return;}
 
                     const startTime = performance.now();
-                    const chunkTime = 8;
+                    const chunkTime = 8; // ms per chunk
 
                     while (trackIndex < tracksArray.length && performance.now() - startTime < chunkTime) {
                         const track = tracksArray[trackIndex];
                         const points = track.points;
 
                         if (points && points.length > 0) {
+                            // draw line segments into accumulator
                             for (let i = 0; i < points.length - 1; i++) {
                                 const p1 = latlngToPixel(points[i].lat, points[i].lon);
                                 const p2 = latlngToPixel(points[i + 1].lat, points[i + 1].lon);
@@ -123,16 +136,17 @@ export function drawActivities(
                 };
 
                 const finishRender = () => {
-                    if (renderAbortRef.current) return;
+                    if (renderAbortRef.current) {return;}
 
                     const finishStartTime = performance.now();
 
+                    // convert accumulator to colored pixels
                     const imageData = ctx.createImageData(canvasWidth, canvasHeight);
                     const data = imageData.data;
 
                     for (let i = 0; i < accumulator.length; i++) {
                         const count = accumulator[i];
-                        if (count === 0) continue;
+                        if (count === 0) {continue;}
 
                         const [r, g, b] = getHeatmapColorForCount(count, THICKNESS);
                         const pixelIndex = i * 4;
@@ -144,9 +158,9 @@ export function drawActivities(
 
                     ctx.putImageData(imageData, 0, 0);
 
+                    // create leaflet image overlay
                     const imageUrl = canvas.toDataURL();
                     const imageBounds: any = [bounds.getSouthWest(), bounds.getNorthEast()];
-
                     heatmapCache = { imageUrl, bounds: imageBounds, zoomLevel: map.getZoom() };
 
                     if (currentImageLayerRef.current && map.hasLayer?.(currentImageLayerRef.current)) {
@@ -161,8 +175,7 @@ export function drawActivities(
 
                             const totalDuration = (performance.now() - renderStartTime).toFixed(2);
                             const finishDuration = (performance.now() - finishStartTime).toFixed(2);
-
-                            logger.info(`[drawActivities] Heatmap rendered rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`);
+                            logger.info(`[drawActivities] Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`);
                             lastZoom = currentZoom;
                         } catch (error) {
                             logger.error('[drawActivities] Error adding image overlay:', error);
@@ -177,10 +190,9 @@ export function drawActivities(
         }, 0);
     };
 
-    // Initial render
     renderHeatmap();
 
-    // Re-render on zoom changes (debounced)
+    // re-render on zoom/move with debouncing
     const handleMapChange = () => {
         const newZoom = map.getZoom();
 
@@ -198,6 +210,7 @@ export function drawActivities(
         map.on('moveend', handleMapChange);
     }
 
+    // cleanup function
     return () => {
         logger.info('[drawActivities] Cleanup');
         renderAbortRef.current = true;

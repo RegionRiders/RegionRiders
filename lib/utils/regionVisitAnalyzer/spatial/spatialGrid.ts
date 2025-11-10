@@ -2,8 +2,14 @@ import { SpatialCell } from '../types';
 import { Regions } from '@/lib/types/types';
 import { getBoundingBox } from './boundingBox';
 
-// build grid index: divide a map into cells, track which regions overlap each cell
-// makes lookups O(1) instead of checking every region for every point
+/**
+ * builds a spatial grid index for fast region lookups by location
+ * divides map into cells and tracks which regions overlap each cell
+ *
+ * @param regions - all regions to index
+ * @param gridSize - cell size in degrees (~0.1 = 11 km)
+ * @returns map of a cell key to region ids in that cell
+ */
 export function buildSpatialGrid(
     regions: Regions[],
     gridSize: number
@@ -29,14 +35,19 @@ export function buildSpatialGrid(
     return grid;
 }
 
-// get grid cell key for given lat/lon
+/**
+ * converts lat/lon to a grid cell key
+ */
 export function getGridKey(lat: number, lon: number, gridSize: number): string {
     const glat = Math.floor(lat / gridSize);
     const glon = Math.floor(lon / gridSize);
     return `${glat},${glon}`;
 }
 
-// check current cell + 3 adjacent cells for edge cases
+/**
+ * returns current cell + 3 adjacent cells
+ * checks 4 cells total to handle points near cell boundaries
+ */
 export function getAdjacentCells(lat: number, lon: number, gridSize: number): string[] {
     const glat = Math.floor(lat / gridSize);
     const glon = Math.floor(lon / gridSize);

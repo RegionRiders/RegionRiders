@@ -1,12 +1,22 @@
-// components/ActivityMap/drawRegions/drawRegions.ts
 'use client';
 
 import L from 'leaflet';
 import { Regions } from '@/lib/types/types';
-import {getRegionColorForCount} from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
-import {RegionVisitData} from "@/lib/utils/regionVisitAnalyzer";
+import { getRegionColorForCount } from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
+import { RegionVisitData } from "@/lib/utils/regionVisitAnalyzer";
 import logger from "@/lib/utils/logger";
 
+/**
+ * renders region boundaries on a map with colors based on visit count
+ * creates leaflet geojson layers with click handlers
+ *
+ * @param map - leaflet map instance
+ * @param regions - regions to draw
+ * @param visitData - visit statistics for coloring
+ * @param onRegionClick - optional click handler for interaction
+ * @param initialWeight - stroke width (default: 2)
+ * @returns array of leaflet layers for cleanup
+ */
 export function drawRegions(
     map: any,
     regions: Regions[],
@@ -15,21 +25,20 @@ export function drawRegions(
     initialWeight: number = 2
 ): any[] {
     const startTime = performance.now();
-
     const layers: any[] = [];
 
     regions.forEach((region) => {
         const visit = visitData.get(region.id);
         const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
-        // Derive colors from visit count when visited, otherwise use neutral stroke
+        // color based on visit count, or neutral if unvisited
         let fillColor = 'transparent';
         let strokeColor = '#666';
 
         if (visited && typeof visit?.visitCount === 'number') {
             const [r, g, b] = getRegionColorForCount(visit.visitCount);
-            fillColor = `rgba(${r},${g},${b},0.35)`; // semi-transparent region fill
-            strokeColor = `rgba(${r},${g},${b},1)`;   // colored outline
+            fillColor = `rgba(${r},${g},${b},0.35)`;
+            strokeColor = `rgba(${r},${g},${b},1)`;
         }
 
         const layer = L.geoJSON(region.geometry, {
@@ -56,7 +65,7 @@ export function drawRegions(
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-    logger.debug(`[drawRegions] Complete (${layers.length} layers, ${visitedCount} visited, ${duration}ms)`);
+    logger.debug(`[drawRegions] Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
 
     return layers;
 }

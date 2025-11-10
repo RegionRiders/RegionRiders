@@ -8,7 +8,16 @@ const DEFAULT_CONFIG: AnalysisConfig = {
     gridSize: 0.1, // ~11km cells
 };
 
-// main analysis: which regions did tracks visit?
+/**
+ * analyzes gpx tracks to find which regions were visited
+ * uses spatial grid + ray casting for accurate boundary detection
+ *
+ * @param tracks - gpx tracks with lat/lon points
+ * @param regions - geographic regions to check
+ * @param onProgress - optional progress callback (0-100)
+ * @param config - optional grid size tuning
+ * @returns map of a region id to visit stats
+ */
 export function analyzeRegionVisits(
     tracks: GPXTrack[],
     regions: Regions[],
@@ -63,7 +72,9 @@ export function analyzeRegionVisits(
     return visitMap;
 }
 
-// async version
+/**
+ * async version that doesn't block ui thread
+ */
 export function analyzeRegionVisitsAsync(
     tracks: GPXTrack[],
     regions: Regions[],

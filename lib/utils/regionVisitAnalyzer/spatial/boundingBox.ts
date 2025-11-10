@@ -1,10 +1,17 @@
 import { BoundingBox } from '../types';
 import { GPXPoint } from '@/lib/types/types';
-import {GeoJSON} from "geojson";
+import { GeoJSON } from "geojson";
 
 const cache = new Map<string, BoundingBox>();
 
-// calculate rectangle around region for fast pre-filtering
+/**
+ * calculates rectangle bounds around region geometry for fast pre-filtering
+ * cached to avoid repeated calculation
+ *
+ * @param regionId - unique region identifier for caching
+ * @param geometry - geojson polygon or multipolygon
+ * @returns bounding box with min/max lat/lon
+ */
 export function getBoundingBox(
     regionId: string,
     geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
@@ -35,7 +42,10 @@ export function getBoundingBox(
     return bbox;
 }
 
-// quick check: is point inside rectangle?
+/**
+ * quick check if point is inside bounding box rectangle
+ * much faster than accurate polygon check, used for pre-filtering
+ */
 export function pointInBoundingBox(point: GPXPoint, bbox: BoundingBox): boolean {
     return (
         point.lat >= bbox.minLat &&

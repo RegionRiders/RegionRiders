@@ -1,9 +1,15 @@
 import { Regions } from '@/lib/types/types';
-import {GeoJSON} from "geojson";
+import { GeoJSON } from "geojson";
 
 const cache = new Map<string, GeoJSON.Polygon | GeoJSON.MultiPolygon>();
 
-// avoid repeated lookups of region geometry
+/**
+ * retrieves region geometry with caching to avoid repeated lookups
+ *
+ * @param regionId - unique region identifier
+ * @param regions - all regions array
+ * @returns geojson geometry or null if not found
+ */
 export function getGeometry(
     regionId: string,
     regions: Regions[]

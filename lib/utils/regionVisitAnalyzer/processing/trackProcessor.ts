@@ -5,12 +5,22 @@ import { getAdjacentCells } from '../spatial/spatialGrid';
 import { pointInPolygon } from '../geometry/pointInPolygon';
 import { getGeometry } from '../geometry/geometryCache';
 
-// process single track: check which regions it passes through
+/**
+ * processes a single track to find which regions it passes through
+ * uses spatial grid to check only nearby regions, then accurate boundary test
+ *
+ * @param track - gpx track with lat/lon points
+ * @param grid - spatial grid index for fast lookup
+ * @param regionBounds - bounding boxes for pre-filtering
+ * @param map - map to update with visit data
+ * @param regions - all regions for geometry lookup
+ * @param config - grid size configuration
+ */
 export function processTrack(
     track: GPXTrack,
     grid: Map<string, SpatialCell>,
     regionBounds: Map<string, BoundingBox>,
-    visitMap: Map<string, RegionVisitData>,
+    map: Map<string, RegionVisitData>,
     regions: Regions[],
     config: { gridSize: number }
 ): void {
@@ -33,7 +43,7 @@ export function processTrack(
                 const bbox = regionBounds.get(regionId);
                 if (!bbox || !pointInBoundingBox(p, bbox)) {continue;}
 
-                const region = visitMap.get(regionId);
+                const region = map.get(regionId);
                 if (!region) {continue;}
 
                 // accurate check: is point actually inside boundary?

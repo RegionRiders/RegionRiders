@@ -1,8 +1,14 @@
 import { GPXPoint } from '@/lib/types/types';
-import {GeoJSON} from "geojson";
+import { GeoJSON } from "geojson";
 
-// accurate check: is point inside region boundary?
-// uses ray casting algorithm (even-odd rule)
+/**
+ * accurate check if point is inside region boundary
+ * uses ray casting algorithm (even-odd rule)
+ *
+ * @param point - gps point with lat/lon
+ * @param polygon - geojson polygon or multipolygon
+ * @returns true if point is inside boundary
+ */
 export function pointInPolygon(
     point: GPXPoint,
     polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon
@@ -10,20 +16,24 @@ export function pointInPolygon(
     if (polygon.type === 'Polygon') {
         return pointInPolygonRings(point, polygon.coordinates);
     }
-    // multipolygon: check each piece (handles islands, exclaves)
+
+    // multipolygon: check each feature (handles islands, disconnected regions)
     for (const coords of polygon.coordinates) {
         if (pointInPolygonRings(point, coords)) {return true;}
     }
+
     return false;
 }
 
-// check outer boundary, then exclude holes
+// check outer boundary, then exclude holes (like donut cutouts)
 function pointInPolygonRings(point: GPXPoint, rings: GeoJSON.Position[][]): boolean {
     if (!raycastPointInRing(point, rings[0])) {return false;}
+
     // must NOT be in any holes
     for (let i = 1; i < rings.length; i++) {
         if (raycastPointInRing(point, rings[i])) {return false;}
     }
+
     return true;
 }
 
