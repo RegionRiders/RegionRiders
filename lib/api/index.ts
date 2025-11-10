@@ -4,5 +4,3 @@ export {
   handleApiError,
   type ApiErrorResponse,
 } from './errorHandler';
-
-export { logApiRequestProxy, withLogging } from './proxy';
