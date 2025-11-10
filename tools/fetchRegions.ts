@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TopologySimplifier } from './utils/topologySimplifier';
 import logger from '@/lib/utils/logger';
+import {GeoJSON} from "geojson";
 
 interface CountryConfig {
     name: string;
@@ -128,10 +129,10 @@ class MultiCountryFetcher {
         const features: GeoJSON.Feature[] = [];
 
         for (const element of osmData.elements) {
-            if (element.type !== 'relation') continue;
+            if (element.type !== 'relation') {continue;}
 
             const geometry = this.extractGeometry(element);
-            if (!geometry) continue;
+            if (!geometry) {continue;}
 
             const properties = {
                 ...element.tags,
@@ -155,14 +156,13 @@ class MultiCountryFetcher {
     }
 
     private extractGeometry(element: OverpassElement): GeoJSON.Geometry | null {
-        if (!element.members) return null;
+        if (!element.members) {return null;}
 
-        const outerWaysByRef = new Map<number, number[][]>();
-        const innerWaysByRef = new Map<number, number[][]>();
+        const outerWaysByRef = new Map();
+        const innerWaysByRef = new Map();
 
         for (const member of element.members) {
-            if (member.type !== 'way' || !member.geometry) continue;
-
+            if (member.type !== 'way' || !member.geometry) {continue;}
             const coords = member.geometry.map((pt) => [pt.lon, pt.lat]);
 
             if (member.role === 'outer') {
@@ -172,12 +172,12 @@ class MultiCountryFetcher {
             }
         }
 
-        if (outerWaysByRef.size === 0) return null;
+        if (outerWaysByRef.size === 0) {return null;}
 
         const outerRings = this.chainWays(Array.from(outerWaysByRef.values()));
         const innerRings = this.chainWays(Array.from(innerWaysByRef.values()));
 
-        if (outerRings.length === 0) return null;
+        if (outerRings.length === 0) {return null;}
 
         if (outerRings.length === 1) {
             return {
@@ -186,63 +186,108 @@ class MultiCountryFetcher {
             };
         }
 
+        // multipolygon - assign holes to containing outer rings
+        const polygons = outerRings.map((ring) => [ring]);
+
+        for (const hole of innerRings) {
+            if (hole.length === 0) {continue;}
+
+            // find which outer ring contains this hole
+            const target = polygons.find(([outer]) =>
+                this.isPointInRing(hole[0], outer)
+            );
+
+            if (target) {
+                target.push(hole);
+            }
+        }
+
         return {
             type: 'MultiPolygon',
-            coordinates: outerRings.map((ring) => [ring]),
+            coordinates: polygons,
         };
     }
 
+// add point-in-polygon test
+    private isPointInRing(point: number[], ring: number[][]): boolean {
+        if (!point || ring.length === 0) {return false;}
+
+        let inside = false;
+
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const xi = ring[i][0];
+            const yi = ring[i][1];
+            const xj = ring[j][0];
+            const yj = ring[j][1];
+
+            const intersects =
+                ((yi > point[1]) !== (yj > point[1])) &&
+                (point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi);
+
+            if (intersects) {
+                inside = !inside;
+            }
+        }
+
+        return inside;
+    }
+
+
     private chainWays(ways: number[][][]): number[][][] {
-        if (ways.length === 0) return [];
-        if (ways.length === 1) return ways;
+        if (ways.length === 0) {return [];}
+        if (ways.length === 1) {return ways;}
 
         const rings: number[][][] = [];
         const remaining = new Set(ways.map((_, i) => i));
 
         while (remaining.size > 0) {
-            const ring: number[][] = [];
-            let currentIdx = remaining.values().next().value;
-            remaining.delete(currentIdx);
+            while (remaining.size > 0) {
+                const ring: number[][] = [];
+                const firstIdx = Array.from(remaining)[0];
+                remaining.delete(firstIdx);
 
-            let currentWay = ways[currentIdx];
-            ring.push(...currentWay);
+                const currentWay = ways[firstIdx];
+                ring.push(...currentWay);
 
-            while (
-                ring[0][0] !== ring[ring.length - 1][0] ||
-                ring[0][1] !== ring[ring.length - 1][1]
-                ) {
-                const ringEnd = ring[ring.length - 1];
-                let found = false;
+                while (
+                    ring[0][0] !== ring[ring.length - 1][0] ||
+                    ring[0][1] !== ring[ring.length - 1][1]
+                    ) {
+                    const ringEnd = ring[ring.length - 1];
+                    let found = false;
 
-                for (const idx of remaining) {
-                    const way = ways[idx];
-                    const wayStart = way[0];
-                    const wayEnd = way[way.length - 1];
+                    for (const idx of Array.from(remaining)) {
+                        const way = ways[idx];
+                        const wayStart = way[0];
+                        const wayEnd = way[way.length - 1];
 
-                    if (wayStart[0] === ringEnd[0] && wayStart[1] === ringEnd[1]) {
-                        ring.push(...way.slice(1));
-                        remaining.delete(idx);
-                        found = true;
-                        break;
+                        if (wayStart[0] === ringEnd[0] && wayStart[1] === ringEnd[1]) {
+                            ring.push(...way.slice(1));
+                            remaining.delete(idx);
+                            found = true;
+                            break;
+                        }
+
+                        if (wayEnd[0] === ringEnd[0] && wayEnd[1] === ringEnd[1]) {
+                            ring.push(...way.reverse().slice(1));
+                            remaining.delete(idx);
+                            found = true;
+                            break;
+                        }
                     }
 
-                    if (wayEnd[0] === ringEnd[0] && wayEnd[1] === ringEnd[1]) {
-                        ring.push(...way.reverse().slice(1));
-                        remaining.delete(idx);
-                        found = true;
+                    if (!found) {
                         break;
                     }
                 }
 
-                if (!found) break;
-            }
-
-            if (
-                ring.length > 2 &&
-                ring[0][0] === ring[ring.length - 1][0] &&
-                ring[0][1] === ring[ring.length - 1][1]
-            ) {
-                rings.push(ring);
+                if (
+                    ring.length > 2 &&
+                    ring[0][0] === ring[ring.length - 1][0] &&
+                    ring[0][1] === ring[ring.length - 1][1]
+                ) {
+                    rings.push(ring);
+                }
             }
         }
 
@@ -372,4 +417,5 @@ async function main() {
 
 main().catch(logger.error);
 
-export { MultiCountryFetcher, CountryConfig };
+export { MultiCountryFetcher };
+export type { CountryConfig };
