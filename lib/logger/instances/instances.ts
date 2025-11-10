@@ -1,11 +1,68 @@
 import pino from 'pino';
-import { getLoggerConfig } from '../config';
+import { getLoggerConfig, isProduction, isTest } from '../config';
+
+/**
+ * Check if we're in a server environment
+ */
+const isServer = typeof window === 'undefined';
+
+/**
+ * Cached logger instance
+ */
+let cachedLogger: pino.Logger | null = null;
+
+/**
+ * Create the appropriate logger based on environment
+ * In development, uses pino-pretty stream (not transport) to avoid worker threads
+ * In production, uses structured JSON logging
+ * In browser, uses console fallback
+ */
+function createServerLogger(): pino.Logger {
+  const config = getLoggerConfig();
+
+  // In development, use pino-pretty as a stream (not transport) to avoid worker threads
+  if (!isProduction && !isTest && isServer) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pretty = require('pino-pretty');
+      const prettyStream = pretty({
+        colorize: true,
+        translateTime: 'SYS:standard',
+        ignore: 'pid,hostname',
+      });
+
+      return pino(config, prettyStream);
+    } catch (error) {
+      // Fallback to regular pino if pino-pretty is not available
+      console.warn('pino-pretty not available, using standard pino logging');
+      return pino(config);
+    }
+  }
+
+  // For production or test, use standard pino
+  return pino(config);
+}
+
+/**
+ * Get or create the logger instance
+ */
+function getLogger(): pino.Logger {
+  if (!cachedLogger) {
+    cachedLogger = isServer ? createServerLogger() : createBrowserLogger();
+  }
+  return cachedLogger!; // Non-null assertion - cachedLogger is always initialized above
+}
 
 /**
  * Main application logger instance
  * This is the primary logger used throughout the application
+ * In browser environment, uses console as fallback
  */
-export const logger = pino(getLoggerConfig());
+export const logger = new Proxy({} as pino.Logger, {
+  get(_target, prop) {
+    return getLogger()[prop as keyof pino.Logger];
+  },
+});
 
 /**
  * Logger specifically for API routes
@@ -31,19 +88,29 @@ export const dbLogger = logger.child({ context: 'database' });
  * Browser-safe logger that prevents errors when running client-side
  * Uses console methods as fallback in browser environment
  */
-export function createBrowserLogger() {
-  // Check if we're in a browser environment
-  if (typeof window !== 'undefined') {
-    return {
-      trace: (...args: unknown[]) => console.trace(...args),
-      debug: (...args: unknown[]) => console.debug(...args),
-      info: (...args: unknown[]) => console.info(...args),
-      warn: (...args: unknown[]) => console.warn(...args),
-      error: (...args: unknown[]) => console.error(...args),
-      fatal: (...args: unknown[]) => console.error('[FATAL]', ...args),
-    };
-  }
-  return logger;
+export function createBrowserLogger(): any {
+  return {
+    trace: (...args: unknown[]) => console.trace(...args),
+    debug: (...args: unknown[]) => console.debug(...args),
+    info: (...args: unknown[]) => console.info(...args),
+    warn: (...args: unknown[]) => console.warn(...args),
+    error: (...args: unknown[]) => console.error(...args),
+    fatal: (...args: unknown[]) => console.error('[FATAL]', ...args),
+    child: (bindings: Record<string, unknown>) => {
+      const childLogger = createBrowserLogger();
+      // Prefix all logs with the child context
+      const contextStr = JSON.stringify(bindings);
+      return {
+        ...childLogger,
+        trace: (...args: unknown[]) => console.trace(contextStr, ...args),
+        debug: (...args: unknown[]) => console.debug(contextStr, ...args),
+        info: (...args: unknown[]) => console.info(contextStr, ...args),
+        warn: (...args: unknown[]) => console.warn(contextStr, ...args),
+        error: (...args: unknown[]) => console.error(contextStr, ...args),
+        fatal: (...args: unknown[]) => console.error('[FATAL]', contextStr, ...args),
+      };
+    },
+  };
 }
 
 /**

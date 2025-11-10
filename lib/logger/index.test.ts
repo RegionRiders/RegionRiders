@@ -34,7 +34,7 @@ describe('Logger', () => {
 
     it('should create stravaLogger with context', () => {
       expect(stravaLogger).toBeDefined();
-      expect(typeof stravaLogger.info).toBe('function');
+      expect(typeof stravaLogger.debug).toBe('function');
     });
   });
 

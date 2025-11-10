@@ -9,7 +9,7 @@ import { getStravaClient } from '../config';
 export async function getAuthorizationUrl(scope = 'read,activity:read_all'): Promise<string> {
   const strava = getStravaClient();
 
-  stravaLogger.info({ scope }, 'Generating Strava OAuth authorization URL');
+  stravaLogger.debug({ scope }, 'Generating Strava OAuth authorization URL');
 
   const authUrl = await strava.oauth.getRequestAccessURL({
     scope,

@@ -19,12 +19,12 @@ export interface StravaTokenResponse {
 export async function exchangeToken(code: string): Promise<StravaTokenResponse> {
   const strava = getStravaClient();
 
-  stravaLogger.info({ codeLength: code.length }, 'Exchanging authorization code for tokens');
+  stravaLogger.debug({ codeLength: code.length }, 'Exchanging authorization code for tokens');
 
   try {
     const tokenResponse = await strava.oauth.getToken(code);
 
-    stravaLogger.info(
+    stravaLogger.debug(
       {
         athleteId: tokenResponse.athlete?.id,
         expiresAt: tokenResponse.expires_at,

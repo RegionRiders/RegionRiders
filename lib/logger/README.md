@@ -34,7 +34,7 @@ logger.debug({userId: '123'}, 'User action');
 import {apiLogger, stravaLogger, authLogger} from '@/lib/logger';
 
 apiLogger.info({method: 'GET', path: '/api/users'}, 'API request');
-stravaLogger.info({athleteId: 123}, 'Fetching athlete data');
+stravaLogger.debug({athleteId: 123}, 'Fetching athlete data');
 authLogger.warn('Invalid token');
 ```
 

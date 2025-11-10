@@ -16,14 +16,21 @@ export const isTest = process.env.NODE_ENV === 'test';
 export const LOG_DIR = process.env.LOG_DIR || './logs';
 
 /**
+ * Check if we're running in a server environment (Node.js)
+ */
+export const isServer = typeof window === 'undefined';
+
+/**
  * Logger configuration for development environment
- * Uses simple JSON output to avoid worker thread issues in Next.js
+ * Uses simple configuration without transports to avoid worker thread issues in Next.js
  */
 const developmentConfig: LoggerOptions = {
   level: process.env.LOG_LEVEL || 'debug',
+  // Don't use transport in development to avoid worker thread issues
+  // Instead, use formatters for better readability
   formatters: {
     level: (label) => {
-      return { level: label };
+      return { level: label.toUpperCase() };
     },
   },
   timestamp: pino.stdTimeFunctions.isoTime,
