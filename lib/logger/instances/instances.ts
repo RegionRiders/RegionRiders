@@ -1,10 +1,10 @@
 import pino from 'pino';
-import { getLoggerConfig, isProduction, isTest } from '../config';
+import { getLoggerConfig, isProduction, isServer, isTest } from '../config';
 
 /**
  * Check if we're in a server environment
  */
-const isServer = typeof window === 'undefined';
+// const isServer = typeof window === 'undefined';
 
 /**
  * Cached logger instance
