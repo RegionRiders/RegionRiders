@@ -9,4 +9,7 @@ export default withBundleAnalyzer({
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
+  // Empty turbopack config to acknowledge we're using Turbopack
+  // This prevents webpack config errors and allows Turbopack to handle pino correctly
+  turbopack: {},
 });

@@ -139,3 +139,7 @@ dist
 
 # copilot
 /.github/instructions/
+# Pino logs
+logs/
+# storybook
+/storybook-static

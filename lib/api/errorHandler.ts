@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiLogger, logError } from '@/lib/logger';
 
 /**
  * Standard error response structure for API routes
@@ -41,11 +42,7 @@ export function handle404Error(path?: string): NextResponse<ApiErrorResponse> {
 export function handle500Error(error: unknown, context?: string): NextResponse<ApiErrorResponse> {
   const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
 
-  console.error('[API Error]', {
-    context,
-    error,
-    timestamp: new Date().toISOString(),
-  });
+  logError(apiLogger, error, context ? { context } : undefined);
 
   return NextResponse.json(
     {

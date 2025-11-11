@@ -2,6 +2,7 @@
  * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
  */
 
+import { apiLogger } from '@/lib/logger';
 import {
   handle404Error,
   handle500Error,
@@ -9,9 +10,19 @@ import {
   type ApiErrorResponse,
 } from './errorHandler';
 
+// Mock the logger
+jest.mock('@/lib/logger', () => ({
+  apiLogger: {
+    error: jest.fn(),
+  },
+  logError: jest.fn((logger, error, context) => {
+    logger.error({ error, ...context });
+  }),
+}));
+
 describe('API Error Handler', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -92,14 +103,7 @@ describe('API Error Handler', () => {
 
       handle500Error(error, context);
 
-      expect(console.error).toHaveBeenCalledWith(
-        '[API Error]',
-        expect.objectContaining({
-          context,
-          error,
-          timestamp: expect.any(String),
-        })
-      );
+      expect(apiLogger.error).toHaveBeenCalled();
     });
   });
 

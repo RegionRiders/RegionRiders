@@ -1,3 +1,4 @@
+import { stravaLogger } from '@/lib/logger';
 import { getStravaClient } from '../config';
 
 /**
@@ -8,7 +9,13 @@ import { getStravaClient } from '../config';
 export async function getAuthorizationUrl(scope = 'read,activity:read_all'): Promise<string> {
   const strava = getStravaClient();
 
-  return await strava.oauth.getRequestAccessURL({
+  stravaLogger.debug({ scope }, 'Generating Strava OAuth authorization URL');
+
+  const authUrl = await strava.oauth.getRequestAccessURL({
     scope,
   });
+
+  stravaLogger.debug({ authUrl }, 'Strava OAuth URL generated');
+
+  return authUrl;
 }
