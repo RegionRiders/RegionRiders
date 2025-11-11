@@ -24,23 +24,33 @@ export function useGPXData(autoLoad: boolean = true) {
             try {
                 setLoading(true);
                 const loadedTracks = await DataLoader.loadGPXTracks('local');
-                const trackMap = new Map(loadedTracks.map((t) => [t.id, t]));
-                setTracks(trackMap);
+
+                logger.info(`[useGPXData] Loaded ${loadedTracks.size} tracks`);
+
+                setTracks(loadedTracks);
                 setError(null);
             } catch (err) {
-                setError(`Failed to load GPX data: ${err}`);
+                const errorMsg = `Failed to load GPX data: ${err}`;
+                setError(errorMsg);
+                logger.error('[useGPXData]', errorMsg);
             } finally {
                 setLoading(false);
             }
         };
 
         loadTracks().catch((err) => {
-            logger.error('Unexpected error loading GPX data:', err);
+            logger.error('[useGPXData] Unexpected error loading GPX data:', err);
         });
     }, [autoLoad]);
 
     const addTrack = useCallback((track: GPXTrack) => {
-        setTracks((prev) => new Map(prev).set(track.id, track));
+        setTracks((prev) => {
+            const newMap = new Map(prev);
+            // Assuming track has an 'id' property, or use filename
+            const trackId = track.id || track.name || `track-${newMap.size + 1}`;
+            newMap.set(trackId, track);
+            return newMap;
+        });
     }, []);
 
     const removeTrack = useCallback((trackId: string) => {

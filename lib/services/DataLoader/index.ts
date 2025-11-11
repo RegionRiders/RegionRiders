@@ -17,7 +17,7 @@ export class DataLoader {
     static async loadGPXTracks(
         source: 'local' | 'api' = 'api',
         files?: string[]
-    ): Promise<GPXTrack[]> {
+    ): Promise<Map<string, GPXTrack>> {
         return GPXLoader.loadTracks(source, files);
     }
 

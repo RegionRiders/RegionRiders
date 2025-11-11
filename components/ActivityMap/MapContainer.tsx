@@ -5,6 +5,7 @@ import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useActivityRendering } from './hooks/useActivityRendering';
 import { useRegionRendering } from './hooks/useRegionRendering';
 import { GPXTrack } from '@/lib/types/types';
+import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import L from 'leaflet';
 
 interface MapContainerProps {
@@ -12,6 +13,7 @@ interface MapContainerProps {
     tracks: Map<string, GPXTrack>;
     showHeatmap?: boolean;
     showBorders?: boolean;
+    activityMode?: ActivityRenderMode;
 }
 
 /**
@@ -23,6 +25,7 @@ export default function MapContainer({
                                          tracks,
                                          showHeatmap = true,
                                          showBorders = true,
+                                         activityMode = 'heatmap',
                                      }: MapContainerProps) {
     // Load regions based on viewport
     const { regions } = useRegionLoading(map);
@@ -30,8 +33,8 @@ export default function MapContainer({
     // Analyze which regions have been visited
     const { visitData } = useRegionAnalysis(tracks, regions);
 
-    // Render heatmap of activities
-    useActivityRendering(map, tracks, showHeatmap);
+    // Render activities (heatmap or lines based on mode)
+    useActivityRendering(map, tracks, showHeatmap, activityMode);
 
     // Render region borders with zoom handling
     useRegionRendering(map, regions, visitData, showBorders);

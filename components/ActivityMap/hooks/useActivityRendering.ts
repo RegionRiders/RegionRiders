@@ -1,32 +1,58 @@
 'use client';
 
-import {useEffect, useRef} from 'react';
-import {GPXTrack} from '@/lib/types/types';
-import {drawActivities} from '../drawActivities/drawActivities';
+import { useEffect, useRef } from 'react';
+import { GPXTrack } from '@/lib/types/types';
+import { drawActivities, type ActivityRenderMode } from '../drawActivities/drawActivities';
 import L from 'leaflet';
+import logger from '@/lib/utils/logger';
 
 /**
- * Hook to handle heatmap rendering
- * Manages canvas overlay and render lifecycle
+ * Hook to handle activity rendering (heatmap or lines)
+ * Manages canvas/layer lifecycle
  */
 export function useActivityRendering(
-  map: L.Map | null,
-  tracks: Map<string, GPXTrack>,
-  showHeatmap: boolean = true
+    map: L.Map | null,
+    tracks: Map<string, GPXTrack>,
+    showActivities: boolean = true,
+    mode: ActivityRenderMode = 'heatmap'
 ) {
-  const currentImageLayerRef = useRef<any>(null);
-  const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const renderAbortRef = useRef<boolean>(false);
+    const currentImageLayerRef = useRef(null);
+    const renderTimeoutRef = useRef(null);
+    const renderAbortRef = useRef(false);
 
-  useEffect(() => {
-    if (!map || !showHeatmap || tracks.size === 0) {return;}
+    logger.info('[useActivityRendering] Hook called with:', {
+        hasMap: !!map,
+        tracksSize: tracks.size,
+        showActivities,
+        mode,
+        tracksType: tracks instanceof Map ? 'Map' : typeof tracks,
+    });
 
-    return drawActivities(
-        map,
-        tracks,
-        currentImageLayerRef,
-        renderAbortRef,
-        renderTimeoutRef
-    );
-  }, [map, tracks, showHeatmap]);
+    useEffect(() => {
+        logger.info('[useActivityRendering] Effect running:', {
+            hasMap: !!map,
+            tracksSize: tracks.size,
+            showActivities,
+            mode,
+        });
+
+        if (!map || !showActivities || tracks.size === 0) {
+            logger.info('[useActivityRendering] Skipping render:', {
+                noMap: !map,
+                notShowing: !showActivities,
+                noTracks: tracks.size === 0,
+            });
+            return;
+        }
+
+        logger.info('[useActivityRendering] Calling drawActivities...');
+        return drawActivities(
+            map,
+            tracks,
+            currentImageLayerRef,
+            renderAbortRef,
+            renderTimeoutRef,
+            mode
+        );
+    }, [map, tracks, showActivities, mode]);
 }

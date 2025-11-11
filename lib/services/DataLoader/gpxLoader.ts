@@ -18,7 +18,7 @@ export class GPXLoader {
     static async loadTracks(
         source: 'local' | 'api' = 'api',
         files?: string[]
-    ): Promise<GPXTrack[]> {
+    ): Promise<Map<string, GPXTrack>> {
         const startTime = performance.now();
         logger.info(`[GPXLoader] Loading GPX tracks from ${source}...`);
 
@@ -27,7 +27,7 @@ export class GPXLoader {
             : await this.loadFromAPI();
 
         const duration = (performance.now() - startTime).toFixed(2);
-        logger.info(`[GPXLoader] Loaded ${tracks.length} tracks in ${duration}ms`);
+        logger.info(`[GPXLoader] Loaded ${tracks.size} tracks in ${duration}ms`);
 
         return tracks;
     }
@@ -39,7 +39,7 @@ export class GPXLoader {
      * @returns promise resolving to an array of parsed tracks
      * @internal
      */
-    private static async loadFromLocal(files?: string[]): Promise<GPXTrack[]> {
+    private static async loadFromLocal(files?: string[]): Promise<Map<string, GPXTrack>> {
         let filesToLoad = files;
         if (!filesToLoad || filesToLoad.length === 0) {
             filesToLoad = await this.getLocalFileList();
@@ -51,6 +51,11 @@ export class GPXLoader {
         const promises = filesToLoad.map(async (file) => {
             try {
                 const track = await this.cache.loadTrack(file);
+
+                // Set the name to the filename (without .gpx) for local files
+                track.name = file.replace('.gpx', '');
+                track.id = track.name;
+
                 return { success: true as const, track, file };
             } catch (error) {
                 return { success: false as const, error: String(error), file };
@@ -59,13 +64,15 @@ export class GPXLoader {
 
         const results = await Promise.all(promises);
 
-        // process results
-        const tracks: GPXTrack[] = [];
+        // process results into a Map
+        const tracksMap = new Map<string, GPXTrack>();
         const errors: string[] = [];
 
         for (const result of results) {
             if (result.success) {
-                tracks.push(result.track);
+                // Use filename (without .gpx) as key
+                const trackId = result.file.replace('.gpx', '');
+                tracksMap.set(trackId, result.track);
             } else {
                 const errorMsg = `Failed to load ${result.file}: ${result.error}`;
                 errors.push(errorMsg);
@@ -80,7 +87,8 @@ export class GPXLoader {
         // log cache stats
         const stats = this.cache.getStats();
         logger.debug(`[GPXLoader] Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
-        return tracks;
+
+        return tracksMap;
     }
 
     /**
@@ -89,10 +97,10 @@ export class GPXLoader {
      * @returns promise resolving to array of tracks from api
      * @internal
      */
-    private static async loadFromAPI(): Promise<GPXTrack[]> {
+    private static async loadFromAPI():  Promise<Map<string, GPXTrack>> {
         logger.info('[GPXLoader] Loading from API...');
         // TODO: implement strava api integration
-        return [];
+        return new Map();
     }
 
     /**
