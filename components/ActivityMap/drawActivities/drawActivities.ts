@@ -5,6 +5,7 @@ import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 import { GPXTrack } from "@/lib/types/types";
 import L from 'leaflet';
 import logger from "@/lib/utils/logger";
+import {MAP_CONFIG} from "@/components/ActivityMap/config/mapConfig";
 
 interface HeatmapCache {
     imageUrl: string;
@@ -33,12 +34,7 @@ export function drawActivities(
     renderAbortRef: any,
     renderTimeoutRef: any
 ) {
-    const PIXEL_DENSITY = 1;
-    const THICKNESS = 4 * PIXEL_DENSITY;
-
-    const DEBOUNCE_DELAY = 150;
-    const CHUNK_TIME = 8;
-    const RENDER_DELAY = 0;
+    const THICKNESS = MAP_CONFIG.LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
 
     let lastZoom = map?.getZoom?.() ?? 11;
     let zoomChangeTimeout: NodeJS.Timeout | null = null;
@@ -75,8 +71,8 @@ export function drawActivities(
                 const bounds = map.getBounds();
                 const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
                 const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
-                const canvasWidth = Math.round((bottomRight.x - topLeft.x) * PIXEL_DENSITY);
-                const canvasHeight = Math.round((bottomRight.y - topLeft.y) * PIXEL_DENSITY);
+                const canvasWidth = Math.round((bottomRight.x - topLeft.x) * MAP_CONFIG.PIXEL_DENSITY);
+                const canvasHeight = Math.round((bottomRight.y - topLeft.y) * MAP_CONFIG.PIXEL_DENSITY);
 
                 if (!isFinite(canvasWidth) || !isFinite(canvasHeight) || canvasWidth <= 0 || canvasHeight <= 0) {
                     logger.warn('[drawActivities] Invalid canvas dimensions, aborting render:', {
@@ -104,8 +100,8 @@ export function drawActivities(
                 const latlngToPixel = (lat: number, lon: number) => {
                     const point = map.project({ lat, lng: lon }, map.getZoom());
                     return {
-                        x: (point.x - topLeft.x) * PIXEL_DENSITY,
-                        y: (point.y - topLeft.y) * PIXEL_DENSITY,
+                        x: (point.x - topLeft.x) * MAP_CONFIG.PIXEL_DENSITY,
+                        y: (point.y - topLeft.y) * MAP_CONFIG.PIXEL_DENSITY,
                     };
                 };
 
@@ -118,7 +114,7 @@ export function drawActivities(
 
                     const startTime = performance.now();
 
-                    while (trackIndex < tracksArray.length && performance.now() - startTime < CHUNK_TIME) {
+                    while (trackIndex < tracksArray.length && performance.now() - startTime < MAP_CONFIG.CHUNK_PROCESSING_TIME) {
                         const track = tracksArray[trackIndex];
                         const points = track.points;
 
@@ -215,7 +211,7 @@ export function drawActivities(
             } catch (error) {
                 logger.error('[drawActivities] Error rendering heatmap:', error);
             }
-        }, RENDER_DELAY);
+        }, 0);
     };
 
     renderHeatmap();
@@ -230,7 +226,7 @@ export function drawActivities(
 
         zoomChangeTimeout = setTimeout(() => {
             renderHeatmap();
-        }, DEBOUNCE_DELAY);
+        }, MAP_CONFIG.HEATMAP_RENDER_DELAY);
     };
 
     if (map) {

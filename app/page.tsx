@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 
 const ActivityMapComponent = dynamic(
-    () => import('@/components/ActivityMap/ActivityMapComponent'),
+    () => import('@/components/ActivityMap/ActivityMap'),
     {
         ssr: false,
         loading: () => (

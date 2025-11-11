@@ -8,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 
 const MapContainerMemo = memo(MapContainer);
 
-export default function ActivityMapComponent() {
+export default function ActivityMap() {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const { tracks } = useGPXData();
 
