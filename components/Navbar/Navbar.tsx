@@ -4,6 +4,7 @@ import React, { forwardRef} from "react";
 import Link from "next/link";
 import { Avatar, Group, Image, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
 import { Welcome } from "@/components/Welcome/Welcome";
+import {ActivitiesListElement} from "@/components/ActivitiesListElement/ActivitiesListElement";
 
 
 interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -69,7 +70,7 @@ export function Navbar() {
   return (
     <>
       <Tabs defaultValue="map">
-        <Tabs.List>
+        <Tabs.List style={{position: 'sticky', top: '0', zIndex: 10, left: '0', right: '0', backgroundColor: 'var(--mantine-color-body)'}}>
           <Logo
             src="https://upload.wikimedia.org/wikipedia/commons/2/23/Logo_Budimex.png"
             href="https://pl.wikipedia.org/wiki/Budimex"
@@ -93,6 +94,7 @@ export function Navbar() {
         </Tabs.List>
 
         <NavbarTabContent value="map" Content={Welcome} />
+        <NavbarTabContent value="activities" Content={ActivitiesListElement} />
       </Tabs>
     </>
   );
