@@ -1,7 +1,10 @@
 'use client';
 
-import {Avatar, Text, Group, Menu, Tabs, UnstyledButton} from "@mantine/core";
-import React, {forwardRef} from "react";
+import React, { forwardRef} from "react";
+import Link from "next/link";
+import { Avatar, Group, Image, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
+import { Welcome } from "@/components/Welcome/Welcome";
+
 
 interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
   image: string;
@@ -33,42 +36,63 @@ const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   )
 );
 
+const Logo = ({ src, href }: { src: string; href: string }) => (
+  <UnstyledButton
+    component={Link}
+    href={href}
+    target="_blank">
+    <div style={{ padding: 'var(--mantine-spacing-md)' }}>
+      <Image src={src} w={200} />
+    </div>
+  </UnstyledButton>
+);
+
+const NavbarText = ({text} : {text: string}) => (
+  <Text size="lg">
+    {text}
+  </Text>
+);
+
+const NavbarTab = ({value, text} : {value: string, text: string}) => (
+  <Tabs.Tab value={value}>
+    <NavbarText text={text} />
+  </Tabs.Tab>
+);
+
+const NavbarTabContent = ({value, Content} : {value: string, Content: React.ComponentType}) => (
+  <Tabs.Panel value={value}>
+    <Content/>
+  </Tabs.Panel>
+);
+
 export function Navbar() {
   return (
     <>
       <Tabs defaultValue="map">
-        <Tabs.List grow>
+        <Tabs.List>
+          <Logo
+            src="https://upload.wikimedia.org/wikipedia/commons/2/23/Logo_Budimex.png"
+            href="https://pl.wikipedia.org/wiki/Budimex"
+          />
 
-          <Tabs.Tab value="map">
-            Map
-          </Tabs.Tab>
+          <NavbarTab value="map" text="Map" />
 
-          <Tabs.Tab value="trips">
-            Trips
-          </Tabs.Tab>
+          <NavbarTab value="trips" text="Trips" />
 
-          <Tabs.Tab value="activities">
-            Activities
-          </Tabs.Tab>
+          <NavbarTab value="activities" text="Activities" />
 
-          <Menu withArrow>
+          <Menu ml="auto" withArrow>
             <Menu.Target>
-              <UserButton
-                image="https://http.cat/images/426.jpg"
-                name="Harriette Spoonlicker"
-              />
+              <UserButton image="https://http.cat/images/426.jpg" name="Andrzej Lepper" />
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item>
-                Settings
-              </Menu.Item>
-              <Menu.Item color="red">
-                Log out
-              </Menu.Item>
+              <Menu.Item>Settings</Menu.Item>
+              <Menu.Item color="red">Log out</Menu.Item>
             </Menu.Dropdown>
           </Menu>
-
         </Tabs.List>
+
+        <NavbarTabContent value="map" Content={Welcome} />
       </Tabs>
     </>
   );
