@@ -35,7 +35,7 @@ export function drawActivitiesAsHeatmap(
     renderTimeoutRef: any
 ) {
     const THICKNESS = MAP_CONFIG.LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
-    let lastZoom = map?.getZoom?.() ?? 11;
+
     let zoomChangeTimeout: NodeJS.Timeout | null = null;
 
     const renderHeatmap = () => {
@@ -170,7 +170,7 @@ export function drawActivitiesAsHeatmap(
                             continue;
                         }
 
-                        const [r, g, b] = getHeatmapColorForCount(count, THICKNESS);
+                        const [r, g, b] = getHeatmapColorForCount(count, currentZoom, THICKNESS);
                         const pixelIndex = i * 4;
 
                         data[pixelIndex] = r;
@@ -207,7 +207,6 @@ export function drawActivitiesAsHeatmap(
                                 `[drawActivities] Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
                             );
 
-                            lastZoom = currentZoom;
                         } catch (error) {
                             logger.error('[drawActivities] Error adding image overlay:', error);
                         }
@@ -224,8 +223,6 @@ export function drawActivitiesAsHeatmap(
     renderHeatmap();
 
     const handleMapChange = () => {
-        const newZoom = map.getZoom();
-
         if (zoomChangeTimeout) {
             clearTimeout(zoomChangeTimeout);
         }

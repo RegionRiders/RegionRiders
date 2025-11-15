@@ -3,8 +3,8 @@ export const COLOR_THRESHOLDS = [
     { uniqueActivities: 2, color: [220, 20, 20] },  // red
     { uniqueActivities: 10, color: [255, 100, 0] }, // orange-red
     { uniqueActivities: 50, color: [255, 165, 0] }, // orange
-    { uniqueActivities: 150, color: [255, 255, 0] }, // yellow
-    { uniqueActivities: 200, color: [255, 255, 255] } // white
+    { uniqueActivities: 100, color: [255, 255, 0] }, // yellow
+    { uniqueActivities: 150, color: [255, 255, 255] } // white
 ];
 
 // linear interpolation between two rgb colors
@@ -24,9 +24,9 @@ function fadeColor(c1: number[], c2: number[], t: number): number[] {
  * @param lineThickness - thickness of drawn lines
  * @returns rgb tuple [r, g, b]
  */
-export function getHeatmapColorForCount(count: number, lineThickness = 1): number[] {
+export function getHeatmapColorForCount(count: number, zoomLevel:number = 10, lineThickness = 1): number[] {
     // normalize for line thickness (both sides of the line)
-    const uniqueActivities = count / (lineThickness * 2);
+    const uniqueActivities = count / (lineThickness * 2) * (zoomLevel/10);
 
     // below minimum: use the first color
     if (uniqueActivities <= COLOR_THRESHOLDS[0].uniqueActivities) {
