@@ -13,7 +13,7 @@ export class GPXLoader {
      *
      * @param source - data source, either 'local' files or 'api' integration
      * @param files - optional list of specific gpx filenames to load
-     * @returns promise resolving to an array of parsed gpx tracks
+     * @returns promise resolving to a map of parsed gpx tracks keyed by track id
      */
     static async loadTracks(
         source: 'local' | 'api' = 'api',
@@ -53,10 +53,10 @@ export class GPXLoader {
                 const track = await this.cache.loadTrack(file);
 
                 // Set the name to the filename (without .gpx) for local files
-                track.name = file.replace('.gpx', '');
-                track.id = track.name;
+                const trackId = file.replace('.gpx', '');
+                const localTrack = { ...track, name: trackId, id: trackId };
 
-                return { success: true as const, track, file };
+                return { success: true as const, track: localTrack, file };
             } catch (error) {
                 return { success: false as const, error: String(error), file };
             }
@@ -114,8 +114,8 @@ export class GPXLoader {
             const response = await fetch('/api/gpx-files');
             const data = await response.json();
             return data.files || [];
-        } catch {
-            logger.warn('[GPXLoader] Could not load GPX file list');
+        } catch (error) {
+            logger.warn('[GPXLoader] Could not load GPX file list:', error);
             return [];
         }
     }

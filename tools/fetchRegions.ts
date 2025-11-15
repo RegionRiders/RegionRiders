@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 /**
  * Fetch administrative regions from OpenStreetMap Overpass API
@@ -84,28 +84,24 @@ class MultiCountryFetcher {
         const query = this.buildQuery(osmName, adminLevel);
         logger.info(`Querying Overpass API for admin_level=${adminLevel}...`);
 
-        try {
-            const response = await fetch(this.OVERPASS_URL, {
-                method: 'POST',
-                body: new URLSearchParams({ data: query }),
-                signal: AbortSignal.timeout(this.timeout * 1000),
-            });
+        const response = await fetch(this.OVERPASS_URL, {
+            method: 'POST',
+            body: new URLSearchParams({ data: query }),
+            signal: AbortSignal.timeout(this.timeout * 1000),
+        });
 
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(`HTTP ${response.status}: ${response.statusText}\n${text}`);
-            }
-
-            const osmData: OverpassResponse = await response.json();
-            const geojson = this.convertToGeoJSON(osmData, countryCode);
-
-            logger.info(`Found ${geojson.features.length} regions`);
-            return geojson;
-        } catch (error) {
-            logger.error('Request failed:', error);
-            throw error;
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${text}`);
         }
+
+        const osmData: OverpassResponse = await response.json();
+        const geojson = this.convertToGeoJSON(osmData, countryCode);
+
+        logger.info(`Found ${geojson.features.length} regions`);
+        return geojson;
     }
+
 
     private buildQuery(osmName: string, adminLevel: number): string {
         return `
@@ -241,53 +237,51 @@ class MultiCountryFetcher {
         const remaining = new Set(ways.map((_, i) => i));
 
         while (remaining.size > 0) {
-            while (remaining.size > 0) {
-                const ring: number[][] = [];
-                const firstIdx = Array.from(remaining)[0];
-                remaining.delete(firstIdx);
+            const ring: number[][] = [];
+            const firstIdx = Array.from(remaining)[0];
+            remaining.delete(firstIdx);
 
-                const currentWay = ways[firstIdx];
-                ring.push(...currentWay);
+            const currentWay = ways[firstIdx];
+            ring.push(...currentWay);
 
-                while (
-                    ring[0][0] !== ring[ring.length - 1][0] ||
-                    ring[0][1] !== ring[ring.length - 1][1]
-                    ) {
-                    const ringEnd = ring[ring.length - 1];
-                    let found = false;
+            while (
+                ring[0][0] !== ring[ring.length - 1][0] ||
+                ring[0][1] !== ring[ring.length - 1][1]
+                ) {
+                const ringEnd = ring[ring.length - 1];
+                let found = false;
 
-                    for (const idx of Array.from(remaining)) {
-                        const way = ways[idx];
-                        const wayStart = way[0];
-                        const wayEnd = way[way.length - 1];
+                for (const idx of Array.from(remaining)) {
+                    const way = ways[idx];
+                    const wayStart = way[0];
+                    const wayEnd = way[way.length - 1];
 
-                        if (wayStart[0] === ringEnd[0] && wayStart[1] === ringEnd[1]) {
-                            ring.push(...way.slice(1));
-                            remaining.delete(idx);
-                            found = true;
-                            break;
-                        }
-
-                        if (wayEnd[0] === ringEnd[0] && wayEnd[1] === ringEnd[1]) {
-                            ring.push(...way.reverse().slice(1));
-                            remaining.delete(idx);
-                            found = true;
-                            break;
-                        }
+                    if (wayStart[0] === ringEnd[0] && wayStart[1] === ringEnd[1]) {
+                        ring.push(...way.slice(1));
+                        remaining.delete(idx);
+                        found = true;
+                        break;
                     }
 
-                    if (!found) {
+                    if (wayEnd[0] === ringEnd[0] && wayEnd[1] === ringEnd[1]) {
+                        ring.push(...way.reverse().slice(1));
+                        remaining.delete(idx);
+                        found = true;
                         break;
                     }
                 }
 
-                if (
-                    ring.length > 2 &&
-                    ring[0][0] === ring[ring.length - 1][0] &&
-                    ring[0][1] === ring[ring.length - 1][1]
-                ) {
-                    rings.push(ring);
+                if (!found) {
+                    break;
                 }
+            }
+
+            if (
+                ring.length > 2 &&
+                ring[0][0] === ring[ring.length - 1][0] &&
+                ring[0][1] === ring[ring.length - 1][1]
+            ) {
+                rings.push(ring);
             }
         }
 

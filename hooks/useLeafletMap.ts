@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import L from 'leaflet';
 import logger from '@/lib/utils/logger';
 
@@ -56,7 +56,10 @@ export function useLeafletMap(
     const [error, setError] = useState<string | null>(null);
 
     // merge provided options with defaults
-    const config = { ...DEFAULT_OPTIONS, ...options };
+    const config = useMemo(
+        () => ({ ...DEFAULT_OPTIONS, ...options }),
+        [options]
+    );
 
     useEffect(() => {
         // prevent re-initialization if map already exists or container not ready

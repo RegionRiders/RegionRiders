@@ -6,10 +6,10 @@ import { useActivityRendering } from './hooks/useActivityRendering';
 import { useRegionRendering } from './hooks/useRegionRendering';
 import { GPXTrack } from '@/lib/types/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
-import L from 'leaflet';
+import type { Map as LeafletMap } from 'leaflet';
 
 interface MapContainerProps {
-    map: L.Map | null;
+    map: LeafletMap | null;
     tracks: Map<string, GPXTrack>;
     showHeatmap?: boolean;
     showBorders?: boolean;
@@ -33,6 +33,6 @@ export default function MapContainer({
     useActivityRendering(map, tracks, showHeatmap, activityMode);
     useRegionRendering(map, regions, visitData, showBorders);
 
-    // This component is a side-effect coordinator, doesn't render
+    // This component is a side effect coordinator, doesn't render
     return null;
 }

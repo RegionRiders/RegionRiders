@@ -30,11 +30,18 @@ export function attachActivityClickHandler(
     polyline.on('click', function(this: L.Polyline, e: L.LeafletMouseEvent) {
         const displayName = track.name || trackId || 'Unknown Activity';
 
+        const sanitized = displayName
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
         L.popup()
             .setLatLng(e.latlng)
             .setContent(`
         <div style="font-family: sans-serif; min-width: 150px;">
-          <b>${displayName}</b><br>
+          <b>${sanitized}</b><br>
           <small style="color: #666;">Placeholder</small>
         </div>
       `)

@@ -35,8 +35,15 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
 
     for (let i = 0; i < trackPoints.length; i++) {
         const trackPoint = trackPoints[i];
-        const lat = parseFloat(trackPoint.getAttribute('lat') || '0');
-        const lon = parseFloat(trackPoint.getAttribute('lon') || '0');
+        const latStr = trackPoint.getAttribute('lat');
+        const lonStr = trackPoint.getAttribute('lon');
+
+        if (!latStr || !lonStr) {continue;}
+
+        const lat = parseFloat(latStr);
+        const lon = parseFloat(lonStr);
+
+        if (isNaN(lat) || isNaN(lon)) {continue;}
 
         const eleElement = trackPoint.getElementsByTagName('ele')[0];
         const ele = parseFloat(eleElement?.textContent || '0');
@@ -44,9 +51,7 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
         const timeElement = trackPoint.getElementsByTagName('time')[0];
         const time = timeElement?.textContent;
 
-        if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-            points.push({ lat, lon, ele, time });
-        }
+        points.push({ lat, lon, ele, time });
     }
 
     const timeElement = xmlDoc.getElementsByTagName('time')[0];
