@@ -107,12 +107,7 @@ export function drawActivitiesAsHeatmap(
                         return;
                     }
 
-                    const startTime = performance.now();
-
-                    while (
-                        trackIndex < tracksArray.length &&
-                        performance.now() - startTime < MAP_CONFIG.CHUNK_PROCESSING_TIME
-                        ) {
+                    while (trackIndex < tracksArray.length) {
                         const track = tracksArray[trackIndex];
                         const points = track.points;
 

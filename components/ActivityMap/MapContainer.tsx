@@ -27,16 +27,10 @@ export default function MapContainer({
                                          showBorders = true,
                                          activityMode = 'heatmap',
                                      }: MapContainerProps) {
-    // Load regions based on viewport
+
     const { regions } = useRegionLoading(map);
-
-    // Analyze which regions have been visited
     const { visitData } = useRegionAnalysis(tracks, regions);
-
-    // Render activities (heatmap or lines based on mode)
     useActivityRendering(map, tracks, showHeatmap, activityMode);
-
-    // Render region borders with zoom handling
     useRegionRendering(map, regions, visitData, showBorders);
 
     // This component is a side-effect coordinator, doesn't render
