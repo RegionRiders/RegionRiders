@@ -20,7 +20,10 @@ let createProductionLogger: any;
 let initProductionLogger: any;
 let logError: any;
 
-if (typeof window === 'undefined') {
+if (
+    typeof window === 'undefined' ||
+    (typeof process !== 'undefined' && process.release && process.release.name === 'node')
+) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const configModule = require('./config');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
