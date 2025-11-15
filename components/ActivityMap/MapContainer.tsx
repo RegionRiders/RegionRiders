@@ -1,19 +1,19 @@
 'use client';
 
-import { useRegionLoading } from './hooks/useRegionLoading';
-import { useRegionAnalysis } from './hooks/useRegionAnalysis';
-import { useActivityRendering } from './hooks/useActivityRendering';
-import { useRegionRendering } from './hooks/useRegionRendering';
+import type { Map as LeafletMap } from 'leaflet';
 import { GPXTrack } from '@/lib/types/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
-import type { Map as LeafletMap } from 'leaflet';
+import { useActivityRendering } from './hooks/useActivityRendering';
+import { useRegionAnalysis } from './hooks/useRegionAnalysis';
+import { useRegionLoading } from './hooks/useRegionLoading';
+import { useRegionRendering } from './hooks/useRegionRendering';
 
 interface MapContainerProps {
-    map: LeafletMap | null;
-    tracks: Map<string, GPXTrack>;
-    showHeatmap?: boolean;
-    showBorders?: boolean;
-    activityMode?: ActivityRenderMode;
+  map: LeafletMap | null;
+  tracks: Map<string, GPXTrack>;
+  showHeatmap?: boolean;
+  showBorders?: boolean;
+  activityMode?: ActivityRenderMode;
 }
 
 /**
@@ -21,18 +21,17 @@ interface MapContainerProps {
  * Delegates specific concerns to focused hooks
  */
 export default function MapContainer({
-                                         map,
-                                         tracks,
-                                         showHeatmap = true,
-                                         showBorders = true,
-                                         activityMode = 'heatmap',
-                                     }: MapContainerProps) {
+  map,
+  tracks,
+  showHeatmap = true,
+  showBorders = true,
+  activityMode = 'heatmap',
+}: MapContainerProps) {
+  const { regions } = useRegionLoading(map);
+  const { visitData } = useRegionAnalysis(tracks, regions);
+  useActivityRendering(map, tracks, showHeatmap, activityMode);
+  useRegionRendering(map, regions, visitData, showBorders);
 
-    const { regions } = useRegionLoading(map);
-    const { visitData } = useRegionAnalysis(tracks, regions);
-    useActivityRendering(map, tracks, showHeatmap, activityMode);
-    useRegionRendering(map, regions, visitData, showBorders);
-
-    // This component is a side effect coordinator, doesn't render
-    return null;
+  // This component is a side effect coordinator, doesn't render
+  return null;
 }

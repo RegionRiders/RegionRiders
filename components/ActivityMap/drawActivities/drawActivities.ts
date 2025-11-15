@@ -1,6 +1,6 @@
 'use client';
 
-import { GPXTrack } from "@/lib/types/types";
+import { GPXTrack } from '@/lib/types/types';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
 
@@ -18,15 +18,21 @@ export type ActivityRenderMode = 'heatmap' | 'lines';
  * @returns cleanup function
  */
 export function drawActivities(
-    map: any,
-    tracks: Map<string, GPXTrack>,
-    currentImageLayerRef: any,
-    renderAbortRef: any,
-    renderTimeoutRef: any,
-    mode: ActivityRenderMode = 'heatmap'
+  map: any,
+  tracks: Map<string, GPXTrack>,
+  currentImageLayerRef: any,
+  renderAbortRef: any,
+  renderTimeoutRef: any,
+  mode: ActivityRenderMode = 'heatmap'
 ) {
-    if (mode === 'heatmap') {
-        return drawActivitiesAsHeatmap(map, tracks, currentImageLayerRef, renderAbortRef, renderTimeoutRef);
-    }
-    return drawActivitiesAsLines(map, tracks, renderAbortRef, renderTimeoutRef);
+  if (mode === 'heatmap') {
+    return drawActivitiesAsHeatmap(
+      map,
+      tracks,
+      currentImageLayerRef,
+      renderAbortRef,
+      renderTimeoutRef
+    );
+  }
+  return drawActivitiesAsLines(map, tracks, renderAbortRef, renderTimeoutRef);
 }

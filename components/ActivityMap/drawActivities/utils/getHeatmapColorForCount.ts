@@ -1,12 +1,12 @@
 import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 
 export const COLOR_THRESHOLDS = [
-    { threshold: 1, color: [139, 0, 0] },      // dark red
-    { threshold: 2, color: [220, 20, 20] },    // red
-    { threshold: 10, color: [255, 100, 0] },   // orange-red
-    { threshold: 25, color: [255, 165, 0] },   // orange
-    { threshold: 50, color: [255, 255, 0] },  // yellow
-    { threshold: 150, color: [255, 255, 255] } // white
+  { threshold: 1, color: [139, 0, 0] }, // dark red
+  { threshold: 2, color: [220, 20, 20] }, // red
+  { threshold: 10, color: [255, 100, 0] }, // orange-red
+  { threshold: 25, color: [255, 165, 0] }, // orange
+  { threshold: 50, color: [255, 255, 0] }, // yellow
+  { threshold: 150, color: [255, 255, 255] }, // white
 ];
 
 /**
@@ -18,12 +18,12 @@ export const COLOR_THRESHOLDS = [
  * @returns RGB tuple [r, g, b]
  */
 export function getHeatmapColorForCount(
-    count: number,
-    zoomLevel: number = 10,
-    lineThickness: number = 1
+  count: number,
+  zoomLevel: number = 10,
+  lineThickness: number = 1
 ): number[] {
-    // Normalize for line thickness (both sides of the line)
-    const uniqueActivities = count / (lineThickness * 2) * (zoomLevel / 10);
+  // Normalize for line thickness (both sides of the line)
+  const uniqueActivities = (count / (lineThickness * 2)) * (zoomLevel / 10);
 
-    return getColorFromThresholds(uniqueActivities, COLOR_THRESHOLDS);
+  return getColorFromThresholds(uniqueActivities, COLOR_THRESHOLDS);
 }

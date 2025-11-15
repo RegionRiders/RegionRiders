@@ -1,11 +1,11 @@
 'use client';
 
-import {useEffect, useRef} from 'react';
-import {Regions} from '@/lib/types/types';
-import {drawRegions} from '../drawRegions/drawRegions';
-import {RegionVisitData} from '@/lib/utils/regionVisitAnalyzer';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { logger } from '@/lib/logger';
+import { Regions } from '@/lib/types/types';
+import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
+import { drawRegions } from '../drawRegions/drawRegions';
 
 /**
  * Hook to handle region border rendering
@@ -20,7 +20,9 @@ export function useRegionRendering(
   const regionLayersRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (!map || regions.length === 0) {return;}
+    if (!map || regions.length === 0) {
+      return;
+    }
 
     const startTime = performance.now();
 
@@ -36,17 +38,14 @@ export function useRegionRendering(
 
     if (showBorders) {
       const calculateWeightForZoom = (zoom: number): number => {
-        return 2**((zoom - 10) / 2.5);
+        return 2 ** ((zoom - 10) / 2.5);
       };
 
       const initialWeight = calculateWeightForZoom(map.getZoom());
-        regionLayersRef.current = drawRegions(map, regions, visitData, () => {
-      }, initialWeight);
+      regionLayersRef.current = drawRegions(map, regions, visitData, () => {}, initialWeight);
 
       const duration = (performance.now() - startTime).toFixed(2);
-      const visitedCount = Array.from(visitData.values()).filter(
-        (v) => v.visited
-      ).length;
+      const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
       logger.debug(
         `[useRegionRendering] Drew ${visitedCount}/${regions.length} regions (${duration}ms)`

@@ -20,35 +20,35 @@ configurations.
 ### Basic Logging
 
 ```typescript
-import {logger} from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Log levels: trace, debug, info, warn, error, fatal
 logger.info('Application started');
 logger.error('Something went wrong');
-logger.debug({userId: '123'}, 'User action');
+logger.debug({ userId: '123' }, 'User action');
 ```
 
 ### Context-Specific Loggers
 
 ```typescript
-import {apiLogger, stravaLogger, authLogger} from '@/lib/logger';
+import { apiLogger, authLogger, stravaLogger } from '@/lib/logger';
 
-apiLogger.info({method: 'GET', path: '/api/users'}, 'API request');
-stravaLogger.debug({athleteId: 123}, 'Fetching athlete data');
+apiLogger.info({ method: 'GET', path: '/api/users' }, 'API request');
+stravaLogger.debug({ athleteId: 123 }, 'Fetching athlete data');
 authLogger.warn('Invalid token');
 ```
 
 ### Error Logging
 
 ```typescript
-import {logError, apiLogger} from '@/lib/logger';
+import { apiLogger, logError } from '@/lib/logger';
 
 try {
-    // Your code
+  // Your code
 } catch (error) {
-    logError(apiLogger, error, 'Failed to process request');
-    // or with additional context
-    logError(apiLogger, error, {userId: '123', action: 'delete'});
+  logError(apiLogger, error, 'Failed to process request');
+  // or with additional context
+  logError(apiLogger, error, { userId: '123', action: 'delete' });
 }
 ```
 
@@ -59,7 +59,7 @@ try {
 For components that may render on both server and client:
 
 ```typescript
-import {createBrowserLogger} from '@/lib/logger';
+import { createBrowserLogger } from '@/lib/logger';
 
 const logger = createBrowserLogger();
 logger.info('This works on both server and browser');
@@ -146,10 +146,10 @@ From most to least verbose:
 ## Creating Custom Child Loggers
 
 ```typescript
-import {logger} from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
-const paymentLogger = logger.child({context: 'payment'});
-paymentLogger.info({amount: 100, currency: 'USD'}, 'Processing payment');
+const paymentLogger = logger.child({ context: 'payment' });
+paymentLogger.info({ amount: 100, currency: 'USD' }, 'Processing payment');
 ```
 
 ## Sensitive Data Redaction
@@ -165,7 +165,7 @@ The following fields are automatically redacted in production logs:
 
 ```typescript
 // This will be redacted in production
-logger.info({password: 'secret123', username: 'user'}, 'Login attempt');
+logger.info({ password: 'secret123', username: 'user' }, 'Login attempt');
 // Output: {"username":"user","msg":"Login attempt"}
 ```
 
@@ -198,7 +198,7 @@ console.error('Error:', error);
 With:
 
 ```typescript
-logger.info({userId}, 'User logged in');
+logger.info({ userId }, 'User logged in');
 logError(logger, error, 'Login failed');
 ```
 

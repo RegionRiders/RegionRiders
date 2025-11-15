@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '@/lib/logger';
 import { GPXTrack, Regions } from '@/lib/types/types';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
-import { logger } from '@/lib/logger';
 
 /**
  * Hook to analyze which regions have been visited
@@ -15,7 +15,9 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (regions.length === 0 || tracks.size === 0) {return;}
+    if (regions.length === 0 || tracks.size === 0) {
+      return;
+    }
 
     // Skip if nothing changed
     if (
@@ -38,9 +40,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
           if (isMounted) {
             setVisitData(visitData);
             const duration = (performance.now() - startTime).toFixed(2);
-            const visitedCount = Array.from(visitData.values()).filter(
-              (v) => v.visited
-            ).length;
+            const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
             logger.info(
               `[useRegionAnalysis] ${visitedCount}/${regions.length} regions visited (${duration}ms)`

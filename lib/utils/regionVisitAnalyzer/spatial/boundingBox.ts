@@ -1,6 +1,6 @@
-import { BoundingBox } from '../types';
+import { GeoJSON } from 'geojson';
 import { GPXPoint } from '@/lib/types/types';
-import { GeoJSON } from "geojson";
+import { BoundingBox } from '../types';
 
 const cache = new Map<string, BoundingBox>();
 
@@ -13,33 +13,37 @@ const cache = new Map<string, BoundingBox>();
  * @returns bounding box with min/max lat/lon
  */
 export function getBoundingBox(
-    regionId: string,
-    geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
+  regionId: string,
+  geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
 ): BoundingBox {
-    const cached = cache.get(regionId);
-    if (cached) {return cached;}
+  const cached = cache.get(regionId);
+  if (cached) {
+    return cached;
+  }
 
-    let minLat = Infinity, maxLat = -Infinity;
-    let minLon = Infinity, maxLon = -Infinity;
+  let minLat = Infinity,
+    maxLat = -Infinity;
+  let minLon = Infinity,
+    maxLon = -Infinity;
 
-    const processRing = (ring: GeoJSON.Position[]) => {
-        for (const [lon, lat] of ring) {
-            minLat = Math.min(minLat, lat);
-            maxLat = Math.max(maxLat, lat);
-            minLon = Math.min(minLon, lon);
-            maxLon = Math.max(maxLon, lon);
-        }
-    };
-
-    if (geometry.type === 'Polygon') {
-        geometry.coordinates.forEach(processRing);
-    } else {
-        geometry.coordinates.forEach((poly) => poly.forEach(processRing));
+  const processRing = (ring: GeoJSON.Position[]) => {
+    for (const [lon, lat] of ring) {
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLon = Math.min(minLon, lon);
+      maxLon = Math.max(maxLon, lon);
     }
+  };
 
-    const bbox = { minLat, maxLat, minLon, maxLon };
-    cache.set(regionId, bbox);
-    return bbox;
+  if (geometry.type === 'Polygon') {
+    geometry.coordinates.forEach(processRing);
+  } else {
+    geometry.coordinates.forEach((poly) => poly.forEach(processRing));
+  }
+
+  const bbox = { minLat, maxLat, minLon, maxLon };
+  cache.set(regionId, bbox);
+  return bbox;
 }
 
 /**
@@ -47,14 +51,14 @@ export function getBoundingBox(
  * much faster than accurate polygon check, used for pre-filtering
  */
 export function pointInBoundingBox(point: GPXPoint, bbox: BoundingBox): boolean {
-    return (
-        point.lat >= bbox.minLat &&
-        point.lat <= bbox.maxLat &&
-        point.lon >= bbox.minLon &&
-        point.lon <= bbox.maxLon
-    );
+  return (
+    point.lat >= bbox.minLat &&
+    point.lat <= bbox.maxLat &&
+    point.lon >= bbox.minLon &&
+    point.lon <= bbox.maxLon
+  );
 }
 
 export function clearBoundingBoxCache(): void {
-    cache.clear();
+  cache.clear();
 }

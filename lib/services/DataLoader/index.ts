@@ -11,40 +11,40 @@ import { RegionLoader } from './RegionLoader';
  * ```
  */
 export class DataLoader {
-    /**
-     * loads gpx tracks from local storage or strava api
-     */
-    static async loadGPXTracks(
-        source: 'local' | 'api' = 'api',
-        files?: string[]
-    ): Promise<Map<string, GPXTrack>> {
-        return GPXLoader.loadTracks(source, files);
-    }
+  /**
+   * loads gpx tracks from local storage or strava api
+   */
+  static async loadGPXTracks(
+    source: 'local' | 'api' = 'api',
+    files?: string[]
+  ): Promise<Map<string, GPXTrack>> {
+    return GPXLoader.loadTracks(source, files);
+  }
 
-    /**
-     * loads regions optionally filtered by bounds and countries
-     */
-    static async loadRegions(
-        bounds?: { north: number; south: number; east: number; west: number },
-        countries?: string[]
-    ): Promise<Regions[]> {
-        return RegionLoader.loadRegions(bounds, countries);
-    }
+  /**
+   * loads regions optionally filtered by bounds and countries
+   */
+  static async loadRegions(
+    bounds?: { north: number; south: number; east: number; west: number },
+    countries?: string[]
+  ): Promise<Regions[]> {
+    return RegionLoader.loadRegions(bounds, countries);
+  }
 
-    /**
-     * clears all cached data (gpx tracks and regions)
-     */
-    static clearCache(): void {
-        GPXLoader.clearCache();
-        RegionLoader.clearCache();
-    }
+  /**
+   * clears all cached data (gpx tracks and regions)
+   */
+  static clearCache(): void {
+    GPXLoader.clearCache();
+    RegionLoader.clearCache();
+  }
 
-    /**
-     * gets cache statistics for debugging
-     */
-    static getCacheStats() {
-        return {
-            gpx: GPXLoader.getCacheStats(),
-        };
-    }
+  /**
+   * gets cache statistics for debugging
+   */
+  static getCacheStats() {
+    return {
+      gpx: GPXLoader.getCacheStats(),
+    };
+  }
 }

@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Regions } from '@/lib/types/types';
-import { DataLoader } from '@/lib/services/DataLoader';
 import L from 'leaflet';
 import { logger } from '@/lib/logger';
+import { DataLoader } from '@/lib/services/DataLoader';
+import { Regions } from '@/lib/types/types';
 
 /**
  * Hook to handle region loading based on map viewport
@@ -15,7 +15,9 @@ export function useRegionLoading(map: L.Map | null) {
   const lastBoundsRef = useRef<any>(null);
 
   const loadRegionsForViewport = useCallback(async () => {
-    if (!map) {return;}
+    if (!map) {
+      return;
+    }
 
     const startTime = performance.now();
     const bounds = map.getBounds();
@@ -30,16 +32,16 @@ export function useRegionLoading(map: L.Map | null) {
 
     const loadedRegions = await DataLoader.loadRegions(viewportBounds);
     const duration = (performance.now() - startTime).toFixed(2);
-    logger.debug(
-      `[useRegionLoading] Loaded ${loadedRegions.length} regions (${duration}ms)`
-    );
+    logger.debug(`[useRegionLoading] Loaded ${loadedRegions.length} regions (${duration}ms)`);
 
     setRegions(loadedRegions);
   }, [map]);
 
   // Setup map event listeners with debouncing
   useEffect(() => {
-    if (!map) {return;}
+    if (!map) {
+      return;
+    }
 
     void loadRegionsForViewport();
 
