@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GPXTrack, Regions } from '@/lib/types/types';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to analyze which regions have been visited

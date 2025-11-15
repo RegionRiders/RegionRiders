@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useRef, useState} from 'react';
 import L from 'leaflet';
-import logger from '@/lib/utils/logger';
+import {logger} from '@/lib/logger';
 
 interface UseLeafletMapOptions {
     center?: [number, number];
@@ -91,7 +91,7 @@ export function useLeafletMap(
             });
         } catch (err) {
             const errorMessage = `Failed to initialize map: ${err}`;
-            logger.error('[useLeafletMap]', errorMessage);
+            logger.error(`[useLeafletMap] ${errorMessage}`);
             setError(errorMessage);
             setIsReady(false);
         }

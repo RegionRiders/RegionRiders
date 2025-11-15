@@ -1,4 +1,4 @@
-import logger from "@/lib/utils/logger";
+import { logger } from '@/lib/logger';
 
 /**
  * Ensures a Leaflet map pane exists with the specified z-index

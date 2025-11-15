@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataLoader } from '@/lib/services/DataLoader';
 import { GPXTrack } from "@/lib/types/types";
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * manages gpx track data loading
@@ -32,7 +32,7 @@ export function useGPXData(autoLoad: boolean = true) {
             } catch (err) {
                 const errorMsg = `Failed to load GPX data: ${err}`;
                 setError(errorMsg);
-                logger.error('[useGPXData]', errorMsg);
+                logger.error(`[useGPXData] ${errorMsg}`);
             } finally {
                 setLoading(false);
             }

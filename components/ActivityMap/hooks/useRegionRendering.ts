@@ -5,7 +5,7 @@ import {Regions} from '@/lib/types/types';
 import {drawRegions} from '../drawRegions/drawRegions';
 import {RegionVisitData} from '@/lib/utils/regionVisitAnalyzer';
 import L from 'leaflet';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to handle region border rendering

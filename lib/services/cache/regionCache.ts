@@ -1,5 +1,5 @@
 import { Regions } from '@/lib/types/types';
-import logger from "@/lib/utils/logger";
+import { logger } from '@/lib/logger';
 
 export interface CountryData {
     code: string;
@@ -91,7 +91,7 @@ export class RegionCache {
 
             return regions;
         } catch (error) {
-            logger.error(`[RegionCache] Error loading ${fileName}:`, error);
+            logger.error(`[RegionCache] Error loading ${fileName}: ${error}`);
             return existing?.data ?? [];
         } finally {
             this.loadingPromises.delete(fileName);

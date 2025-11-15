@@ -1,6 +1,6 @@
 import { GPXTrack } from '@/lib/types/types';
 import { GPXCache } from '../cache/gpxCache';
-import logger from "@/lib/utils/logger";
+import {logger} from '@/lib/logger';
 
 /**
  * handles loading and parsing of gpx track files with caching
@@ -81,7 +81,7 @@ export class GPXLoader {
         }
 
         if (errors.length > 0) {
-            logger.warn(`[GPXLoader] ${errors.length} files failed:`, errors);
+            logger.warn(`[GPXLoader] ${errors.length} files failed: ${errors}`);
         }
 
         // log cache stats
@@ -115,7 +115,7 @@ export class GPXLoader {
             const data = await response.json();
             return data.files || [];
         } catch (error) {
-            logger.warn('[GPXLoader] Could not load GPX file list:', error);
+            logger.warn(`[GPXLoader] Could not load GPX file list: ${error}`);
             return [];
         }
     }

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { GPXTrack } from '@/lib/types/types';
 import { drawActivities, type ActivityRenderMode } from '../drawActivities/drawActivities';
 import L from 'leaflet';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to handle activity rendering (heatmap or lines)
@@ -20,28 +20,28 @@ export function useActivityRendering(
     const renderTimeoutRef = useRef(null);
     const renderAbortRef = useRef(false);
 
-    logger.info('[useActivityRendering] Hook called with:', {
+    logger.info(`[useActivityRendering] Hook called with: ${{
         hasMap: !!map,
         tracksSize: tracks.size,
         showActivities,
         mode,
         tracksType: tracks instanceof Map ? 'Map' : typeof tracks,
-    });
+    }}`);
 
     useEffect(() => {
-        logger.info('[useActivityRendering] Effect running:', {
+        logger.info(`[useActivityRendering] Effect running: ${{
             hasMap: !!map,
             tracksSize: tracks.size,
             showActivities,
             mode,
-        });
+        }}`);
 
         if (!map || !showActivities || tracks.size === 0) {
-            logger.info('[useActivityRendering] Skipping render:', {
+            logger.info(`[useActivityRendering] Skipping render: ${{
                 noMap: !map,
                 notShowing: !showActivities,
                 noTracks: tracks.size === 0,
-            });
+            }}`);
             return;
         }
 

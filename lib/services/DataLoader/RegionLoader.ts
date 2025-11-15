@@ -2,7 +2,7 @@ import {Regions} from '@/lib/types/types';
 import {RegionCache} from '../cache/regionCache';
 import {BoundsChecker} from '../geometry/boundsChecker';
 import {countryConfig} from '../config/countryConfig';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * handles loading and filtering of geographic region data
@@ -49,7 +49,7 @@ export class RegionLoader {
                 } catch (error) {
                     const errorMsg = `Failed to load ${country.name}`;
                     errors.push(errorMsg);
-                    logger.error(`[RegionLoader] ${errorMsg}:`, error);
+                    logger.error(`[RegionLoader] ${errorMsg}: ${error}`);
                 }
             }
 
@@ -69,7 +69,7 @@ export class RegionLoader {
 
             return allRegions;
         } catch (error) {
-            logger.error('[RegionLoader] Error loading regions:', error);
+            logger.error(`[RegionLoader] Error loading regions: ${error}`);
             return [];
         }
     }

@@ -2,7 +2,7 @@
 
 import { GPXTrack } from "@/lib/types/types";
 import L from 'leaflet';
-import logger from "@/lib/utils/logger";
+import {logger} from '@/lib/logger';
 import { MAP_CONFIG } from "@/components/ActivityMap/config/mapConfig";
 import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
 import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
@@ -66,13 +66,13 @@ export function drawActivitiesAsHeatmap(
                     canvasWidth <= 0 ||
                     canvasHeight <= 0
                 ) {
-                    logger.warn('[drawActivities] Invalid canvas dimensions, aborting render:', {
+                    logger.warn(`[drawActivities] Invalid canvas dimensions, aborting render: ${{
                         canvasWidth,
                         canvasHeight,
                         topLeft,
                         bottomRight,
                         zoom: map.getZoom(),
-                    });
+                    }}`);
                     return;
                 }
 
@@ -145,11 +145,11 @@ export function drawActivitiesAsHeatmap(
                         canvasWidth <= 0 ||
                         canvasHeight <= 0
                     ) {
-                        logger.error('[drawActivities] Invalid state in finishRender:', {
+                        logger.error(`[drawActivities] Invalid state in finishRender: ${{
                             hasCtx: !!ctx,
                             canvasWidth,
                             canvasHeight,
-                        });
+                        }}`);
                         return;
                     }
 
@@ -198,14 +198,14 @@ export function drawActivitiesAsHeatmap(
                             );
 
                         } catch (error) {
-                            logger.error('[drawActivities] Error adding image overlay:', error);
+                            logger.error(`[drawActivities] Error adding image overlay: ${error}`);
                         }
                     }
                 };
 
                 processChunk();
             } catch (error) {
-                logger.error('[drawActivities] Error rendering heatmap:', error);
+                logger.error(`[drawActivities] Error rendering heatmap: ${error}`);
             }
         }, 0);
     };

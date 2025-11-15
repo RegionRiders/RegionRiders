@@ -8,7 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { TopologySimplifier } from './utils/topologySimplifier';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import {GeoJSON} from "geojson";
 
 interface CountryConfig {
@@ -65,7 +65,7 @@ class MultiCountryFetcher {
 
                 logger.info(`Completed: ${geojson.features.length} regions saved`);
             } catch (error) {
-                logger.error(`Error fetching ${country.name}:`, error);
+                logger.error(`Error fetching ${country.name}: ${error}`);
             }
 
             // Rate limiting: wait between requests

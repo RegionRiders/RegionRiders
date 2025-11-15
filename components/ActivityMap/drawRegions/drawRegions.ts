@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { Regions } from '@/lib/types/types';
 import { getRegionColorForCount } from "@/components/ActivityMap/drawRegions/utils/getRegionColorForCount";
 import { RegionVisitData } from "@/lib/utils/regionVisitAnalyzer";
-import logger from "@/lib/utils/logger";
+import { logger } from '@/lib/logger';
 
 /**
  * renders region boundaries on a map with colors based on visit count

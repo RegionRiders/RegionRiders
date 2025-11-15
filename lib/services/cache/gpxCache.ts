@@ -1,6 +1,6 @@
 import { GPXTrack } from '@/lib/types/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface GPXCacheEntry {
     track: GPXTrack;
@@ -64,7 +64,7 @@ export class GPXCache {
 
             return track;
         } catch (error) {
-            logger.error(`[GPXCache] Error loading ${fileName}:`, error);
+            logger.error(`[GPXCache] Error loading ${fileName}: ${error}`);
             throw error;
         } finally {
             this.loadingPromises.delete(fileName);

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Regions } from '@/lib/types/types';
 import { DataLoader } from '@/lib/services/DataLoader';
 import L from 'leaflet';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to handle region loading based on map viewport
