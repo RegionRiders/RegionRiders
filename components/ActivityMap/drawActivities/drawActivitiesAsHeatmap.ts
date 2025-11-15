@@ -9,14 +9,6 @@ import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 import { ensureMapPane } from './utils/ensureMapPane';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
 
-interface HeatmapCache {
-    imageUrl: string;
-    bounds: any;
-    zoomLevel: number;
-}
-
-let heatmapCache: HeatmapCache | null = null;
-
 /**
  * renders gpx tracks as a heatmap overlay
  *
@@ -184,8 +176,6 @@ export function drawActivitiesAsHeatmap(
                     const imageUrl = canvas.toDataURL();
                     const imageBounds: any = [bounds.getSouthWest(), bounds.getNorthEast()];
 
-                    heatmapCache = { imageUrl, bounds: imageBounds, zoomLevel: map.getZoom() };
-
                     if (currentImageLayerRef.current && map.hasLayer?.(currentImageLayerRef.current)) {
                         map.removeLayer(currentImageLayerRef.current);
                     }
@@ -260,8 +250,4 @@ export function drawActivitiesAsHeatmap(
             } catch (e) { /* empty */ }
         }
     };
-}
-
-export function clearHeatmapCache() {
-    heatmapCache = null;
 }
