@@ -5,6 +5,18 @@
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 
+// Helper utilities to safely mutate NODE_ENV without TS readonly errors
+const setNodeEnv = (value: string) => {
+  (process.env as Record<string, string>).NODE_ENV = value;
+};
+const restoreNodeEnv = (value: string | undefined) => {
+  if (value === undefined) {
+    delete (process.env as Record<string, string>).NODE_ENV;
+  } else {
+    (process.env as Record<string, string>).NODE_ENV = value;
+  }
+};
+
 describe('Logger Server - Pretty Stream Coverage', () => {
   let originalEnv: string | undefined;
   let consoleWarnSpy: jest.SpyInstance;
@@ -16,14 +28,14 @@ describe('Logger Server - Pretty Stream Coverage', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
+    restoreNodeEnv(originalEnv);
     consoleWarnSpy.mockRestore();
     jest.resetModules();
   });
 
   describe('Development environment with pino-pretty success', () => {
     it('should use pino-pretty stream when available in development', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       // Mock pino-pretty to return a stream
       const mockPrettyStream = {
@@ -56,7 +68,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should create logger with pretty stream in non-test development', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       const mockPrettyStream = {
         write: jest.fn(),
@@ -84,7 +96,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Development environment with pino-pretty failure', () => {
     it('should fallback to standard pino when pino-pretty throws', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       // Mock pino-pretty to throw an error
       jest.doMock('pino-pretty', () => {
@@ -107,7 +119,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should handle require error gracefully', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       // Mock require to throw
       jest.doMock('pino-pretty', () => {
@@ -131,7 +143,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should create functional logger after pretty failure', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       jest.doMock('pino-pretty', () => {
         throw new Error('Not installed');
@@ -153,7 +165,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Production environment bypasses pretty', () => {
     it('should not attempt to load pino-pretty in production', () => {
-      process.env.NODE_ENV = 'production';
+      setNodeEnv('production');
 
       // Mock should not be called in production
       const mockPretty = jest.fn();
@@ -172,7 +184,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should use standard pino in production', () => {
-      process.env.NODE_ENV = 'production';
+      setNodeEnv('production');
 
       jest.isolateModules(() => {
         const { logger, apiLogger } = require('./logger.server');
@@ -189,7 +201,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Test environment bypasses pretty', () => {
     it('should not attempt to load pino-pretty in test', () => {
-      process.env.NODE_ENV = 'test';
+      setNodeEnv('test');
 
       const mockPretty = jest.fn();
       jest.doMock('pino-pretty', () => mockPretty);
@@ -206,7 +218,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should use standard pino with silent level in test', () => {
-      process.env.NODE_ENV = 'test';
+      setNodeEnv('test');
 
       jest.isolateModules(() => {
         const { logger, stravaLogger, authLogger } = require('./logger.server');
@@ -222,7 +234,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Logger proxy behavior', () => {
     it('should lazy-initialize logger through proxy', () => {
-      process.env.NODE_ENV = 'test';
+      setNodeEnv('test');
 
       jest.isolateModules(() => {
         const { logger } = require('./logger.server');
@@ -235,7 +247,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
     });
 
     it('should cache logger instance across accesses', () => {
-      process.env.NODE_ENV = 'test';
+      setNodeEnv('test');
 
       jest.isolateModules(() => {
         const { logger } = require('./logger.server');
@@ -251,7 +263,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Named loggers in different environments', () => {
     it('should create named loggers successfully in development', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       const mockPrettyStream = { write: jest.fn() };
       jest.doMock('pino-pretty', () => jest.fn(() => mockPrettyStream));
@@ -273,7 +285,7 @@ describe('Logger Server - Pretty Stream Coverage', () => {
 
   describe('Helper functions in different environments', () => {
     it('should create helper functions in development with pretty', () => {
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
 
       const mockPrettyStream = { write: jest.fn() };
       jest.doMock('pino-pretty', () => jest.fn(() => mockPrettyStream));
