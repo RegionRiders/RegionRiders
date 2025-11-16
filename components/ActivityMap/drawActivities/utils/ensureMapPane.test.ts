@@ -39,7 +39,7 @@ describe('ensureMapPane', () => {
   });
 
   it('should create pane if it does not exist', () => {
-    const newPane = { style: {} };
+    const newPane = { style: {} as { zIndex?: string } };
     const mockMap = {
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => newPane),
@@ -52,7 +52,7 @@ describe('ensureMapPane', () => {
   });
 
   it('should set z-index on newly created pane', () => {
-    const newPane = { style: {} };
+    const newPane = { style: {} as { zIndex?: string } };
     const mockMap = {
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => newPane),
@@ -64,7 +64,7 @@ describe('ensureMapPane', () => {
   });
 
   it('should handle different pane names', () => {
-    const newPane = { style: {} };
+    const newPane = { style: {} as { zIndex?: string } };
     const mockMap = {
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => newPane),
@@ -76,7 +76,7 @@ describe('ensureMapPane', () => {
   });
 
   it('should handle different z-index values', () => {
-    const newPane = { style: {} };
+    const newPane = { style: {} as { zIndex?: string } };
     const mockMap = {
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => newPane),
