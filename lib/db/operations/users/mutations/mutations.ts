@@ -1,15 +1,12 @@
 /**
- * User CRUD Operations
- * Provides Create, Read, Update, Delete operations for users
- *
- * Note: These are database operations used by Server Actions and API Routes.
- * For direct Server Actions, create separate files in the app directory.
+ * User Mutation Operations
+ * Write operations for creating, updating, and deleting users
  */
 
-import { cache } from 'react';
-import { desc, eq } from 'drizzle-orm';
-import { getDb, users, type NewUser, type User } from '@/lib/db';
+import { eq } from 'drizzle-orm';
+import { getDb, getUserByStravaId, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
+import type { NewUser, User, UserTokenUpdate } from '../types';
 
 /**
  * Create a new user
@@ -20,85 +17,12 @@ export async function createUser(data: NewUser): Promise<User> {
     const db = getDb();
     const [user] = await db.insert(users).values(data).returning();
 
-    if (!user) {
-      throw new Error('Failed to create user');
-    }
-
     return user;
   } catch (error) {
     dbLogger.error({ error, data }, 'Error creating user');
     throw error;
   }
 }
-
-/**
- * Get a user by ID
- * Cached for the duration of the request (React cache)
- */
-export const getUserById = cache(async (id: string): Promise<User | undefined> => {
-  try {
-    const db = getDb();
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return user;
-  } catch (error) {
-    dbLogger.error({ error, id }, 'Error fetching user by ID');
-    return undefined;
-  }
-});
-
-/**
- * Get a user by Strava ID
- * Cached for the duration of the request (React cache)
- */
-export const getUserByStravaId = cache(async (stravaId: string): Promise<User | undefined> => {
-  try {
-    const db = getDb();
-    const [user] = await db.select().from(users).where(eq(users.stravaId, stravaId)).limit(1);
-    return user;
-  } catch (error) {
-    dbLogger.error({ error, stravaId }, 'Error fetching user by Strava ID');
-    return undefined;
-  }
-});
-
-/**
- * Get a user by email
- * Cached for the duration of the request (React cache)
- */
-export const getUserByEmail = cache(async (email: string): Promise<User | undefined> => {
-  try {
-    const db = getDb();
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    return user;
-  } catch (error) {
-    dbLogger.error({ error, email }, 'Error fetching user by email');
-    return undefined;
-  }
-});
-
-/**
- * Get all users with pagination
- * Cached for the duration of the request (React cache)
- */
-export const getAllUsers = cache(
-  async (options?: { limit?: number; offset?: number; activeOnly?: boolean }): Promise<User[]> => {
-    try {
-      const db = getDb();
-      const { limit = 50, offset = 0, activeOnly = false } = options || {};
-
-      let query = db.select().from(users);
-
-      if (activeOnly) {
-        query = query.where(eq(users.isActive, true)) as any;
-      }
-
-      return await query.orderBy(desc(users.createdAt)).limit(limit).offset(offset);
-    } catch (error) {
-      dbLogger.error({ error, options }, 'Error fetching users');
-      return [];
-    }
-  }
-);
 
 /**
  * Update a user
@@ -132,11 +56,7 @@ export async function updateUser(
  */
 export async function updateUserTokens(
   id: string,
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-    tokenExpiresAt: Date;
-  }
+  tokens: UserTokenUpdate
 ): Promise<User | undefined> {
   try {
     const db = getDb();

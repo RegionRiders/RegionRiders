@@ -1,5 +1,5 @@
 /**
- * Database Schema - Users Table
+ * Database Schema - Users AKA Athletes Table
  * Defines the users table structure using Drizzle ORM
  */
 
