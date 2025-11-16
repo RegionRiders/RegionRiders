@@ -9,6 +9,7 @@ import {
   isTest,
   LOG_DIR,
 } from './config';
+import { createBrowserLogger } from './logger.client';
 import {
   apiLogger,
   authLogger,
@@ -19,7 +20,6 @@ import {
   logger,
   stravaLogger,
 } from './logger.server';
-import { createBrowserLogger } from './logger.client';
 import { logError } from './utils';
 
 describe('Logger Module - Main Exports', () => {
