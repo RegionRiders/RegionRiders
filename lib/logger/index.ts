@@ -1,29 +1,32 @@
-// Configuration
-export {
-  getLoggerConfig,
-  isProduction,
-  isTest,
-  LOG_DIR,
-  createChildLogger,
-  createProductionLogger,
-  initProductionLogger,
-} from './config';
-
-// Logger instances and creation
+// Default export: Server-side logger (Next.js App Router is server-first)
+// This follows Next.js best practice where components are server components by default
+// For client components, explicitly import from '@/lib/logger/client'
 export {
   logger,
   apiLogger,
   stravaLogger,
   authLogger,
   dbLogger,
-  createBrowserLogger,
   createLogger,
   createRequestLogger,
   logApiRequest,
-} from './instances';
+} from './logger.server';
 
 // Utility functions
 export { logError } from './utils';
+
+// Configuration exports
+export {
+  getLoggerConfig,
+  createChildLogger,
+  isProduction,
+  isTest,
+  isServer,
+  LOG_DIR,
+} from './config';
+
+// Production logger functions
+export { createProductionLogger, initProductionLogger } from './config/production';
 
 // Type exports
 export type { LoggerOptions } from 'pino';

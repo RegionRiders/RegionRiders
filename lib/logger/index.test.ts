@@ -12,14 +12,14 @@ import {
 import {
   apiLogger,
   authLogger,
-  createBrowserLogger,
   createLogger,
   createRequestLogger,
   dbLogger,
   logApiRequest,
   logger,
   stravaLogger,
-} from './instances';
+} from './logger.server';
+import { createBrowserLogger } from './logger.client';
 import { logError } from './utils';
 
 describe('Logger Module - Main Exports', () => {
