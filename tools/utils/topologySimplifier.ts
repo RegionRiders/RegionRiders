@@ -43,7 +43,9 @@ export class TopologySimplifier {
   }
 
   private simplifyRing(ring: Point[]): Point[] {
-    if (ring.length <= 3) {return ring;}
+    if (ring.length <= 3) {
+      return ring;
+    }
 
     const simplified = this.douglasPeucker(ring, this.tolerance);
 
@@ -63,7 +65,9 @@ export class TopologySimplifier {
    * Douglas-Peucker line simplification algorithm
    */
   private douglasPeucker(points: Point[], tolerance: number): Point[] {
-    if (points.length <= 2) {return points;}
+    if (points.length <= 2) {
+      return points;
+    }
 
     let maxDistance = 0;
     let maxIndex = 0;
@@ -85,7 +89,6 @@ export class TopologySimplifier {
       return [...left.slice(0, -1), ...right];
     }
     return [first, last];
-
   }
 
   /**
@@ -96,9 +99,7 @@ export class TopologySimplifier {
     const dy = lineEnd.lat - lineStart.lat;
 
     if (dx === 0 && dy === 0) {
-      return Math.sqrt(
-        (point.lon - lineStart.lon)**2 + (point.lat - lineStart.lat)**2
-      );
+      return Math.sqrt((point.lon - lineStart.lon) ** 2 + (point.lat - lineStart.lat) ** 2);
     }
 
     const t = Math.max(
@@ -112,6 +113,6 @@ export class TopologySimplifier {
     const projectionX = lineStart.lon + t * dx;
     const projectionY = lineStart.lat + t * dy;
 
-    return Math.sqrt((point.lon - projectionX)**2 + (point.lat - projectionY)**2);
+    return Math.sqrt((point.lon - projectionX) ** 2 + (point.lat - projectionY) ** 2);
   }
 }
