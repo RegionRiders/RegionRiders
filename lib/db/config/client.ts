@@ -111,15 +111,18 @@ export async function testConnection(): Promise<boolean> {
     const result = await query('SELECT NOW() as now, version() as version');
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('Database connection successful:', {
-        timestamp: result.rows[0].now,
-        version: result.rows[0].version.split(' ')[0], // Just the version number
-      });
+      logger.info(
+        {
+          timestamp: result.rows[0].now,
+          version: result.rows[0].version.split(' ')[0],
+        },
+        'Database connection successful'
+      );
     }
 
     return true;
   } catch (error) {
-    console.error('Database connection failed:', error);
+    logger.error({ error }, 'Database connection failed');
     return false;
   }
 }

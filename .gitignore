@@ -143,3 +143,12 @@ dist
 logs/
 # storybook
 /storybook-static
+
+# Database
+drizzle/
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+.pgdata/
+

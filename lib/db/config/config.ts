@@ -80,10 +80,6 @@ export function getDatabaseConfig(): DatabaseConfig {
  * @returns {string} PostgreSQL connection URL
  */
 export function getDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-
   const config = getDatabaseConfig();
   const credentials = `${config.user}:${config.password}`;
   const location = `${config.host}:${config.port}`;
