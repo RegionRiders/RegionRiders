@@ -9,17 +9,17 @@ import {
   isTest,
   LOG_DIR,
 } from './config';
+import { createBrowserLogger } from './logger.client';
 import {
   apiLogger,
   authLogger,
-  createBrowserLogger,
   createLogger,
   createRequestLogger,
   dbLogger,
   logApiRequest,
   logger,
   stravaLogger,
-} from './instances';
+} from './logger.server';
 import { logError } from './utils';
 
 describe('Logger Module - Main Exports', () => {
