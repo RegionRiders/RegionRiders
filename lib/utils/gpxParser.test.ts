@@ -17,7 +17,7 @@ global.File = MockFile as any;
 
 // Mock DOMParser
 global.DOMParser = class DOMParser {
-  parseFromString(xmlString: string, mimeType: string) {
+  parseFromString(xmlString: string, _mimeType: string) {
     // Simple mock implementation for testing
     const mockDoc = {
       getElementsByTagName: (tagName: string) => {
@@ -201,8 +201,8 @@ describe('parseGPXFile', () => {
       const result = await parseGPXFile(mockFile);
 
       expect(result.metadata).toBeDefined();
-      expect(result.metadata.distance).toBeDefined();
-      expect(typeof result.metadata.distance).toBe('number');
+      expect(result.metadata?.distance).toBeDefined();
+      expect(typeof result.metadata?.distance).toBe('number');
     });
 
     it('should generate unique track IDs', async () => {
@@ -226,7 +226,9 @@ describe('parseGPXFile', () => {
         parseFromString() {
           return {
             getElementsByTagName: (tag: string) => {
-              if (tag === 'parsererror' || tag === 'parser error') return [];
+              if (tag === 'parsererror' || tag === 'parser error') {
+                return [];
+              }
               if (tag === 'trk') {
                 return [{ getElementsByTagName: () => [] }];
               }
@@ -258,7 +260,9 @@ describe('parseGPXFile', () => {
         parseFromString() {
           return {
             getElementsByTagName: (tag: string) => {
-              if (tag === 'parsererror' || tag === 'parser error') return [];
+              if (tag === 'parsererror' || tag === 'parser error') {
+                return [];
+              }
               if (tag === 'trk') {
                 return [{ getElementsByTagName: () => [] }];
               }

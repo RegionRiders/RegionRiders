@@ -1,3 +1,8 @@
+import { RegionCache } from '../cache/regionCache';
+import { countryConfig } from '../config/countryConfig';
+import { BoundsChecker } from '../geometry/boundsChecker';
+import { RegionLoader } from './RegionLoader';
+
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
   logger: {
@@ -28,11 +33,6 @@ jest.mock('../config/countryConfig', () => ({
     getAvailableCountries: jest.fn(),
   },
 }));
-
-import { RegionLoader } from './RegionLoader';
-import { RegionCache } from '../cache/regionCache';
-import { BoundsChecker } from '../geometry/boundsChecker';
-import { countryConfig } from '../config/countryConfig';
 
 describe('RegionLoader', () => {
   const mockRegions = [
@@ -66,7 +66,7 @@ describe('RegionLoader', () => {
     jest.clearAllMocks();
 
     // Get the mock instances
-    (RegionCache as jest.Mock).mockClear();
+    (RegionCache as unknown as jest.Mock).mockClear();
     (BoundsChecker as jest.Mock).mockClear();
 
     mockCacheInstance = {
@@ -79,7 +79,7 @@ describe('RegionLoader', () => {
       clearCache: jest.fn(),
     };
 
-    (RegionCache as jest.Mock).mockImplementation(() => mockCacheInstance);
+    (RegionCache as unknown as jest.Mock).mockImplementation(() => mockCacheInstance);
     (BoundsChecker as jest.Mock).mockImplementation(() => mockBoundsCheckerInstance);
     (countryConfig.getAvailableCountries as jest.Mock).mockReturnValue(mockCountries);
   });
@@ -189,9 +189,7 @@ describe('RegionLoader', () => {
         west: 14.0,
       };
 
-      mockBoundsCheckerInstance.isInBounds
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(false);
+      mockBoundsCheckerInstance.isInBounds.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
       const result = await RegionLoader.loadRegions(bounds);
 

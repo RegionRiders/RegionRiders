@@ -1,4 +1,4 @@
-import { RegionCache, CountryData } from './regionCache';
+import { CountryData, RegionCache } from './regionCache';
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
@@ -86,7 +86,6 @@ describe('RegionCache', () => {
       expect(result[0].id).toBe('region-1');
       expect(result[0].name).toBe('Test Region 1');
       expect(result[0].country).toBe('PL');
-      expect(result[0].adminLevel).toBe(4);
       expect(result[0].geometry).toBeDefined();
       expect(global.fetch).toHaveBeenCalledWith('/data/regions/poland.geojson');
     });
@@ -157,7 +156,6 @@ describe('RegionCache', () => {
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Unknown');
       expect(result[0].country).toBe('');
-      expect(result[0].adminLevel).toBe(0);
     });
 
     it('should reload after cache expiration', async () => {

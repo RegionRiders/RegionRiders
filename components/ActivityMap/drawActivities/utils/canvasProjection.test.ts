@@ -37,10 +37,7 @@ describe('canvasProjection', () => {
 
       converter(50.5, 14.5);
 
-      expect(mockMap.project).toHaveBeenCalledWith(
-        { lat: 50.5, lng: 14.5 },
-        10
-      );
+      expect(mockMap.project).toHaveBeenCalledWith({ lat: 50.5, lng: 14.5 }, 10);
     });
 
     it('should call map.getZoom', () => {
@@ -65,7 +62,7 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
 
       // Mock map.project returns { x: 5010, y: 1410 }
-      // After subtracting topLeft and scaling: 
+      // After subtracting topLeft and scaling:
       // x = (5010 - 5000) * 2 = 20
       // y = (1410 - 1400) * 2 = 20
       const result = converter(50, 14);

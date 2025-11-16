@@ -1,7 +1,7 @@
+import type { GPXTrack } from '@/lib/types/types';
 import { drawActivities } from './drawActivities';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
-import type { GPXTrack } from '@/lib/types/types';
 
 // Mock the draw functions
 jest.mock('./drawActivitiesAsHeatmap', () => ({
@@ -34,14 +34,7 @@ describe('drawActivities', () => {
   });
 
   it('should call drawActivitiesAsHeatmap when mode is heatmap', () => {
-    drawActivities(
-      mockMap,
-      mockTracks,
-      mockImageLayerRef,
-      mockAbortRef,
-      mockTimeoutRef,
-      'heatmap'
-    );
+    drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef, 'heatmap');
 
     expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
       mockMap,
@@ -54,14 +47,7 @@ describe('drawActivities', () => {
   });
 
   it('should call drawActivitiesAsLines when mode is lines', () => {
-    drawActivities(
-      mockMap,
-      mockTracks,
-      mockImageLayerRef,
-      mockAbortRef,
-      mockTimeoutRef,
-      'lines'
-    );
+    drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef, 'lines');
 
     expect(drawActivitiesAsLines).toHaveBeenCalledWith(
       mockMap,
@@ -73,13 +59,7 @@ describe('drawActivities', () => {
   });
 
   it('should default to heatmap mode when no mode specified', () => {
-    drawActivities(
-      mockMap,
-      mockTracks,
-      mockImageLayerRef,
-      mockAbortRef,
-      mockTimeoutRef
-    );
+    drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef);
 
     expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
       mockMap,

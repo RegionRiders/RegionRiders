@@ -1,5 +1,5 @@
-import { attachActivityHoverEvents, attachActivityClickHandler } from './activityLineEvents';
 import type { GPXTrack } from '@/lib/types/types';
+import { attachActivityClickHandler, attachActivityHoverEvents } from './activityLineEvents';
 
 describe('activityLineEvents', () => {
   describe('attachActivityHoverEvents', () => {
@@ -19,7 +19,7 @@ describe('activityLineEvents', () => {
 
     it('should change style on mouseover', () => {
       const mockPolyline = {
-        on: jest.fn((event: string, handler: Function) => {
+        on: jest.fn((event: string, handler: () => void) => {
           if (event === 'mouseover') {
             handler.call(mockPolyline);
           }
@@ -39,10 +39,10 @@ describe('activityLineEvents', () => {
     });
 
     it('should change style on mouseout', () => {
-      let mouseoutHandler: Function | null = null;
+      let mouseoutHandler: (() => void) | null = null;
 
       const mockPolyline = {
-        on: jest.fn((event: string, handler: Function) => {
+        on: jest.fn((event: string, handler: () => void) => {
           if (event === 'mouseout') {
             mouseoutHandler = handler;
           }
@@ -53,9 +53,8 @@ describe('activityLineEvents', () => {
 
       attachActivityHoverEvents(mockPolyline as any);
 
-      // Call the mouseout handler
       if (mouseoutHandler) {
-        mouseoutHandler.call(mockPolyline);
+        (mouseoutHandler as () => void).call(mockPolyline);
       }
 
       expect(mockPolyline.setStyle).toHaveBeenCalledWith({

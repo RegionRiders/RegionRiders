@@ -1,3 +1,6 @@
+import { parseGPXFile } from '@/lib/utils/gpxParser';
+import { GPXLoader } from './gpxLoader';
+
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
   logger: {
@@ -8,13 +11,10 @@ jest.mock('@/lib/logger/client', () => ({
   },
 }));
 
-// Mock parseGPXFile 
+// Mock parseGPXFile
 jest.mock('@/lib/utils/gpxParser', () => ({
   parseGPXFile: jest.fn(),
 }));
-
-import { GPXLoader } from './gpxLoader';
-import { parseGPXFile } from '@/lib/utils/gpxParser';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -25,9 +25,7 @@ describe('GPXLoader', () => {
   const mockTrack = {
     id: 'track-1',
     name: 'Test Track',
-    points: [
-      { lat: 50.0, lon: 14.0, ele: 500, time: '2024-01-01T12:00:00Z' },
-    ],
+    points: [{ lat: 50.0, lon: 14.0, ele: 500, time: '2024-01-01T12:00:00Z' }],
     metadata: {
       date: '2024-01-01T12:00:00Z',
       distance: 10.0,
@@ -107,10 +105,11 @@ describe('GPXLoader', () => {
 
       const result = await GPXLoader.loadTracks('local');
 
-      // The implementation sets name to filename without .gpx
       if (result.size > 0) {
         const track = result.values().next().value;
-        expect(track.name).not.toContain('.gpx');
+        if (track) {
+          expect(track.name).not.toContain('.gpx');
+        }
       }
     });
 

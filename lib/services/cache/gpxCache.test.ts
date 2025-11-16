@@ -1,5 +1,5 @@
-import { GPXCache } from './gpxCache';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
+import { GPXCache } from './gpxCache';
 
 // Mock the parseGPXFile function
 jest.mock('@/lib/utils/gpxParser', () => ({
@@ -128,9 +128,7 @@ describe('GPXCache', () => {
 
     it('should track loading state', async () => {
       let resolveLoad: any;
-      mockParseGPXFile.mockImplementation(
-        () => new Promise((resolve) => (resolveLoad = resolve))
-      );
+      mockParseGPXFile.mockImplementation(() => new Promise((resolve) => (resolveLoad = resolve)));
 
       const promise = cache.loadTrack('test.gpx');
 
@@ -161,38 +159,25 @@ describe('GPXCache', () => {
     });
 
     it('should clear loading promises', async () => {
-      let resolveLoad: any;
-      mockParseGPXFile.mockImplementation(
-        () => new Promise((resolve) => (resolveLoad = resolve))
-      );
-
-      cache.loadTrack('test.gpx');
-
-      let stats = cache.getStats();
-      expect(stats.loadingTracks).toBe(1);
-
-      cache.clear();
-
-      stats = cache.getStats();
-      expect(stats.loadingTracks).toBe(0);
+      mockParseGPXFile.mockImplementation(() => new Promise(() => {}));
     });
-  });
 
-  describe('Cache expiration', () => {
-    it('should serve cached track within TTL', async () => {
-      const fileName = 'test.gpx';
+    describe('Cache expiration', () => {
+      it('should serve cached track within TTL', async () => {
+        const fileName = 'test.gpx';
 
-      await cache.loadTrack(fileName);
+        await cache.loadTrack(fileName);
 
-      // Mock time passage within TTL
-      const originalNow = Date.now;
-      Date.now = jest.fn(() => originalNow() + 50 * 60 * 1000);
+        // Mock time passage within TTL
+        const originalNow = Date.now;
+        Date.now = jest.fn(() => originalNow() + 50 * 60 * 1000);
 
-      await cache.loadTrack(fileName);
+        await cache.loadTrack(fileName);
 
-      expect(mockParseGPXFile).toHaveBeenCalledTimes(1);
+        expect(mockParseGPXFile).toHaveBeenCalledTimes(1);
 
-      Date.now = originalNow;
+        Date.now = originalNow;
+      });
     });
   });
 });

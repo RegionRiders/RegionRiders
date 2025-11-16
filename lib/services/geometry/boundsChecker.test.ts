@@ -1,5 +1,5 @@
-import { BoundsChecker } from './boundsChecker';
 import { Regions } from '@/lib/types/types';
+import { BoundsChecker } from './boundsChecker';
 
 describe('BoundsChecker', () => {
   let boundsChecker: BoundsChecker;
@@ -16,7 +16,6 @@ describe('BoundsChecker', () => {
     id,
     name: `Region ${id}`,
     country: 'TEST',
-    adminLevel: 4,
     geometry: {
       type,
       coordinates,
@@ -199,7 +198,6 @@ describe('BoundsChecker', () => {
         id: 'multi-region',
         name: 'Multi Region',
         country: 'TEST',
-        adminLevel: 4,
         geometry: {
           type: 'MultiPolygon',
           coordinates: [
@@ -236,7 +234,6 @@ describe('BoundsChecker', () => {
         id: 'invalid',
         name: 'Invalid Region',
         country: 'TEST',
-        adminLevel: 4,
         geometry: null as any,
         properties: {},
       };
@@ -251,7 +248,6 @@ describe('BoundsChecker', () => {
         id: 'invalid',
         name: 'Invalid Region',
         country: 'TEST',
-        adminLevel: 4,
         geometry: { type: 'Polygon' } as any,
         properties: {},
       };

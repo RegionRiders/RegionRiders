@@ -1,8 +1,5 @@
-import {
-  analyzeRegionVisits,
-  analyzeRegionVisitsAsync,
-} from './regionVisitAnalyzer';
 import { GPXTrack, Regions } from '@/lib/types/types';
+import { analyzeRegionVisits, analyzeRegionVisitsAsync } from './regionVisitAnalyzer';
 
 // Mock dependencies
 jest.mock('./processing', () => ({
@@ -39,7 +36,6 @@ describe('regionVisitAnalyzer', () => {
     id: 'region-1',
     name: 'Test Region',
     country: 'TEST',
-    adminLevel: 4,
     geometry: {
       type: 'Polygon',
       coordinates: [
@@ -113,10 +109,7 @@ describe('regionVisitAnalyzer', () => {
       analyzeRegionVisits(tracks, regions, onProgress);
 
       expect(onProgress).toHaveBeenCalled();
-      expect(onProgress).toHaveBeenCalledWith(
-        expect.any(Number),
-        expect.any(String)
-      );
+      expect(onProgress).toHaveBeenCalledWith(expect.any(Number), expect.any(String));
     });
 
     it('should report 100% progress at completion', () => {
@@ -176,7 +169,6 @@ describe('regionVisitAnalyzer', () => {
         id: 'region-2',
         name: 'Test Region 2',
         country: 'TEST',
-        adminLevel: 4,
         geometry: mockRegion.geometry,
         properties: {},
       };
@@ -281,12 +273,7 @@ describe('regionVisitAnalyzer', () => {
       const regions = [mockRegion];
       const config = { gridSize: 0.15 };
 
-      const result = await analyzeRegionVisitsAsync(
-        tracks,
-        regions,
-        undefined,
-        config
-      );
+      const result = await analyzeRegionVisitsAsync(tracks, regions, undefined, config);
 
       expect(result).toBeInstanceOf(Map);
     });

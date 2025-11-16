@@ -1,5 +1,5 @@
-import { DataLoader } from './index';
 import { GPXLoader } from './gpxLoader';
+import { DataLoader } from './index';
 import { RegionLoader } from './RegionLoader';
 
 // Mock the loaders
