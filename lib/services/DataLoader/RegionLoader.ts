@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types/types';
 import { RegionCache } from '../cache/regionCache';
 import { countryConfig } from '../config/countryConfig';

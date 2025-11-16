@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { DataLoader } from '@/lib/services/DataLoader';
 import { GPXTrack } from '@/lib/types/types';
 

@@ -2,7 +2,7 @@
 
 import L from 'leaflet';
 import { getRegionColorForCount } from '@/components/ActivityMap/drawRegions/utils/getRegionColorForCount';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 

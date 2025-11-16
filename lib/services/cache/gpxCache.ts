@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
 

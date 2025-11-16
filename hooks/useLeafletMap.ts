@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 
 interface UseLeafletMapOptions {
   center?: [number, number];

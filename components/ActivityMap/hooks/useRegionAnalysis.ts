@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { GPXTrack, Regions } from '@/lib/types/types';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types/types';
 import { drawActivities, type ActivityRenderMode } from '../drawActivities/drawActivities';
 
