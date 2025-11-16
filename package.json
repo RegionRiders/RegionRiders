@@ -33,7 +33,6 @@
     "@next/bundle-analyzer": "^16.0.0",
     "@tabler/icons-react": "^3.35.0",
     "dotenv": "^17.2.3",
-    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "next": "16.0.0",
     "pg": "^8.16.3",
