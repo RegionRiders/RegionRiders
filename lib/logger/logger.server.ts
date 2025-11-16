@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import pino from 'pino';
 import { getLoggerConfig, isProduction, isTest } from './config';
 import { createLoggerHelpers, createNamedLoggers } from './utils/core';
