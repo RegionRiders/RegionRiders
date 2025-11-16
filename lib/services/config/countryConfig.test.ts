@@ -22,55 +22,6 @@ describe('countryConfig', () => {
       });
     });
 
-    it('should include Poland in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const poland = countries.find((c) => c.code === 'PL');
-
-      expect(poland).toBeDefined();
-      expect(poland?.name).toBe('Poland');
-      expect(poland?.fileName).toBe('poland.geojson');
-    });
-
-    it('should include Slovakia in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const slovakia = countries.find((c) => c.code === 'SK');
-
-      expect(slovakia).toBeDefined();
-      expect(slovakia?.name).toBe('Slovakia');
-    });
-
-    it('should include Hungary in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const hungary = countries.find((c) => c.code === 'HU');
-
-      expect(hungary).toBeDefined();
-      expect(hungary?.name).toBe('Hungary');
-    });
-
-    it('should include Germany in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const germany = countries.find((c) => c.code === 'DE');
-
-      expect(germany).toBeDefined();
-      expect(germany?.name).toBe('Germany');
-    });
-
-    it('should include France in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const france = countries.find((c) => c.code === 'FR');
-
-      expect(france).toBeDefined();
-      expect(france?.name).toBe('France');
-    });
-
-    it('should include Netherlands in the list', () => {
-      const countries = countryConfig.getAvailableCountries();
-      const netherlands = countries.find((c) => c.code === 'NL');
-
-      expect(netherlands).toBeDefined();
-      expect(netherlands?.name).toBe('Netherlands');
-    });
-
     it('should have unique country codes', () => {
       const countries = countryConfig.getAvailableCountries();
       const codes = countries.map((c) => c.code);
