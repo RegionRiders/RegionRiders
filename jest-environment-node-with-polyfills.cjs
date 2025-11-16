@@ -9,20 +9,20 @@ class CustomEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    // Mock localStorage and sessionStorage to avoid Node.js 25.2.0 SecurityError
-    const storageMock = {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-      clear: () => {},
-      key: () => null,
-      get length() {
-        return 0;
-      },
-    };
-
-    this.global.localStorage = storageMock;
-    this.global.sessionStorage = storageMock;
+    function createStorageMock() {
+      return {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {},
+        key: () => null,
+        get length() {
+          return 0;
+        },
+      };
+    }
+    this.global.localStorage = createStorageMock();
+    this.global.sessionStorage = createStorageMock();
 
     // Set up Node.js polyfills
     const { ReadableStream, TransformStream } = require('node:stream/web');
