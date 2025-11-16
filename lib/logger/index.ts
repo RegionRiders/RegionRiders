@@ -1,5 +1,4 @@
-// Default export: Server-side logger (Next.js App Router is server-first)
-// This follows Next.js best practice where components are server components by default
+// Server-side logger
 // For client components, explicitly import from '@/lib/logger/client'
 export {
   logger,
