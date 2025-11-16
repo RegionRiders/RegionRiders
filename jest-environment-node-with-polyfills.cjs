@@ -9,7 +9,22 @@ class CustomEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    // Set up TextEncoder/TextDecoder first
+    // Mock localStorage and sessionStorage to avoid Node.js 25.2.0 SecurityError
+    const storageMock = {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+      clear: () => {},
+      key: () => null,
+      get length() {
+        return 0;
+      },
+    };
+
+    this.global.localStorage = storageMock;
+    this.global.sessionStorage = storageMock;
+
+    // Set up Node.js polyfills
     const { ReadableStream, TransformStream } = require('node:stream/web');
     const { TextEncoder, TextDecoder } = require('node:util');
     const { MessageChannel: NodeMessageChannel, MessagePort } = require('node:worker_threads');
@@ -30,7 +45,7 @@ class CustomEnvironment extends NodeEnvironment {
       }
     };
 
-    // Now import and set up fetch APIs from undici
+    // Set up fetch APIs from undici
     const { fetch, Request, Response, Headers, FormData } = require('undici');
 
     this.global.fetch = fetch;
