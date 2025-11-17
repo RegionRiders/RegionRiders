@@ -28,7 +28,9 @@ export function analyzeRegionVisits(
   const visitMap = new Map<string, RegionVisitData>();
 
   // setup: create empty visit records
+  const trackIdSets = new Map<string, Set<string>>();
   regions.forEach((region) => {
+    trackIdSets.set(region.id, new Set());
     visitMap.set(region.id, {
       regionId: region.id,
       regionName: region.name,
@@ -50,7 +52,7 @@ export function analyzeRegionVisits(
   const validTracks = tracks.filter((t) => t.points?.length > 0);
 
   for (let i = 0; i < validTracks.length; i++) {
-    processTrack(validTracks[i], grid, regionBounds, visitMap, regions, config);
+    processTrack(validTracks[i], grid, regionBounds, visitMap, regions, config, trackIdSets);
     if (i % Math.max(1, Math.floor(validTracks.length / 10)) === 0) {
       const progress = Math.floor((i / validTracks.length) * 60) + 20;
       onProgress?.(progress, `processed ${i + 1}/${validTracks.length} tracks`);

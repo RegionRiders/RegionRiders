@@ -236,5 +236,37 @@ describe('RegionCache', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
+
+    it('should correctly parse and assign adminLevel from GeoJSON', async () => {
+      const result = await cache.loadCountryRegions(mockCountryData);
+
+      expect(result[0].adminLevel).toBe(4);
+      expect(result[1].adminLevel).toBe(4);
+      expect(typeof result[0].adminLevel).toBe('number');
+    });
+
+    it('should default adminLevel to 0 when missing from properties', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          features: [
+            {
+              id: 'region-no-admin-level',
+              properties: {
+                name: 'Test Region',
+                country_code: 'PL',
+              },
+              geometry: { type: 'Polygon', coordinates: [] },
+            },
+          ],
+        }),
+      });
+
+      const result = await cache.loadCountryRegions(mockCountryData);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].adminLevel).toBe(0);
+      expect(typeof result[0].adminLevel).toBe('number');
+    });
   });
 });

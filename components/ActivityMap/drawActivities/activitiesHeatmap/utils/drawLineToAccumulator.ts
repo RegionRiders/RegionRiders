@@ -29,7 +29,6 @@ export function drawLineToAccumulator(
     return;
   }
 
-  // 70% core = solid, outer 30% = antialiased falloff
   const core = Math.floor(thickness * 0.7);
   const coreThicknessSq = core * core;
 
@@ -57,7 +56,7 @@ export function drawLineToAccumulator(
               accumulator[idx]++;
             } else {
               // antialiased edge
-              const alpha = (thickness - dist) / (thickness - core);
+              const alpha = Math.max(0, 1 - (dist - core));
               accumulator[idx] += alpha;
             }
           }

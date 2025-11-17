@@ -11,7 +11,7 @@ import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVis
  */
 export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Regions[]) {
   const [visitData, setVisitData] = useState<Map<string, RegionVisitData>>(new Map());
-  const lastAnalysisRef = useRef<{ tracksSize: number; regionsSize: number } | null>(null);
+  const lastAnalysisRef = useRef<{ trackKeys: string; regionIds: string } | null>(null);
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -19,10 +19,16 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
       return;
     }
 
+    const trackKeySignature = Array.from(tracks.keys()).sort().join('|');
+    const regionIdSignature = regions
+      .map((region) => region.id)
+      .sort()
+      .join('|');
+
     // Skip if nothing changed
     if (
-      lastAnalysisRef.current?.tracksSize === tracks.size &&
-      lastAnalysisRef.current?.regionsSize === regions.length
+      lastAnalysisRef.current?.trackKeys === trackKeySignature &&
+      lastAnalysisRef.current?.regionIds === regionIdSignature
     ) {
       return;
     }
@@ -47,8 +53,8 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
             );
 
             lastAnalysisRef.current = {
-              tracksSize: tracks.size,
-              regionsSize: regions.length,
+              trackKeys: trackKeySignature,
+              regionIds: regionIdSignature,
             };
           }
         })

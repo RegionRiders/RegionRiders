@@ -15,6 +15,7 @@ import { BoundingBox, RegionVisitData, SpatialCell } from '../types';
  * @param map - map to update with visit data
  * @param regions - all regions for geometry lookup
  * @param config - grid size configuration
+ * @param trackIdSets - map of regionId to set of trackIds already counted
  */
 export function processTrack(
   track: GPXTrack,
@@ -22,7 +23,8 @@ export function processTrack(
   regionBounds: Map<string, BoundingBox>,
   map: Map<string, RegionVisitData>,
   regions: Regions[],
-  config: { gridSize: number }
+  config: { gridSize: number },
+  trackIdSets: Map<string, Set<string>>
 ): void {
   const visitedRegions = new Set<string>();
   const pts = track.points;
@@ -55,10 +57,12 @@ export function processTrack(
         }
 
         // accurate check: is point actually inside boundary?
+        const trackSet = trackIdSets.get(regionId);
         if (checkPointInRegion(p, regionId, regions)) {
           visitedRegions.add(regionId);
           region.visitCount++;
-          if (!region.trackIds.includes(track.id)) {
+          if (!trackSet?.has(track.id)) {
+            trackSet?.add(track.id);
             region.trackIds.push(track.id);
           }
         }

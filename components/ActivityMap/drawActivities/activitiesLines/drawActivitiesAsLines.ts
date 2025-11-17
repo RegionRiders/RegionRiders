@@ -2,9 +2,9 @@
 
 import L from 'leaflet';
 import { logger } from '@/lib/logger/client';
-import { GPXTrack } from '@/lib/types/types';
-import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
+import { GPXPoint, GPXTrack } from '@/lib/types/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
+import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
 import { filterVisibleTracks } from './utils/filterVisibleTracks';
 
 /**
@@ -59,7 +59,7 @@ export function drawActivitiesAsLines(
         );
 
         visibleTracks.forEach(([trackId, track]) => {
-          const latlngs = track.points.map((p: any) => [p.lat, p.lon]);
+          const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
 
           const polyline = L.polyline(latlngs, {
             color: '#FF6B6B',

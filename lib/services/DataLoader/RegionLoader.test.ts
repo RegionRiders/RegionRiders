@@ -120,8 +120,8 @@ describe('RegionLoader', () => {
 
       await RegionLoader.loadRegions(bounds);
 
-      // Should call boundsChecker for filtering
-      // Verify through implementation
+      expect(mockCacheInstance.clear).toHaveBeenCalled();
+      expect(mockBoundsCheckerInstance.clearCache).toHaveBeenCalled();
     });
 
     it('should return all regions when no bounds provided', async () => {

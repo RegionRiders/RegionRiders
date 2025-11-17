@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXPoint, GPXTrack } from '@/lib/types/types';
 
 /**
  * Filters tracks to only include those visible in the current map bounds
@@ -18,6 +18,6 @@ export function filterVisibleTracks(
     if (!track.points || track.points.length === 0) {
       return false;
     }
-    return track.points.some((p: any) => bounds.contains([p.lat, p.lon]));
+    return track.points.some((p: GPXPoint) => bounds.contains([p.lat, p.lon]));
   });
 }

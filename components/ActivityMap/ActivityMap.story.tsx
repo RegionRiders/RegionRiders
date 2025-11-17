@@ -18,13 +18,3 @@ export default {
  * Note: This requires browser environment and leaflet to be loaded
  */
 export const Default = () => <ActivityMap />;
-
-/**
- * Story demonstrating the loading state
- * Shows what users see while the map initializes
- */
-export const Loading = () => (
-  <div className="h-screen flex items-center justify-center bg-gray-900">
-    <p className="text-gray-400">Loading map...</p>
-  </div>
-);

@@ -4,9 +4,9 @@ import L from 'leaflet';
 import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types/types';
+import { ensureMapPane } from '../utils/ensureMapPane';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
 import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
-import { ensureMapPane } from '../utils/ensureMapPane';
 import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 
 /**

@@ -27,7 +27,11 @@ describe('useActivityRendering', () => {
 
     // Create mock tracks
     mockTracks = new Map<string, GPXTrack>();
-    mockTracks.set('track1', { id: 'track1', name: 'Test Track' } as GPXTrack);
+    mockTracks.set('track1', {
+      id: 'track1',
+      name: 'Test Track',
+      points: [],
+    } as GPXTrack);
   });
 
   it('should call drawActivities when all conditions are met', () => {
