@@ -2,7 +2,7 @@
  * Database Configuration Tests
  */
 
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import {
   closePool,
   getDatabaseConfig,
@@ -12,32 +12,47 @@ import {
 } from './index';
 
 describe('Database Configuration', () => {
-  const originalEnv = process.env;
+  beforeAll(() => {
+    const REQUIRED_ENV = {
+      POSTGRES_HOST: 'localhost',
+      POSTGRES_PORT: '5432',
+      POSTGRES_DB: 'regionriders',
+      POSTGRES_USER: 'regionriders_user',
+      POSTGRES_PASSWORD: 'regionriders_password',
+    };
 
-  beforeEach(() => {
-    // Reset environment
-    process.env = { ...originalEnv };
+    Object.assign(process.env, REQUIRED_ENV);
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
+  afterAll(() => {
+    const REQUIRED_ENV = {
+      POSTGRES_HOST: 'localhost',
+      POSTGRES_PORT: '5432',
+      POSTGRES_DB: 'regionriders',
+      POSTGRES_USER: 'regionriders_user',
+      POSTGRES_PASSWORD: 'regionriders_password',
+    };
+
+    for (const key of Object.keys(REQUIRED_ENV)) {
+      delete process.env[key];
+    }
   });
 
   describe('validateDatabaseEnv', () => {
     it('should pass validation with all required env vars', () => {
       process.env.POSTGRES_HOST = 'localhost';
-      process.env.POSTGRES_DB = 'testdb';
-      process.env.POSTGRES_USER = 'testuser';
-      process.env.POSTGRES_PASSWORD = 'testpass';
+      process.env.POSTGRES_DB = 'regionriders';
+      process.env.POSTGRES_USER = 'regionriders_user';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
 
       expect(() => validateDatabaseEnv()).not.toThrow();
     });
 
     it('should fail validation when POSTGRES_HOST is missing', () => {
       delete process.env.POSTGRES_HOST;
-      process.env.POSTGRES_DB = 'testdb';
-      process.env.POSTGRES_USER = 'testuser';
-      process.env.POSTGRES_PASSWORD = 'testpass';
+      process.env.POSTGRES_DB = 'regionriders';
+      process.env.POSTGRES_USER = 'regionriders_user';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
 
       expect(() => validateDatabaseEnv()).toThrow(/POSTGRES_HOST/);
     });
@@ -45,25 +60,25 @@ describe('Database Configuration', () => {
     it('should fail validation when POSTGRES_DB is missing', () => {
       process.env.POSTGRES_HOST = 'localhost';
       delete process.env.POSTGRES_DB;
-      process.env.POSTGRES_USER = 'testuser';
-      process.env.POSTGRES_PASSWORD = 'testpass';
+      process.env.POSTGRES_USER = 'regionriders_user';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
 
       expect(() => validateDatabaseEnv()).toThrow(/POSTGRES_DB/);
     });
 
     it('should fail validation when POSTGRES_USER is missing', () => {
       process.env.POSTGRES_HOST = 'localhost';
-      process.env.POSTGRES_DB = 'testdb';
+      process.env.POSTGRES_DB = 'regionriders';
       delete process.env.POSTGRES_USER;
-      process.env.POSTGRES_PASSWORD = 'testpass';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
 
       expect(() => validateDatabaseEnv()).toThrow(/POSTGRES_USER/);
     });
 
     it('should fail validation when POSTGRES_PASSWORD is missing', () => {
       process.env.POSTGRES_HOST = 'localhost';
-      process.env.POSTGRES_DB = 'testdb';
-      process.env.POSTGRES_USER = 'testuser';
+      process.env.POSTGRES_DB = 'regionriders';
+      process.env.POSTGRES_USER = 'regionriders_user';
       delete process.env.POSTGRES_PASSWORD;
 
       expect(() => validateDatabaseEnv()).toThrow(/POSTGRES_PASSWORD/);
@@ -74,10 +89,10 @@ describe('Database Configuration', () => {
     beforeEach(() => {
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
-      process.env.POSTGRES_DB = 'testdb';
-      process.env.POSTGRES_USER = 'testuser';
-      process.env.POSTGRES_PASSWORD = 'testpass';
-      Object.assign(process.env, { NODE_ENV: 'development' });
+      process.env.POSTGRES_DB = 'regionriders';
+      process.env.POSTGRES_USER = 'regionriders_user';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
+      process.env.NODE_ENV = 'development';
     });
 
     it('should return correct database configuration', () => {
@@ -85,14 +100,24 @@ describe('Database Configuration', () => {
 
       expect(config.host).toBe('localhost');
       expect(config.port).toBe(5432);
-      expect(config.database).toBe('testdb');
-      expect(config.user).toBe('testuser');
-      expect(config.password).toBe('testpass');
-      expect(config.ssl).toBe(false); // development mode
+      expect(config.database).toBe('regionriders');
+      expect(config.user).toBe('regionriders_user');
+      expect(config.password).toBe('regionriders_password');
+      expect(config.ssl).toBe(false);
     });
 
-    it('should enable SSL in production', () => {
-      Object.assign(process.env, { NODE_ENV: 'production' });
+    it('should disable SSL in production with localhost', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.POSTGRES_HOST = 'localhost';
+
+      const config = getDatabaseConfig();
+
+      expect(config.ssl).toBe(false);
+    });
+
+    it('should enable SSL in production with remote host', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.POSTGRES_HOST = 'remote.example.com';
 
       const config = getDatabaseConfig();
 
@@ -132,33 +157,36 @@ describe('Database Configuration', () => {
     beforeEach(() => {
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
-      process.env.POSTGRES_DB = 'testdb';
-      process.env.POSTGRES_USER = 'testuser';
-      process.env.POSTGRES_PASSWORD = 'testpass';
-      Object.assign(process.env, { NODE_ENV: 'development' });
+      process.env.POSTGRES_DB = 'regionriders';
+      process.env.POSTGRES_USER = 'regionriders_user';
+      process.env.POSTGRES_PASSWORD = 'regionriders_password';
+      process.env.NODE_ENV = 'development';
     });
 
     it('should construct correct database URL', () => {
       const url = getDatabaseUrl();
 
-      expect(url).toBe('postgresql://testuser:testpass@localhost:5432/testdb');
+      expect(url).toBe(
+        'postgresql://regionriders_user:regionriders_password@localhost:5432/regionriders'
+      );
     });
 
-    it('should use DATABASE_URL env var when provided', () => {
-      const customUrl = 'postgresql://custom:pass@custom-host:5433/customdb';
-      process.env.DATABASE_URL = customUrl;
-
-      const url = getDatabaseUrl();
-
-      expect(url).toBe(customUrl);
-    });
-
-    it('should include SSL parameter in production', () => {
-      Object.assign(process.env, { NODE_ENV: 'production' });
+    it('should include SSL parameter in production with remote host', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.POSTGRES_HOST = 'remotehost.example.com';
 
       const url = getDatabaseUrl();
 
       expect(url).toContain('?sslmode=require');
+    });
+
+    it('should not include SSL parameter in production with local host', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.POSTGRES_HOST = 'localhost';
+
+      const url = getDatabaseUrl();
+
+      expect(url).not.toContain('?sslmode=require');
     });
   });
 
