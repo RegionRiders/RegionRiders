@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types/types';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
-import { ensureMapPane } from './utils/ensureMapPane';
+import { ensureMapPane } from '../utils/ensureMapPane';
 import { filterVisibleTracks } from './utils/filterVisibleTracks';
 
 /**

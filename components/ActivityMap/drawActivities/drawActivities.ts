@@ -1,8 +1,8 @@
 'use client';
 
 import { GPXTrack } from '@/lib/types/types';
-import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
-import { drawActivitiesAsLines } from './drawActivitiesAsLines';
+import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
+import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
 
 export type ActivityRenderMode = 'heatmap' | 'lines';
 

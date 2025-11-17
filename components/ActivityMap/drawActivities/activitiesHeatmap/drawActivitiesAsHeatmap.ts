@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types/types';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
 import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
-import { ensureMapPane } from './utils/ensureMapPane';
+import { ensureMapPane } from '../utils/ensureMapPane';
 import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 
 /**

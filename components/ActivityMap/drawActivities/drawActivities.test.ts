@@ -1,14 +1,14 @@
 import type { GPXTrack } from '@/lib/types/types';
 import { drawActivities } from './drawActivities';
-import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
-import { drawActivitiesAsLines } from './drawActivitiesAsLines';
+import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
+import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
 
 // Mock the draw functions
-jest.mock('./drawActivitiesAsHeatmap', () => ({
+jest.mock('./activitiesHeatmap/drawActivitiesAsHeatmap', () => ({
   drawActivitiesAsHeatmap: jest.fn(),
 }));
 
-jest.mock('./drawActivitiesAsLines', () => ({
+jest.mock('./activitiesLines/drawActivitiesAsLines', () => ({
   drawActivitiesAsLines: jest.fn(),
 }));
 

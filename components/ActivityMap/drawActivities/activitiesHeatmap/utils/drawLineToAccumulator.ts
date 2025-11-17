@@ -57,7 +57,7 @@ export function drawLineToAccumulator(
               accumulator[idx]++;
             } else {
               // antialiased edge
-              const alpha = Math.max(0, 1 - (dist - core));
+              const alpha = (thickness - dist) / (thickness - core);
               accumulator[idx] += alpha;
             }
           }

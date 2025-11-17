@@ -32,7 +32,7 @@ jest.mock('./utils/drawLineToAccumulator', () => ({
   drawLineToAccumulator: jest.fn(),
 }));
 
-jest.mock('./utils/ensureMapPane', () => ({
+jest.mock('../utils/ensureMapPane', () => ({
   ensureMapPane: jest.fn(),
 }));
 

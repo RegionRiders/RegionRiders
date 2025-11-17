@@ -27,7 +27,7 @@ jest.mock('@/lib/logger/client', () => ({
 }));
 
 // Mock utilities
-jest.mock('./utils/ensureMapPane', () => ({
+jest.mock('../utils/ensureMapPane', () => ({
   ensureMapPane: jest.fn(),
 }));
 
