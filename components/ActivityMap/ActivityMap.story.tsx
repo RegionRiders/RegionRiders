@@ -17,4 +17,6 @@ export default {
  * Default ActivityMap showing the map interface
  * Note: This requires browser environment and leaflet to be loaded
  */
-export const Default = () => <ActivityMap />;
+export const Default = {
+  render: () => <ActivityMap />,
+};
