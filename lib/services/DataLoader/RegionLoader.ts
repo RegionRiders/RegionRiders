@@ -54,18 +54,18 @@ export class RegionLoader {
       }
 
       // filter by bounds if provided
-      if (bounds) {
-        return allRegions.filter((region) => this.boundsChecker.isInBounds(region, bounds));
-      }
+      const filteredRegions = bounds
+        ? allRegions.filter((region) => this.boundsChecker.isInBounds(region, bounds))
+        : allRegions;
 
       const duration = (performance.now() - startTime).toFixed(2);
-      logger.debug(`[RegionLoader] Loaded ${allRegions.length} total regions (${duration}ms)`);
+      logger.debug(`[RegionLoader] Loaded ${filteredRegions.length} total regions (${duration}ms)`);
 
       if (errors.length > 0) {
         logger.warn(`[RegionLoader] ${errors.length} countries failed to load`);
       }
 
-      return allRegions;
+      return filteredRegions;
     } catch (error) {
       logger.error(`[RegionLoader] Error loading regions: ${error}`);
       return [];

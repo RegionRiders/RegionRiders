@@ -12,29 +12,40 @@ import { Regions } from '@/lib/types/types';
  */
 export function useRegionLoading(map: L.Map | null) {
   const [regions, setRegions] = useState<Regions[]>([]);
-  const lastBoundsRef = useRef<any>(null);
+  const lastBoundsRef = useRef<L.LatLngBounds | null>(null);
 
   const loadRegionsForViewport = useCallback(async () => {
     if (!map) {
       return;
     }
 
-    const startTime = performance.now();
-    const bounds = map.getBounds();
-    lastBoundsRef.current = bounds;
+    try {
+      const startTime = performance.now();
+      const bounds = map.getBounds();
+      lastBoundsRef.current = bounds;
 
-    const viewportBounds = {
-      north: bounds.getNorth(),
-      south: bounds.getSouth(),
-      east: bounds.getEast(),
-      west: bounds.getWest(),
-    };
+      const viewportBounds = {
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest(),
+      };
 
-    const loadedRegions = await DataLoader.loadRegions(viewportBounds);
-    const duration = (performance.now() - startTime).toFixed(2);
-    logger.debug(`[useRegionLoading] Loaded ${loadedRegions.length} regions (${duration}ms)`);
+      const loadedRegions = await DataLoader.loadRegions(viewportBounds);
 
-    setRegions(loadedRegions);
+      // Ignore stale results if bounds changed during load
+      if (lastBoundsRef.current !== bounds) {
+        logger.debug('[useRegionLoading] Ignoring stale region load');
+        return;
+      }
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      logger.debug(`[useRegionLoading] Loaded ${loadedRegions.length} regions (${duration}ms)`);
+
+      setRegions(loadedRegions);
+    } catch (error) {
+      logger.error(`[useRegionLoading] Failed to load regions: ${error}`);
+    }
   }, [map]);
 
   // Setup map event listeners with debouncing

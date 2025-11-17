@@ -42,7 +42,8 @@ export function useRegionRendering(
       };
 
       const initialWeight = calculateWeightForZoom(map.getZoom());
-      regionLayersRef.current = drawRegions(map, regions, visitData, () => {}, initialWeight);
+      // TODO: implement region onClick handling
+      regionLayersRef.current = drawRegions(map, regions, visitData, undefined, initialWeight);
 
       const duration = (performance.now() - startTime).toFixed(2);
       const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
