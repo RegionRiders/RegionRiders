@@ -1,5 +1,3 @@
-// components/ActivityMap/hooks/useRegionRendering.test.ts
-
 import { renderHook } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
 import { Regions } from '@/lib/types/types';
@@ -37,6 +35,7 @@ describe('useRegionRendering', () => {
     id: 'region1',
     name: 'Test Region',
     country: 'Test Country',
+    adminLevel: 1,
     geometry: mockPolygon,
     properties: {},
   };

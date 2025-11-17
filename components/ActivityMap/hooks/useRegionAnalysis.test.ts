@@ -76,7 +76,8 @@ describe('useRegionAnalysis', () => {
       id: 'region1',
       name: 'Test Region',
       geometry: mockPolygon,
-      country: 'Test Country', // ✅ Added required property
+      country: 'Test Country',
+      adminLevel: 1,
       properties: {},
     },
   ];
