@@ -70,5 +70,16 @@ describe('colorInterpolation', () => {
       const result = getColorFromThresholds(0, thresholds);
       expect(result).toEqual([0, 0, 255]);
     });
+
+    it('should handle zero range (identical thresholds)', () => {
+      const zeroRangeThresholds = [
+        { threshold: 10, color: [0, 0, 255] },
+        { threshold: 10, color: [255, 0, 0] }, // Same threshold
+      ];
+
+      const result = getColorFromThresholds(10, zeroRangeThresholds);
+      // Should use the lower color when range is 0
+      expect(result).toEqual([0, 0, 255]);
+    });
   });
 });

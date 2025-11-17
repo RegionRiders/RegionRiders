@@ -48,6 +48,10 @@ describe('useActivityRendering', () => {
       expect.objectContaining({ current: null }), // renderTimeoutRef
       'heatmap'
     );
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('[useActivityRendering] Effect running')
+    );
   });
 
   it('should not call drawActivities when map is null', () => {

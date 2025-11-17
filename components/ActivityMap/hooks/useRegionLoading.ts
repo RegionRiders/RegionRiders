@@ -12,7 +12,7 @@ import { Regions } from '@/lib/types/types';
  */
 export function useRegionLoading(map: L.Map | null) {
   const [regions, setRegions] = useState<Regions[]>([]);
-  const lastBoundsRef = useRef<L.LatLngBounds | null>(null);
+  const lastBoundsRef = useRef<string | null>(null);
 
   const loadRegionsForViewport = useCallback(async () => {
     if (!map) {
@@ -22,8 +22,6 @@ export function useRegionLoading(map: L.Map | null) {
     try {
       const startTime = performance.now();
       const bounds = map.getBounds();
-      lastBoundsRef.current = bounds;
-
       const viewportBounds = {
         north: bounds.getNorth(),
         south: bounds.getSouth(),
@@ -31,10 +29,14 @@ export function useRegionLoading(map: L.Map | null) {
         west: bounds.getWest(),
       };
 
+      // store a simple signature to compare after async load
+      const boundsSignature = `${viewportBounds.north}|${viewportBounds.south}|${viewportBounds.east}|${viewportBounds.west}`;
+      lastBoundsRef.current = boundsSignature;
+
       const loadedRegions = await DataLoader.loadRegions(viewportBounds);
 
       // Ignore stale results if bounds changed during load
-      if (lastBoundsRef.current !== bounds) {
+      if (lastBoundsRef.current !== boundsSignature) {
         logger.debug('[useRegionLoading] Ignoring stale region load');
         return;
       }

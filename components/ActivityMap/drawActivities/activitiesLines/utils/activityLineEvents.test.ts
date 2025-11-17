@@ -2,6 +2,8 @@ import type { GPXTrack } from '@/lib/types/types';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './activityLineEvents';
 
 describe('activityLineEvents', () => {
+  const mockMap: any = {};
+
   describe('attachActivityHoverEvents', () => {
     it('should attach mouseover and mouseout event handlers', () => {
       const mockPolyline = {
@@ -93,6 +95,77 @@ describe('activityLineEvents', () => {
       attachActivityClickHandler(mockPolyline as any, {}, 'track-1', mockTrack);
 
       expect(mockPolyline.on).toHaveBeenCalledWith('click', expect.any(Function));
+    });
+
+    it('should create and open popup on click', () => {
+      const mockMapObj = {};
+      const mockPolyline = {
+        on: jest.fn((event: string, handler: (e: any) => void) => {
+          if (event === 'click') {
+            // Simulate click event
+            handler({
+              latlng: { lat: 50.0, lng: 14.0 },
+            });
+          }
+        }),
+      };
+
+      attachActivityClickHandler(mockPolyline as any, mockMapObj, 'track-1', mockTrack);
+
+      expect(global.L.popup).toHaveBeenCalled();
+      expect(mockPopup.setLatLng).toHaveBeenCalledWith({ lat: 50.0, lng: 14.0 });
+      expect(mockPopup.setContent).toHaveBeenCalledWith(expect.stringContaining('Test Track'));
+      expect(mockPopup.openOn).toHaveBeenCalledWith(mockMapObj);
+    });
+
+    it('should sanitize HTML in track name', () => {
+      const maliciousTrack: GPXTrack = {
+        id: 'track-1',
+        name: '<script>alert("xss")</script>Test & "Track"',
+        points: [{ lat: 50.0, lon: 14.0 }],
+        metadata: { distance: 10.0 },
+      };
+
+      const mockPolyline = {
+        on: jest.fn((event: string, handler: (e: any) => void) => {
+          if (event === 'click') {
+            handler({
+              latlng: { lat: 50.0, lng: 14.0 },
+            });
+          }
+        }),
+      };
+
+      attachActivityClickHandler(mockPolyline as any, mockMap, 'track-1', maliciousTrack);
+
+      expect(mockPopup.setContent).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;Test &amp; &quot;Track&quot;'
+        )
+      );
+    });
+
+    it('should use trackId when name is not available', () => {
+      const noNameTrack: GPXTrack = {
+        id: 'track-1',
+        name: '',
+        points: [{ lat: 50.0, lon: 14.0 }],
+        metadata: { distance: 10.0 },
+      };
+
+      const mockPolyline = {
+        on: jest.fn((event: string, handler: (e: any) => void) => {
+          if (event === 'click') {
+            handler({
+              latlng: { lat: 50.0, lng: 14.0 },
+            });
+          }
+        }),
+      };
+
+      attachActivityClickHandler(mockPolyline as any, mockMap, 'fallback-id', noNameTrack);
+
+      expect(mockPopup.setContent).toHaveBeenCalledWith(expect.stringContaining('fallback-id'));
     });
   });
 });

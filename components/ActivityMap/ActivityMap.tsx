@@ -11,7 +11,7 @@ import 'leaflet/dist/leaflet.css';
 const MapContainerMemo = memo(MapContainer);
 
 export default function ActivityMap() {
-  const mapContainerRef = useRef(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const { tracks } = useGPXData();
   const { map, isReady, error } = useLeafletMap(mapContainerRef, {
     center: [54.352375, 18.656686],
@@ -25,8 +25,8 @@ export default function ActivityMap() {
   if (error) {
     return (
       <div>
-        Failed to load map
-        {error}
+        <div>Failed to load map</div>
+        <div>{error}</div>
       </div>
     );
   }
@@ -70,7 +70,11 @@ export default function ActivityMap() {
         <MapContainerMemo map={map} tracks={memoizedTracks} activityMode={activityMode} />
       )}
 
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+      <div
+        data-testid="map-wrapper"
+        ref={mapContainerRef}
+        style={{ width: '100%', height: '100%' }}
+      />
     </div>
   );
 }

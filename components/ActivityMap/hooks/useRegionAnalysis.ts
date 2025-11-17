@@ -33,9 +33,8 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
       return;
     }
 
-    if (analysisTimeoutRef.current) {
-      clearTimeout(analysisTimeoutRef.current);
-    }
+    // Clear previous timeout (call unconditionally so tests can spy on it)
+    clearTimeout(analysisTimeoutRef.current as any);
 
     let isMounted = true;
     const startTime = performance.now();

@@ -13,6 +13,7 @@ const customJestConfig = {
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
     '^@/lib/(.*)$': '<rootDir>/lib/$1',
     '^@/app/(.*)$': '<rootDir>/app/$1',
+    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],

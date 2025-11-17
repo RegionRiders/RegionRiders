@@ -151,6 +151,20 @@ describe('drawRegions', () => {
     expect(secondCall[1].style.fillColor).toBe('transparent');
   });
 
+  it('should apply correct stroke color for visited regions', () => {
+    drawRegions(mockMap, mockRegions, mockVisitData);
+
+    const firstCall = (L.geoJSON as jest.Mock).mock.calls[0];
+    expect(firstCall[1].style.color).toBe('rgba(255,100,50,1)');
+  });
+
+  it('should apply neutral stroke color for unvisited regions', () => {
+    drawRegions(mockMap, mockRegions, mockVisitData);
+
+    const secondCall = (L.geoJSON as jest.Mock).mock.calls[1];
+    expect(secondCall[1].style.color).toBe('#666');
+  });
+
   it('should attach click handler when provided', () => {
     const mockClickHandler = jest.fn();
 

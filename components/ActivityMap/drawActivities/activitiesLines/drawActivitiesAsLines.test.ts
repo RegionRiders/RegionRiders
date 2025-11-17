@@ -160,4 +160,16 @@ describe('drawActivitiesAsLines', () => {
 
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockActivityGroup);
   });
+
+  it('should abort rendering when renderAbortRef is set', () => {
+    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+
+    // Set abort before timeout executes
+    renderAbortRef.current = true;
+
+    jest.advanceTimersByTime(200);
+
+    // Should not create feature group when aborted
+    expect(L.featureGroup).not.toHaveBeenCalled();
+  });
 });

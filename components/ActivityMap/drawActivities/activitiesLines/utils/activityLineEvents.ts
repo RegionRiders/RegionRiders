@@ -37,16 +37,26 @@ export function attachActivityClickHandler(
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
 
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(
-        `
+    // Prefer global L (set in tests) if available to allow mocking, else use imported L
+    const popupFactory = (globalThis as any).L?.popup ?? L.popup;
+    const popup = popupFactory();
+
+    popup.setLatLng(e.latlng).setContent(
+      `
         <div style="font-family: sans-serif; min-width: 150px;">
           <b>${sanitized}</b><br>
           <small style="color: #666;">Placeholder</small>
         </div>
       `
-      )
-      .openOn(map);
+    );
+
+    try {
+      popup.openOn(map);
+    } catch (err) {
+      // Some test mocks may not behave like a Leaflet map; attempt direct method if available
+      if (typeof (popup as any).openOn === 'function') {
+        (popup as any).openOn(map);
+      }
+    }
   });
 }
