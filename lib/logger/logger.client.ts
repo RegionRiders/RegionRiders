@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createLoggerHelpers, createNamedLoggers } from './utils/core';
 
 /**
