@@ -21,7 +21,7 @@ global.DOMParser = class DOMParser {
     // Simple mock implementation for testing
     const mockDoc = {
       getElementsByTagName: (tagName: string) => {
-        if (tagName === 'parsererror') {
+        if (tagName === 'parsererror' || tagName === 'parser error') {
           return xmlString.includes('invalid') ? [{}] : [];
         }
         if (tagName === 'trk') {
