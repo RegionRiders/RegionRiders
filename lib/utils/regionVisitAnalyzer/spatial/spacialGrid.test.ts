@@ -68,6 +68,7 @@ describe('spatialGrid', () => {
           id: 'region-1',
           name: 'Test Region',
           country: 'TEST',
+          adminLevel: 1,
           geometry: {
             type: 'Polygon',
             coordinates: [
@@ -96,6 +97,7 @@ describe('spatialGrid', () => {
           id: 'region-1',
           name: 'Region 1',
           country: 'TEST',
+          adminLevel: 1,
           geometry: {
             type: 'Polygon',
             coordinates: [
@@ -114,6 +116,7 @@ describe('spatialGrid', () => {
           id: 'region-2',
           name: 'Region 2',
           country: 'TEST',
+          adminLevel: 1,
           geometry: {
             type: 'Polygon',
             coordinates: [
@@ -149,6 +152,7 @@ describe('spatialGrid', () => {
           id: 'multi-region',
           name: 'Multi Region',
           country: 'TEST',
+          adminLevel: 1,
           geometry: {
             type: 'MultiPolygon',
             coordinates: [
@@ -188,6 +192,7 @@ describe('spatialGrid', () => {
           id: 'region-1',
           name: 'Test Region',
           country: 'TEST',
+          adminLevel: 1,
           geometry: {
             type: 'Polygon',
             coordinates: [

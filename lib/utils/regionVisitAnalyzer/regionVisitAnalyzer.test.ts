@@ -36,6 +36,7 @@ describe('regionVisitAnalyzer', () => {
     id: 'region-1',
     name: 'Test Region',
     country: 'TEST',
+    adminLevel: 1,
     geometry: {
       type: 'Polygon',
       coordinates: [
@@ -47,7 +48,7 @@ describe('regionVisitAnalyzer', () => {
           [14.0, 50.0],
         ],
       ],
-    } as any,
+    },
     properties: {},
   };
 
@@ -169,6 +170,7 @@ describe('regionVisitAnalyzer', () => {
         id: 'region-2',
         name: 'Test Region 2',
         country: 'TEST',
+        adminLevel: 1,
         geometry: mockRegion.geometry,
         properties: {},
       };

@@ -45,6 +45,7 @@ describe('drawRegions', () => {
         id: 'region-1',
         name: 'Test Region 1',
         country: 'Test Country',
+        adminLevel: 1,
         properties: {},
         geometry: {
           type: 'Polygon',
@@ -63,6 +64,7 @@ describe('drawRegions', () => {
         id: 'region-2',
         name: 'Test Region 2',
         country: 'Test Country',
+        adminLevel: 1,
         properties: {},
         geometry: {
           type: 'Polygon',

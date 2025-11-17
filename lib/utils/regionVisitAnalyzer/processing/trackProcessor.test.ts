@@ -62,7 +62,10 @@ describe('trackProcessor', () => {
     return {
       id,
       name: `Region ${id}`,
+      country: 'Test Country',
+      adminLevel: 1,
       geometry: mockPolygon,
+      properties: {},
     } as Regions;
   };
 
@@ -117,8 +120,11 @@ describe('trackProcessor', () => {
     );
     const regions: Regions[] = regionIds.map(createRegion);
     const config = { gridSize: 1 };
+    const trackIdSets = new Map<string, Set<string>>(
+      regionIds.map((id) => [id, new Set<string>()])
+    );
 
-    return { track, grid, regionBounds, visitMap, regions, config };
+    return { track, grid, regionBounds, visitMap, regions, config, trackIdSets };
   };
 
   beforeEach(() => {
@@ -127,7 +133,7 @@ describe('trackProcessor', () => {
 
   describe('basic processing', () => {
     it('should process track through single region', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 0.5, lon: 0.5 }],
       });
 
@@ -136,13 +142,13 @@ describe('trackProcessor', () => {
       mockGetGeometry.mockReturnValue(mockPolygon);
       mockPointInPolygon.mockReturnValue(true);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(1);
     });
 
     it('should not add region if point not in polygon', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 0.5, lon: 0.5 }],
       });
 
@@ -151,13 +157,13 @@ describe('trackProcessor', () => {
       mockGetGeometry.mockReturnValue(mockPolygon);
       mockPointInPolygon.mockReturnValue(false);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(0);
     });
 
     it('should skip region if not in bounding box', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 5, lon: 5 }],
         gridCells: [['cell_5_5', ['region1']]],
       });
@@ -165,7 +171,7 @@ describe('trackProcessor', () => {
       mockGetAdjacentCells.mockReturnValue(['cell_5_5']);
       mockPointInBoundingBox.mockReturnValue(false);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(mockGetGeometry).not.toHaveBeenCalled();
       expect(mockPointInPolygon).not.toHaveBeenCalled();
@@ -175,7 +181,7 @@ describe('trackProcessor', () => {
 
   describe('multiple regions', () => {
     it('should process track through multiple regions', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [
           { lat: 0.5, lon: 0.5 },
           { lat: 2.5, lon: 2.5 },
@@ -200,14 +206,14 @@ describe('trackProcessor', () => {
       mockGetGeometry.mockReturnValue(mockPolygon);
       mockPointInPolygon.mockReturnValue(true);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(1);
       expect(visitMap.get('region2')?.visitCount).toBe(1);
     });
 
     it('should not double-count same region', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [
           { lat: 0.5, lon: 0.5 },
           { lat: 0.6, lon: 0.6 },
@@ -219,7 +225,7 @@ describe('trackProcessor', () => {
       mockGetGeometry.mockReturnValue(mockPolygon);
       mockPointInPolygon.mockReturnValue(true);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(1);
     });
@@ -233,14 +239,15 @@ describe('trackProcessor', () => {
       const visitMap = new Map<string, RegionVisitData>();
       const regions: Regions[] = [];
       const config = { gridSize: 1 };
+      const trackIdSets = new Map<string, Set<string>>();
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.size).toBe(0);
     });
 
     it('should handle empty grid cell', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 0.5, lon: 0.5 }],
         gridCells: [['cell_0_0', []]],
       });
@@ -251,13 +258,13 @@ describe('trackProcessor', () => {
 
       mockGetAdjacentCells.mockReturnValue(['cell_0_0']);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.size).toBe(0);
     });
 
     it('should handle missing geometry', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 0.5, lon: 0.5 }],
       });
 
@@ -265,13 +272,13 @@ describe('trackProcessor', () => {
       mockPointInBoundingBox.mockReturnValue(true);
       mockGetGeometry.mockReturnValue(null);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(0);
     });
 
     it('should handle missing bounding box', () => {
-      const { track, grid, regionBounds, visitMap, regions, config } = setupTest({
+      const { track, grid, regionBounds, visitMap, regions, config, trackIdSets } = setupTest({
         trackPoints: [{ lat: 0.5, lon: 0.5 }],
       });
 
@@ -279,7 +286,7 @@ describe('trackProcessor', () => {
 
       mockGetAdjacentCells.mockReturnValue(['cell_0_0']);
 
-      processTrack(track, grid, regionBounds, visitMap, regions, config);
+      processTrack(track, grid, regionBounds, visitMap, regions, config, trackIdSets);
 
       expect(visitMap.get('region1')?.visitCount).toBe(0);
     });
