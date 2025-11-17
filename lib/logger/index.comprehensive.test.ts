@@ -1,6 +1,8 @@
 /**
- * Comprehensive tests for main logger index.ts re-exports
+ * Comprehensive tests for logger default exports (server-side)
  * Ensures 100% coverage of all export statements
+ * Tests the default logger which is the server-side implementation
+ * (Following Next.js server-first principle where components are server by default)
  */
 
 describe('Logger Index - All Re-exports', () => {
@@ -49,12 +51,10 @@ describe('Logger Index - All Re-exports', () => {
   it('should re-export all instance creation functions', async () => {
     const loggerIndex = await import('./index');
 
-    expect(loggerIndex.createBrowserLogger).toBeDefined();
     expect(loggerIndex.createLogger).toBeDefined();
     expect(loggerIndex.createRequestLogger).toBeDefined();
     expect(loggerIndex.logApiRequest).toBeDefined();
 
-    expect(typeof loggerIndex.createBrowserLogger).toBe('function');
     expect(typeof loggerIndex.createLogger).toBe('function');
     expect(typeof loggerIndex.createRequestLogger).toBe('function');
     expect(typeof loggerIndex.logApiRequest).toBe('function');
@@ -79,17 +79,14 @@ describe('Logger Index - All Re-exports', () => {
   });
 
   it('should have functional re-exported creation functions', async () => {
-    const { createBrowserLogger, createLogger, createRequestLogger } = await import('./index');
+    const { createLogger, createRequestLogger } = await import('./index');
 
-    const browserLogger = createBrowserLogger();
     const customLogger = createLogger({ test: 'context' });
     const requestLogger = createRequestLogger('req-123');
 
-    expect(browserLogger).toBeDefined();
     expect(customLogger).toBeDefined();
     expect(requestLogger).toBeDefined();
 
-    expect(typeof browserLogger.info).toBe('function');
     expect(typeof customLogger.info).toBe('function');
     expect(typeof requestLogger.info).toBe('function');
   });
@@ -179,6 +176,7 @@ describe('Logger Index - All Re-exports', () => {
       'getLoggerConfig',
       'isProduction',
       'isTest',
+      'isServer',
       'LOG_DIR',
       'createChildLogger',
       'createProductionLogger',
@@ -189,7 +187,6 @@ describe('Logger Index - All Re-exports', () => {
       'stravaLogger',
       'authLogger',
       'dbLogger',
-      'createBrowserLogger',
       'createLogger',
       'createRequestLogger',
       'logApiRequest',
@@ -212,6 +209,7 @@ describe('Logger Index - All Re-exports', () => {
       'getLoggerConfig',
       'isProduction',
       'isTest',
+      'isServer',
       'LOG_DIR',
       'createChildLogger',
       'createProductionLogger',
@@ -221,7 +219,6 @@ describe('Logger Index - All Re-exports', () => {
       'stravaLogger',
       'authLogger',
       'dbLogger',
-      'createBrowserLogger',
       'createLogger',
       'createRequestLogger',
       'logApiRequest',

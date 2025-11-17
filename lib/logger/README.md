@@ -14,6 +14,46 @@ configurations.
 - **Sensitive data redaction** (passwords, tokens, API keys)
 - **Child loggers** with context for different parts of the application
 - **Browser-safe logging** for client-side code
+- **Client/Server split** to prevent Node.js dependencies from bundling client-side
+
+## Important: Server-First Architecture
+
+This logger follows Next.js App Router best practices where **server components are the default**. The main export
+provides the full server-side pino logger.
+
+### For Server-Side Code (Default - API Routes, Server Components, Tests)
+
+```typescript
+import {logger, apiLogger, stravaLogger} from '@/lib/logger';
+```
+
+This is the default and recommended import for most use cases. It provides the full pino logger with all features.
+
+### For Client-Side Code (Client Components, Browser)
+
+```typescript
+import {logger, createBrowserLogger} from '@/lib/logger/client';
+```
+
+Use this explicit import when you need logging in client components. It provides a browser-safe console-based logger.
+
+### Explicit Server Import (Optional - For Clarity)
+
+```typescript
+import {logger} from '@/lib/logger';
+```
+
+This is still available if you want to be explicit that you're using the server logger, but it's not necessary since the
+default is already server-side.
+
+### Why Server-First?
+
+1. **Next.js Philosophy**: App Router components are server components by default
+2. **Most Common**: 90%+ of logging happens on the server (API routes, backend logic)
+3. **Full Featured**: Server logger has all pino features (structured logging, log levels, etc.)
+4. **Smaller Client Bundles**: Clients only import logger when explicitly needed
+5. **Safety**: Prevents accidental Node.js dependency bundling in client code
+   explicitly import from `@/lib/logger`.
 
 ## Usage
 
