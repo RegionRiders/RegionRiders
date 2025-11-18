@@ -1,6 +1,7 @@
 'use client';
 
 import {Card, Image, Text, Stack, Flex, Group, SimpleGrid} from '@mantine/core';
+import {PostsList} from "@/components/PostsList/PostsList";
 
 interface ActivityData {
   title: string;
@@ -70,14 +71,7 @@ const ActivityPost = (
 export function ActivitiesListElement() {
   return (
     <>
-        <Stack
-          align="center"
-          justify="flex-start"
-          gap="md"
-        >
-          {activities.map((activity: ActivityData) => (<ActivityPost data={activity} />))}
-        </Stack>
-
+      <PostsList Content={activities.map((activity: ActivityData) => (<ActivityPost data={activity} />))}/>
     </>
   )
 }
