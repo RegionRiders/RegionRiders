@@ -9,7 +9,6 @@ export default defineConfig(
   { ignores: ['**/*.{mjs,cjs,js,d.ts,d.mts}', '.next'] },
   {
     files: ['**/*.{story.tsx,ts}'],
-    rules: { 'no-console': 'off' },
   },
   {
     languageOptions: {
