@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import type { Regions } from '@/lib/types/types';
+import type { Regions } from '@/lib/types';
 import { useActivityRendering } from './hooks/useActivityRendering';
 import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useRegionLoading } from './hooks/useRegionLoading';

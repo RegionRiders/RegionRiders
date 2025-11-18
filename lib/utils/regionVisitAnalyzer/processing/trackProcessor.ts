@@ -1,4 +1,4 @@
-import { GPXPoint, GPXTrack, Regions } from '@/lib/types/types';
+import { GPXPoint, GPXTrack, Regions } from '@/lib/types';
 import { getGeometry } from '../geometry/geometryCache';
 import { pointInPolygon } from '../geometry/pointInPolygon';
 import { pointInBoundingBox } from '../spatial/boundingBox';

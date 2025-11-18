@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { GPXPoint, GPXTrack } from '@/lib/types/types';
+import { GPXPoint, GPXTrack } from '@/lib/types';
 
 /**
  * Filters tracks to only include those visible in the current map bounds

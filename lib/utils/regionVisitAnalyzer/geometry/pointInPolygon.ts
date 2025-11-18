@@ -1,5 +1,5 @@
 import { GeoJSON } from 'geojson';
-import { GPXPoint } from '@/lib/types/types';
+import { GPXPoint } from '@/lib/types';
 
 /**
  * accurate check if point is inside region boundary

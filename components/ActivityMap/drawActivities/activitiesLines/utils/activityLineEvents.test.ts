@@ -1,4 +1,4 @@
-import type { GPXTrack } from '@/lib/types/types';
+import type { GPXTrack } from '@/lib/types';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './activityLineEvents';
 
 describe('activityLineEvents', () => {

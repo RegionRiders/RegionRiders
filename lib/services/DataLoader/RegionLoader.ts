@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger/client';
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { RegionCache } from '../cache/regionCache';
 import { countryConfig } from '../config/countryConfig';
 import { BoundsChecker } from '../geometry/boundsChecker';

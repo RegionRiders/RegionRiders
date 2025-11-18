@@ -1,5 +1,5 @@
 import { GeoJSON } from 'geojson';
-import { GPXPoint } from '@/lib/types/types';
+import { GPXPoint } from '@/lib/types';
 import { BoundingBox } from '../types';
 
 const cache = new Map<string, BoundingBox>();

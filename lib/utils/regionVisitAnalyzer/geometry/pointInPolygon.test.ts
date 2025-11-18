@@ -1,4 +1,4 @@
-import type { GPXPoint } from '@/lib/types/types';
+import type { GPXPoint } from '@/lib/types';
 import { pointInPolygon } from './pointInPolygon';
 
 describe('pointInPolygon', () => {

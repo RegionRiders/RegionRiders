@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import L from 'leaflet';
-import type { Regions } from '@/lib/types/types';
+import type { Regions } from '@/lib/types';
 import type { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { drawRegions } from './drawRegions';
 

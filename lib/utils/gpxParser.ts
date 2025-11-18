@@ -1,4 +1,4 @@
-import { GPXPoint, GPXTrack } from '@/lib/types/types';
+import { GPXPoint, GPXTrack } from '@/lib/types';
 
 /**
  * parses gpx (gps exchange format) files into track objects,

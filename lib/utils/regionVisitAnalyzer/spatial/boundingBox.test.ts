@@ -1,4 +1,4 @@
-import type { GPXPoint } from '@/lib/types/types';
+import type { GPXPoint } from '@/lib/types';
 import { clearBoundingBoxCache, getBoundingBox, pointInBoundingBox } from './boundingBox';
 
 describe('boundingBox', () => {

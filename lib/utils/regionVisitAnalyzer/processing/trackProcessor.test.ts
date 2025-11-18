@@ -1,6 +1,6 @@
 // lib/utils/regionVisitAnalyzer/processing/trackProcessor.test.ts
 import { GeoJSON } from 'geojson';
-import { GPXTrack, Regions } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types';
 import { getGeometry } from '../geometry/geometryCache';
 import { pointInPolygon } from '../geometry/pointInPolygon';
 import { pointInBoundingBox } from '../spatial/boundingBox';

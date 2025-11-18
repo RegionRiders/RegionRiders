@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { logger } from '@/lib/logger/client';
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { drawRegions } from '../drawRegions/drawRegions';
 

@@ -1,4 +1,4 @@
-import type { GPXTrack } from '@/lib/types/types';
+import type { GPXTrack } from '@/lib/types';
 import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
 import { drawActivities } from './drawActivities';

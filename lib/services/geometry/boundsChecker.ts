@@ -1,4 +1,4 @@
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 
 interface Bounds {
   north: number;

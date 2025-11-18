@@ -2,7 +2,7 @@
 
 import L from 'leaflet';
 import { logger } from '@/lib/logger/client';
-import { GPXPoint, GPXTrack } from '@/lib/types/types';
+import { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
 import { filterVisibleTracks } from './utils/filterVisibleTracks';

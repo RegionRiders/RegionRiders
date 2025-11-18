@@ -1,4 +1,4 @@
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { SpatialCell } from '../types';
 import { getBoundingBox } from './boundingBox';
 

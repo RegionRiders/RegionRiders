@@ -3,7 +3,7 @@
  */
 import { imageOverlay } from 'leaflet';
 import { logger } from '@/lib/logger/client';
-import type { GPXTrack } from '@/lib/types/types';
+import type { GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
 

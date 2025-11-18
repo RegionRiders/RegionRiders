@@ -1,4 +1,4 @@
-import { GPXTrack, Regions } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types';
 import { GPXLoader } from './gpxLoader';
 import { RegionLoader } from './RegionLoader';
 

@@ -1,5 +1,5 @@
 import { GeoJSON } from 'geojson';
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { clearGeometryCache, getGeometry } from './geometryCache';
 
 describe('geometryCache', () => {

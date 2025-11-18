@@ -1,7 +1,7 @@
 'use client';
 
 import type { Map as LeafletMap } from 'leaflet';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXTrack } from '@/lib/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import { useActivityRendering } from './hooks/useActivityRendering';
 import { useRegionAnalysis } from './hooks/useRegionAnalysis';

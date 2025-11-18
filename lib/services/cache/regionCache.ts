@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger/client';
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 
 export interface CountryData {
   code: string;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { logger } from '@/lib/logger/client';
 import { DataLoader } from '@/lib/services/DataLoader';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXTrack } from '@/lib/types';
 
 /**
  * manages gpx track data loading

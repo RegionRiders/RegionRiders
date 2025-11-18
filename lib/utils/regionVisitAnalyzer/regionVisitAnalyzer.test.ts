@@ -1,4 +1,4 @@
-import { GPXTrack, Regions } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisits, analyzeRegionVisitsAsync } from './regionVisitAnalyzer';
 
 // Mock dependencies

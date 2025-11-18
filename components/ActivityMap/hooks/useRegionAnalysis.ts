@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger/client';
-import { GPXTrack, Regions } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 /**

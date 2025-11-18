@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import L from 'leaflet';
 import { logger } from '@/lib/logger/client';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXTrack } from '@/lib/types';
 import { drawActivities } from '../drawActivities/drawActivities';
 import { useActivityRendering } from './useActivityRendering';
 

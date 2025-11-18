@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXTrack } from '@/lib/types';
 import { filterVisibleTracks } from './filterVisibleTracks';
 
 describe('filterVisibleTracks', () => {

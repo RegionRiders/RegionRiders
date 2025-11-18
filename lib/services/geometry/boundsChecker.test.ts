@@ -1,4 +1,4 @@
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { BoundsChecker } from './boundsChecker';
 
 describe('BoundsChecker', () => {

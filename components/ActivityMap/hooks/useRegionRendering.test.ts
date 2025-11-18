@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
-import { Regions } from '@/lib/types/types';
+import { Regions } from '@/lib/types';
 import { useRegionRendering } from './useRegionRendering';
 
 // Mock the drawing function

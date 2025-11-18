@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger/client';
-import { GPXTrack } from '@/lib/types/types';
+import { GPXTrack } from '@/lib/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
 
 interface GPXCacheEntry {

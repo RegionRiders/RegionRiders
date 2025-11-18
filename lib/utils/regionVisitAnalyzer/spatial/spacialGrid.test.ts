@@ -1,4 +1,4 @@
-import type { Regions } from '@/lib/types/types';
+import type { Regions } from '@/lib/types';
 import { buildSpatialGrid, getAdjacentCells, getGridKey } from './spatialGrid';
 
 describe('spatialGrid', () => {

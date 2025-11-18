@@ -1,4 +1,4 @@
-import { GPXTrack, Regions } from '@/lib/types/types';
+import { GPXTrack, Regions } from '@/lib/types';
 import { processTrack } from './processing';
 import { buildSpatialGrid } from './spatial';
 import { getBoundingBox } from './spatial/boundingBox';

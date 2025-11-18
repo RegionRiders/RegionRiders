@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import L from 'leaflet';
-import type { GPXTrack } from '@/lib/types/types';
+import type { GPXTrack } from '@/lib/types';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
 
 // Mock leaflet
