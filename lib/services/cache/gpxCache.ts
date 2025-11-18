@@ -52,6 +52,7 @@ export class GPXCache {
    * @internal
    */
   private async fetchAndCache(fileName: string): Promise<GPXTrack> {
+    const existing = this.trackCache.get(fileName);
     try {
       const url = getApiUrl(`/data/gpx/${fileName}`);
       const track = await parseGPXFile(url);
@@ -67,6 +68,10 @@ export class GPXCache {
       return track;
     } catch (error) {
       logger.error(`[GPXCache] Error loading ${fileName}: ${error}`);
+      if (existing?.track) {
+        logger.info('[GPXCache] Serving stale track from cache after load failure');
+        return existing.track;
+      }
       throw error;
     } finally {
       this.loadingPromises.delete(fileName);

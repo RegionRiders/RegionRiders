@@ -26,6 +26,10 @@ export function processTrack(
   config: { gridSize: number },
   trackIdSets: Map<string, Set<string>>
 ): void {
+  if (!trackIdSets) {
+    throw new Error('trackIdSets parameter is required');
+  }
+
   const visitedRegions = new Set<string>();
   const pts = track.points;
 
