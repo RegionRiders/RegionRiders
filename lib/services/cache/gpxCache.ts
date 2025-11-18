@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/api';
 import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
@@ -52,7 +53,8 @@ export class GPXCache {
    */
   private async fetchAndCache(fileName: string): Promise<GPXTrack> {
     try {
-      const track = await parseGPXFile(`/data/gpx/${fileName}`);
+      const url = getApiUrl(`/data/gpx/${fileName}`);
+      const track = await parseGPXFile(url);
 
       // cache it
       this.trackCache.set(fileName, {

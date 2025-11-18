@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/api';
 import { logger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 
@@ -60,7 +61,8 @@ export class RegionCache {
 
     const existing = this.countryCache.get(fileName);
     try {
-      const response = await fetch(`/data/regions/${fileName}`);
+      const url = getApiUrl(`/data/regions/${fileName}`);
+      const response = await fetch(url);
 
       if (!response.ok) {
         logger.info(`[RegionCache] HTTP ${response.status} for ${fileName}`);
@@ -104,5 +106,12 @@ export class RegionCache {
   clear(): void {
     this.countryCache.clear();
     this.loadingPromises.clear();
+  }
+
+  getStats() {
+    return {
+      cachedCountries: this.countryCache.size,
+      loadingCountries: this.loadingPromises.size,
+    };
   }
 }

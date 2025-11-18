@@ -24,7 +24,8 @@ describe('app/api/gpx-files/route', () => {
     const data = await response.json();
 
     expect(data.files).toEqual(['track1.gpx', 'track2.gpx', 'track3.gpx']);
-    expect(readdir).toHaveBeenCalledWith(expect.stringContaining('public/data/gpx'));
+    // Use expect.stringMatching with regex to handle Windows paths
+    expect(readdir).toHaveBeenCalledWith(expect.stringMatching(/public[/\\]data[/\\]gpx/));
   });
 
   it('should filter out non-GPX files', async () => {

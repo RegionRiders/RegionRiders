@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/api';
 import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { GPXCache } from '../cache/gpxCache';
@@ -109,7 +110,8 @@ export class GPXLoader {
    */
   private static async getLocalFileList(): Promise<string[]> {
     try {
-      const response = await fetch('/api/gpx-files');
+      const url = getApiUrl('/api/gpx-files');
+      const response = await fetch(url);
       const data = await response.json();
       return data.files || [];
     } catch (error) {

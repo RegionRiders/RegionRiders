@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { handle404Error } from '@/lib/api';
+import { handle404Error } from '@/lib/api/errorHandler';
 
 /**
  * Catch-all route handler for undefined API endpoints

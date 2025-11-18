@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handle500Error, handleApiError } from '@/lib/api/errorHandler';
 import { exchangeToken } from '@/lib/strava';
 
 /**

@@ -1,42 +1,54 @@
-/**
- * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
- */
-
-import { NextResponse } from 'next/server';
-import { handle500Error } from '@/lib/api';
-import { getAuthorizationUrl } from '@/lib/strava';
+import * as errorHandler from '@/lib/api/errorHandler';
+import * as strava from '@/lib/strava';
 import { GET } from './route';
 
 jest.mock('@/lib/strava');
-jest.mock('@/lib/api');
+jest.mock('@/lib/api/errorHandler');
 
 describe('GET /api/strava/auth', () => {
-  const mockUrl = 'https://strava.com/oauth/authorize?client_id=123';
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should redirect with hardcoded scope read,activity:read_all', async () => {
-    (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
+  it('should redirect to Strava authorization URL', async () => {
+    const mockAuthUrl =
+      'https://www.strava.com/oauth/authorize?client_id=test&redirect_uri=test&response_type=code&scope=read,activity:read_all';
 
-    const res = await GET();
+    (strava.getAuthorizationUrl as jest.Mock).mockResolvedValue(mockAuthUrl);
 
-    expect(getAuthorizationUrl).toHaveBeenCalledWith('read,activity:read_all');
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe(mockUrl);
+    const response = await GET();
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(mockAuthUrl);
+    expect(strava.getAuthorizationUrl).toHaveBeenCalledWith('read,activity:read_all');
   });
 
-  it('should handle errors', async () => {
-    const error = new Error('API error');
-    const errorResponse = NextResponse.json({ error: 'API error' }, { status: 500 });
+  it('should handle errors and return 500', async () => {
+    const mockError = new Error('Authorization failed');
+    (strava.getAuthorizationUrl as jest.Mock).mockRejectedValue(mockError);
 
-    (getAuthorizationUrl as jest.Mock).mockRejectedValue(error);
-    (handle500Error as jest.Mock).mockReturnValue(errorResponse);
+    // Mock the error handler to return a Response object
+    const mockErrorResponse = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: 'An unexpected error occurred',
+        statusCode: 500,
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
 
-    const res = await GET();
+    (errorHandler.handle500Error as jest.Mock).mockReturnValue(mockErrorResponse);
 
-    expect(handle500Error).toHaveBeenCalledWith(error, 'Strava API: Authorization Request');
-    expect(res).toBe(errorResponse);
+    const response = await GET();
+
+    expect(response.status).toBe(500);
+    expect(errorHandler.handle500Error).toHaveBeenCalledWith(
+      mockError,
+      'Strava API: Authorization Request'
+    );
   });
 });
