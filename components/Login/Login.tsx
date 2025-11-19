@@ -3,8 +3,8 @@ import { Container, Paper, Text, Title } from '@mantine/core';
 import Image from 'next/image';
 import styles from './Login.module.css';
 
-const CLIENT_ID = "YOUR_CLIENT_ID";
-const REDIRECT_URI = "https://yourapp.com/strava/callback";
+const CLIENT_ID = process.env.STRAVA_CLIENT_ID!;
+const REDIRECT_URI = process.env.STRAVA_REDIRECT_URI!;
 const RESPONSE_TYPE = "code";
 const APPROVAL_PROMPT = "auto";
 const SCOPE = "read,activity:read_all";
@@ -31,7 +31,7 @@ const Login: React.FC = () => {
       `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,status=yes`
     );
 
-    if (!popup) {return};
+    if (!popup) {return}
 
     const interval = setInterval(() => {
       try {
@@ -48,7 +48,6 @@ const Login: React.FC = () => {
           popup.close();
           console.log('Strava OAuth code:', code);
 
-          // TODO: send `code` to your backend to exchange for access token
         }
       } catch (err) {
         // cross-origin error until popup redirects to your domain
@@ -56,7 +55,7 @@ const Login: React.FC = () => {
     }, 500);
   };
 
-  if (!isOpen){ return null}; // modal is closed
+  if (!isOpen){ return null} // modal is closed
 
   return (
     <div className={styles.overlay}>
