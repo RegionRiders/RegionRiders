@@ -56,13 +56,13 @@ const Login: React.FC = () => {
     }, 500);
   };
 
-  if (!isOpen) return null; // modal is closed
+  if (!isOpen){ return null}; // modal is closed
 
   return (
     <div className={styles.overlay}>
       <Container size="xs">
         <Paper withBorder shadow="md" p="xl" radius="md" className={styles.card}>
-          <button className={styles.closeButton} onClick={() => setIsOpen(false)} aria-label="Close modal">
+          <button type="button" className={styles.closeButton} onClick={() => setIsOpen(false)} aria-label="Close modal">
             ×
           </button>
           <div className={styles.stack}>
