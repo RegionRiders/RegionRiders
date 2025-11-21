@@ -1,7 +1,7 @@
-import * as apiConfig from '@/lib/api/config';
+import * as apiConfig from '@/lib/client/config';
 import { CountryData, RegionCache } from './regionCache';
 
-jest.mock('@/lib/api/config');
+jest.mock('@/lib/client/config');
 
 global.fetch = jest.fn();
 

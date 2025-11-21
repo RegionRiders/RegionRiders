@@ -1,4 +1,4 @@
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/client';
 import { logger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';

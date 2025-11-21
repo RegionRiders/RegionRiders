@@ -1,9 +1,9 @@
-import * as errorHandler from '@/lib/api/errorHandler';
+import * as errorHandler from '@/lib/api';
 import * as strava from '@/lib/strava';
 import { GET } from './route';
 
 jest.mock('@/lib/strava');
-jest.mock('@/lib/api/errorHandler');
+jest.mock('@/lib/api');
 
 describe('GET /api/strava/auth', () => {
   beforeEach(() => {

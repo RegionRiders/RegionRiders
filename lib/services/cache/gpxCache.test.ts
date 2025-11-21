@@ -1,9 +1,9 @@
-import * as apiConfig from '@/lib/api/config';
+import * as apiConfig from '@/lib/client/config';
 import * as gpxParser from '@/lib/utils/gpxParser';
 import { GPXCache } from './gpxCache';
 
 jest.mock('@/lib/utils/gpxParser');
-jest.mock('@/lib/api/config');
+jest.mock('@/lib/client/config');
 
 describe('GPXCache', () => {
   let cache: GPXCache;

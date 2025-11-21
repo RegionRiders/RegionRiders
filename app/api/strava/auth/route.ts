@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { handle500Error } from '@/lib/api/errorHandler';
+import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
 
 /**

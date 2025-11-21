@@ -1,7 +1,7 @@
-import * as apiConfig from '@/lib/api/config';
+import * as apiConfig from '@/lib/client/config';
 import { GPXLoader } from './gpxLoader';
 
-jest.mock('@/lib/api/config');
+jest.mock('@/lib/client/config');
 
 // Mock the entire GPXCache module before it's imported
 jest.mock('../cache/gpxCache', () => {
