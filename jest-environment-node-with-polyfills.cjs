@@ -9,7 +9,35 @@ class CustomEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    // Set up TextEncoder/TextDecoder first
+    function createStorageMock() {
+      const store = new Map();
+      return {
+        getItem: (key) => {
+          key = String(key);
+          return store.has(key) ? store.get(key) : null;
+        },
+        setItem: (key, value) => {
+          store.set(String(key), String(value));
+        },
+        removeItem: (key) => {
+          store.delete(String(key));
+        },
+        clear: () => {
+          store.clear();
+        },
+        key: (index) => {
+          if (typeof index !== 'number' || index < 0 || index >= store.size) return null;
+          return Array.from(store.keys())[index] ?? null;
+        },
+        get length() {
+          return store.size;
+        },
+      };
+    }
+    this.global.localStorage = createStorageMock();
+    this.global.sessionStorage = createStorageMock();
+
+    // Set up Node.js polyfills
     const { ReadableStream, TransformStream } = require('node:stream/web');
     const { TextEncoder, TextDecoder } = require('node:util');
     const { MessageChannel: NodeMessageChannel, MessagePort } = require('node:worker_threads');
@@ -30,7 +58,7 @@ class CustomEnvironment extends NodeEnvironment {
       }
     };
 
-    // Now import and set up fetch APIs from undici
+    // Set up fetch APIs from undici
     const { fetch, Request, Response, Headers, FormData } = require('undici');
 
     this.global.fetch = fetch;
