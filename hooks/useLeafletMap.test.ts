@@ -1,4 +1,3 @@
-// hooks/useLeafletMap.test.ts
 import { renderHook, waitFor } from '@testing-library/react';
 import L from 'leaflet';
 import { useLeafletMap } from './useLeafletMap';
@@ -24,11 +23,11 @@ jest.mock('leaflet', () => ({
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
-  logger: {
+  createComponentLogger: jest.fn(() => ({
     info: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
-  },
+  })),
 }));
 
 describe('useLeafletMap', () => {

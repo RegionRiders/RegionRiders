@@ -1,8 +1,10 @@
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionCache } from '../cache/regionCache';
 import { countryConfig } from '../config/countryConfig';
 import { BoundsChecker } from '../geometry/boundsChecker';
+
+const logger = createComponentLogger('RegionLoader');
 
 /**
  * handles loading and filtering of geographic region data
@@ -23,7 +25,7 @@ export class RegionLoader {
     countries?: string[]
   ): Promise<Regions[]> {
     const startTime = performance.now();
-    logger.info(`[RegionLoader] Loading regions ${countries?.join(',') || 'all'}`);
+    logger.info(`Loading regions ${countries?.join(',') || 'all'}`);
 
     try {
       const countryFiles = countryConfig.getAvailableCountries();
@@ -33,7 +35,7 @@ export class RegionLoader {
         : countryFiles;
 
       if (filesToLoad.length === 0) {
-        logger.warn('[RegionLoader] No matching country files found');
+        logger.warn('No matching country files found');
         return [];
       }
 
@@ -49,7 +51,7 @@ export class RegionLoader {
         } catch (error) {
           const errorMsg = `Failed to load ${country.name}`;
           errors.push(errorMsg);
-          logger.error(`[RegionLoader] ${errorMsg}: ${error}`);
+          logger.error(`${errorMsg}: ${error}`);
         }
       }
 
@@ -59,15 +61,15 @@ export class RegionLoader {
         : allRegions;
 
       const duration = (performance.now() - startTime).toFixed(2);
-      logger.debug(`[RegionLoader] Loaded ${filteredRegions.length} total regions (${duration}ms)`);
+      logger.debug(`Loaded ${filteredRegions.length} total regions (${duration}ms)`);
 
       if (errors.length > 0) {
-        logger.warn(`[RegionLoader] ${errors.length} countries failed to load`);
+        logger.warn(`${errors.length} countries failed to load`);
       }
 
       return filteredRegions;
     } catch (error) {
-      logger.error(`[RegionLoader] Error loading regions: ${error}`);
+      logger.error(`Error loading regions: ${error}`);
       return [];
     }
   }
@@ -76,7 +78,7 @@ export class RegionLoader {
    * clears all cached region data
    */
   static clearCache(): void {
-    logger.debug('[RegionLoader] Clearing caches');
+    logger.debug('Clearing caches');
     this.cache.clear();
     this.boundsChecker.clearCache();
   }

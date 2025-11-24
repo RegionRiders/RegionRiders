@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisitsAsync, RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
+const logger = createComponentLogger('useRegionAnalysis');
 /**
  * Hook to analyze which regions have been visited
  * Debounce analysis to avoid excessive calculations
@@ -47,9 +48,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
             const duration = (performance.now() - startTime).toFixed(2);
             const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
-            logger.info(
-              `[useRegionAnalysis] ${visitedCount}/${regions.length} regions visited (${duration}ms)`
-            );
+            logger.info(`${visitedCount}/${regions.length} regions visited (${duration}ms)`);
 
             lastAnalysisRef.current = {
               trackKeys: trackKeySignature,
@@ -58,7 +57,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
           }
         })
         .catch((error) => {
-          logger.error('[useRegionAnalysis] Analysis failed:', error);
+          logger.error('Analysis failed:', error);
         });
     }, 500);
 

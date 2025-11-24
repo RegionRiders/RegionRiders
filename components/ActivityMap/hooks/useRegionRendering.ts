@@ -2,11 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { drawRegions } from '../drawRegions/drawRegions';
 
+const logger = createComponentLogger('useRegionRendering');
 /**
  * Hook to handle region border rendering
  * Manages layer lifecycle and Zoom-based weight adjustment
@@ -48,9 +49,7 @@ export function useRegionRendering(
       const duration = (performance.now() - startTime).toFixed(2);
       const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
-      logger.debug(
-        `[useRegionRendering] Drew ${visitedCount}/${regions.length} regions (${duration}ms)`
-      );
+      logger.debug(`Drew ${visitedCount}/${regions.length} regions (${duration}ms)`);
 
       // Handle Zoom-based weight adjustment
       const handleZoom = () => {

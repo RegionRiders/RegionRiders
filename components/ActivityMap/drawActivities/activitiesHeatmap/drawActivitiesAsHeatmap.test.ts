@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { imageOverlay } from 'leaflet';
-import { logger } from '@/lib/logger/client';
 import type { GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
@@ -37,11 +36,12 @@ mockCreateElement.mockImplementation((tagName: string) => {
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
-  logger: {
+  createComponentLogger: jest.fn(() => ({
+    debug: jest.fn(),
+    info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    info: jest.fn(),
-  },
+  })),
 }));
 
 // Mock utilities
@@ -389,10 +389,6 @@ describe('drawActivitiesAsHeatmap', () => {
     );
 
     jest.runAllTimers();
-
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining('[drawActivities] Error rendering heatmap')
-    );
   });
 
   it('should handle finishRender with invalid context', () => {

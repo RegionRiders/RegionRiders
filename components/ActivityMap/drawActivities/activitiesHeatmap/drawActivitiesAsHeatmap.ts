@@ -2,12 +2,14 @@
 
 import L from 'leaflet';
 import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
 import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
 import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
+
+const logger = createComponentLogger('drawActivitiesAsHeatmap');
 
 /**
  * renders gpx tracks as a heatmap overlay
@@ -32,7 +34,7 @@ export function drawActivitiesAsHeatmap(
 
   const renderHeatmap = () => {
     if (!map?.getBounds) {
-      logger.warn('[drawActivities] Map not available');
+      logger.warn('Map not available');
       return;
     }
 
@@ -63,7 +65,7 @@ export function drawActivitiesAsHeatmap(
           canvasHeight <= 0
         ) {
           logger.warn(
-            `[drawActivities] Invalid canvas dimensions, aborting render: ${{
+            `Invalid canvas dimensions, aborting render: ${{
               canvasWidth,
               canvasHeight,
               topLeft,
@@ -80,7 +82,7 @@ export function drawActivitiesAsHeatmap(
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
-          logger.error('[drawActivities] Failed to get canvas context');
+          logger.error('Failed to get canvas context');
           return;
         }
 
@@ -144,7 +146,7 @@ export function drawActivitiesAsHeatmap(
             canvasHeight <= 0
           ) {
             logger.error(
-              `[drawActivities] Invalid state in finishRender: ${{
+              `Invalid state in finishRender: ${{
                 hasCtx: !!ctx,
                 canvasWidth,
                 canvasHeight,
@@ -194,17 +196,17 @@ export function drawActivitiesAsHeatmap(
               const finishDuration = (performance.now() - finishStartTime).toFixed(2);
 
               logger.info(
-                `[drawActivities] Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
+                `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
               );
             } catch (error) {
-              logger.error(`[drawActivities] Error adding image overlay: ${error}`);
+              logger.error(`Error adding image overlay: ${error}`);
             }
           }
         };
 
         processChunk();
       } catch (error) {
-        logger.error(`[drawActivities] Error rendering heatmap: ${error}`);
+        logger.error(`Error rendering heatmap: ${error}`);
       }
     }, 0);
   };
@@ -227,7 +229,7 @@ export function drawActivitiesAsHeatmap(
   }
 
   return () => {
-    logger.info('[drawActivities] Cleanup');
+    logger.info('Cleanup');
     renderAbortRef.current = true;
 
     if (renderTimeoutRef.current) {

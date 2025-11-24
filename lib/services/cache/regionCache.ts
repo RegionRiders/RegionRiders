@@ -1,6 +1,8 @@
 import { getApiUrl } from '@/lib/client';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
+
+const logger = createComponentLogger('RegionCache');
 
 export interface CountryData {
   code: string;
@@ -30,7 +32,7 @@ export class RegionCache {
 
     // check if already loading to avoid duplicate requests
     if (this.loadingPromises.has(fileName)) {
-      logger.info(`[RegionCache] Already loading ${country.name}, waiting...`);
+      logger.info(`Already loading ${country.name}, waiting...`);
       return this.loadingPromises.get(fileName)!;
     }
 
@@ -65,7 +67,7 @@ export class RegionCache {
       const response = await fetch(url);
 
       if (!response.ok) {
-        logger.info(`[RegionCache] HTTP ${response.status} for ${fileName}`);
+        logger.info(`HTTP ${response.status} for ${fileName}`);
         return existing?.data ?? [];
       }
 
@@ -89,11 +91,11 @@ export class RegionCache {
         cachedAt: Date.now(),
       });
 
-      logger.debug(`[RegionCache] Cached ${country.name}: ${regions.length} regions`);
+      logger.debug(`Cached ${country.name}: ${regions.length} regions`);
 
       return regions;
     } catch (error) {
-      logger.error(`[RegionCache] Error loading ${fileName}: ${error}`);
+      logger.error(`Error loading ${fileName}: ${error}`);
       return existing?.data ?? [];
     } finally {
       this.loadingPromises.delete(fileName);

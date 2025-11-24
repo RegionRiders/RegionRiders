@@ -10,13 +10,14 @@ const mocks = {
 };
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
-  logger: {
+  createComponentLogger: jest.fn(() => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  },
+  })),
 }));
+
 // Mock RegionCache
 jest.mock('../cache/regionCache', () => ({
   RegionCache: jest.fn().mockImplementation(() => ({

@@ -2,12 +2,12 @@ import { ensureMapPane } from './ensureMapPane';
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
-  logger: {
+  createComponentLogger: jest.fn(() => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  },
+  })),
 }));
 
 describe('ensureMapPane', () => {
