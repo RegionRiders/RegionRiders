@@ -12,14 +12,37 @@ jest.mock('@/lib/services/DataLoader', () => ({
   },
 }));
 
-// Mock logger
-jest.mock('@/lib/logger/client', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
+// Mock logger - define functions inside factory to avoid hoisting issues
+jest.mock('@/lib/logger/client', () => {
+  const mockInfo = jest.fn();
+  const mockError = jest.fn();
+  const mockDebug = jest.fn();
+  const mockWarn = jest.fn();
+  const mockTrace = jest.fn();
+  const mockFatal = jest.fn();
+  const mockChild = jest.fn();
+
+  return {
+    logger: {
+      info: mockInfo,
+      error: mockError,
+      debug: mockDebug,
+      warn: mockWarn,
+      trace: mockTrace,
+      fatal: mockFatal,
+      child: mockChild,
+    },
+    createComponentLogger: jest.fn(() => ({
+      info: mockInfo,
+      error: mockError,
+      debug: mockDebug,
+      warn: mockWarn,
+      trace: mockTrace,
+      fatal: mockFatal,
+      child: mockChild,
+    })),
+  };
+});
 
 describe('useRegionLoading', () => {
   const mockPolygon: GeoJSON.Polygon = {
@@ -110,9 +133,7 @@ describe('useRegionLoading', () => {
       renderHook(() => useRegionLoading(mockMap));
 
       await waitFor(() => {
-        expect((logger as any).error).toHaveBeenCalledWith(
-          `[useRegionLoading] Failed to load regions: ${error}`
-        );
+        expect(logger.error).toHaveBeenCalledWith(`Failed to load regions: ${error}`);
       });
     });
   });
@@ -167,9 +188,7 @@ describe('useRegionLoading', () => {
       resolveLoad(mockRegions);
 
       await waitFor(() => {
-        expect((logger as any).debug).toHaveBeenCalledWith(
-          '[useRegionLoading] Ignoring stale region load'
-        );
+        expect(logger.debug).toHaveBeenCalledWith('Ignoring stale region load');
       });
     });
   });

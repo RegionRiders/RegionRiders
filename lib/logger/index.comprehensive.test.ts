@@ -220,6 +220,7 @@ describe('Logger Index - All Re-exports', () => {
       'authLogger',
       'dbLogger',
       'createLogger',
+      'createComponentLogger',
       'createRequestLogger',
       'logApiRequest',
       'logError',
