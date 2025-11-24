@@ -49,9 +49,7 @@ export function useRegionRendering(
       const duration = (performance.now() - startTime).toFixed(2);
       const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
-      logger.debug(
-        `Drew ${visitedCount}/${regions.length} regions (${duration}ms)`
-      );
+      logger.debug(`Drew ${visitedCount}/${regions.length} regions (${duration}ms)`);
 
       // Handle Zoom-based weight adjustment
       const handleZoom = () => {

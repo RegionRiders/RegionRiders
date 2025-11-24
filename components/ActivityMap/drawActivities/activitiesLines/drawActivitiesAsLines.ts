@@ -56,9 +56,7 @@ export function drawActivitiesAsLines(
         // Use utility to filter visible tracks
         const visibleTracks = filterVisibleTracks(tracks, bounds);
 
-        logger.info(
-          `Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`
-        );
+        logger.info(`Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`);
 
         visibleTracks.forEach(([trackId, track]) => {
           const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);

@@ -48,9 +48,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
             const duration = (performance.now() - startTime).toFixed(2);
             const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
 
-            logger.info(
-              `${visitedCount}/${regions.length} regions visited (${duration}ms)`
-            );
+            logger.info(`${visitedCount}/${regions.length} regions visited (${duration}ms)`);
 
             lastAnalysisRef.current = {
               trackKeys: trackKeySignature,
