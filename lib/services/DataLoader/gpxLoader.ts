@@ -3,6 +3,8 @@ import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { GPXCache } from '../cache/gpxCache';
 
+const logger = createComponentLogger('GPXLoader');
+
 /**
  * handles loading and parsing of gpx track files with caching
  */

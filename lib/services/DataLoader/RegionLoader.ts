@@ -4,6 +4,8 @@ import { RegionCache } from '../cache/regionCache';
 import { countryConfig } from '../config/countryConfig';
 import { BoundsChecker } from '../geometry/boundsChecker';
 
+const logger = createComponentLogger('RegionLoader');
+
 /**
  * handles loading and filtering of geographic region data
  */
