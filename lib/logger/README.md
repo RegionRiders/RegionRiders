@@ -24,7 +24,7 @@ provides the full server-side pino logger.
 ### For Server-Side Code (Default - API Routes, Server Components, Tests)
 
 ```typescript
-import {logger, apiLogger, stravaLogger} from '@/lib/logger';
+import { apiLogger, logger, stravaLogger } from '@/lib/logger';
 ```
 
 This is the default and recommended import for most use cases. It provides the full pino logger with all features.
@@ -32,7 +32,7 @@ This is the default and recommended import for most use cases. It provides the f
 ### For Client-Side Code (Client Components, Browser)
 
 ```typescript
-import {logger, createBrowserLogger} from '@/lib/logger/client';
+import { createBrowserLogger, logger } from '@/lib/logger/client';
 ```
 
 Use this explicit import when you need logging in client components. It provides a browser-safe console-based logger.
@@ -40,7 +40,7 @@ Use this explicit import when you need logging in client components. It provides
 ### Explicit Server Import (Optional - For Clarity)
 
 ```typescript
-import {logger} from '@/lib/logger';
+import { logger } from '@/lib/logger';
 ```
 
 This is still available if you want to be explicit that you're using the server logger, but it's not necessary since the
@@ -77,6 +77,33 @@ apiLogger.info({ method: 'GET', path: '/api/users' }, 'API request');
 stravaLogger.debug({ athleteId: 123 }, 'Fetching athlete data');
 authLogger.warn('Invalid token');
 ```
+
+### Component/Module-Specific Loggers
+
+For components, hooks, or modules, use `createComponentLogger` to automatically add `[ComponentName]` prefix to all
+logs:
+
+```typescript
+import { createComponentLogger } from '@/lib/logger/client'; // or '@/lib/logger' for server
+
+// Create a logger for your component/module
+const logger = createComponentLogger('useRegionLoading');
+
+// All logs will automatically include [useRegionLoading] prefix
+logger.debug('Loading regions...'); // Output: [useRegionLoading] Loading regions...
+logger.info(`Loaded ${count} regions`); // Output: [useRegionLoading] Loaded 5 regions
+logger.error('Failed to load'); // Output: [useRegionLoading] Failed to load
+```
+
+This is the **recommended pattern** for all components and modules instead of manually adding prefixes like
+`logger.debug('[ComponentName] message')`.
+
+**Benefits:**
+
+- ✅ Consistent formatting across the codebase
+- ✅ Easy to filter logs by component in production
+- ✅ Cleaner code without manual prefix strings
+- ✅ Automatic formatting in both browser console and server logs
 
 ### Error Logging
 
