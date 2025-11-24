@@ -1,4 +1,6 @@
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
+
+const logger = createComponentLogger('ensureMapPane');
 
 /**
  * Ensures a Leaflet map pane exists with the specified z-index
@@ -15,6 +17,6 @@ export function ensureMapPane(map: any, paneName: string, zIndex: string): void 
   if (!map.getPane(paneName)) {
     const pane = map.createPane(paneName);
     pane.style.zIndex = zIndex;
-    logger.debug(`[ensureMapPane] Created '${paneName}' with z-index ${zIndex}`);
+    logger.debug(`Created '${paneName}' with z-index ${zIndex}`);
   }
 }

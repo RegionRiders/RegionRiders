@@ -1,0 +1,40 @@
+refactor: migrate all components to use createComponentLogger pattern
+
+Refactored 13 files to use the createComponentLogger pattern instead of
+manual [ComponentName] prefixes in log statements.
+
+Changes:
+- Updated imports from logger to createComponentLogger  
+- Added component-specific logger instances
+- Removed ~50 manual prefix strings
+- Achieved 100% pattern compliance
+- Improved code maintainability and consistency
+
+Client components (11 files):
+- drawActivitiesAsHeatmap.ts
+- drawActivitiesAsLines.ts
+- ensureMapPane.ts
+- drawRegions.ts
+- useActivityRendering.ts
+- useRegionAnalysis.ts
+- useRegionRendering.ts
+- useGPXData.ts
+- useLeafletMap.ts
+- gpxCache.ts
+- regionCache.ts
+
+Server services (2 files):
+- RegionLoader.ts
+- gpxLoader.ts
+
+Benefits:
+- Cleaner, more maintainable code
+- Consistent logging across all components
+- Single point of change for component names
+- Better IDE support and autocomplete
+- Easier testing and mocking
+
+No functional changes - behavioral equivalence maintained.
+Follows pattern established in useRegionLoading.ts.
+
+Addresses review feedback on manual log prefixes.

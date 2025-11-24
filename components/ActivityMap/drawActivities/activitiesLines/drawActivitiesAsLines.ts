@@ -1,11 +1,13 @@
 'use client';
 
 import L from 'leaflet';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
 import { filterVisibleTracks } from './utils/filterVisibleTracks';
+
+const logger = createComponentLogger('drawActivitiesAsLines');
 
 /**
  * draws tracks as individual polylines on the map
@@ -55,7 +57,7 @@ export function drawActivitiesAsLines(
         const visibleTracks = filterVisibleTracks(tracks, bounds);
 
         logger.info(
-          `[Lines] Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`
+          `Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`
         );
 
         visibleTracks.forEach(([trackId, track]) => {
@@ -87,9 +89,9 @@ export function drawActivitiesAsLines(
           activityGroup.addTo(map);
         }
 
-        logger.info(`[drawActivities] Drew ${visibleTracks.length} interactive lines`);
+        logger.info(`Drew ${visibleTracks.length} interactive lines`);
       } catch (error) {
-        logger.error('[Lines] Error rendering lines:', error);
+        logger.error('Error rendering lines:', error);
       }
     }, 150); // Debounce pan/zoom
   };
@@ -106,7 +108,7 @@ export function drawActivitiesAsLines(
   }
 
   return () => {
-    logger.info('[drawActivities Lines] Cleanup');
+    logger.info('Cleanup');
     renderAbortRef.current = true;
 
     if (renderTimeoutRef.current) {

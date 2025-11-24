@@ -2,10 +2,11 @@
 
 import L from 'leaflet';
 import { getRegionColorForCount } from '@/components/ActivityMap/drawRegions/utils/getRegionColorForCount';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
+const logger = createComponentLogger('drawRegions');
 /**
  * renders region boundaries on a map with colors based on visit count
  * creates leaflet geojson layers with click handlers
@@ -65,7 +66,7 @@ export function drawRegions(
 
   const duration = (performance.now() - startTime).toFixed(2);
   const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-  logger.debug(`[drawRegions] Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
+  logger.debug(`Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
 
   return layers;
 }

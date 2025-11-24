@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 
+const logger = createComponentLogger('useLeafletMap');
 interface UseLeafletMapOptions {
   center?: [number, number];
   zoom?: number;
@@ -64,7 +65,7 @@ export function useLeafletMap(
       return;
     }
 
-    logger.info('[useLeafletMap] Initializing map...');
+    logger.info('Initializing map...');
 
     try {
       // create leaflet map instance
@@ -84,11 +85,11 @@ export function useLeafletMap(
       mapRef.current.whenReady(() => {
         setIsReady(true);
         setError(null);
-        logger.info('[useLeafletMap] Map initialized and ready');
+        logger.info('Map initialized and ready');
       });
     } catch (err) {
       const errorMessage = `Failed to initialize map: ${err}`;
-      logger.error(`[useLeafletMap] ${errorMessage}`);
+      logger.error(`${errorMessage}`);
       setError(errorMessage);
       setIsReady(false);
     }
@@ -96,7 +97,7 @@ export function useLeafletMap(
     // cleanup function runs when component unmounts
     return () => {
       if (mapRef.current) {
-        logger.info('[useLeafletMap] Cleaning up map...');
+        logger.info('Cleaning up map...');
         mapRef.current.remove();
         mapRef.current = null;
         setIsReady(false);

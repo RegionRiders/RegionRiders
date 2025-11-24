@@ -1,8 +1,9 @@
 import { getApiUrl } from '@/lib/client';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
 
+const logger = createComponentLogger('GPXCache');
 interface GPXCacheEntry {
   track: GPXTrack;
   cachedAt: number;
@@ -63,13 +64,13 @@ export class GPXCache {
         cachedAt: Date.now(),
       });
 
-      logger.debug(`[GPXCache] Cached ${fileName}: ${track.points.length} points`);
+      logger.debug(`Cached ${fileName}: ${track.points.length} points`);
 
       return track;
     } catch (error) {
-      logger.error(`[GPXCache] Error loading ${fileName}: ${error}`);
+      logger.error(`Error loading ${fileName}: ${error}`);
       if (existing?.track) {
-        logger.info('[GPXCache] Serving stale track from cache after load failure');
+        logger.info('Serving stale track from cache after load failure');
         return existing.track;
       }
       throw error;
@@ -92,7 +93,7 @@ export class GPXCache {
    * clears all cached track data and in-flight requests
    */
   clear(): void {
-    logger.debug('[GPXCache] Clearing cache');
+    logger.debug('Clearing cache');
     this.trackCache.clear();
     this.loadingPromises.clear();
   }

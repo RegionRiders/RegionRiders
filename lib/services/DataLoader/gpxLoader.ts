@@ -1,5 +1,5 @@
 import { getApiUrl } from '@/lib/client';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { GPXCache } from '../cache/gpxCache';
 
@@ -21,12 +21,12 @@ export class GPXLoader {
     files?: string[]
   ): Promise<Map<string, GPXTrack>> {
     const startTime = performance.now();
-    logger.info(`[GPXLoader] Loading GPX tracks from ${source}...`);
+    logger.info(`Loading GPX tracks from ${source}...`);
 
     const tracks = source === 'local' ? await this.loadFromLocal(files) : await this.loadFromAPI();
 
     const duration = (performance.now() - startTime).toFixed(2);
-    logger.info(`[GPXLoader] Loaded ${tracks.size} tracks in ${duration}ms`);
+    logger.info(`Loaded ${tracks.size} tracks in ${duration}ms`);
 
     return tracks;
   }
@@ -44,7 +44,7 @@ export class GPXLoader {
       filesToLoad = await this.getLocalFileList();
     }
 
-    logger.info(`[GPXLoader] Found ${filesToLoad.length} GPX files to load`);
+    logger.info(`Found ${filesToLoad.length} GPX files to load`);
 
     // load all tracks in parallel with caching
     const promises = filesToLoad.map(async (file) => {
@@ -75,17 +75,17 @@ export class GPXLoader {
       } else {
         const errorMsg = `Failed to load ${result.file}: ${result.error}`;
         errors.push(errorMsg);
-        logger.error(`[GPXLoader] ${errorMsg}`);
+        logger.error(`${errorMsg}`);
       }
     }
 
     if (errors.length > 0) {
-      logger.warn(`[GPXLoader] ${errors.length} files failed: ${errors}`);
+      logger.warn(`${errors.length} files failed: ${errors}`);
     }
 
     // log cache stats
     const stats = this.cache.getStats();
-    logger.debug(`[GPXLoader] Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
+    logger.debug(`Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
 
     return tracksMap;
   }
@@ -97,7 +97,7 @@ export class GPXLoader {
    * @internal
    */
   private static async loadFromAPI(): Promise<Map<string, GPXTrack>> {
-    logger.info('[GPXLoader] Loading from API...');
+    logger.info('Loading from API...');
     // TODO: implement strava api integration
     return new Map();
   }
@@ -115,7 +115,7 @@ export class GPXLoader {
       const data = await response.json();
       return data.files || [];
     } catch (error) {
-      logger.warn(`[GPXLoader] Could not load GPX file list: ${error}`);
+      logger.warn(`Could not load GPX file list: ${error}`);
       return [];
     }
   }

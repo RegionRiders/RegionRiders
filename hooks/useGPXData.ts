@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { DataLoader } from '@/lib/services/DataLoader';
 import { GPXTrack } from '@/lib/types';
 
+const logger = createComponentLogger('useGPXData');
 /**
  * manages gpx track data loading
  * provides add/remove/clear operations for track management
@@ -27,21 +28,21 @@ export function useGPXData(autoLoad: boolean = true) {
         setLoading(true);
         const loadedTracks = await DataLoader.loadGPXTracks('local');
 
-        logger.info(`[useGPXData] Loaded ${loadedTracks.size} tracks`);
+        logger.info(`Loaded ${loadedTracks.size} tracks`);
 
         setTracks(loadedTracks);
         setError(null);
       } catch (err) {
         const errorMsg = `Failed to load GPX data: ${err}`;
         setError(errorMsg);
-        logger.error(`[useGPXData] ${errorMsg}`);
+        logger.error(`${errorMsg}`);
       } finally {
         setLoading(false);
       }
     };
 
     loadTracks().catch((err) => {
-      logger.error('[useGPXData] Unexpected error loading GPX data:', err);
+      logger.error('Unexpected error loading GPX data:', err);
     });
   }, [autoLoad]);
 
