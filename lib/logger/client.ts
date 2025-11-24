@@ -7,6 +7,7 @@ export {
   dbLogger,
   createBrowserLogger,
   createLogger,
+  createComponentLogger,
   createRequestLogger,
   logApiRequest,
 } from './logger.client';

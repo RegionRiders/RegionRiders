@@ -23,9 +23,23 @@ export interface BrowserLogger {
 export function createBrowserLogger(
   accumulatedBindings: Record<string, unknown> = {}
 ): BrowserLogger {
-  // Create context string from accumulated bindings (empty string if no bindings)
-  const contextStr =
-    Object.keys(accumulatedBindings).length > 0 ? JSON.stringify(accumulatedBindings) : '';
+  // Format context string from accumulated bindings
+  // If 'component' binding exists, format as [ComponentName], otherwise use JSON
+  const contextStr = (() => {
+    if (Object.keys(accumulatedBindings).length === 0) {
+      return '';
+    }
+
+    // Special formatting for component bindings
+    if ('component' in accumulatedBindings) {
+      const { component, ...rest } = accumulatedBindings;
+      const componentStr = `[${component}]`;
+      const restStr = Object.keys(rest).length > 0 ? ` ${JSON.stringify(rest)}` : '';
+      return componentStr + restStr;
+    }
+
+    return JSON.stringify(accumulatedBindings);
+  })();
 
   return {
     trace: (...args: unknown[]) =>
@@ -69,5 +83,6 @@ export const dbLogger = namedLoggers.dbLogger;
 // Create helper functions using shared utility
 const helpers = createLoggerHelpers(logger, apiLogger);
 export const createLogger = helpers.createLogger;
+export const createComponentLogger = helpers.createComponentLogger;
 export const createRequestLogger = helpers.createRequestLogger;
 export const logApiRequest = helpers.logApiRequest;

@@ -62,6 +62,20 @@ export function createLoggerHelpers<T extends LoggerLike>(baseLogger: T, apiLogg
     },
 
     /**
+     * Helper to create a child logger for a specific component or module
+     * This automatically formats the component name in brackets [ComponentName]
+     * @param componentName - Name of the component/module (e.g., 'useRegionLoading', 'GPXLoader')
+     * @param additionalContext - Additional context to include
+     * @returns A child logger with component context
+     * @example
+     * const logger = createComponentLogger('useRegionLoading');
+     * logger.debug('Loading regions...'); // Outputs: [useRegionLoading] Loading regions...
+     */
+    createComponentLogger(componentName: string, additionalContext?: Record<string, unknown>): T {
+      return baseLogger.child({ component: componentName, ...additionalContext }) as T;
+    },
+
+    /**
      * Helper function to create a logger with request context
      * @param requestId - Unique identifier for the request
      * @param additionalContext - Additional context to include

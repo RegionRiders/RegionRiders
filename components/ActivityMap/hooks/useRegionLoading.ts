@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { logger } from '@/lib/logger/client';
+import { createComponentLogger } from '@/lib/logger/client';
 import { DataLoader } from '@/lib/services/DataLoader';
 import { Regions } from '@/lib/types';
+
+const logger = createComponentLogger('useRegionLoading');
 
 /**
  * Hook to handle region loading based on map viewport
@@ -37,16 +39,16 @@ export function useRegionLoading(map: L.Map | null) {
 
       // Ignore stale results if bounds changed during load
       if (lastBoundsRef.current !== boundsSignature) {
-        logger.debug('[useRegionLoading] Ignoring stale region load');
+        logger.debug('Ignoring stale region load');
         return;
       }
 
       const duration = (performance.now() - startTime).toFixed(2);
-      logger.debug(`[useRegionLoading] Loaded ${loadedRegions.length} regions (${duration}ms)`);
+      logger.debug(`Loaded ${loadedRegions.length} regions (${duration}ms)`);
 
       setRegions(loadedRegions);
     } catch (error) {
-      logger.error(`[useRegionLoading] Failed to load regions: ${error}`);
+      logger.error(`Failed to load regions: ${error}`);
     }
   }, [map]);
 

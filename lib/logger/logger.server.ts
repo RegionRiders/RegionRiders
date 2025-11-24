@@ -70,5 +70,6 @@ export const dbLogger = namedLoggers.dbLogger;
 // Create helper functions using shared utility
 const helpers = createLoggerHelpers(logger, apiLogger);
 export const createLogger = helpers.createLogger;
+export const createComponentLogger = helpers.createComponentLogger;
 export const createRequestLogger = helpers.createRequestLogger;
 export const logApiRequest = helpers.logApiRequest;
