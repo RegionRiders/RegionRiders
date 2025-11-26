@@ -4,6 +4,7 @@ import React, { forwardRef} from "react";
 import { Avatar, Group, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
 import { Welcome } from "@/components/Welcome/Welcome";
 import {ActivitiesListElement} from "@/components/ActivitiesListElement/ActivitiesListElement";
+import {TripsListElement} from "@/components/TripsListElement/TripsListElement";
 import { Logo } from '@/components/Logo/Logo';
 
 
@@ -50,7 +51,7 @@ const NavbarTab = ({value, text} : {value: string, text: string}) => (
 );
 
 const NavbarTabContent = ({value, Content} : {value: string, Content: React.ComponentType}) => (
-  <Tabs.Panel value={value}>
+  <Tabs.Panel value={value} p="md">
     <Content/>
   </Tabs.Panel>
 );
@@ -63,6 +64,7 @@ export function Navbar() {
           <Logo
             src="https://http.cat/images/200.jpg"
             href="/"
+            height={50}
           />
 
           <NavbarTab value="map" text="Map" />
@@ -84,6 +86,7 @@ export function Navbar() {
 
         <NavbarTabContent value="map" Content={Welcome} />
         <NavbarTabContent value="activities" Content={ActivitiesListElement} />
+        <NavbarTabContent value="trips" Content={TripsListElement} />
       </Tabs>
     </>
   );
