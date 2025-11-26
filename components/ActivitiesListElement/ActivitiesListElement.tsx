@@ -1,6 +1,6 @@
 'use client';
 
-import {Card, Image, Text, Stack, Flex, SimpleGrid} from '@mantine/core';
+import {Card, Image, Text, Stack, Flex, SimpleGrid, Box} from '@mantine/core';
 import {PostsList} from "@/components/PostsList/PostsList";
 
 interface ActivityData {
@@ -38,16 +38,20 @@ const ActivityStat = ({name, value} : {name: string; value: string;}) => (
 
 const ActivityPost = (
   {data} : {data: ActivityData;}) => (
-  <Card shadow="sm" padding="xs" radius="md" withBorder h={100}>
+  <Card shadow="sm" radius="md" withBorder>
     <Flex
       direction="row"
       gap="xl"
       justify="flex-start"
-      align="flex-start"
+      align="center"
       wrap="nowrap">
-      <Card.Section>
-        <Image src="https://http.cat/images/404.jpg" h={100} w={100}/>
-      </Card.Section>
+
+      <Box display="flex">
+        <Card.Section>
+          <Image src="https://http.cat/images/404.jpg" h={100} w={100}/>
+        </Card.Section>
+      </Box>
+
 
       <Stack align="flex-start" justify="center" gap="md">
         <Text fw={500}>
