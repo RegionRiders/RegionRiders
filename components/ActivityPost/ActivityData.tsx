@@ -4,4 +4,5 @@ export interface ActivityData {
   distance: string;
   time: string;
   average: string;
+  startDate: string;
 }

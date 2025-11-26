@@ -1,5 +1,6 @@
-import { Box, Card, Flex, Image, SimpleGrid, Stack, Text } from "@mantine/core";
+import {Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text, ThemeIcon} from "@mantine/core";
 import {ActivityData} from "@/components/ActivityPost/ActivityData";
+import {IconShoe} from "@tabler/icons-react";
 
 const ActivityStat = ({name, value} : {name: string; value: string;}) => (
   <Stack gap="md">
@@ -29,19 +30,26 @@ const ActivityPost = (
       </Box>
 
 
-      <Stack align="flex-start" justify="center" gap="md">
-        <Text fw={500} truncate="end" w={300}>
-          {data.title}
-        </Text>
-        <Text size="sm" c="dimmed" truncate="end" w={300}>
+      <Stack align="flex-start" justify="center" display="block">
+        <Group>
+          <ThemeIcon>
+            <IconShoe/>
+          </ThemeIcon>
+          <Text fw={500} truncate="end" w={300}>
+            {data.title}
+          </Text>
+        </Group>
+
+        <Text size="sm" c="dimmed" lineClamp={2} w={300}>
           {data.desc}
         </Text>
       </Stack>
 
-      <SimpleGrid cols={3}>
+      <SimpleGrid cols={4} spacing="xs">
         <ActivityStat name="Distance" value={data.distance} />
         <ActivityStat name="Time" value={data.time} />
         <ActivityStat name="Average" value={data.average} />
+        <ActivityStat name="Start Date" value={data.startDate} />
       </SimpleGrid>
     </Flex>
   </Card>
