@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Container, Paper, Text, Title } from '@mantine/core';
 import Image from 'next/image';
+import { Container, Paper, Text, Title } from '@mantine/core';
 import styles from './Login.module.css';
+
 
 const CLIENT_ID = process.env.STRAVA_CLIENT_ID!;
 const REDIRECT_URI = process.env.STRAVA_REDIRECT_URI!;
@@ -10,7 +11,11 @@ const APPROVAL_PROMPT = "auto";
 const SCOPE = "read,activity:read_all";
 
 const Login: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true); // state to control modal visibility
+  const [isOpen, setIsOpen] = useState(true);
+  const [authCode, setAuthCode] = useState<string | null>(null);
+
+  // Log code whenever it changes
+  console.log("Strava OAuth code:", authCode);
 
   const handleStravaLogin = () => {
     const authUrl =
@@ -31,7 +36,7 @@ const Login: React.FC = () => {
       `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,status=yes`
     );
 
-    if (!popup) {return}
+    if (!popup) {return;}
 
     const interval = setInterval(() => {
       try {
@@ -46,27 +51,38 @@ const Login: React.FC = () => {
         if (code) {
           clearInterval(interval);
           popup.close();
-          console.log('Strava OAuth code:', code);
-
+          setAuthCode(code); // triggers useLogger
         }
       } catch (err) {
-        // cross-origin error until popup redirects to your domain
+        // Ignore cross-origin errors until Strava redirects back
       }
     }, 500);
   };
 
-  if (!isOpen){ return null} // modal is closed
+  if (!isOpen) {return null;}
 
   return (
     <div className={styles.overlay}>
       <Container size="xs">
-        <Paper withBorder shadow="md" p="xl" radius="md" className={styles.card}>
-          <button type="button" className={styles.closeButton} onClick={() => setIsOpen(false)} aria-label="Close modal">
+        <Paper withBorder shadow="md" radius="md" className={styles.card}>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={() => setIsOpen(false)}
+            aria-label="Close modal"
+          >
             ×
           </button>
+
           <div className={styles.stack}>
-            <Title order={2}>Welcome Athlete!</Title>
-            <Text color="dimmed">Log in to connect your Strava account</Text>
+            <Title order={2} className={styles.title}>
+              Welcome Athlete!
+            </Title>
+
+            <Text className={styles.dimmedText}>
+              Log in to connect your Strava account
+            </Text>
+
             <button
               type="button"
               onClick={handleStravaLogin}
