@@ -1,18 +1,11 @@
 'use client';
 
-import {Card, Image, Text, Stack, Flex, SimpleGrid, Box} from '@mantine/core';
 import {PostsList} from "@/components/PostsList/PostsList";
-
-interface ActivityData {
-  title: string;
-  desc: string;
-  distance: string;
-  time: string;
-  average: string;
-}
+import {ActivityPost} from "@/components/ActivityPost/ActivityPost";
+import {ActivityData} from "@/components/ActivityPost/ActivityData";
 
 const activities: ActivityData[] = [
-  {title: "Wycieczka wgłąb torby", desc: "Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!",
+  {title: "Wycieczka wgłąb torbyfdsvfdgfhdgfgdfbhdgfhdgfbhjghfj", desc: "Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!",
   distance: "0.13 km", time: "00:00:32", average: "7.02 km/h"},{title: "Wycieczka wgłąb torby", desc: "Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!",
   distance: "0.13 km", time: "00:00:32", average: "7.02 km/h"},{title: "Wycieczka wgłąb torby", desc: "Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!",
   distance: "0.13 km", time: "00:00:32", average: "7.02 km/h"},{title: "Wycieczka wgłąb torby", desc: "Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!",
@@ -25,52 +18,7 @@ const activities: ActivityData[] = [
   distance: "0.13 km", time: "00:00:32", average: "7.02 km/h"},
 ]
 
-const ActivityStat = ({name, value} : {name: string; value: string;}) => (
-  <Stack gap="md">
-    <Text>
-      {name}
-    </Text>
-    <Text>
-      {value}
-    </Text>
-  </Stack>
-)
 
-const ActivityPost = (
-  {data} : {data: ActivityData;}) => (
-  <Card shadow="sm" radius="md" withBorder>
-    <Flex
-      direction="row"
-      gap="xl"
-      justify="flex-start"
-      align="center"
-      wrap="nowrap">
-
-      <Box display="flex">
-        <Card.Section>
-          <Image src="https://http.cat/images/404.jpg" h={100} w={100}/>
-        </Card.Section>
-      </Box>
-
-
-      <Stack align="flex-start" justify="center" gap="md">
-        <Text fw={500}>
-          {data.title}
-        </Text>
-        <Text size="sm" c="dimmed" truncate="end" w={300}>
-          {data.desc}
-        </Text>
-      </Stack>
-
-      <SimpleGrid cols={3}>
-        <ActivityStat name="Distance" value={data.distance} />
-        <ActivityStat name="Time" value={data.time} />
-        <ActivityStat name="Average" value={data.average} />
-      </SimpleGrid>
-    </Flex>
-  </Card>
-
-);
 
 export function ActivitiesListElement() {
   return (
