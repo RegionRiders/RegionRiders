@@ -14,7 +14,7 @@ const trips: TripData[] = [
 export function TripsListElement() {
   return (
     <>
-      <PostsList Content={trips.map((trip: TripData) => (<TripPost data={trip}/>))}/>
+      <PostsList Content={trips.map((trip: TripData) => (<TripPost data={trip} width={600}/>))}/>
     </>
   )
 }
