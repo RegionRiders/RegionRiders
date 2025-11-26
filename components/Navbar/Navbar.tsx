@@ -1,10 +1,10 @@
 'use client';
 
 import React, { forwardRef} from "react";
-import Link from "next/link";
-import { Avatar, Group, Image, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
+import { Avatar, Group, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
 import { Welcome } from "@/components/Welcome/Welcome";
 import {ActivitiesListElement} from "@/components/ActivitiesListElement/ActivitiesListElement";
+import { Logo } from '@/components/Logo/Logo';
 
 
 interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -37,17 +37,6 @@ const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   )
 );
 
-const Logo = ({ src, href }: { src: string; href: string }) => (
-  <UnstyledButton
-    component={Link}
-    href={href}
-    target="_blank">
-    <div style={{ padding: 'var(--mantine-spacing-md)' }}>
-      <Image src={src} w={200} />
-    </div>
-  </UnstyledButton>
-);
-
 const NavbarText = ({text} : {text: string}) => (
   <Text size="lg">
     {text}
@@ -72,8 +61,8 @@ export function Navbar() {
       <Tabs defaultValue="map">
         <Tabs.List style={{position: 'sticky', top: '0', zIndex: 10, left: '0', right: '0', backgroundColor: 'var(--mantine-color-body)'}}>
           <Logo
-            src="https://upload.wikimedia.org/wikipedia/commons/2/23/Logo_Budimex.png"
-            href="https://pl.wikipedia.org/wiki/Budimex"
+            src="https://http.cat/images/200.jpg"
+            href="/"
           />
 
           <NavbarTab value="map" text="Map" />

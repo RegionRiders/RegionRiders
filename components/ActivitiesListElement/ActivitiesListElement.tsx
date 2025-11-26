@@ -1,6 +1,6 @@
 'use client';
 
-import {Card, Image, Text, Stack, ScrollArea} from '@mantine/core';
+import {Card, Image, Text, Stack} from '@mantine/core';
 
 const ActivityPost = () => (
   <Card shadow="sm" padding="lg" radius="md" withBorder w={300}>
