@@ -1,6 +1,6 @@
+import L from 'leaflet';
 import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import {PixelPoint} from "@/components/ActivityMap/drawActivities/activitiesHeatmap/types";
-import L from "leaflet";
+import {PixelPoint} from "@/components/ActivityMap/drawActivities/types";
 
 /**
  * Creates a converter function that transforms lat/lng coordinates to pixel coordinates

@@ -3,10 +3,10 @@
  */
 
 import type { GPXTrack } from '@/lib/types';
-
+import type { HeatmapRefs } from '../types';
 import { ensureMapPane } from '../utils/ensureMapPane';
-import { validateCanvasDimensions } from './utils/canvasValidation';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
+import { validateCanvasDimensions } from './utils/canvasValidation';
 
 // Mock leaflet
 jest.mock('leaflet', () => ({
@@ -41,9 +41,10 @@ jest.mock('./utils/drawLineToAccumulator');
 describe('drawActivitiesAsHeatmap', () => {
   let mockMap: any;
   let mockTracks: Map<string, GPXTrack>;
-  let currentImageLayerRef: any;
-  let renderAbortRef: any;
-  let renderTimeoutRef: any;
+  let currentImageLayerRef: { current: any };
+  let renderAbortRef: { current: boolean };
+  let renderTimeoutRef: { current: NodeJS.Timeout | null };
+  let refs: HeatmapRefs;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,7 +65,7 @@ describe('drawActivitiesAsHeatmap', () => {
       addLayer: jest.fn(),
     };
 
-    mockTracks = new Map([
+    mockTracks = new Map<string, GPXTrack>([
       [
         'track-1',
         {
@@ -82,43 +83,31 @@ describe('drawActivitiesAsHeatmap', () => {
     currentImageLayerRef = { current: null };
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
+
+    refs = {
+      currentImageLayerRef,
+      renderAbortRef,
+      renderTimeoutRef,
+    } as HeatmapRefs;
   });
 
   describe('Setup and event listeners', () => {
     it('should attach event listeners to map', () => {
-      drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
       expect(mockMap.on).toHaveBeenCalledWith('moveend', expect.any(Function));
     });
 
     it('should return cleanup function', () => {
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       expect(cleanup).toBeDefined();
       expect(typeof cleanup).toBe('function');
     });
 
     it('should create heatmap pane', () => {
-      drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       expect(ensureMapPane).toHaveBeenCalledWith(mockMap, 'heatmapPane', '450');
     });
@@ -126,13 +115,7 @@ describe('drawActivitiesAsHeatmap', () => {
 
   describe('Cleanup', () => {
     it('should remove event listeners on cleanup', () => {
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       cleanup();
 
@@ -141,13 +124,7 @@ describe('drawActivitiesAsHeatmap', () => {
     });
 
     it('should set renderAbortRef to true on cleanup', () => {
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       cleanup();
 
@@ -159,13 +136,7 @@ describe('drawActivitiesAsHeatmap', () => {
       currentImageLayerRef.current = existingLayer;
       mockMap.hasLayer.mockReturnValue(true);
 
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       cleanup();
 
@@ -179,13 +150,7 @@ describe('drawActivitiesAsHeatmap', () => {
         throw new Error('Remove layer failed');
       });
 
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       expect(() => cleanup()).not.toThrow();
     });
@@ -193,13 +158,7 @@ describe('drawActivitiesAsHeatmap', () => {
 
   describe('Input validation', () => {
     it('should handle null map gracefully', () => {
-      const cleanup = drawActivitiesAsHeatmap(
-          null,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(null, mockTracks, refs);
 
       expect(cleanup).toBeDefined();
       expect(ensureMapPane).not.toHaveBeenCalled();
@@ -211,13 +170,7 @@ describe('drawActivitiesAsHeatmap', () => {
         off: jest.fn(),
       };
 
-      drawActivitiesAsHeatmap(
-          invalidMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      drawActivitiesAsHeatmap(invalidMap, mockTracks, refs);
 
       expect(invalidMap.on).toHaveBeenCalled();
     });
@@ -225,13 +178,7 @@ describe('drawActivitiesAsHeatmap', () => {
     it('should handle invalid canvas dimensions', () => {
       (validateCanvasDimensions as jest.Mock).mockReturnValue(false);
 
-      const cleanup = drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       expect(cleanup).toBeDefined();
     });
@@ -241,15 +188,10 @@ describe('drawActivitiesAsHeatmap', () => {
     it('should debounce rapid zoom events', () => {
       jest.useFakeTimers();
 
-      drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       const zoomHandler = mockMap.on.mock.calls.find((call: any[]) => call[0] === 'zoomend')[1];
+
       const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
       zoomHandler();
@@ -263,13 +205,7 @@ describe('drawActivitiesAsHeatmap', () => {
     it('should trigger re-render on moveend', () => {
       jest.useFakeTimers();
 
-      drawActivitiesAsHeatmap(
-          mockMap,
-          mockTracks,
-          currentImageLayerRef,
-          renderAbortRef,
-          renderTimeoutRef
-      );
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
 
       const moveHandler = mockMap.on.mock.calls.find((call: any[]) => call[0] === 'moveend')[1];
 
@@ -288,15 +224,7 @@ describe('drawActivitiesAsHeatmap', () => {
         throw new Error('Map pane error');
       });
 
-      expect(() =>
-          drawActivitiesAsHeatmap(
-              mockMap,
-              mockTracks,
-              currentImageLayerRef,
-              renderAbortRef,
-              renderTimeoutRef
-          )
-      ).not.toThrow();
+      expect(() => drawActivitiesAsHeatmap(mockMap, mockTracks, refs)).not.toThrow();
     });
   });
 });

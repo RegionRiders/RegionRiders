@@ -13,7 +13,7 @@ jest.mock('./activitiesLines/drawActivitiesAsLines', () => ({
 }));
 
 describe('drawActivities', () => {
-  const mockMap = {};
+  const mockMap = {} as any;
   const mockTracks = new Map<string, GPXTrack>([
     [
       'track-1',
@@ -25,9 +25,10 @@ describe('drawActivities', () => {
       },
     ],
   ]);
-  const mockImageLayerRef = {};
-  const mockAbortRef = {};
-  const mockTimeoutRef = {};
+
+  const mockImageLayerRef = {} as any;
+  const mockAbortRef = {} as any;
+  const mockTimeoutRef = {} as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -36,38 +37,32 @@ describe('drawActivities', () => {
   it('should call drawActivitiesAsHeatmap when mode is heatmap', () => {
     drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef, 'heatmap');
 
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
-      mockMap,
-      mockTracks,
-      mockImageLayerRef,
-      mockAbortRef,
-      mockTimeoutRef
-    );
+    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(mockMap, mockTracks, {
+      currentImageLayerRef: mockImageLayerRef,
+      renderAbortRef: mockAbortRef,
+      renderTimeoutRef: mockTimeoutRef,
+    });
     expect(drawActivitiesAsLines).not.toHaveBeenCalled();
   });
 
   it('should call drawActivitiesAsLines when mode is lines', () => {
     drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef, 'lines');
 
-    expect(drawActivitiesAsLines).toHaveBeenCalledWith(
-      mockMap,
-      mockTracks,
-      mockAbortRef,
-      mockTimeoutRef
-    );
+    expect(drawActivitiesAsLines).toHaveBeenCalledWith(mockMap, mockTracks, {
+      renderAbortRef: mockAbortRef,
+      renderTimeoutRef: mockTimeoutRef,
+    });
     expect(drawActivitiesAsHeatmap).not.toHaveBeenCalled();
   });
 
   it('should default to heatmap mode when no mode specified', () => {
     drawActivities(mockMap, mockTracks, mockImageLayerRef, mockAbortRef, mockTimeoutRef);
 
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
-      mockMap,
-      mockTracks,
-      mockImageLayerRef,
-      mockAbortRef,
-      mockTimeoutRef
-    );
+    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(mockMap, mockTracks, {
+      currentImageLayerRef: mockImageLayerRef,
+      renderAbortRef: mockAbortRef,
+      renderTimeoutRef: mockTimeoutRef,
+    });
   });
 
   it('should return the result from drawActivitiesAsHeatmap', () => {

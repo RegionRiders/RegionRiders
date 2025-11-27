@@ -31,8 +31,8 @@ export function interpolateRgb(c1: number[], c2: number[], t: number): number[] 
  * @returns Color array (RGB or RGBA depending on threshold colors)
  */
 export function getColorFromThresholds<T extends { threshold: number; color: number[] }>(
-    value: number,
-    thresholds: T[]
+  value: number,
+  thresholds: T[]
 ): number[] {
   // Below minimum: use first color
   if (value <= thresholds[0].threshold) {

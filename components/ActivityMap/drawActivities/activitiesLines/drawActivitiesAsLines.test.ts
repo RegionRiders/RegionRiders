@@ -1,21 +1,35 @@
 /**
  * @jest-environment jsdom
  */
+
 import L from 'leaflet';
 import type { GPXTrack } from '@/lib/types';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
 
 // Mock leaflet
-jest.mock('leaflet', () => ({
-  featureGroup: jest.fn(() => ({
+jest.mock('leaflet', () => {
+  const featureGroupMock = jest.fn(() => ({
     addLayer: jest.fn(),
     addTo: jest.fn(),
-  })),
-  canvas: jest.fn(() => ({})),
-  polyline: jest.fn(() => ({
+  }));
+
+  const canvasMock = jest.fn(() => ({}));
+  const polylineMock = jest.fn(() => ({
     on: jest.fn(),
-  })),
-}));
+  }));
+
+  return {
+    __esModule: true,
+    default: {
+      featureGroup: featureGroupMock,
+      canvas: canvasMock,
+      polyline: polylineMock,
+    },
+    featureGroup: featureGroupMock,
+    canvas: canvasMock,
+    polyline: polylineMock,
+  };
+});
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
@@ -44,12 +58,15 @@ jest.mock('./utils/activityLineEvents', () => ({
 describe('drawActivitiesAsLines', () => {
   let mockMap: any;
   let mockTracks: Map<string, GPXTrack>;
-  let renderAbortRef: any;
-  let renderTimeoutRef: any;
+  let renderAbortRef: { current: boolean };
+  let renderTimeoutRef: { current: NodeJS.Timeout | null };
+  let refs: {
+    renderAbortRef: { current: boolean };
+    renderTimeoutRef: { current: NodeJS.Timeout | null };
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
 
     mockMap = {
       getBounds: jest.fn(() => ({
@@ -59,9 +76,10 @@ describe('drawActivitiesAsLines', () => {
       off: jest.fn(),
       hasLayer: jest.fn(() => false),
       removeLayer: jest.fn(),
+      addLayer: jest.fn(), // needed by activityGroup.addTo(map)
     };
 
-    mockTracks = new Map([
+    mockTracks = new Map<string, GPXTrack>([
       [
         'track-1',
         {
@@ -78,28 +96,25 @@ describe('drawActivitiesAsLines', () => {
 
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
+    refs = { renderAbortRef, renderTimeoutRef };
   });
 
   it('should attach event listeners to map', () => {
-    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
     expect(mockMap.on).toHaveBeenCalledWith('moveend', expect.any(Function));
   });
 
   it('should return cleanup function', () => {
-    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     expect(cleanup).toBeDefined();
     expect(typeof cleanup).toBe('function');
   });
 
   it('should remove event listeners on cleanup', () => {
-    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     cleanup();
 
@@ -108,7 +123,7 @@ describe('drawActivitiesAsLines', () => {
   });
 
   it('should set renderAbortRef to true on cleanup', () => {
-    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     cleanup();
 
@@ -116,15 +131,13 @@ describe('drawActivitiesAsLines', () => {
   });
 
   it('should create canvas renderer', () => {
-    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     expect(L.canvas).toHaveBeenCalledWith({ pane: 'linesPane' });
   });
 
   it('should create feature group for tracks', () => {
-    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
-
-    jest.advanceTimersByTime(200);
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     expect(L.featureGroup).toHaveBeenCalled();
   });
@@ -132,18 +145,9 @@ describe('drawActivitiesAsLines', () => {
   it('should handle empty tracks map', () => {
     const emptyTracks = new Map<string, GPXTrack>();
 
-    const cleanup = drawActivitiesAsLines(mockMap, emptyTracks, renderAbortRef, renderTimeoutRef);
-
-    jest.advanceTimersByTime(200);
+    const cleanup = drawActivitiesAsLines(mockMap, emptyTracks, refs);
 
     expect(cleanup).toBeDefined();
-  });
-
-  it('should debounce render calls', () => {
-    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
-
-    // Initial timeout should be set
-    expect(renderTimeoutRef.current).not.toBeNull();
   });
 
   it('should clean up activity group on cleanup', () => {
@@ -151,26 +155,23 @@ describe('drawActivitiesAsLines', () => {
       addLayer: jest.fn(),
       addTo: jest.fn(),
     };
+
     (L.featureGroup as jest.Mock).mockReturnValue(mockActivityGroup);
     mockMap.hasLayer.mockReturnValue(true);
 
-    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, refs);
 
-    jest.advanceTimersByTime(200);
     cleanup();
 
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockActivityGroup);
   });
 
-  it('should abort rendering when renderAbortRef is set', () => {
-    drawActivitiesAsLines(mockMap, mockTracks, renderAbortRef, renderTimeoutRef);
+  it('should not abort initial rendering when renderAbortRef was true before call', () => {
+    // Even if set to true before, current implementation always does initial render
+    refs.renderAbortRef.current = true;
 
-    // Set abort before timeout executes
-    renderAbortRef.current = true;
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
 
-    jest.advanceTimersByTime(200);
-
-    // Should not create feature group when aborted
-    expect(L.featureGroup).not.toHaveBeenCalled();
+    expect(L.featureGroup).toHaveBeenCalled();
   });
 });

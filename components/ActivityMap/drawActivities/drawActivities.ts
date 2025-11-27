@@ -1,38 +1,36 @@
+// drawActivities.ts
 'use client';
 
-import { GPXTrack } from '@/lib/types';
+import type { RefObject } from 'react';
+import type L from 'leaflet';
+import type { GPXTrack } from '@/lib/types';
 import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
+import type { HeatmapRefs, LinesRefs } from './types';
 
 export type ActivityRenderMode = 'heatmap' | 'lines';
 
-/**
- * renders gpx tracks as either heatmap or individual lines
- *
- * @param map - leaflet map instance
- * @param tracks - map of gpx tracks to render
- * @param currentImageLayerRef - ref to current overlay layer for cleanup
- * @param renderAbortRef - ref to abort flag for canceling renders
- * @param renderTimeoutRef - ref to timeout for debouncing
- * @param mode - 'heatmap' for density visualization or 'lines' for individual tracks
- * @returns cleanup function
- */
 export function drawActivities(
-  map: any,
+  map: L.Map | null,
   tracks: Map<string, GPXTrack>,
-  currentImageLayerRef: any,
-  renderAbortRef: any,
-  renderTimeoutRef: any,
+  currentImageLayerRef: RefObject<L.ImageOverlay | null>,
+  renderAbortRef: RefObject<boolean>,
+  renderTimeoutRef: RefObject<NodeJS.Timeout | null>,
   mode: ActivityRenderMode = 'heatmap'
-) {
+): () => void {
   if (mode === 'heatmap') {
-    return drawActivitiesAsHeatmap(
-      map,
-      tracks,
+    const heatmapRefs: HeatmapRefs = {
       currentImageLayerRef,
       renderAbortRef,
-      renderTimeoutRef
-    );
+      renderTimeoutRef,
+    };
+
+    return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
   }
-  return drawActivitiesAsLines(map, tracks, renderAbortRef, renderTimeoutRef);
+  const linesRefs: LinesRefs = {
+    renderAbortRef,
+    renderTimeoutRef,
+  };
+
+  return drawActivitiesAsLines(map, tracks, linesRefs);
 }
