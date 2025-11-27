@@ -1,21 +1,21 @@
 import { getHeatmapColorForCount } from './getHeatmapColorForCount';
 
 const TEST_THRESHOLDS = [
-  { threshold: 1, color: [139, 0, 0] }, // dark red
-  { threshold: 2, color: [220, 20, 20] }, // red
-  { threshold: 10, color: [255, 100, 0] }, // orange-red
-  { threshold: 25, color: [255, 165, 0] }, // orange
-  { threshold: 50, color: [255, 255, 0] }, // yellow
-  { threshold: 150, color: [255, 255, 255] }, // white
+  { threshold: 1, color: [139, 0, 0, 40] }, // dark red, 15% opacity
+  { threshold: 2, color: [220, 20, 20, 80] }, // red, 31% opacity
+  { threshold: 10, color: [255, 100, 0, 120] }, // orange-red, 47% opacity
+  { threshold: 25, color: [255, 165, 0, 160] }, // orange, 63% opacity
+  { threshold: 50, color: [255, 255, 0, 200] }, // yellow, 78% opacity
+  { threshold: 150, color: [255, 255, 255, 255] }, // white, 100% opacity
 ];
 
 describe('getHeatmapColorForCount', () => {
   describe('basic color mapping', () => {
-    it('should return a valid RGB array', () => {
+    it('should return a valid RGBA array', () => {
       const result = getHeatmapColorForCount(5, 10, 1, TEST_THRESHOLDS);
 
       expect(Array.isArray(result)).toBe(true);
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4); // ← Changed from 3 to 4
       result.forEach((channel) => {
         expect(channel).toBeGreaterThanOrEqual(0);
         expect(channel).toBeLessThanOrEqual(255);
@@ -29,7 +29,16 @@ describe('getHeatmapColorForCount', () => {
       // High count should have higher total RGB value (brighter)
       const lowTotal = lowCount[0] + lowCount[1] + lowCount[2];
       const highTotal = highCount[0] + highCount[1] + highCount[2];
+
       expect(highTotal).toBeGreaterThan(lowTotal);
+    });
+
+    it('should return higher opacity for high counts', () => {
+      const lowCount = getHeatmapColorForCount(1, 10, 1, TEST_THRESHOLDS);
+      const highCount = getHeatmapColorForCount(100, 10, 1, TEST_THRESHOLDS);
+
+      // High count should have higher alpha (more opaque)
+      expect(highCount[3]).toBeGreaterThan(lowCount[3]);
     });
 
     it('should return consistent results for same input', () => {
@@ -48,20 +57,24 @@ describe('getHeatmapColorForCount', () => {
       // With thickness=5, count=50 also represents 10 unique activities (50 / (5*2))
       const thick = getHeatmapColorForCount(50, 10, 5, TEST_THRESHOLDS);
 
-      // Should produce similar colors
+      // Should produce similar colors (allowing for rounding differences)
       expect(Math.abs(thin[0] - thick[0])).toBeLessThan(50);
       expect(Math.abs(thin[1] - thick[1])).toBeLessThan(50);
       expect(Math.abs(thin[2] - thick[2])).toBeLessThan(50);
+      expect(Math.abs(thin[3] - thick[3])).toBeLessThan(50); // ← Added alpha check
     });
 
     it('should handle thickness of 1', () => {
       const result = getHeatmapColorForCount(5, 10, 1, TEST_THRESHOLDS);
+
       expect(result).toBeDefined();
       expect(result[0]).toBeGreaterThanOrEqual(0);
+      expect(result[3]).toBeGreaterThanOrEqual(0); // ← Added alpha check
     });
 
     it('should handle large thickness values', () => {
       const result = getHeatmapColorForCount(100, 10, 10, TEST_THRESHOLDS);
+
       expect(result).toBeDefined();
       result.forEach((channel) => {
         expect(channel).toBeGreaterThanOrEqual(0);
@@ -96,25 +109,27 @@ describe('getHeatmapColorForCount', () => {
   });
 
   describe('custom thresholds', () => {
-    it('should use provided custom thresholds', () => {
+    it('should use provided custom thresholds with RGBA', () => {
       const customThresholds = [
-        { threshold: 0, color: [0, 0, 0] },
-        { threshold: 50, color: [255, 255, 255] },
+        { threshold: 0, color: [0, 0, 0, 100] },
+        { threshold: 50, color: [255, 255, 255, 200] },
       ];
 
       const result = getHeatmapColorForCount(5, 10, 1, customThresholds);
+
       expect(result).toBeDefined();
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4);
     });
 
     it('should respect custom threshold values', () => {
       const customThresholds = [
-        { threshold: 1, color: [100, 100, 100] },
-        { threshold: 10, color: [200, 200, 200] },
+        { threshold: 1, color: [100, 100, 100, 150] },
+        { threshold: 10, color: [200, 200, 200, 250] },
       ];
 
       const atFirst = getHeatmapColorForCount(1, 10, 1, customThresholds);
-      expect(atFirst).toEqual([100, 100, 100]);
+
+      expect(atFirst).toEqual([100, 100, 100, 150]);
     });
   });
 
@@ -123,7 +138,7 @@ describe('getHeatmapColorForCount', () => {
       const result = getHeatmapColorForCount(0, 10, 1, TEST_THRESHOLDS);
 
       expect(result).toBeDefined();
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4);
     });
 
     it('should handle very high counts', () => {
@@ -139,7 +154,7 @@ describe('getHeatmapColorForCount', () => {
       const result = getHeatmapColorForCount(2.5, 10, 1, TEST_THRESHOLDS);
 
       expect(result).toBeDefined();
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4);
     });
 
     it('should handle negative counts as minimum', () => {
@@ -166,14 +181,25 @@ describe('getHeatmapColorForCount', () => {
       }
     });
 
-    it('should maintain RGB validity throughout progression', () => {
+    it('should maintain RGBA validity throughout progression', () => {
       for (let count = 0; count <= 200; count += 10) {
         const result = getHeatmapColorForCount(count, 10, 1, TEST_THRESHOLDS);
+
         result.forEach((channel) => {
           expect(channel).toBeGreaterThanOrEqual(0);
           expect(channel).toBeLessThanOrEqual(255);
         });
       }
+    });
+
+    it('should show increasing opacity with activity density', () => {
+      const low = getHeatmapColorForCount(1, 10, 1, TEST_THRESHOLDS);
+      const medium = getHeatmapColorForCount(10, 10, 1, TEST_THRESHOLDS);
+      const high = getHeatmapColorForCount(100, 10, 1, TEST_THRESHOLDS);
+
+      // Alpha channel should increase
+      expect(medium[3]).toBeGreaterThan(low[3]);
+      expect(high[3]).toBeGreaterThan(medium[3]);
     });
   });
 
@@ -189,8 +215,9 @@ describe('getHeatmapColorForCount', () => {
 
       combinations.forEach(([count, zoom, thickness]) => {
         const result = getHeatmapColorForCount(count, zoom, thickness, TEST_THRESHOLDS);
+
         expect(result).toBeDefined();
-        expect(result).toHaveLength(3);
+        expect(result).toHaveLength(4);
       });
     });
   });

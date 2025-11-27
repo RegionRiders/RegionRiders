@@ -29,6 +29,21 @@ describe('colorInterpolation', () => {
       const result = interpolateRgb(c1, c2, 0.25);
       expect(result).toEqual([64, 64, 64]);
     });
+
+    // ← NEW: RGBA tests
+    it('should interpolate RGBA colors including alpha channel', () => {
+      const c1 = [255, 0, 0, 100];
+      const c2 = [0, 255, 0, 200];
+      const result = interpolateRgb(c1, c2, 0.5);
+      expect(result).toEqual([128, 128, 0, 150]);
+    });
+
+    it('should interpolate alpha channel at different positions', () => {
+      const c1 = [100, 100, 100, 50];
+      const c2 = [200, 200, 200, 250];
+      const result = interpolateRgb(c1, c2, 0.25);
+      expect(result).toEqual([125, 125, 125, 100]);
+    });
   });
 
   describe('getColorFromThresholds', () => {
@@ -76,10 +91,30 @@ describe('colorInterpolation', () => {
         { threshold: 10, color: [0, 0, 255] },
         { threshold: 10, color: [255, 0, 0] }, // Same threshold
       ];
-
       const result = getColorFromThresholds(10, zeroRangeThresholds);
       // Should use the lower color when range is 0
       expect(result).toEqual([0, 0, 255]);
+    });
+
+    // ← NEW: RGBA threshold tests
+    it('should handle RGBA thresholds and interpolate alpha', () => {
+      const rgbaThresholds = [
+        { threshold: 0, color: [255, 0, 0, 50] },
+        { threshold: 10, color: [0, 255, 0, 150] },
+        { threshold: 20, color: [0, 0, 255, 250] },
+      ];
+      const result = getColorFromThresholds(10, rgbaThresholds);
+      expect(result).toEqual([0, 255, 0, 150]);
+    });
+
+    it('should interpolate RGBA values between thresholds', () => {
+      const rgbaThresholds = [
+        { threshold: 0, color: [100, 0, 0, 100] },
+        { threshold: 100, color: [200, 200, 200, 200] },
+      ];
+      const result = getColorFromThresholds(50, rgbaThresholds);
+      // Midpoint interpolation
+      expect(result).toEqual([150, 100, 100, 150]);
     });
   });
 });

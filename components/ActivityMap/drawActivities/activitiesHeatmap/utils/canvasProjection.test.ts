@@ -16,14 +16,12 @@ describe('canvasProjection', () => {
     };
 
     it('should create a converter function', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       expect(typeof converter).toBe('function');
     });
 
     it('should convert lat/lng to pixel coordinates', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       const result = converter(50, 14);
 
       expect(result).toHaveProperty('x');
@@ -33,24 +31,23 @@ describe('canvasProjection', () => {
     });
 
     it('should call map.project with correct parameters', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      mockMap.project.mockClear();
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       converter(50.5, 14.5);
 
       expect(mockMap.project).toHaveBeenCalledWith({ lat: 50.5, lng: 14.5 }, 10);
     });
 
     it('should call map.getZoom', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      mockMap.getZoom.mockClear();
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       converter(50, 14);
 
       expect(mockMap.getZoom).toHaveBeenCalled();
     });
 
     it('should apply PIXEL_DENSITY scaling', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       const result = converter(50, 14);
 
       // Result should be scaled by PIXEL_DENSITY (which is 2 in mapConfig)
@@ -59,12 +56,12 @@ describe('canvasProjection', () => {
     });
 
     it('should subtract topLeft offset', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
 
       // Mock map.project returns { x: 5010, y: 1410 }
       // After subtracting topLeft and scaling:
-      // x = (5010 - 5000) * 2 = 20
-      // y = (1410 - 1400) * 2 = 20
+      // x = (5010-5000) * 2 = 20
+      // y = (1410-1400) * 2 = 20
       const result = converter(50, 14);
 
       // The exact values depend on PIXEL_DENSITY constant
@@ -73,8 +70,7 @@ describe('canvasProjection', () => {
     });
 
     it('should handle different coordinate values', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       const result1 = converter(51, 15);
       const result2 = converter(49, 13);
 
@@ -83,8 +79,7 @@ describe('canvasProjection', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const converter = createLatLngToPixelConverter(mockMap, mockTopLeft);
-
+      const converter = createLatLngToPixelConverter(mockMap as any, mockTopLeft as any);
       const result = converter(-50, -14);
 
       expect(result).toHaveProperty('x');

@@ -14,7 +14,6 @@ describe('drawLineToAccumulator', () => {
     const width = 100;
     const height = 100;
     const accumulator = new Float32Array(width * height);
-
     drawLineToAccumulator(accumulator, width, height, 10, 50, 20, 50, 2);
 
     // Check that some pixels were drawn
@@ -26,7 +25,6 @@ describe('drawLineToAccumulator', () => {
     const width = 100;
     const height = 100;
     const accumulator = new Float32Array(width * height);
-
     drawLineToAccumulator(accumulator, width, height, 50, 10, 50, 20, 2);
 
     const sum = accumulator.reduce((a, b) => a + b, 0);
@@ -37,7 +35,6 @@ describe('drawLineToAccumulator', () => {
     const width = 100;
     const height = 100;
     const accumulator = new Float32Array(width * height);
-
     drawLineToAccumulator(accumulator, width, height, 10, 10, 20, 20, 2);
 
     const sum = accumulator.reduce((a, b) => a + b, 0);
