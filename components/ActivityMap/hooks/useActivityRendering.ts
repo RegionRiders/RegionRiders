@@ -22,32 +22,32 @@ export function useActivityRendering(
   const renderAbortRef = useRef(false);
 
   logger.info(
-    `Hook called with: ${{
+    `Hook called with: ${JSON.stringify({
       hasMap: !!map,
       tracksSize: tracks.size,
       showActivities,
       mode,
       tracksType: tracks instanceof Map ? 'Map' : typeof tracks,
-    }}`
+    })}`
   );
 
   useEffect(() => {
     logger.info(
-      `Effect running: ${{
+      `Effect running: ${JSON.stringify({
         hasMap: !!map,
         tracksSize: tracks.size,
         showActivities,
         mode,
-      }}`
+      })}`
     );
 
     if (!map || !showActivities || tracks.size === 0) {
       logger.info(
-        `Skipping render: ${{
+        `Skipping render: ${JSON.stringify({
           noMap: !map,
           notShowing: !showActivities,
           noTracks: tracks.size === 0,
-        }}`
+        })}`
       );
       return;
     }
