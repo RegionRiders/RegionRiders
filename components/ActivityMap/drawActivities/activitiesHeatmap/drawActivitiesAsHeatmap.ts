@@ -110,7 +110,7 @@ function finishRender(
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
-  lineThickness: number = MAP_CONFIG.LINE_THICKNESS
+  lineThickness: number = MAP_CONFIG.ACTIVITY_LINE_THICKNESS
 ): void {
   if (renderAbortRef.current) {
     return;
@@ -283,7 +283,7 @@ export function drawActivitiesAsHeatmap(
 ): () => void {
   const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
 
-  const lineThickness = MAP_CONFIG.LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
+  const lineThickness = MAP_CONFIG.ACTIVITY_LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
   let zoomChangeTimeout: NodeJS.Timeout | null = null;
 
   const renderHeatmap = (): void => {

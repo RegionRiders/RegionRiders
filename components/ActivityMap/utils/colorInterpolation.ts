@@ -16,8 +16,9 @@ export function interpolateRgb(c1: number[], c2: number[], t: number): number[] 
     Math.round(c1[2] + (c2[2] - c1[2]) * t),
   ];
 
+  // If colors have alpha channel, interpolate it too
   if (c1.length === 4 && c2.length === 4) {
-    result.push(Math.round(c1[3] + (c2[3] - c1[3]) * t));
+    result.push(c1[3] + (c2[3] - c1[3]) * t);
   }
 
   return result;

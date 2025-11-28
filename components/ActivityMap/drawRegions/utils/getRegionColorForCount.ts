@@ -1,6 +1,4 @@
-import {
-  REGION_VISIT_COLOR_THRESHOLDS,
-} from '@/components/ActivityMap/config/mapConfig';
+import { REGION_VISIT_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 import { ColorThreshold } from '@/components/ActivityMap/types';
 

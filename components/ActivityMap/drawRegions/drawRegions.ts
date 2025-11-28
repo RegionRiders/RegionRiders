@@ -2,31 +2,47 @@
 
 import L from 'leaflet';
 import { getRegionColorForCount } from '@/components/ActivityMap/drawRegions/utils/getRegionColorForCount';
-import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
-const logger = createComponentLogger('drawRegions');
-
+/**
+ * renders region boundaries on a map with colors based on visit count
+ * creates leaflet geojson layers with click handlers
+ *
+ * @param map - leaflet map instance
+ * @param regions - regions to draw
+ * @param visitData - visit statistics for coloring
+ * @param onRegionClick - optional click handler for interaction
+ * @param initialWeight - stroke width (default: 2)
+ * @returns array of leaflet layers for cleanup
+ */
 export function drawRegions(
-  map: any,
-  regions: Regions[],
-  visitData: Map<string, RegionVisitData>,
-  onRegionClick?: (region: Regions, visitInfo: RegionVisitData | undefined, layer: any) => void,
-  initialWeight: number = 2
-): any[] {
-  const startTime = performance.now();
-  const layers: any[] = [];
+    map: L.Map,
+    regions: Regions[],
+    visitData: Map<string, RegionVisitData>,
+    onRegionClick?: (
+        region: Regions,
+        visitInfo: RegionVisitData | undefined,
+        layer: L.GeoJSON
+    ) => void,
+    initialWeight: number = 2
+): L.GeoJSON[] {
+  const layers: L.GeoJSON[] = [];
 
   regions.forEach((region) => {
     const visit = visitData.get(region.id);
     const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
-    let fillColor = 'transparent';
-    let strokeColor = '#000';
+    let fillColor: string;
+    let strokeColor: string;
 
     if (visited && typeof visit?.visitCount === 'number') {
       const [r, g, b, a] = getRegionColorForCount(visit.visitCount);
+      fillColor = `rgba(${r},${g},${b},${a})`;
+      strokeColor = `rgba(${r},${g},${b},1)`;
+    }
+    else{
+      const [r, g, b, a] = getRegionColorForCount(0);
       fillColor = `rgba(${r},${g},${b},${a})`;
       strokeColor = `rgba(${r},${g},${b},1)`;
     }
@@ -44,7 +60,7 @@ export function drawRegions(
       onEachFeature: (_feature, leafletLayer) => {
         if (onRegionClick) {
           leafletLayer.on('click', () => {
-            onRegionClick(region, visit, leafletLayer);
+            onRegionClick(region, visit, layer);
           });
         }
       },
@@ -52,12 +68,6 @@ export function drawRegions(
 
     layers.push(layer);
   });
-
-  if (process.env.NODE_ENV === 'development') {
-    const duration = (performance.now() - startTime).toFixed(2);
-    const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-    logger.debug(`Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
-  }
 
   return layers;
 }

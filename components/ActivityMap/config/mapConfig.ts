@@ -4,7 +4,8 @@ import { ColorThreshold } from '../types';
 export const MAP_CONFIG = {
   HEATMAP_RENDER_DELAY: 0,
   PIXEL_DENSITY: 1,
-  LINE_THICKNESS: 2,
+  ACTIVITY_LINE_THICKNESS: 2,
+  REGION_LINE_THICKNESS: 3,
 } as const;
 
 export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
@@ -17,9 +18,9 @@ export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
 ];
 
 export const REGION_VISIT_COLOR_THRESHOLDS: ColorThreshold[] = [
-  { threshold: 1, color: [34, 197, 94, 55] }, // green
-  { threshold: 2, color: [234, 179, 8, 55] }, // yellow
-  { threshold: 5, color: [249, 115, 22, 55] }, // orange
-  { threshold: 10, color: [220, 38, 38, 55] }, // red
-  { threshold: 20, color: [255, 255, 255, 55] }, // white
+  { threshold: 0, color: [60, 60, 60, 0] }, // transparent
+  { threshold: 1, color: [220, 20, 20, 0.1] }, // red
+  { threshold: 5, color: [255, 165, 0, 0.1] }, // orange
+  { threshold: 10, color: [255, 255, 0, 0.1] }, // yellow
+  { threshold: 25, color: [255, 255, 255, 0.1] }, // white
 ];
