@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import type { CanvasDimensions } from '../types';
+import { CanvasDimensions } from '@/components/ActivityMap/drawActivities/types';
 import { validateCanvasDimensions } from './canvasValidation';
 
 describe('validateCanvasDimensions', () => {
