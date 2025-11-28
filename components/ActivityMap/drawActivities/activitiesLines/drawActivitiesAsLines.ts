@@ -24,6 +24,12 @@ export function drawActivitiesAsLines(
 ): () => void {
   let activityGroup: L.FeatureGroup | null = null;
 
+  if (!map) {
+    return () => {
+      // No-op cleanup for null map
+    };
+  }
+
   // Ensure pane exists
   ensureMapPane(map, 'linesPane', '440');
   const canvasRenderer = L.canvas({ pane: 'linesPane' });

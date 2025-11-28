@@ -331,7 +331,7 @@ export function drawActivitiesAsHeatmap(
         try {
           map.removeLayer(currentImageLayerRef.current);
         } catch (e) {
-          /* empty */
+          logger.warn('Failed to remove image layer during cleanup', e);
         }
       }
     }

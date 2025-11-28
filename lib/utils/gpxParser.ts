@@ -68,12 +68,17 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
     }
 
     const eleElement = trackPoint.getElementsByTagName('ele')[0];
-    const ele = parseFloat(eleElement?.textContent || '0');
+    const ele = eleElement?.textContent ? parseFloat(eleElement.textContent) : undefined;
 
     const timeElement = trackPoint.getElementsByTagName('time')[0];
-    const time = timeElement?.textContent;
+    const time = timeElement?.textContent || undefined;
 
-    points.push({ lat, lon, ele, time });
+    points.push({
+      lat,
+      lon,
+      ...(ele !== undefined && !isNaN(ele) && { ele }),
+      ...(time && { time }),
+    });
   }
 
   const timeElement = xmlDoc.getElementsByTagName('time')[0];

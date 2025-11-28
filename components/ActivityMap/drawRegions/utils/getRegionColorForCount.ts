@@ -7,7 +7,7 @@ import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInte
  * Alpha channel is pre-calculated to avoid multiply operations in style props
  * @param count - Number of times region was visited
  * @param thresholds - Optional custom color thresholds
- * @returns RGBA tuple [r, g, b, a]
+ * @returns RGBA color tuple [r, g, b, a]
  */
 export function getRegionColorForCount(
   count: number,
