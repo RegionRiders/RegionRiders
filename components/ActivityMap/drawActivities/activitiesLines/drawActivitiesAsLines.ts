@@ -64,6 +64,10 @@ export function drawActivitiesAsLines(
 
       visibleTracks.forEach(([trackId, track]) => {
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
+        const polylineMetadata = new WeakMap<
+          L.Polyline,
+          { trackId: string; trackData: GPXTrack }
+        >();
 
         const polyline = L.polyline(latlngs, {
           color: '#FF6B6B',
@@ -74,9 +78,8 @@ export function drawActivitiesAsLines(
           smoothFactor: 1.5,
         });
 
-        // Store track data on the polyline instance
-        (polyline as any).trackId = trackId;
-        (polyline as any).trackData = track;
+        // Store track data in WeakMap
+        polylineMetadata.set(polyline, { trackId, trackData: track });
 
         // Use utility functions for event handling
         attachActivityHoverEvents(polyline);
