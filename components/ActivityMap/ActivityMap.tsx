@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useRef, useState } from 'react';
 import { useGPXData } from '@/hooks/useGPXData';
-import { useLeafletMap } from '@/hooks/useLeafletMap';
+import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import MapContainer from './MapContainer';
 

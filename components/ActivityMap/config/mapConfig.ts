@@ -1,4 +1,4 @@
-import { ColorThreshold } from '../types';
+import {ColorThreshold, MapConfig} from '../types';
 
 
 export const MAP_CONFIG = {
@@ -7,6 +7,15 @@ export const MAP_CONFIG = {
   ACTIVITY_LINE_THICKNESS: 2,
   REGION_LINE_THICKNESS: 3,
 } as const;
+
+export const DEFAULT_MAP_CONFIG: MapConfig = {
+  center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
+  zoom: 11,
+  maxZoom: 20,
+  minZoom: 3,
+  tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+  attribution: '© OpenStreetMap contributors © CARTO',
+};
 
 export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 1, color: [139, 0, 0, 255] }, // dark red
@@ -24,3 +33,4 @@ export const REGION_VISIT_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 10, color: [255, 255, 0, 0.1] }, // yellow
   { threshold: 25, color: [255, 255, 255, 0.1] }, // white
 ];
+

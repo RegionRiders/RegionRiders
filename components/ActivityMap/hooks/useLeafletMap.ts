@@ -3,27 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { createComponentLogger } from '@/lib/logger/client';
+import {MapConfig} from "@/components/ActivityMap/types";
+import {DEFAULT_MAP_CONFIG} from "@/components/ActivityMap/config/mapConfig";
 
 const logger = createComponentLogger('useLeafletMap');
-interface UseLeafletMapOptions {
-  center?: [number, number];
-  zoom?: number;
-  maxZoom?: number;
-  minZoom?: number;
-  /** tile layer url pattern with {z}/{x}/{y} placeholders */
-  tileLayerUrl?: string;
-  /** attribution text for map tiles */
-  attribution?: string;
-}
-
-const DEFAULT_OPTIONS: UseLeafletMapOptions = {
-  center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
-  zoom: 11,
-  maxZoom: 20,
-  minZoom: 3,
-  tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-  attribution: '© OpenStreetMap contributors © CARTO',
-};
 
 /**
  * react hook for initializing and managing a leaflet map instance
@@ -49,15 +32,18 @@ const DEFAULT_OPTIONS: UseLeafletMapOptions = {
  * ```
  */
 export function useLeafletMap(
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  options: UseLeafletMapOptions = {}
+    containerRef: React.RefObject<HTMLDivElement | null>,
+    options: Partial<MapConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // merge provided options with defaults
-  const config = useMemo(() => ({ ...DEFAULT_OPTIONS, ...options }), [options]);
+  const config: MapConfig = useMemo(
+      () => ({ ...DEFAULT_MAP_CONFIG, ...options }),
+      [options]
+  );
 
   useEffect(() => {
     // prevent re-initialization if map already exists or container not ready
