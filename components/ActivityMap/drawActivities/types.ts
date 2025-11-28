@@ -23,7 +23,7 @@ export interface RenderState {
 // Shared render refs
 export interface RenderRefs {
   renderAbortRef: RefObject<boolean>;
-  renderTimeoutRef: RefObject<number | null>;
+  renderTimeoutRef: RefObject<ReturnType<typeof setTimeout> | null>;
 }
 
 // Heatmap-specific refs
