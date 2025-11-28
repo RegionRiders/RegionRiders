@@ -46,7 +46,7 @@ export async function parseGPXFile(file: File | string): Promise<GPXTrack> {
   const tracks = xmlDoc.getElementsByTagName('trk');
   const nameElement = tracks[0]?.getElementsByTagName('name')[0];
   const trackName =
-      nameElement?.textContent || (file instanceof File ? file.name : 'Unknown Track');
+    nameElement?.textContent || (file instanceof File ? file.name : 'Unknown Track');
 
   const points: GPXPoint[] = [];
   const trackPoints = xmlDoc.getElementsByTagName('trkpt');
@@ -112,8 +112,8 @@ function haversineDistance(p1: GPXPoint, p2: GPXPoint): number {
   const dLon = ((p2.lon - p1.lon) * Math.PI) / 180;
 
   const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((p1.lat * Math.PI) / 180) *
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((p1.lat * Math.PI) / 180) *
       Math.cos((p2.lat * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);

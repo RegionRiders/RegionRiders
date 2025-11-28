@@ -1,5 +1,4 @@
-import {ColorThreshold, MapConfig} from '../types';
-
+import { ColorThreshold, MapConfig } from '../types';
 
 export const MAP_CONFIG = {
   HEATMAP_RENDER_DELAY: 0,
@@ -33,4 +32,3 @@ export const REGION_VISIT_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 10, color: [255, 255, 0, 0.1] }, // yellow
   { threshold: 25, color: [255, 255, 255, 0.1] }, // white
 ];
-

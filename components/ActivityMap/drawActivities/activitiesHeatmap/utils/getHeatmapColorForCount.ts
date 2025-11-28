@@ -1,6 +1,6 @@
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 import { ColorThreshold } from '@/components/ActivityMap/types';
+import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 
 /**
  * Maps accumulator count to heatmap color with smooth gradients and opacity.

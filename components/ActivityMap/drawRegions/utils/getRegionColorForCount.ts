@@ -1,6 +1,6 @@
 import { REGION_VISIT_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 import { ColorThreshold } from '@/components/ActivityMap/types';
+import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 
 /**
  * Maps visit count to RGBA color with smooth gradients between thresholds

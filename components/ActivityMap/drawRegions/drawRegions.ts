@@ -17,15 +17,15 @@ import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
  * @returns array of leaflet layers for cleanup
  */
 export function drawRegions(
-    map: L.Map,
-    regions: Regions[],
-    visitData: Map<string, RegionVisitData>,
-    onRegionClick?: (
-        region: Regions,
-        visitInfo: RegionVisitData | undefined,
-        layer: L.GeoJSON
-    ) => void,
-    initialWeight: number = 2
+  map: L.Map,
+  regions: Regions[],
+  visitData: Map<string, RegionVisitData>,
+  onRegionClick?: (
+    region: Regions,
+    visitInfo: RegionVisitData | undefined,
+    layer: L.GeoJSON
+  ) => void,
+  initialWeight: number = 2
 ): L.GeoJSON[] {
   const layers: L.GeoJSON[] = [];
 
@@ -40,8 +40,7 @@ export function drawRegions(
       const [r, g, b, a] = getRegionColorForCount(visit.visitCount);
       fillColor = `rgba(${r},${g},${b},${a})`;
       strokeColor = `rgba(${r},${g},${b},1)`;
-    }
-    else{
+    } else {
       const [r, g, b, a] = getRegionColorForCount(0);
       fillColor = `rgba(${r},${g},${b},${a})`;
       strokeColor = `rgba(${r},${g},${b},1)`;

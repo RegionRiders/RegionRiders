@@ -39,4 +39,3 @@ export interface PixelPoint {
   x: number;
   y: number;
 }
-

@@ -1,5 +1,5 @@
-import { useGPXData } from '@/hooks/useGPXData';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
+import { useGPXData } from '@/hooks/useGPXData';
 import { fireEvent, render, screen } from '@/test-utils';
 import ActivityMap from './ActivityMap';
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { memo, useMemo, useRef, useState } from 'react';
-import { useGPXData } from '@/hooks/useGPXData';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
+import { useGPXData } from '@/hooks/useGPXData';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import MapContainer from './MapContainer';
 

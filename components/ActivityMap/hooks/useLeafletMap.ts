@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
+import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { MapConfig } from '@/components/ActivityMap/types';
 import { createComponentLogger } from '@/lib/logger/client';
-import {MapConfig} from "@/components/ActivityMap/types";
-import {DEFAULT_MAP_CONFIG} from "@/components/ActivityMap/config/mapConfig";
 
 const logger = createComponentLogger('useLeafletMap');
 
@@ -32,18 +32,15 @@ const logger = createComponentLogger('useLeafletMap');
  * ```
  */
 export function useLeafletMap(
-    containerRef: React.RefObject<HTMLDivElement | null>,
-    options: Partial<MapConfig> = {}
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  options: Partial<MapConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // merge provided options with defaults
-  const config: MapConfig = useMemo(
-      () => ({ ...DEFAULT_MAP_CONFIG, ...options }),
-      [options]
-  );
+  const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
 
   useEffect(() => {
     // prevent re-initialization if map already exists or container not ready
