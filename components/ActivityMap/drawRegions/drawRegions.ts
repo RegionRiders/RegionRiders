@@ -7,17 +7,7 @@ import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 const logger = createComponentLogger('drawRegions');
-/**
- * renders region boundaries on a map with colors based on visit count
- * creates leaflet geojson layers with click handlers
- *
- * @param map - leaflet map instance
- * @param regions - regions to draw
- * @param visitData - visit statistics for coloring
- * @param onRegionClick - optional click handler for interaction
- * @param initialWeight - stroke width (default: 2)
- * @returns array of leaflet layers for cleanup
- */
+
 export function drawRegions(
   map: any,
   regions: Regions[],
@@ -32,23 +22,22 @@ export function drawRegions(
     const visit = visitData.get(region.id);
     const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
-    // color based on visit count, or neutral if unvisited
     let fillColor = 'transparent';
-    let strokeColor = '#666';
+    let strokeColor = '#000';
 
     if (visited && typeof visit?.visitCount === 'number') {
-      const [r, g, b] = getRegionColorForCount(visit.visitCount);
-      fillColor = `rgba(${r},${g},${b},0.35)`;
+      const [r, g, b, a] = getRegionColorForCount(visit.visitCount);
+      fillColor = `rgba(${r},${g},${b},${a})`;
       strokeColor = `rgba(${r},${g},${b},1)`;
     }
 
     const layer = L.geoJSON(region.geometry, {
       style: {
-        fillColor: visited ? fillColor : 'transparent',
+        fillColor,
         weight: initialWeight,
         opacity: 1,
         color: strokeColor,
-        fillOpacity: visited ? 0.25 : 0,
+        fillOpacity: 1,
         lineCap: 'round',
         lineJoin: 'round',
       },
@@ -64,9 +53,11 @@ export function drawRegions(
     layers.push(layer);
   });
 
-  const duration = (performance.now() - startTime).toFixed(2);
-  const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-  logger.debug(`Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
+  if (process.env.NODE_ENV === 'development') {
+    const duration = (performance.now() - startTime).toFixed(2);
+    const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
+    logger.debug(`Visited ${visitedCount}/${regions.length} regions, ${duration}ms`);
+  }
 
   return layers;
 }
