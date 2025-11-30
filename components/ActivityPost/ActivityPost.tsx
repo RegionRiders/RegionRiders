@@ -35,21 +35,23 @@ const ActivityPost = (
           <ThemeIcon>
             <IconShoe/>
           </ThemeIcon>
-          <Text fw={500} truncate="end" w={300}>
+          <Text fw={650} truncate="end" w={225}>
             {data.title}
+          </Text>
+          <Text c="dimmed" size="xs">
+            {data.startDate}
           </Text>
         </Group>
 
-        <Text size="sm" c="dimmed" lineClamp={2} w={300}>
+        <Text size="sm" c="dimmed" lineClamp={2} w={350}>
           {data.desc}
         </Text>
       </Stack>
 
-      <SimpleGrid cols={4} spacing="xs">
+      <SimpleGrid cols={3} spacing="xs">
         <ActivityStat name="Distance" value={data.distance} />
         <ActivityStat name="Time" value={data.time} />
         <ActivityStat name="Average" value={data.average} />
-        <ActivityStat name="Start Date" value={data.startDate} />
       </SimpleGrid>
     </Flex>
   </Card>
