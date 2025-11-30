@@ -21,8 +21,8 @@ const TripStat = (({value} : {value: string;}) => (
 ));
 
 const TripPost = (
-  {data, width} : {data: TripData, width: number}) => (
-  <Card shadow="sm" radius="md" withBorder w={width}>
+  {data} : {data: TripData}) => (
+  <Card shadow="sm" radius="md" withBorder>
     <Card.Section>
       <Image src="https://http.cat/images/404.jpg" h={150}/>
     </Card.Section>
@@ -43,13 +43,12 @@ const TripPost = (
         <List.Item c="dimmed">
           <Group>
             <Anchor href="https://http.cat/images/404.jpg">
-              <Text truncate="end" w={width * 0.3}>
+              <Text truncate="end" w={250}>
                 {activity.title}
               </Text>
             </Anchor>
             <TripPostActivityStat value={activity.distance}/>
             <TripPostActivityStat value={activity.time}/>
-            <TripPostActivityStat value={activity.average}/>
             <TripPostActivityStat value={activity.startDate}/>
           </Group>
 
