@@ -1,5 +1,9 @@
+import {ActivityData} from "@/components/ActivityPost/ActivityData";
+
 export interface TripData {
   title: string;
   distance: string;
-  activities: string[];
+  startDate: string;
+  endDate: string;
+  activities: ActivityData[];
 }

@@ -1,5 +1,24 @@
-import {Card, Group, Image, List, Text} from "@mantine/core";
+import {Anchor, Card, Group, Image, List, Text, Divider} from "@mantine/core";
 import {TripData} from "@/components/TripPost/TripData";
+import {ActivityData} from "@/components/ActivityPost/ActivityData";
+
+const TripPostActivityStat = (({value} : {value: string;}) => (
+  <>
+    <Divider orientation="vertical" />
+    <Text>
+      {value}
+    </Text>
+  </>
+));
+
+const TripStat = (({value} : {value: string;}) => (
+  <>
+    <Divider orientation="vertical" size="xl"/>
+    <Text size="md">
+      {value}
+    </Text>
+  </>
+));
 
 const TripPost = (
   {data, width} : {data: TripData, width: number}) => (
@@ -8,19 +27,32 @@ const TripPost = (
       <Image src="https://http.cat/images/404.jpg" h={150}/>
     </Card.Section>
 
-    <Group>
-      <Text fw={500} mt="md" mb="md">
+    <Group mt="md">
+      <Text fw="bold" size="lg">
         {data.title}
       </Text>
+      <TripStat value={data.distance} />
+      <TripStat value={data.startDate} />
+      <TripStat value={data.endDate} />
     </Group>
 
+    <Divider orientation="horizontal" size="md" mt="xs" mb="xs"/>
 
     <List size="sm" c="dimmed">
-      {data.activities.map((activity: string) => (
-        <List.Item>
-          <Text truncate="end" w={width * 0.75}>
-            {activity}
-          </Text>
+      {data.activities.map((activity: ActivityData) => (
+        <List.Item c="dimmed">
+          <Group>
+            <Anchor href="https://http.cat/images/404.jpg">
+              <Text truncate="end" w={width * 0.3}>
+                {activity.title}
+              </Text>
+            </Anchor>
+            <TripPostActivityStat value={activity.distance}/>
+            <TripPostActivityStat value={activity.time}/>
+            <TripPostActivityStat value={activity.average}/>
+            <TripPostActivityStat value={activity.startDate}/>
+          </Group>
+
         </List.Item>
       ))}
     </List>
