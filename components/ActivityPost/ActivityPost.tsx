@@ -1,6 +1,6 @@
-import { IconShoe } from '@tabler/icons-react';
-import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core';
+import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text } from '@mantine/core';
 import { ActivityData } from '@/types/ActivityData';
+import {ActivityTypeIcon} from "@/components/ActivityTypeIcon/ActivityTypeIcon";
 
 const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   <Stack gap="md">
@@ -9,29 +9,37 @@ const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   </Stack>
 );
 
-const ActivityPost = ({ data }: { data: ActivityData }) => (
+const ActivityPost = ({ data, imageUrl }: { data: ActivityData; imageUrl?: string }) => (
   <Card shadow="sm" radius="md" withBorder>
     <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
+      {/*Activity route preview image*/}
       <Box>
         <Card.Section>
-          <Image src="https://http.cat/images/404.jpg" h={100} w={100} />
+          <Image src={imageUrl || '/assets/placeholders/activity.jpg'} h={100} w={100} />
         </Card.Section>
       </Box>
 
       <Stack align="flex-start" justify="center" display="block">
         <Group>
-          <ThemeIcon>
-            <IconShoe />
-          </ThemeIcon>
+          {/*Icon*/}
+          <ActivityTypeIcon
+              type={data.activityType}
+              size={200}
+          />
+
+          {/*Title*/}
           <Text fw={650} truncate="end" w={225}>
             {data.title}
           </Text>
+
+          {/*Start date*/}
           <Text c="dimmed" size="xs">
             {data.startDate}
           </Text>
         </Group>
 
-        <Text size="sm" c="dimmed" lineClamp={2} w={350}>
+        {/*Description*/}
+        <Text size="sm" c="dimmed" lineClamp={2} maw={350}>
           {data.desc}
         </Text>
       </Stack>
