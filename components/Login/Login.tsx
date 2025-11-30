@@ -3,19 +3,18 @@ import Image from 'next/image';
 import { Container, Paper, Text, Title } from '@mantine/core';
 import styles from './Login.module.css';
 
-
 const CLIENT_ID = process.env.STRAVA_CLIENT_ID!;
 const REDIRECT_URI = process.env.STRAVA_REDIRECT_URI!;
-const RESPONSE_TYPE = "code";
-const APPROVAL_PROMPT = "auto";
-const SCOPE = "read,activity:read_all";
+const RESPONSE_TYPE = 'code';
+const APPROVAL_PROMPT = 'auto';
+const SCOPE = 'read,activity:read_all';
 
 const Login: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [authCode, setAuthCode] = useState<string | null>(null);
 
   // Log code whenever it changes
-  console.log("Strava OAuth code:", authCode);
+  console.log('Strava OAuth code:', authCode);
 
   const handleStravaLogin = () => {
     const authUrl =
@@ -36,7 +35,9 @@ const Login: React.FC = () => {
       `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,status=yes`
     );
 
-    if (!popup) {return;}
+    if (!popup) {
+      return;
+    }
 
     const interval = setInterval(() => {
       try {
@@ -59,7 +60,9 @@ const Login: React.FC = () => {
     }, 500);
   };
 
-  if (!isOpen) {return null;}
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className={styles.overlay}>
@@ -79,9 +82,7 @@ const Login: React.FC = () => {
               Welcome Athlete!
             </Title>
 
-            <Text className={styles.dimmedText}>
-              Log in to connect your Strava account
-            </Text>
+            <Text className={styles.dimmedText}>Log in to connect your Strava account</Text>
 
             <button
               type="button"

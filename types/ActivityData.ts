@@ -1,4 +1,5 @@
 export interface ActivityData {
+  id: string;
   title: string;
   desc: string;
   distance: string;

@@ -1,39 +1,27 @@
-import {Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text, ThemeIcon} from "@mantine/core";
-import {ActivityData} from "@/components/ActivityPost/ActivityData";
-import {IconShoe} from "@tabler/icons-react";
+import { IconShoe } from '@tabler/icons-react';
+import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core';
+import { ActivityData } from '@/types/ActivityData';
 
-const ActivityStat = ({name, value} : {name: string; value: string;}) => (
+const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   <Stack gap="md">
-    <Text>
-      {name}
-    </Text>
-    <Text>
-      {value}
-    </Text>
+    <Text>{name}</Text>
+    <Text>{value}</Text>
   </Stack>
-)
+);
 
-const ActivityPost = (
-  {data} : {data: ActivityData;}) => (
+const ActivityPost = ({ data }: { data: ActivityData }) => (
   <Card shadow="sm" radius="md" withBorder>
-    <Flex
-      direction="row"
-      gap="xl"
-      justify="flex-start"
-      align="center"
-      wrap="nowrap">
-
+    <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
       <Box>
         <Card.Section>
-          <Image src="https://http.cat/images/404.jpg" h={100} w={100}/>
+          <Image src="https://http.cat/images/404.jpg" h={100} w={100} />
         </Card.Section>
       </Box>
-
 
       <Stack align="flex-start" justify="center" display="block">
         <Group>
           <ThemeIcon>
-            <IconShoe/>
+            <IconShoe />
           </ThemeIcon>
           <Text fw={650} truncate="end" w={225}>
             {data.title}
@@ -55,7 +43,6 @@ const ActivityPost = (
       </SimpleGrid>
     </Flex>
   </Card>
-
 );
 
 export { ActivityPost };

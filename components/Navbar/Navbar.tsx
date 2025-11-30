@@ -1,12 +1,11 @@
 'use client';
 
-import React, { forwardRef} from "react";
-import { Avatar, Group, Menu, Tabs, Text, UnstyledButton } from "@mantine/core";
-import { Welcome } from "@/components/Welcome/Welcome";
-import {ActivitiesListElement} from "@/components/ActivitiesListElement/ActivitiesListElement";
-import {TripsListElement} from "@/components/TripsListElement/TripsListElement";
+import React, { forwardRef } from 'react';
+import { Avatar, Group, Menu, Tabs, Text, UnstyledButton } from '@mantine/core';
+import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
-
+import { TripsListElement } from '@/components/TripsListElement/TripsListElement';
+import { Welcome } from '@/components/Welcome/Welcome';
 
 interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
   image: string;
@@ -38,21 +37,17 @@ const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   )
 );
 
-const NavbarText = ({text} : {text: string}) => (
-  <Text size="lg">
-    {text}
-  </Text>
-);
+const NavbarText = ({ text }: { text: string }) => <Text size="lg">{text}</Text>;
 
-const NavbarTab = ({value, text} : {value: string, text: string}) => (
+const NavbarTab = ({ value, text }: { value: string; text: string }) => (
   <Tabs.Tab value={value}>
     <NavbarText text={text} />
   </Tabs.Tab>
 );
 
-const NavbarTabContent = ({value, Content} : {value: string, Content: React.ComponentType}) => (
+const NavbarTabContent = ({ value, Content }: { value: string; Content: React.ComponentType }) => (
   <Tabs.Panel value={value} p="md">
-    <Content/>
+    <Content />
   </Tabs.Panel>
 );
 
@@ -60,12 +55,17 @@ export function Navbar() {
   return (
     <>
       <Tabs defaultValue="map">
-        <Tabs.List style={{position: 'sticky', top: '0', zIndex: 10, left: '0', right: '0', backgroundColor: 'var(--mantine-color-body)'}}>
-          <Logo
-            src="https://http.cat/images/200.jpg"
-            href="/"
-            height={50}
-          />
+        <Tabs.List
+          style={{
+            position: 'sticky',
+            top: '0',
+            zIndex: 10,
+            left: '0',
+            right: '0',
+            backgroundColor: 'var(--mantine-color-body)',
+          }}
+        >
+          <Logo src="https://http.cat/images/200.jpg" href="/" height={50} />
 
           <NavbarTab value="map" text="Map" />
 

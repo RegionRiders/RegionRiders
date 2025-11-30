@@ -1,30 +1,25 @@
-import {Anchor, Card, Group, Image, List, Text, Divider} from "@mantine/core";
-import {TripData} from "@/components/TripPost/TripData";
-import {ActivityData} from "@/components/ActivityPost/ActivityData";
+import { Anchor, Card, Divider, Group, Image, List, Text } from '@mantine/core';
+import { ActivityData } from '@/types/ActivityData';
+import { TripData } from '@/types/TripData';
 
-const TripPostActivityStat = (({value} : {value: string;}) => (
+const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
     <Divider orientation="vertical" />
-    <Text>
-      {value}
-    </Text>
+    <Text>{value}</Text>
   </>
-));
+);
 
-const TripStat = (({value} : {value: string;}) => (
+const TripStat = ({ value }: { value: string }) => (
   <>
-    <Divider orientation="vertical" size="xl"/>
-    <Text size="md">
-      {value}
-    </Text>
+    <Divider orientation="vertical" size="xl" />
+    <Text size="md">{value}</Text>
   </>
-));
+);
 
-const TripPost = (
-  {data} : {data: TripData}) => (
+const TripPost = ({ data }: { data: TripData }) => (
   <Card shadow="sm" radius="md" withBorder>
     <Card.Section>
-      <Image src="https://http.cat/images/404.jpg" h={150}/>
+      <Image src="https://http.cat/images/404.jpg" h={150} />
     </Card.Section>
 
     <Group mt="md">
@@ -36,7 +31,7 @@ const TripPost = (
       <TripStat value={data.endDate} />
     </Group>
 
-    <Divider orientation="horizontal" size="md" mt="xs" mb="xs"/>
+    <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
 
     <List size="sm" c="dimmed">
       {data.activities.map((activity: ActivityData) => (
@@ -47,16 +42,13 @@ const TripPost = (
                 {activity.title}
               </Text>
             </Anchor>
-            <TripPostActivityStat value={activity.distance}/>
-            <TripPostActivityStat value={activity.time}/>
-            <TripPostActivityStat value={activity.startDate}/>
+            <TripPostActivityStat value={activity.distance} />
+            <TripPostActivityStat value={activity.time} />
+            <TripPostActivityStat value={activity.startDate} />
           </Group>
-
         </List.Item>
       ))}
     </List>
-
-
   </Card>
 );
 

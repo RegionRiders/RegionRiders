@@ -13,6 +13,5 @@ const config: StorybookConfig = {
     name: '@storybook/nextjs',
     options: {},
   },
-
 };
 export default config;

@@ -1,4 +1,3 @@
-
 import { Meta, StoryObj } from '@storybook/react';
 import Login from './Login'; // import the default export component
 

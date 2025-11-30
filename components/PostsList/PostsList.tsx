@@ -1,18 +1,14 @@
 'use client';
 
-import {Stack} from "@mantine/core";
-import React from "react";
+import React from 'react';
+import { Stack } from '@mantine/core';
 
-export function PostsList({Content}: {Content: React.ReactNode[]}) {
+export function PostsList({ Content }: { Content: React.ReactNode[] }) {
   return (
     <>
-      <Stack
-        align="center"
-        justify="flex-start"
-        gap="md"
-      >
+      <Stack align="center" justify="flex-start" gap="md">
         {Content}
       </Stack>
     </>
-  )
+  );
 }
