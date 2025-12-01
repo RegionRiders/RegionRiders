@@ -8,6 +8,9 @@ import { theme } from '@/theme';
 export const metadata: Metadata = {
   title: 'Mantine Next.js template',
   description: 'I am using Mantine with Next.js!',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: any }) {
