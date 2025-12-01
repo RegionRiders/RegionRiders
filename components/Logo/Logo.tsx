@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Image, UnstyledButton } from '@mantine/core';
+import classes from './Logo.module.css';
 
 const Logo = ({
-  src = 'https://http.cat/images/200.jpg',
+  src = '/favicon.svg',
   href = '/',
   width = undefined,
   height = undefined,
@@ -16,11 +17,18 @@ const Logo = ({
   const appliedHeight = height ?? (width === undefined ? 50 : undefined);
 
   return (
-    <UnstyledButton component={Link} href={href} target="_blank">
-      <div style={{ padding: 'var(--mantine-spacing-md)' }}>
-        <Image src={src} h={appliedHeight} w={appliedWidth} />
-      </div>
-    </UnstyledButton>
+    <Link href={href} passHref>
+      <UnstyledButton component="a" className={classes.logoButton}>
+        <Image
+          src={src}
+          alt="Region Riders Logo"
+          width={appliedWidth}
+          height={appliedHeight}
+          fit="contain"
+          className={classes.logoImage}
+        />
+      </UnstyledButton>
+    </Link>
   );
 };
 
