@@ -45,14 +45,6 @@
     font-size: 14px;
 }
 
-/* Strava button wrapper */
-.button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-
 /* Close button */
 .closeButton {
     position: absolute;

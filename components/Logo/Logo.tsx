@@ -21,7 +21,7 @@ const Logo = ({
       <UnstyledButton component="a" className={classes.logoButton}>
         <Image
           src={src}
-          alt="Region Riders Logo"
+          alt="RegionRiders Logo"
           width={appliedWidth}
           height={appliedHeight}
           fit="contain"

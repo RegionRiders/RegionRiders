@@ -11,12 +11,7 @@ const ActivityStat = ({ name, value }: { name: string; value: string }) => (
 
 const ActivityPost = ({ data, imageUrl }: { data: Activity; imageUrl?: string }) => (
   <Card shadow="sm" radius="md" withBorder>
-    <Flex
-      direction="row"
-      gap="xl"
-      justify="flex-start"
-      align="center"
-      wrap="nowrap">
+    <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
       {/*Activity route preview image*/}
       <Box>
         <Card.Section>

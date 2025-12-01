@@ -1,21 +1,25 @@
-import { stravaLogger } from '@/lib/logger';
-import { getStravaClient } from '../config';
+import { logger } from '@/lib/logger/client';
 
 /**
  * Generates the Strava OAuth authorization URL
  * @param scope - OAuth scope (default: 'read,activity:read_all')
  * @returns Authorization URL string
  */
-export async function getAuthorizationUrl(scope = 'read,activity:read_all'): Promise<string> {
-  const strava = getStravaClient();
+export function getAuthorizationUrl(scope = 'read,activity:read_all'): string {
+  const CLIENT_ID = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || process.env.STRAVA_CLIENT_ID;
+  const REDIRECT_URI =
+    process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || process.env.STRAVA_REDIRECT_URI;
 
-  stravaLogger.debug({ scope }, 'Generating Strava OAuth authorization URL');
+  if (!CLIENT_ID || !REDIRECT_URI) {
+    logger.warn('Strava credentials not configured');
+    return '';
+  }
 
-  const authUrl = await strava.oauth.getRequestAccessURL({
-    scope,
-  });
-
-  stravaLogger.debug({ authUrl }, 'Strava OAuth URL generated');
-
-  return authUrl;
+  return (
+    `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&response_type=code` +
+    `&approval_prompt=auto` +
+    `&scope=${encodeURIComponent(scope)}`
+  );
 }
