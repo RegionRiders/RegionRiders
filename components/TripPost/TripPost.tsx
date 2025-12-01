@@ -1,6 +1,6 @@
 import { Anchor, Card, Divider, Group, Image, List, Text } from '@mantine/core';
-import { ActivityData } from '@/types/ActivityData';
-import { TripData } from '@/types/TripData';
+import { Activity } from '@/types/activity';
+import { Trip } from '@/types/trip';
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -16,7 +16,7 @@ const TripStat = ({ value }: { value: string }) => (
   </>
 );
 
-const TripPost = ({ data }: { data: TripData }) => (
+const TripPost = ({ data }: { data: Trip }) => (
   <Card shadow="sm" radius="md" withBorder>
     <Card.Section>
       <Image src="https://http.cat/images/404.jpg" h={150} />
@@ -34,7 +34,7 @@ const TripPost = ({ data }: { data: TripData }) => (
     <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
 
     <List size="sm" c="dimmed">
-      {data.activities.map((activity: ActivityData) => (
+      {data.activities.map((activity: Activity) => (
         <List.Item c="dimmed">
           <Group>
             <Anchor href="https://http.cat/images/404.jpg">

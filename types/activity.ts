@@ -1,6 +1,6 @@
 import { ActivityType } from '@/lib/client/activityConfig';
 
-export interface ActivityData {
+export interface Activity {
   id: string;
   activityType: ActivityType;
   title: string;

@@ -1,43 +1,22 @@
 'use client';
 
-import React, { forwardRef } from 'react';
-import { Avatar, Group, Menu, Tabs, Text, UnstyledButton } from '@mantine/core';
+import React from 'react';
+import { Button, Tabs, Text } from '@mantine/core';
 import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
 import { TripsListElement } from '@/components/TripsListElement/TripsListElement';
 import { Welcome } from '@/components/Welcome/Welcome';
+import { User } from '@/types/user';
+import { UserMenu } from './UserMenu';
+import classes from './Navbar.module.css';
 
-interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
-  image: string;
-  name: string;
-  icon?: React.ReactNode;
+export interface NavbarProps {
+  user?: User;
+  defaultTab?: 'map' | 'activities' | 'trips';
+  onLoginClick?: () => void;
 }
 
-const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
-  ({ image, name, icon, ...others }: UserButtonProps, ref) => (
-    <UnstyledButton
-      ref={ref}
-      style={{
-        padding: 'var(--mantine-spacing-md)',
-        color: 'var(--mantine-color-text)',
-        borderRadius: 'var(--mantine-radius-sm)',
-      }}
-      {...others}
-    >
-      <Group>
-        <Avatar src={image} radius="xl" />
-
-        <div style={{ flex: 1 }}>
-          <Text size="sm" fw="500">
-            {name}
-          </Text>
-        </div>
-      </Group>
-    </UnstyledButton>
-  )
-);
-
-const NavbarText = ({ text }: { text: string }) => <Text size="lg">{text}</Text>;
+const NavbarText = ({ text }: { text: string }) => <Text>{text}</Text>;
 
 const NavbarTab = ({ value, text }: { value: string; text: string }) => (
   <Tabs.Tab value={value}>
@@ -46,48 +25,34 @@ const NavbarTab = ({ value, text }: { value: string; text: string }) => (
 );
 
 const NavbarTabContent = ({ value, Content }: { value: string; Content: React.ComponentType }) => (
-  <Tabs.Panel value={value} p="md">
+  <Tabs.Panel value={value}>
     <Content />
   </Tabs.Panel>
 );
 
-export function Navbar() {
+export function Navbar({ user, defaultTab = 'map', onLoginClick }: NavbarProps) {
   return (
-    <>
-      <Tabs defaultValue="map">
-        <Tabs.List
-          style={{
-            position: 'sticky',
-            top: '0',
-            zIndex: 10,
-            left: '0',
-            right: '0',
-            backgroundColor: 'var(--mantine-color-body)',
-          }}
-        >
-          <Logo src="https://http.cat/images/200.jpg" href="/" height={50} />
+    <Tabs defaultValue={defaultTab}>
+      <Tabs.List className={classes.tabsList}>
+        <Logo />
+        <NavbarTab value="map" text="Map" />
+        <NavbarTab value="activities" text="Activities" />
+        <NavbarTab value="trips" text="Trips" />
 
-          <NavbarTab value="map" text="Map" />
+        <div className={classes.userSection}>
+          {user ? (
+            <UserMenu user={user} />
+          ) : (
+            <Button variant="outline" onClick={onLoginClick}>
+              Login with Strava
+            </Button>
+          )}
+        </div>
+      </Tabs.List>
 
-          <NavbarTab value="trips" text="Trips" />
-
-          <NavbarTab value="activities" text="Activities" />
-
-          <Menu ml="auto" withArrow>
-            <Menu.Target>
-              <UserButton image="https://http.cat/images/426.jpg" name="Andrzej Lepper" />
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item>Settings</Menu.Item>
-              <Menu.Item color="red">Log out</Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Tabs.List>
-
-        <NavbarTabContent value="map" Content={Welcome} />
-        <NavbarTabContent value="activities" Content={ActivitiesListElement} />
-        <NavbarTabContent value="trips" Content={TripsListElement} />
-      </Tabs>
-    </>
+      <NavbarTabContent value="map" Content={Welcome} />
+      <NavbarTabContent value="activities" Content={ActivitiesListElement} />
+      <NavbarTabContent value="trips" Content={TripsListElement} />
+    </Tabs>
   );
 }

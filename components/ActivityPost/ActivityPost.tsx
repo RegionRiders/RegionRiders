@@ -1,6 +1,6 @@
 import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text } from '@mantine/core';
-import { ActivityData } from '@/types/ActivityData';
-import {ActivityTypeIcon} from "@/components/ActivityTypeIcon/ActivityTypeIcon";
+import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
+import { Activity } from '@/types/activity';
 
 const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   <Stack gap="md">
@@ -9,7 +9,7 @@ const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   </Stack>
 );
 
-const ActivityPost = ({ data, imageUrl }: { data: ActivityData; imageUrl?: string }) => (
+const ActivityPost = ({ data, imageUrl }: { data: Activity; imageUrl?: string }) => (
   <Card shadow="sm" radius="md" withBorder>
     <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
       {/*Activity route preview image*/}
@@ -22,10 +22,7 @@ const ActivityPost = ({ data, imageUrl }: { data: ActivityData; imageUrl?: strin
       <Stack align="flex-start" justify="center" display="block">
         <Group>
           {/*Icon*/}
-          <ActivityTypeIcon
-              type={data.activityType}
-              size={200}
-          />
+          <ActivityTypeIcon type={data.activityType} size={200} />
 
           {/*Title*/}
           <Text fw={650} truncate="end" w={225}>
