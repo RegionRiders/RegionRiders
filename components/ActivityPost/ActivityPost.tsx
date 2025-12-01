@@ -36,7 +36,7 @@ const ActivityPost = ({ data, imageUrl }: { data: Activity; imageUrl?: string })
 
           {/*Start date*/}
           <Text c="dimmed" size="xs">
-            {data.startDate}
+            {data.startDate.toUTCString()}
           </Text>
         </Group>
 

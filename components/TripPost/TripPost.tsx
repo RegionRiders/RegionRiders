@@ -1,6 +1,7 @@
-import { Anchor, Card, Divider, Group, Image, List, Text } from '@mantine/core';
+import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
+
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -9,46 +10,108 @@ const TripPostActivityStat = ({ value }: { value: string }) => (
   </>
 );
 
-const TripStat = ({ value }: { value: string }) => (
+const TripStat = ({ header, value }: { header:string; value: string }) => (
   <>
-    <Divider orientation="vertical" size="xl" />
-    <Text size="md">{value}</Text>
+    <Group>
+      <Text size="md" fw="bold">
+        {header}
+      </Text>
+      <Text>
+        {value}
+      </Text>
+    </Group>
   </>
 );
 
+const pad = (n: number) => n.toString().padStart(2, "0");
+const dateNoTime = (date: Date) => date.toISOString().slice(0, 10);
+const dateWithTime = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const dateOnlyTime = (date: Date) => `${pad(date.getHours())}-${pad(date.getMinutes())}`;
+
+const Activities = ({ activities, tripStartDate, tripEndDate }: { activities: Activity[]; tripStartDate: Date; tripEndDate: Date }) => {
+  const isSameDay = (date1: Date, date2: Date) =>
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDay() === date2.getDay();
+
+  const days = Math.abs(
+    Math.floor(
+      (new Date(tripEndDate.getFullYear(), tripEndDate.getMonth(), tripEndDate.getDate()).getTime() -
+        new Date(tripStartDate.getFullYear(), tripStartDate.getMonth(), tripStartDate.getDate()).getTime())
+      / (1000 * 60 * 60 * 24)
+    )
+  );
+
+  let prevActivityDate: Date | null = null;
+  let dayCount = 0;
+
+  return (
+      <>
+
+          {activities.map((activity: Activity) => {
+            const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate)
+
+            if (isNewDay) {
+              dayCount++;
+              prevActivityDate = activity.startDate;
+            }
+
+            return (
+              <>
+                {isNewDay && (
+                  <Group>
+                    <Text>
+                      {dateNoTime(activity.startDate)}
+                    </Text>
+                    <Divider orientation="vertical" size="md"/>
+                    <Text>
+                      Day {dayCount}/{days}
+                    </Text>
+                  </Group>
+
+                )}
+                <List size="sm" c="dimmed">
+                  <List.Item c="dimmed">
+                    <Group>
+                      <Anchor href="https://http.cat/images/404.jpg">
+                        <Text truncate="end" w={250}>
+                          {activity.title}
+                        </Text>
+                      </Anchor>
+                      <TripPostActivityStat value={activity.distance} />
+                      <TripPostActivityStat value={activity.time} />
+                    </Group>
+                  </List.Item>
+                </List>
+              </>
+            );
+          })}
+      </>
+    );
+};
+
 const TripPost = ({ data }: { data: Trip }) => (
   <Card shadow="sm" radius="md" withBorder>
-    <Card.Section>
-      <Image src="https://http.cat/images/404.jpg" h={150} />
-    </Card.Section>
+    <SimpleGrid cols={2} mb="xs">
+      <Card.Section>
+        <Image src="https://http.cat/images/404.jpg" h={250} />
+      </Card.Section>
 
-    <Group mt="md">
-      <Text fw="bold" size="lg">
-        {data.title}
-      </Text>
-      <TripStat value={data.distance} />
-      <TripStat value={data.startDate} />
-      <TripStat value={data.endDate} />
-    </Group>
+      <Stack ml="md" gap={0}>
+        <Text fw="bold" size="xl" mb={0}>
+          {data.title}
+        </Text>
+        <Text c="dimmed" size="sm" mb="xs">
+          🚥{dateWithTime(data.startDate)} 🏁{dateWithTime(data.endDate)}
+        </Text>
+
+        <TripStat header="Distance:" value={data.distance} />
+      </Stack>
+    </SimpleGrid>
 
     <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
 
-    <List size="sm" c="dimmed">
-      {data.activities.map((activity: Activity) => (
-        <List.Item c="dimmed">
-          <Group>
-            <Anchor href="https://http.cat/images/404.jpg">
-              <Text truncate="end" w={250}>
-                {activity.title}
-              </Text>
-            </Anchor>
-            <TripPostActivityStat value={activity.distance} />
-            <TripPostActivityStat value={activity.time} />
-            <TripPostActivityStat value={activity.startDate} />
-          </Group>
-        </List.Item>
-      ))}
-    </List>
+    <Activities activities={data.activities} tripStartDate={data.startDate} tripEndDate={data.endDate} />
   </Card>
 );
 

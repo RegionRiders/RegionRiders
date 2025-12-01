@@ -5,7 +5,7 @@ export interface Activity {
   activityType: ActivityType;
   title: string;
   desc: string;
-  startDate: string;
+  startDate: Date;
   endDate: string;
   distance: string;
   time: string;

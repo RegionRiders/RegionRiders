@@ -4,7 +4,7 @@ export interface Trip {
   id: string;
   title: string;
   distance: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   activities: Activity[];
 }
