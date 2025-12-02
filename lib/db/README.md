@@ -330,9 +330,6 @@ yarn test
 # Run only unit tests (skips database tests)
 yarn test:unit
 
-# Run integration tests (includes database)
-yarn test:integration
-
 # Watch mode
 yarn jest:watch
 ```
