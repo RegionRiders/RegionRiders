@@ -81,7 +81,7 @@ export function getDatabaseConfig(): DatabaseConfig {
  */
 export function getDatabaseUrl(): string {
   const config = getDatabaseConfig();
-  const credentials = `${config.user}:${config.password}`;
+  const credentials = `${encodeURIComponent(config.user)}:${encodeURIComponent(config.password)}`;
   const location = `${config.host}:${config.port}`;
   const sslParam = config.ssl ? '?sslmode=require' : '';
 
