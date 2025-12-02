@@ -1,6 +1,7 @@
 import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
+import {ActivityTypeIcon} from "@/components/ActivityTypeIcon/ActivityTypeIcon";
 
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
@@ -82,6 +83,7 @@ const Activities = ({ activities, tripStartDate, tripEndDate }:
               }>
               <List.Item c="dimmed">
                 <Group>
+                  <ActivityTypeIcon type={activity.activityType} size={25} />
                   <Anchor href="https://http.cat/images/404.jpg">
                     <Text truncate="end" w={250}>
                       {activity.title}
