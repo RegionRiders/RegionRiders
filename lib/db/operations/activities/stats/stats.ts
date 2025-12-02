@@ -25,7 +25,7 @@ export const getActivityStats = cache(
         .select({
           totalActivities: sql<number>`count(*)::int`,
           totalDistance: sql<number>`coalesce(sum(${activities.distance}), 0)`,
-          totalMovingTime: sql<number>`coalesce(sum(${activities.movingTime}), 0)`,
+          totalMovingTime: sql<number>`coalesce(sum(${activities.movingTime})::int, 0)`,
           totalElevationGain: sql<number>`coalesce(sum(${activities.totalElevationGain}), 0)`,
           averageDistance: sql<number>`coalesce(avg(${activities.distance}), 0)`,
           averageSpeed: sql<number>`coalesce(avg(${activities.averageSpeed}), 0)`,
