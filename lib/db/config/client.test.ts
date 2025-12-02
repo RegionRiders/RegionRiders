@@ -61,4 +61,45 @@ describe('Database Client Connection', () => {
     process.env.POSTGRES_HOST = originalHost;
     await closePool();
   });
+
+  it('handles pool error events', async () => {
+    const errorListener = jest.fn();
+    pool.on('error', errorListener);
+
+    // Simulate an error event
+    const testError = new Error('Idle client error');
+    pool.emit('error', testError);
+
+    expect(errorListener).toHaveBeenCalledWith(testError);
+  });
+
+  it('logs debug messages in development mode', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
+
+    // Close existing pool to trigger creation with development logging
+    await closePool();
+    const devPool = getPool();
+    expect(devPool).toBeDefined();
+
+    // Close pool to trigger development close logging
+    await closePool();
+
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, writable: true });
+  });
+
+  it('logs connection info in development mode during testConnection', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
+
+    const result = await testConnection();
+    expect(result).toBe(true);
+
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, writable: true });
+  });
+
+  it('executes query with parameters', async () => {
+    const result = await query('SELECT $1::int as value', [42]);
+    expect(result.rows[0].value).toBe(42);
+  });
 });

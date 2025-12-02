@@ -341,4 +341,73 @@ describe('Activity Operations', () => {
       expect(remainingActivities.length).toBe(0);
     });
   });
+
+  describe('Error Handling', () => {
+    it('should handle createActivity errors gracefully', async () => {
+      const invalidActivity: NewActivity = {
+        userId: 'invalid-uuid-format', // Invalid UUID format
+        name: 'Test',
+        type: 'Ride',
+        startDate: new Date(),
+      };
+
+      await expect(createActivity(invalidActivity)).rejects.toThrow();
+    });
+
+    it('should handle updateActivity errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(updateActivity(invalidId, { name: 'Test' })).rejects.toThrow();
+    });
+
+    it('should handle deleteActivity errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(deleteActivity(invalidId)).rejects.toThrow();
+    });
+
+    it('should handle deleteActivitiesByUserId errors gracefully', async () => {
+      const invalidUserId = 'invalid-uuid-format';
+      await expect(deleteActivitiesByUserId(invalidUserId)).rejects.toThrow();
+    });
+
+    it('should handle bulkCreateActivities errors gracefully', async () => {
+      const invalidActivities: NewActivity[] = [
+        {
+          userId: 'invalid-uuid-format',
+          name: 'Test',
+          type: 'Ride',
+          startDate: new Date(),
+        },
+      ];
+
+      await expect(bulkCreateActivities(invalidActivities)).rejects.toThrow();
+    });
+
+    it('should handle upsertActivity without stravaActivityId', async () => {
+      const activityWithoutStravaId: NewActivity = {
+        userId: testUserId,
+        name: 'No Strava ID',
+        type: 'Ride',
+        startDate: new Date(),
+      };
+
+      const activity = await findOrCreateActivity(activityWithoutStravaId);
+      expect(activity).toBeDefined();
+      expect(activity.stravaActivityId).toBeNull();
+
+      // Cleanup
+      await deleteActivity(activity.id);
+    });
+
+    it('should handle upsertActivity errors gracefully', async () => {
+      const invalidActivity: NewActivity = {
+        userId: 'invalid-uuid-format',
+        stravaActivityId: 'test_123',
+        name: 'Test',
+        type: 'Ride',
+        startDate: new Date(),
+      };
+
+      await expect(findOrCreateActivity(invalidActivity)).rejects.toThrow();
+    });
+  });
 });

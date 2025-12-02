@@ -229,4 +229,93 @@ describe('User Operations', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('Error Handling', () => {
+    it('should handle createUser errors gracefully', async () => {
+      const invalidUser: NewUser = {
+        stravaId: '123',
+        email: 'invalid-email', // This may not cause an error, but we test the flow
+        firstName: 'Test',
+      };
+
+      // Creating a user with an invalid structure
+      await expect(
+        createUser({
+          ...invalidUser,
+          tokenExpiresAt: 'invalid-date' as any,
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should handle updateUser errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(updateUser(invalidId, { firstName: 'Test' })).rejects.toThrow();
+    });
+
+    it('should handle updateUserTokens errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(
+        updateUserTokens(invalidId, {
+          accessToken: 'test',
+          refreshToken: 'test',
+          tokenExpiresAt: new Date(),
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should handle deactivateUser errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(deactivateUser(invalidId)).rejects.toThrow();
+    });
+
+    it('should handle deleteUser errors gracefully', async () => {
+      const invalidId = 'invalid-uuid-format';
+      await expect(deleteUser(invalidId)).rejects.toThrow();
+    });
+
+    it('should handle upsertUser without stravaId', async () => {
+      const userWithoutStravaId: NewUser = {
+        stravaId: null as any, // Testing behavior when stravaId is not provided
+        email: 'nostrava@example.com',
+        firstName: 'No',
+        lastName: 'StravaId',
+      };
+
+      // Should throw an error because stravaId is required
+      await expect(findOrCreateUser(userWithoutStravaId)).rejects.toThrow();
+    });
+
+    it('should handle findOrCreateUser errors gracefully', async () => {
+      const invalidUser: NewUser = {
+        stravaId: 'test_123',
+        email: 'test@test.com',
+        firstName: 'Test',
+        tokenExpiresAt: 'invalid-date' as any,
+      };
+
+      await expect(findOrCreateUser(invalidUser)).rejects.toThrow();
+    });
+
+    it('should handle getUserById errors gracefully with invalid UUID', async () => {
+      const user = await getUserById('invalid-uuid');
+      expect(user).toBeUndefined();
+    });
+
+    it('should handle getUserByStravaId errors gracefully', async () => {
+      // Test with very long string that might cause issues
+      const user = await getUserByStravaId('a'.repeat(1000));
+      expect(user).toBeUndefined();
+    });
+
+    it('should handle getUserByEmail errors gracefully', async () => {
+      // Test with invalid input
+      const user = await getUserByEmail('');
+      expect(user).toBeUndefined();
+    });
+
+    it('should handle getAllUsers errors with invalid options', async () => {
+      const users = await getAllUsers({ limit: -1, offset: -1 });
+      expect(Array.isArray(users)).toBe(true);
+    });
+  });
 });
