@@ -237,18 +237,19 @@ Access at `https://local.drizzle.studio`
 ### Basic Query
 
 ```typescript
-import {db} from '@/lib/db';
+import {getDb} from '@/lib/db';
 import {users} from '@/lib/db/schema';
 import {eq} from 'drizzle-orm';
 
 // Find a user by ID
+const db = getDb();
 const user = await db.select().from(users).where(eq(users.id, 1));
 ```
 
 ### Insert Data
 
 ```typescript
-import {db} from '@/lib/db';
+import {getDb} from '@/lib/db';
 import {users, type NewUser} from '@/lib/db/schema';
 
 const newUser: NewUser = {
@@ -258,16 +259,18 @@ const newUser: NewUser = {
     lastName: 'Doe',
 };
 
+const db = getDb();
 const [created] = await db.insert(users).values(newUser).returning();
 ```
 
 ### Update Data
 
 ```typescript
-import {db} from '@/lib/db';
+import {getDb} from '@/lib/db';
 import {users} from '@/lib/db/schema';
 import {eq} from 'drizzle-orm';
 
+const db = getDb();
 await db
     .update(users)
     .set({firstName: 'Jane'})
@@ -277,10 +280,11 @@ await db
 ### Join Queries
 
 ```typescript
-import {db} from '@/lib/db';
+import {getDb} from '@/lib/db';
 import {users, activities} from '@/lib/db/schema';
 import {eq} from 'drizzle-orm';
 
+const db = getDb();
 const userWithActivities = await db
     .select()
     .from(users)
