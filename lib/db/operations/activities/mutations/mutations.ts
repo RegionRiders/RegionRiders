@@ -4,7 +4,7 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { activities, getActivityByStravaId, getDb } from '@/lib/db';
+import { activities, getDb } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { Activity, NewActivity } from '../types';
 
@@ -82,16 +82,60 @@ export async function deleteActivitiesByUserId(userId: string): Promise<number> 
 
 /**
  * Find or create an activity by Strava Activity ID (upsert pattern)
+ * This used to do a pre-check then insert which is vulnerable to a race condition.
+ * Replace that with an atomic upsert at the DB layer so concurrent requests return the same canonical row.
+ * @throws {Error} If operation fails
+ */
+export async function upsertActivity(data: NewActivity): Promise<Activity> {
+  try {
+    const db = getDb();
+
+    // If there's no Strava activity id we cannot perform an upsert by that key — fall back to normal create
+    if (!data.stravaActivityId) {
+      return await createActivity(data);
+    }
+
+    // Prepare the SET payload for ON CONFLICT DO UPDATE.
+    // Exclude immutable keys that should never be overwritten by the upsert.
+    const setPayload: Partial<Omit<Activity, 'id' | 'userId' | 'createdAt'>> = {
+      ...data,
+      // Ensure updatedAt is always set when upserting
+      updatedAt: new Date(),
+    } as any;
+
+    // Defensive: remove keys that may exist on the insert type but must not be part of the update
+    delete (setPayload as any).id;
+    delete (setPayload as any).userId;
+    delete (setPayload as any).createdAt;
+
+    // Perform a single INSERT ... ON CONFLICT (strava_activity_id) DO UPDATE SET ... RETURNING *
+    const [activity] = await db
+      .insert(activities)
+      .values(data)
+      .onConflictDoUpdate({
+        target: activities.stravaActivityId,
+        set: setPayload,
+      })
+      .returning();
+
+    return activity;
+  } catch (error) {
+    dbLogger.error({ error, stravaActivityId: data.stravaActivityId }, 'Error upserting activity');
+    throw error;
+  }
+}
+
+/**
+ * Find or create an activity by Strava Activity ID (upsert pattern)
+ * Uses a single atomic DB upsert when a Strava Activity ID is present to avoid race conditions.
  * @throws {Error} If operation fails
  */
 export async function findOrCreateActivity(data: NewActivity): Promise<Activity> {
   try {
     if (data.stravaActivityId) {
-      const existingActivity = await getActivityByStravaId(data.stravaActivityId);
-      if (existingActivity) {
-        return existingActivity;
-      }
+      return await upsertActivity(data);
     }
+
     return await createActivity(data);
   } catch (error) {
     dbLogger.error(

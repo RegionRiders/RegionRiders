@@ -4,7 +4,7 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { getDb, getUserByStravaId, users } from '@/lib/db';
+import { getDb, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { NewUser, User, UserTokenUpdate } from '../types';
 
@@ -117,14 +117,50 @@ export async function deleteUser(id: string): Promise<boolean> {
 }
 
 /**
+ * Atomically insert or update a user based on the unique `strava_id`.
+ * Falls back to a normal create when `stravaId` is not provided.
+ */
+export async function upsertUser(data: NewUser): Promise<User> {
+  try {
+    const db = getDb();
+
+    if (!data.stravaId) {
+      return await createUser(data);
+    }
+
+    // Build the SET payload for ON CONFLICT DO UPDATE. Exclude immutable keys.
+    const setPayload: Partial<Omit<User, 'id' | 'createdAt'>> = {
+      ...data,
+      updatedAt: new Date(),
+    } as any;
+
+    delete (setPayload as any).id;
+    delete (setPayload as any).createdAt;
+
+    const [user] = await db
+      .insert(users)
+      .values(data)
+      .onConflictDoUpdate({
+        target: users.stravaId,
+        set: setPayload,
+      })
+      .returning();
+
+    return user;
+  } catch (error) {
+    dbLogger.error({ error, stravaId: data.stravaId }, 'Error upserting user');
+    throw error;
+  }
+}
+
+/**
  * Find or create a user by Strava ID (upsert pattern)
- * @throws {Error} If operation fails
+ * Replaced pre-check with an atomic upsert to avoid race conditions.
  */
 export async function findOrCreateUser(data: NewUser): Promise<User> {
   try {
-    const existingUser = await getUserByStravaId(data.stravaId);
-    if (existingUser) {
-      return existingUser;
+    if (data.stravaId) {
+      return await upsertUser(data);
     }
     return await createUser(data);
   } catch (error) {
