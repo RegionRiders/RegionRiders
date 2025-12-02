@@ -49,7 +49,7 @@ export const getUserByEmail = cache(async (email: string): Promise<User | undefi
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     return user;
   } catch (error) {
-    dbLogger.error({ error, email }, 'Error fetching user by email');
+    dbLogger.error({ error }, 'Error fetching user by email');
     return undefined;
   }
 });
