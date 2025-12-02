@@ -9,7 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-regionriders}
       POSTGRES_USER: ${POSTGRES_USER:-regionriders_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-regionriders_pass}
-      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
