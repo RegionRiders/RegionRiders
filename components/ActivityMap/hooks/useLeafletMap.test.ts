@@ -1,3 +1,4 @@
+import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import L from 'leaflet';
 import { useLeafletMap } from './useLeafletMap';
@@ -48,7 +49,7 @@ describe('useLeafletMap', () => {
 
   describe('map initialization', () => {
     it('should initialize with null map when container ref has no element', () => {
-      const emptyRef = { current: null };
+      const emptyRef = { current: null } as unknown as React.RefObject<HTMLDivElement>;
       const { result } = renderHook(() => useLeafletMap(emptyRef));
 
       expect(result.current.map).toBeNull();
@@ -123,7 +124,7 @@ describe('useLeafletMap', () => {
         }),
       };
 
-      (L.map as jest.Mock).mockReturnValue(mockMap);
+      (L.map as jest.Mock).mockReturnValueOnce(mockMap);
 
       const containerRef = { current: mockContainer };
       const { result, unmount } = renderHook(() => useLeafletMap(containerRef));
@@ -149,6 +150,83 @@ describe('useLeafletMap', () => {
       rerender();
 
       expect(L.map).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('config updates', () => {
+    it('should update map view when config changes', async () => {
+      const mockSetView = jest.fn().mockReturnThis();
+      const mockMap = {
+        setView: mockSetView,
+        remove: jest.fn(),
+        on: jest.fn(),
+        off: jest.fn(),
+        whenReady: jest.fn((callback) => {
+          callback();
+          return { on: jest.fn(), off: jest.fn() };
+        }),
+      };
+
+      (L.map as jest.Mock).mockReturnValueOnce(mockMap);
+
+      const containerRef = { current: mockContainer };
+      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
+        initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
+      });
+
+      await waitFor(() => {
+        expect(result.current.isReady).toBe(true);
+      });
+
+      // Clear previous setView calls from initialization
+      mockSetView.mockClear();
+
+      // Update config
+      rerender({ opts: { center: [60, 20] as [number, number], zoom: 15 } });
+
+      await waitFor(() => {
+        expect(mockSetView).toHaveBeenCalledWith([60, 20], 15);
+      });
+
+      // Map should not be recreated
+      expect(L.map).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not update view if map is not ready', async () => {
+      const mockSetView = jest.fn().mockReturnThis();
+
+      const mockMap = {
+        setView: mockSetView,
+        remove: jest.fn(),
+        on: jest.fn(),
+        off: jest.fn(),
+        whenReady: jest.fn(() => {
+          // Don't call callback - map never becomes ready
+          return { on: jest.fn(), off: jest.fn() };
+        }),
+      };
+
+      (L.map as jest.Mock).mockReturnValueOnce(mockMap);
+
+      const containerRef = { current: mockContainer };
+      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
+        initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
+      });
+
+      // Verify map is not ready
+      expect(result.current.isReady).toBe(false);
+
+      mockSetView.mockClear();
+
+      // Update config while map is not ready
+      rerender({ opts: { center: [60, 20] as [number, number], zoom: 15 } });
+
+      // Wait a bit to ensure effect has run
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // setView should not be called since map is not ready
+      expect(mockSetView).not.toHaveBeenCalled();
+      expect(result.current.isReady).toBe(false);
     });
   });
 

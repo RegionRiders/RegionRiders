@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { MapConfig } from '@/components/ActivityMap/types';
@@ -18,7 +18,7 @@ const logger = createComponentLogger('useLeafletMap');
  *
  * @example
  * ```
- * const mapContainerRef = useRef<HTMLDivElement>(null);
+ * const mapContainerRef = useRef(null);
  * const { map, isReady, error } = useLeafletMap(mapContainerRef, {
  *   center: [54.352375, 18.656686],
  *   zoom: 13
@@ -32,16 +32,16 @@ const logger = createComponentLogger('useLeafletMap');
  * ```
  */
 export function useLeafletMap(
-  containerRef: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement>,
   options: Partial<MapConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // merge provided options with defaults
   const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
 
+  // Initial map creation effect
   useEffect(() => {
     // prevent re-initialization if map already exists or container not ready
     if (mapRef.current || !containerRef.current) {
@@ -86,7 +86,15 @@ export function useLeafletMap(
         setIsReady(false);
       }
     };
-  }, [containerRef]); // only re-run if container ref changes
+  }, [containerRef]);
+
+  // Update map view when config changes
+  useEffect(() => {
+    if (mapRef.current && isReady) {
+      logger.debug('Updating map view with new config');
+      mapRef.current.setView(config.center!, config.zoom!);
+    }
+  }, [config, isReady]);
 
   return {
     map: mapRef.current,
