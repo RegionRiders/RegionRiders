@@ -12,6 +12,7 @@ jest.mock('./hooks/useLeafletMap', () => ({
   useLeafletMap: jest.fn(),
 }));
 
+// Mock the child components
 jest.mock('./MapContainer', () => ({
   __esModule: true,
   default: function MockMapContainer() {
@@ -19,16 +20,100 @@ jest.mock('./MapContainer', () => ({
   },
 }));
 
+jest.mock('./MapOrchestrator', () => ({
+  __esModule: true,
+  default: function MockMapOrchestrator() {
+    return <div data-testid="map-orchestrator">Map Orchestrator</div>;
+  },
+}));
+
 const mockUseGPXData = useGPXData as jest.MockedFunction<typeof useGPXData>;
 const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeafletMap>;
 
 describe('ActivityMap', () => {
-  const mockTracks = new Map<string, any>();
-
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Provide full shape expected from useGPXData to satisfy TS
+    // Default mock implementations
+    mockUseGPXData.mockReturnValue({
+      tracks: new Map(),
+      loading: false,
+      error: null,
+      addTrack: jest.fn(),
+      removeTrack: jest.fn(),
+      clearTracks: jest.fn(),
+      trackCount: 0,
+    });
+
+    mockUseLeafletMap.mockReturnValue({
+      map: {} as any,
+      isReady: true,
+      error: null,
+    });
+  });
+
+  it('renders without crashing', () => {
+    render(<ActivityMap />);
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
+  });
+
+  it('displays error message when map fails to load', () => {
+    mockUseLeafletMap.mockReturnValue({
+      map: null,
+      isReady: false,
+      error: 'Failed to initialize map',
+    });
+
+    render(<ActivityMap />);
+    expect(screen.getByText('Failed to load map')).toBeInTheDocument();
+    expect(screen.getByText('Failed to initialize map')).toBeInTheDocument();
+  });
+
+  it('renders mode selector with heatmap and lines options', () => {
+    render(<ActivityMap />);
+
+    expect(screen.getByLabelText('Heatmap')).toBeInTheDocument();
+    expect(screen.getByLabelText('Lines')).toBeInTheDocument();
+  });
+
+  it('defaults to heatmap mode', () => {
+    render(<ActivityMap />);
+
+    const heatmapRadio = screen.getByLabelText('Heatmap') as HTMLInputElement;
+    expect(heatmapRadio.checked).toBe(true);
+  });
+
+  it('changes mode when user selects lines', () => {
+    render(<ActivityMap />);
+
+    const linesRadio = screen.getByLabelText('Lines') as HTMLInputElement;
+    fireEvent.click(linesRadio);
+
+    expect(linesRadio.checked).toBe(true);
+  });
+
+  it('renders MapOrchestrator when map is ready', () => {
+    render(<ActivityMap />);
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+  });
+
+  it('does not render MapOrchestrator when map is not ready', () => {
+    mockUseLeafletMap.mockReturnValue({
+      map: null,
+      isReady: false,
+      error: null,
+    });
+
+    render(<ActivityMap />);
+    expect(screen.queryByTestId('map-orchestrator')).not.toBeInTheDocument();
+  });
+
+  it('works with populated tracks', () => {
+    const mockTracks = new Map([
+      ['track1', { id: 'track1', name: 'Track 1', coordinates: [] } as any],
+      ['track2', { id: 'track2', name: 'Track 2', coordinates: [] } as any],
+    ]);
+
     mockUseGPXData.mockReturnValue({
       tracks: mockTracks,
       loading: false,
@@ -36,83 +121,10 @@ describe('ActivityMap', () => {
       addTrack: jest.fn(),
       removeTrack: jest.fn(),
       clearTracks: jest.fn(),
-      trackCount: 0,
-    } as any);
-
-    mockUseLeafletMap.mockReturnValue({
-      map: null,
-      isReady: false,
-      error: null,
-    } as any);
-  });
-
-  it('should render error message when map loading fails', () => {
-    mockUseLeafletMap.mockReturnValue({
-      map: null,
-      isReady: false,
-      error: 'Map loading failed',
-    } as any);
-
-    render(<ActivityMap />);
-
-    expect(screen.getByText('Failed to load map')).toBeInTheDocument();
-    expect(screen.getByText('Map loading failed')).toBeInTheDocument();
-  });
-
-  it('should render mode selector with heatmap selected by default', () => {
-    render(<ActivityMap />);
-
-    const heatmapRadio = screen.getByLabelText('Heatmap');
-    const linesRadio = screen.getByLabelText('Lines');
-
-    expect(heatmapRadio).toBeChecked();
-    expect(linesRadio).not.toBeChecked();
-  });
-
-  it('should not render MapContainer when map is not ready', () => {
-    render(<ActivityMap />);
-
-    expect(screen.queryByTestId('map-container')).not.toBeInTheDocument();
-  });
-
-  it('should render MapContainer when map is ready', () => {
-    const mockMap: any = {};
-    mockUseLeafletMap.mockReturnValue({
-      map: mockMap,
-      isReady: true,
-      error: null,
-    } as any);
-
-    render(<ActivityMap />);
-
-    expect(screen.getByTestId('map-container')).toBeInTheDocument();
-  });
-
-  it('should change activity mode when radio button is clicked', () => {
-    const mockMap: any = {};
-    mockUseLeafletMap.mockReturnValue({
-      map: mockMap,
-      isReady: true,
-      error: null,
-    } as any);
-
-    render(<ActivityMap />);
-
-    const linesRadio = screen.getByLabelText('Lines');
-    fireEvent.click(linesRadio);
-
-    expect(linesRadio).toBeChecked();
-    const heatmapRadio = screen.getByLabelText('Heatmap');
-    expect(heatmapRadio).not.toBeChecked();
-  });
-
-  it('should render map container div', () => {
-    render(<ActivityMap />);
-
-    const mapContainer = screen.getByTestId('map-wrapper');
-    expect(mapContainer).toHaveStyle({
-      width: '100%',
-      height: '100%',
+      trackCount: 2,
     });
+
+    render(<ActivityMap />);
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
   });
 });

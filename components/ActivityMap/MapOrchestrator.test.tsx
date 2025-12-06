@@ -4,7 +4,7 @@ import { useActivityRendering } from './hooks/useActivityRendering';
 import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useRegionLoading } from './hooks/useRegionLoading';
 import { useRegionRendering } from './hooks/useRegionRendering';
-import MapContainer from './MapContainer';
+import MapOrchestrator from './MapOrchestrator';
 
 // Mock the hooks
 jest.mock('./hooks/useActivityRendering', () => ({
@@ -30,7 +30,7 @@ const mockUseRegionAnalysis = useRegionAnalysis as jest.MockedFunction<typeof us
 const mockUseRegionLoading = useRegionLoading as jest.MockedFunction<typeof useRegionLoading>;
 const mockUseRegionRendering = useRegionRendering as jest.MockedFunction<typeof useRegionRendering>;
 
-describe('MapContainer', () => {
+describe('MapOrchestrator', () => {
   const mockMap: any = {};
   const mockTracks = new Map<string, any>();
   const mockRegions: Regions[] = [];
@@ -52,19 +52,19 @@ describe('MapContainer', () => {
   });
 
   it('should call useRegionLoading with map', () => {
-    render(<MapContainer map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
 
     expect(mockUseRegionLoading).toHaveBeenCalledWith(mockMap);
   });
 
   it('should call useRegionAnalysis with tracks and regions', () => {
-    render(<MapContainer map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
 
     expect(mockUseRegionAnalysis).toHaveBeenCalledWith(mockTracks, mockRegions);
   });
 
   it('should call useActivityRendering with correct parameters', () => {
-    render(<MapContainer map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
 
     expect(mockUseActivityRendering).toHaveBeenCalledWith(
       mockMap,
@@ -75,7 +75,7 @@ describe('MapContainer', () => {
   });
 
   it('should call useRegionRendering with correct parameters', () => {
-    render(<MapContainer map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
 
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
       mockMap,
@@ -87,7 +87,7 @@ describe('MapContainer', () => {
 
   it('should pass custom props correctly', () => {
     render(
-      <MapContainer
+      <MapOrchestrator
         map={mockMap}
         tracks={mockTracks}
         showHeatmap={false}
@@ -102,7 +102,7 @@ describe('MapContainer', () => {
   });
 
   it('should render null', () => {
-    const { container } = render(<MapContainer map={mockMap} tracks={mockTracks} />);
+    const { container } = render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
 
     expect(container.firstChild).toBeNull();
   });

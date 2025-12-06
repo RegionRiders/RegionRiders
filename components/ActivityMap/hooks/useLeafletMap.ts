@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { MapConfig } from '@/components/ActivityMap/types';
@@ -18,7 +18,7 @@ const logger = createComponentLogger('useLeafletMap');
  *
  * @example
  * ```
- * const mapContainerRef = useRef(null);
+ * const mapContainerRef = useRef<HTMLDivElement>(null);
  * const { map, isReady, error } = useLeafletMap(mapContainerRef, {
  *   center: [54.352375, 18.656686],
  *   zoom: 13
@@ -32,14 +32,15 @@ const logger = createComponentLogger('useLeafletMap');
  * ```
  */
 export function useLeafletMap(
-  containerRef: React.RefObject<HTMLDivElement>,
-  options: Partial<MapConfig> = {}
+    containerRef: React.RefObject<HTMLDivElement | null>,
+    options: Partial<MapConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
+  const config: MapConfig = { ...DEFAULT_MAP_CONFIG, ...options };
 
   // Initial map creation effect
   useEffect(() => {
@@ -55,10 +56,12 @@ export function useLeafletMap(
       mapRef.current = L.map(containerRef.current, {
         center: config.center!,
         zoom: config.zoom!,
+        maxZoom: config.maxZoom,
+        minZoom: config.minZoom,
       });
 
       // add tile layer for map background
-      L.tileLayer(config.tileLayerUrl!, {
+      tileLayerRef.current = L.tileLayer(config.tileLayerUrl!, {
         attribution: config.attribution,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
@@ -83,18 +86,29 @@ export function useLeafletMap(
         logger.info('Cleaning up map...');
         mapRef.current.remove();
         mapRef.current = null;
+        tileLayerRef.current = null;
         setIsReady(false);
       }
     };
-  }, [containerRef]);
+  }, []);
 
-  // Update map view when config changes
+  // Update tile layer and map limits when respective configs change
   useEffect(() => {
-    if (mapRef.current && isReady) {
-      logger.debug('Updating map view with new config');
-      mapRef.current.setView(config.center!, config.zoom!);
+    if (!mapRef.current || !isReady) {return;}
+
+    if (tileLayerRef.current) {
+      mapRef.current.removeLayer(tileLayerRef.current);
     }
-  }, [config, isReady]);
+
+    tileLayerRef.current = L.tileLayer(config.tileLayerUrl!, {
+      attribution: config.attribution,
+      maxZoom: config.maxZoom,
+      minZoom: config.minZoom,
+    }).addTo(mapRef.current);
+
+    mapRef.current.setMaxZoom(config.maxZoom!);
+    mapRef.current.setMinZoom(config.minZoom!);
+  }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
 
   return {
     map: mapRef.current,
