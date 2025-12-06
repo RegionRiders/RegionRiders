@@ -21,12 +21,12 @@ interface MapOrchestratorProps {
  * Delegates specific concerns to focused hooks
  */
 export default function MapOrchestrator({
-                                          map,
-                                          tracks,
-                                          showHeatmap = true,
-                                          showBorders = true,
-                                          activityMode = 'heatmap',
-                                        }: MapOrchestratorProps) {
+  map,
+  tracks,
+  showHeatmap = true,
+  showBorders = true,
+  activityMode = 'heatmap',
+}: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
   const { visitData } = useRegionAnalysis(tracks, regions);
 

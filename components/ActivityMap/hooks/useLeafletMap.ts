@@ -32,8 +32,8 @@ const logger = createComponentLogger('useLeafletMap');
  * ```
  */
 export function useLeafletMap(
-    containerRef: React.RefObject<HTMLDivElement | null>,
-    options: Partial<MapConfig> = {}
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  options: Partial<MapConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -94,7 +94,9 @@ export function useLeafletMap(
 
   // Update tile layer and map limits when respective configs change
   useEffect(() => {
-    if (!mapRef.current || !isReady) {return;}
+    if (!mapRef.current || !isReady) {
+      return;
+    }
 
     if (tileLayerRef.current) {
       mapRef.current.removeLayer(tileLayerRef.current);
