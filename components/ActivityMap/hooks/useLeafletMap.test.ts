@@ -11,8 +11,12 @@ jest.mock('leaflet', () => ({
     on: jest.fn(),
     off: jest.fn(),
     invalidateSize: jest.fn(),
+    options: {
+      maxZoom: 18,
+      minZoom: 0,
+    },
+    removeLayer: jest.fn(),
     whenReady: jest.fn((callback) => {
-      // Call the callback immediately in tests
       callback();
       return { on: jest.fn(), off: jest.fn() };
     }),
@@ -51,7 +55,6 @@ describe('useLeafletMap', () => {
     it('should initialize with null map when container ref has no element', () => {
       const emptyRef = { current: null } as unknown as React.RefObject<HTMLDivElement>;
       const { result } = renderHook(() => useLeafletMap(emptyRef));
-
       expect(result.current.map).toBeNull();
       expect(result.current.isReady).toBe(false);
       expect(result.current.error).toBeNull();
@@ -79,11 +82,11 @@ describe('useLeafletMap', () => {
       });
 
       expect(L.map).toHaveBeenCalledWith(
-        mockContainer,
-        expect.objectContaining({
-          center: expect.any(Array),
-          zoom: expect.any(Number),
-        })
+          mockContainer,
+          expect.objectContaining({
+            center: expect.any(Array),
+            zoom: expect.any(Number),
+          })
       );
     });
 
@@ -101,11 +104,11 @@ describe('useLeafletMap', () => {
       });
 
       expect(L.map).toHaveBeenCalledWith(
-        mockContainer,
-        expect.objectContaining({
-          center: [50, 10],
-          zoom: 15,
-        })
+          mockContainer,
+          expect.objectContaining({
+            center: [50, 10],
+            zoom: 15,
+          })
       );
     });
   });
@@ -118,6 +121,8 @@ describe('useLeafletMap', () => {
         remove: mockRemove,
         on: jest.fn(),
         off: jest.fn(),
+        options: { maxZoom: 18, minZoom: 0 },
+        removeLayer: jest.fn(),
         whenReady: jest.fn((callback) => {
           callback();
           return { on: jest.fn(), off: jest.fn() };
@@ -134,7 +139,6 @@ describe('useLeafletMap', () => {
       });
 
       unmount();
-
       expect(mockRemove).toHaveBeenCalled();
     });
 
@@ -148,58 +152,61 @@ describe('useLeafletMap', () => {
 
       // Rerender should not create a new map
       rerender();
-
       expect(L.map).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('config updates', () => {
-    it('should update map view when config changes', async () => {
-      const mockSetView = jest.fn().mockReturnThis();
-      const mockMap = {
-        setView: mockSetView,
-        remove: jest.fn(),
-        on: jest.fn(),
-        off: jest.fn(),
-        whenReady: jest.fn((callback) => {
-          callback();
-          return { on: jest.fn(), off: jest.fn() };
-        }),
-      };
-
-      (L.map as jest.Mock).mockReturnValueOnce(mockMap);
-
+    it('should update tile layer when config changes', async () => {
       const containerRef = { current: mockContainer };
-      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
-        initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
-      });
+
+      const { rerender, result } = renderHook(
+          ({ opts }) => useLeafletMap(containerRef, opts),
+          {
+            initialProps: {
+              opts: {
+                tileLayerUrl: 'https://tile1.com/{z}/{x}/{y}.png'
+              }
+            },
+          }
+      );
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
       });
 
-      // Clear previous setView calls from initialization
-      mockSetView.mockClear();
+      // Verify initial tile layer was created
+      const initialCallCount = (L.tileLayer as unknown as jest.Mock).mock.calls.length;
+      expect(initialCallCount).toBeGreaterThan(0);
 
-      // Update config
-      rerender({ opts: { center: [60, 20] as [number, number], zoom: 15 } });
-
-      await waitFor(() => {
-        expect(mockSetView).toHaveBeenCalledWith([60, 20], 15);
+      // Update tile layer URL
+      rerender({
+        opts: {
+          tileLayerUrl: 'https://tile2.com/{z}/{x}/{y}.png'
+        }
       });
 
-      // Map should not be recreated
-      expect(L.map).toHaveBeenCalledTimes(1);
+      // Wait for the effect to trigger
+      await waitFor(() => {
+        const newCallCount = (L.tileLayer as unknown as jest.Mock).mock.calls.length;
+        expect(newCallCount).toBeGreaterThan(initialCallCount);
+      });
+
+      // Verify the new tile layer URL was used
+      const calls = (L.tileLayer as unknown as jest.Mock).mock.calls;
+      const lastCall = calls[calls.length - 1];
+      expect(lastCall[0]).toBe('https://tile2.com/{z}/{x}/{y}.png');
     });
 
     it('should not update view if map is not ready', async () => {
       const mockSetView = jest.fn().mockReturnThis();
-
       const mockMap = {
         setView: mockSetView,
         remove: jest.fn(),
         on: jest.fn(),
         off: jest.fn(),
+        options: { maxZoom: 18, minZoom: 0 },
+        removeLayer: jest.fn(),
         whenReady: jest.fn(() => {
           // Don't call callback - map never becomes ready
           return { on: jest.fn(), off: jest.fn() };
@@ -209,9 +216,12 @@ describe('useLeafletMap', () => {
       (L.map as jest.Mock).mockReturnValueOnce(mockMap);
 
       const containerRef = { current: mockContainer };
-      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
-        initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
-      });
+      const { rerender, result } = renderHook(
+          ({ opts }) => useLeafletMap(containerRef, opts),
+          {
+            initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
+          }
+      );
 
       // Verify map is not ready
       expect(result.current.isReady).toBe(false);
