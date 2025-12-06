@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { MapConfig } from '@/components/ActivityMap/types';
@@ -40,7 +40,7 @@ export function useLeafletMap(
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const config: MapConfig = { ...DEFAULT_MAP_CONFIG, ...options };
+  const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
 
   // Initial map creation effect
   useEffect(() => {
@@ -108,8 +108,10 @@ export function useLeafletMap(
       minZoom: config.minZoom,
     }).addTo(mapRef.current);
 
-    mapRef.current.options.maxZoom = config.maxZoom!;
-    mapRef.current.options.minZoom = config.minZoom!;
+    if (mapRef.current.options) {
+      mapRef.current.options.maxZoom = config.maxZoom!;
+      mapRef.current.options.minZoom = config.minZoom!;
+    }
   }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
 
   return {

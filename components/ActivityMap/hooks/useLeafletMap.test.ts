@@ -82,11 +82,11 @@ describe('useLeafletMap', () => {
       });
 
       expect(L.map).toHaveBeenCalledWith(
-          mockContainer,
-          expect.objectContaining({
-            center: expect.any(Array),
-            zoom: expect.any(Number),
-          })
+        mockContainer,
+        expect.objectContaining({
+          center: expect.any(Array),
+          zoom: expect.any(Number),
+        })
       );
     });
 
@@ -104,11 +104,11 @@ describe('useLeafletMap', () => {
       });
 
       expect(L.map).toHaveBeenCalledWith(
-          mockContainer,
-          expect.objectContaining({
-            center: [50, 10],
-            zoom: 15,
-          })
+        mockContainer,
+        expect.objectContaining({
+          center: [50, 10],
+          zoom: 15,
+        })
       );
     });
   });
@@ -160,16 +160,13 @@ describe('useLeafletMap', () => {
     it('should update tile layer when config changes', async () => {
       const containerRef = { current: mockContainer };
 
-      const { rerender, result } = renderHook(
-          ({ opts }) => useLeafletMap(containerRef, opts),
-          {
-            initialProps: {
-              opts: {
-                tileLayerUrl: 'https://tile1.com/{z}/{x}/{y}.png'
-              }
-            },
-          }
-      );
+      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
+        initialProps: {
+          opts: {
+            tileLayerUrl: 'https://tile1.com/{z}/{x}/{y}.png',
+          },
+        },
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -182,8 +179,8 @@ describe('useLeafletMap', () => {
       // Update tile layer URL
       rerender({
         opts: {
-          tileLayerUrl: 'https://tile2.com/{z}/{x}/{y}.png'
-        }
+          tileLayerUrl: 'https://tile2.com/{z}/{x}/{y}.png',
+        },
       });
 
       // Wait for the effect to trigger
@@ -216,12 +213,9 @@ describe('useLeafletMap', () => {
       (L.map as jest.Mock).mockReturnValueOnce(mockMap);
 
       const containerRef = { current: mockContainer };
-      const { rerender, result } = renderHook(
-          ({ opts }) => useLeafletMap(containerRef, opts),
-          {
-            initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
-          }
-      );
+      const { rerender, result } = renderHook(({ opts }) => useLeafletMap(containerRef, opts), {
+        initialProps: { opts: { center: [50, 10] as [number, number], zoom: 10 } },
+      });
 
       // Verify map is not ready
       expect(result.current.isReady).toBe(false);
