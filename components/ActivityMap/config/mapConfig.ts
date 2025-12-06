@@ -1,5 +1,5 @@
+import { convert1to255value } from '@/components/ActivityMap/utils/convert1to255value';
 import { ColorThreshold, MapConfig } from '../types';
-import {convert1to255value} from "@/components/ActivityMap/utils/convert1to255value";
 
 export const MAP_CONFIG = {
   HEATMAP_RENDER_DELAY: 0,
