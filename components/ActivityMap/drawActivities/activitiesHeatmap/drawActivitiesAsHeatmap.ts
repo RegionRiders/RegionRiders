@@ -6,7 +6,7 @@ import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { validateCanvasDimensions } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasValidation';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
-import { CanvasDimensions, HeatmapRefs, RenderState } from '../types';
+import { CanvasDimensions, HeatmapRefs, RenderState } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
 import { drawLineToAccumulator } from './utils/drawLineToAccumulator';

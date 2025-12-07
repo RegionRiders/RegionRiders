@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { MapConfig } from '@/components/ActivityMap/types';
+import { MapConfig } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');

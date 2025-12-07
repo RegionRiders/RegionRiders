@@ -3,7 +3,7 @@
  */
 
 import type { GPXTrack } from '@/lib/types';
-import type { HeatmapRefs } from '../types';
+import type { HeatmapRefs } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { drawActivitiesAsHeatmap } from './drawActivitiesAsHeatmap';
 import { validateCanvasDimensions } from './utils/canvasValidation';

@@ -1,7 +1,7 @@
 'use client';
 
 import L from 'leaflet';
-import { LinesRefs } from '@/components/ActivityMap/drawActivities/types';
+import { LinesRefs } from '@/components/ActivityMap/drawActivities/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import type { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';

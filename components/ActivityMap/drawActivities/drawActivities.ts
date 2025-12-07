@@ -6,7 +6,7 @@ import type L from 'leaflet';
 import type { GPXTrack } from '@/lib/types';
 import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
-import type { HeatmapRefs, LinesRefs } from './types';
+import type { HeatmapRefs, LinesRefs } from './activityTypes';
 
 export type ActivityRenderMode = 'heatmap' | 'lines';
 
