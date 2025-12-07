@@ -9,11 +9,9 @@ import { getAuthorizationUrl } from '@/lib/strava';
 export async function GET() {
   try {
     const scope = 'read,activity:read_all';
-
-    const authUrl = await getAuthorizationUrl(scope);
-
-    return NextResponse.redirect(authUrl);
+    const authUrl = getAuthorizationUrl(scope);
+    return NextResponse.redirect(authUrl, 307);
   } catch (error) {
-    return handle500Error(error, `Strava API: ${'Authorization Request'}`);
+    return handle500Error(error, 'Strava API: Authorization Request');
   }
 }

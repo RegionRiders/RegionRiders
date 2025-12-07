@@ -1,7 +1,6 @@
 /**
- * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
+ * @jest-environment node
  */
-
 import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { getAuthorizationUrl } from '@/lib/strava';
@@ -11,14 +10,14 @@ jest.mock('@/lib/strava');
 jest.mock('@/lib/api');
 
 describe('GET /api/strava/auth', () => {
-  const mockUrl = 'https://strava.com/oauth/authorize?client_id=123';
+  const mockUrl = 'https://www.strava.com/oauth/authorize?client_id=123&scope=read%2Cactivity%3Aread_all';
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should redirect with hardcoded scope read,activity:read_all', async () => {
-    (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
+    (getAuthorizationUrl as jest.Mock).mockReturnValue(mockUrl);
 
     const res = await GET();
 
@@ -31,7 +30,9 @@ describe('GET /api/strava/auth', () => {
     const error = new Error('API error');
     const errorResponse = NextResponse.json({ error: 'API error' }, { status: 500 });
 
-    (getAuthorizationUrl as jest.Mock).mockRejectedValue(error);
+    (getAuthorizationUrl as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
     (handle500Error as jest.Mock).mockReturnValue(errorResponse);
 
     const res = await GET();
