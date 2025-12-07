@@ -1,15 +1,15 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { Tabs, Text } from '@mantine/core';
 import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
+import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
 import { TripsListElement } from '@/components/TripsListElement/TripsListElement';
 import { Welcome } from '@/components/Welcome/Welcome';
 import { User } from '@/types/user';
 import { UserMenu } from './UserMenu';
 import classes from './Navbar.module.css';
-import {StravaLoginButton} from "@/components/StravaLoginButton/StravaLoginButton";
 
 export interface NavbarProps {
   user?: User;
@@ -32,10 +32,10 @@ const NavbarTabContent = ({ value, Content }: { value: string; Content: React.Co
 );
 
 export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
-    /** Stores the OAuth authorization code received from Strava */
-    const [, setAuthCode] = useState<string | null>(null);
+  /** Stores the OAuth authorization code received from Strava */
+  const [, setAuthCode] = useState<string | null>(null);
 
-    return (
+  return (
     <Tabs defaultValue={defaultTab}>
       <Tabs.List className={classes.tabsList}>
         <Logo />
@@ -44,11 +44,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         <NavbarTab value="trips" text="Trips" />
 
         <div className={classes.userSection}>
-          {user ? (
-            <UserMenu user={user} />
-          ) : (
-            <StravaLoginButton onAuthCode={setAuthCode} />
-          )}
+          {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
         </div>
       </Tabs.List>
 

@@ -10,7 +10,8 @@ jest.mock('@/lib/strava');
 jest.mock('@/lib/api');
 
 describe('GET /api/strava/auth', () => {
-  const mockUrl = 'https://www.strava.com/oauth/authorize?client_id=123&scope=read%2Cactivity%3Aread_all';
+  const mockUrl =
+    'https://www.strava.com/oauth/authorize?client_id=123&scope=read%2Cactivity%3Aread_all';
 
   beforeEach(() => {
     jest.clearAllMocks();

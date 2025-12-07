@@ -1,8 +1,7 @@
 import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
+import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
-import {ActivityTypeIcon} from "@/components/ActivityTypeIcon/ActivityTypeIcon";
-
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -11,28 +10,32 @@ const TripPostActivityStat = ({ value }: { value: string }) => (
   </>
 );
 
-const TripStat = ({ header, value }: { header:string; value: string }) => (
+const TripStat = ({ header, value }: { header: string; value: string }) => (
   <>
     <Group>
       <Text size="md" fw="bold">
         {header}
       </Text>
-      <Text>
-        {value}
-      </Text>
+      <Text>{value}</Text>
     </Group>
   </>
 );
 
-const pad = (n: number) => n.toString().padStart(2, "0");
+const pad = (n: number) => n.toString().padStart(2, '0');
 const dateNoTime = (date: Date) => date.toISOString().slice(0, 10);
 const dateWithTime = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 const dateOnlyTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
-const Activities = ({ activities, tripStartDate, tripEndDate }:
-                    { activities: Activity[]; tripStartDate: Date; tripEndDate: Date }) => {
-
+const Activities = ({
+  activities,
+  tripStartDate,
+  tripEndDate,
+}: {
+  activities: Activity[];
+  tripStartDate: Date;
+  tripEndDate: Date;
+}) => {
   const isSameDay = (date1: Date, date2: Date) =>
     date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
@@ -40,9 +43,17 @@ const Activities = ({ activities, tripStartDate, tripEndDate }:
 
   const days = Math.abs(
     Math.floor(
-      (new Date(tripEndDate.getFullYear(), tripEndDate.getMonth(), tripEndDate.getDate()).getTime() -
-        new Date(tripStartDate.getFullYear(), tripStartDate.getMonth(), tripStartDate.getDate()).getTime())
-      / (1000 * 60 * 60 * 24)
+      (new Date(
+        tripEndDate.getFullYear(),
+        tripEndDate.getMonth(),
+        tripEndDate.getDate()
+      ).getTime() -
+        new Date(
+          tripStartDate.getFullYear(),
+          tripStartDate.getMonth(),
+          tripStartDate.getDate()
+        ).getTime()) /
+        (1000 * 60 * 60 * 24)
     )
   );
 
@@ -51,9 +62,8 @@ const Activities = ({ activities, tripStartDate, tripEndDate }:
 
   return (
     <>
-
       {activities.map((activity: Activity) => {
-        const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate)
+        const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
 
         if (isNewDay) {
           dayCount++;
@@ -64,23 +74,14 @@ const Activities = ({ activities, tripStartDate, tripEndDate }:
           <>
             {isNewDay && (
               <Group>
-                <Text fw="bold">
-                  {dateNoTime(activity.startDate)}
-                </Text>
-                <Divider orientation="vertical" size="md"/>
+                <Text fw="bold">{dateNoTime(activity.startDate)}</Text>
+                <Divider orientation="vertical" size="md" />
                 <Text fw="bold">
                   Day {dayCount}/{days}
                 </Text>
               </Group>
-
             )}
-            <List
-              size="sm" c="dimmed"
-              icon={
-                <Text>
-                  {dateOnlyTime(activity.startDate)}
-                </Text>
-              }>
+            <List size="sm" c="dimmed" icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
               <List.Item c="dimmed">
                 <Group>
                   <ActivityTypeIcon type={activity.activityType} size={25} />
@@ -122,7 +123,11 @@ const TripPost = ({ data }: { data: Trip }) => (
 
     <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
 
-    <Activities activities={data.activities} tripStartDate={data.startDate} tripEndDate={data.endDate} />
+    <Activities
+      activities={data.activities}
+      tripStartDate={data.startDate}
+      tripEndDate={data.endDate}
+    />
   </Card>
 );
 
