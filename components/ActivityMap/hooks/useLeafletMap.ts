@@ -40,7 +40,10 @@ export function useLeafletMap(
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const config: LeafletConfig = useMemo(() => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }), [options]);
+  const config: LeafletConfig = useMemo(
+    () => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }),
+    [options]
+  );
 
   // Initial map creation effect
   useEffect(() => {
