@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
@@ -19,6 +19,10 @@ export default function ActivityMap() {
 
   const [activityMode, setActivityMode] = useState<ActivityRenderMode>('heatmap');
   const memoizedTracks = useMemo(() => tracks, [tracks]);
+
+  const handleModeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setActivityMode(e.target.value as ActivityRenderMode);
+  }, []);
 
   if (error) {
     return (
@@ -40,7 +44,7 @@ export default function ActivityMap() {
               id="heatmap"
               value="heatmap"
               checked={activityMode === 'heatmap'}
-              onChange={(e) => setActivityMode(e.target.value as ActivityRenderMode)}
+              onChange={handleModeChange}
             />
             <label htmlFor="heatmap">Heatmap</label>
           </div>
@@ -50,7 +54,7 @@ export default function ActivityMap() {
               id="lines"
               value="lines"
               checked={activityMode === 'lines'}
-              onChange={(e) => setActivityMode(e.target.value as ActivityRenderMode)}
+              onChange={handleModeChange}
             />
             <label htmlFor="lines">Lines</label>
           </div>
