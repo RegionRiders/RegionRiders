@@ -71,7 +71,7 @@ function finishRender(
   ctx.putImageData(imageData, 0, 0);
   const imageUrl = state.canvas.toDataURL();
 
-  if (currentImageLayerRef.current && map.hasLayer?.(currentImageLayerRef.current)) {
+  if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
     map.removeLayer(currentImageLayerRef.current);
   }
   try {
@@ -241,7 +241,7 @@ export function drawActivitiesAsHeatmap(
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
 
-      if (currentImageLayerRef.current && map?.hasLayer?.(currentImageLayerRef.current)) {
+      if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
         try {
           map.removeLayer(currentImageLayerRef.current);
         } catch (e) {

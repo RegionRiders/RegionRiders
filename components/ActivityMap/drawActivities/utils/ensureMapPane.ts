@@ -11,7 +11,7 @@ const logger = createComponentLogger('ensureMapPane');
  * @param zIndex - Z-index value for the pane (numeric or string)
  */
 export function ensureMapPane(map: L.Map, paneName: string, zIndex: number | string): void {
-  if (!map?.getPane) {
+  if (!map || !map.getPane) {
     return;
   }
 

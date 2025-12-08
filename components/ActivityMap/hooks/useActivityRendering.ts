@@ -18,9 +18,9 @@ export function useActivityRendering(
   showActivities: boolean = true,
   mode: ActivityRenderMode = 'heatmap'
 ) {
-  const currentImageLayerRef = useRef(null);
-  const renderTimeoutRef = useRef(null);
-  const renderAbortRef = useRef(false);
+  const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
+  const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const renderAbortRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!map || !showActivities || tracks.size === 0) {
