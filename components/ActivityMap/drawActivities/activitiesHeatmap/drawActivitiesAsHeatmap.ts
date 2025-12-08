@@ -284,7 +284,7 @@ export function drawActivitiesAsHeatmap(
   const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
 
   const lineThickness = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS * HEATMAP_CONFIG.PIXEL_DENSITY;
-  let zoomChangeTimeout: NodeJS.Timeout | null = null;
+  let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const renderHeatmap = (): void => {
     if (!map) {
