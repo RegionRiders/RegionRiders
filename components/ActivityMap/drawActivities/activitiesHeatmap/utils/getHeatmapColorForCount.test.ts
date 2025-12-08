@@ -1,12 +1,13 @@
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/types';
 import { getHeatmapColorForCount } from './getHeatmapColorForCount';
 
-const TEST_THRESHOLDS = [
-  { threshold: 1, color: [139, 0, 0, 40] }, // dark red, 15% opacity
-  { threshold: 2, color: [220, 20, 20, 80] }, // red, 31% opacity
-  { threshold: 10, color: [255, 100, 0, 120] }, // orange-red, 47% opacity
-  { threshold: 25, color: [255, 165, 0, 160] }, // orange, 63% opacity
-  { threshold: 50, color: [255, 255, 0, 200] }, // yellow, 78% opacity
-  { threshold: 150, color: [255, 255, 255, 255] }, // white, 100% opacity
+const TEST_THRESHOLDS: ColorThreshold[] = [
+  { threshold: 1, color: [139, 0, 0, 40] as RGBA }, // dark red, 15% opacity
+  { threshold: 2, color: [220, 20, 20, 80] as RGBA }, // red, 31% opacity
+  { threshold: 10, color: [255, 100, 0, 120] as RGBA }, // orange-red, 47% opacity
+  { threshold: 25, color: [255, 165, 0, 160] as RGBA }, // orange, 63% opacity
+  { threshold: 50, color: [255, 255, 0, 200] as RGBA }, // yellow, 78% opacity
+  { threshold: 150, color: [255, 255, 255, 255] as RGBA }, // white, 100% opacity
 ];
 
 describe('getHeatmapColorForCount', () => {
@@ -110,9 +111,9 @@ describe('getHeatmapColorForCount', () => {
 
   describe('custom thresholds', () => {
     it('should use provided custom thresholds with RGBA', () => {
-      const customThresholds = [
-        { threshold: 0, color: [0, 0, 0, 100] },
-        { threshold: 50, color: [255, 255, 255, 200] },
+      const customThresholds: ColorThreshold[] = [
+        { threshold: 0, color: [0, 0, 0, 100] as RGBA },
+        { threshold: 50, color: [255, 255, 255, 200] as RGBA },
       ];
 
       const result = getHeatmapColorForCount(5, 10, 1, customThresholds);
@@ -122,9 +123,9 @@ describe('getHeatmapColorForCount', () => {
     });
 
     it('should respect custom threshold values', () => {
-      const customThresholds = [
-        { threshold: 1, color: [100, 100, 100, 150] },
-        { threshold: 10, color: [200, 200, 200, 250] },
+      const customThresholds: ColorThreshold[] = [
+        { threshold: 1, color: [100, 100, 100, 150] as RGBA },
+        { threshold: 10, color: [200, 200, 200, 250] as RGBA },
       ];
 
       const atFirst = getHeatmapColorForCount(1, 10, 1, customThresholds);

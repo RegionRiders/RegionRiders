@@ -1,5 +1,5 @@
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { ColorThreshold } from '@/components/ActivityMap/types';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/types';
 import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 
 /**
@@ -17,9 +17,16 @@ export function getHeatmapColorForCount(
   zoomLevel: number = 10,
   lineThickness: number = 1,
   thresholds: ColorThreshold[] = ACTIVITY_HEATMAP_COLOR_THRESHOLDS
-): number[] {
+): RGBA {
   // Normalize for line thickness (both sides of the line)
   const uniqueActivities = (count / (lineThickness * 2)) * (zoomLevel / 10);
 
-  return getColorFromThresholds(uniqueActivities, thresholds);
+  const color = getColorFromThresholds(uniqueActivities, thresholds);
+
+  // Ensure we always return RGBA
+  if (color.length === 3) {
+    return [...color, 255] as RGBA;
+  }
+
+  return color as RGBA;
 }
