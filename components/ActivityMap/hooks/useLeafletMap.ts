@@ -57,14 +57,14 @@ export function useLeafletMap(
     try {
       // create leaflet map instance
       mapRef.current = L.map(containerRef.current, {
-        center: config.center!,
-        zoom: config.zoom!,
+        center: config.center,
+        zoom: config.zoom,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
       });
 
       // add tile layer for map background
-      tileLayerRef.current = L.tileLayer(config.tileLayerUrl!, {
+      tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
         attribution: config.attribution,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
