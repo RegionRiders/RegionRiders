@@ -11,7 +11,7 @@ export interface ColorThreshold {
 /**
  * Leaflet map initialization options
  */
-export interface MapConfig {
+export interface LeafletConfig {
   /** Default map center [lat, lng] */
   center: [number, number];
   zoom: number;
@@ -21,4 +21,14 @@ export interface MapConfig {
   tileLayerUrl: string;
   /** Attribution text for map tiles */
   attribution: string;
+}
+
+/**
+ *  Heatmap rendering configuration options
+ */
+export interface HeatmapConfig {
+  HEATMAP_RENDER_DELAY: number;
+  PIXEL_DENSITY: number;
+  ACTIVITY_LINE_THICKNESS: number;
+  REGION_LINE_THICKNESS: number;
 }

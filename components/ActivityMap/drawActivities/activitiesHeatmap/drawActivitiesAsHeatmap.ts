@@ -2,7 +2,7 @@
 
 import type { RefObject } from 'react';
 import L from 'leaflet';
-import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { HEATMAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { validateCanvasDimensions } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasValidation';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
@@ -110,7 +110,7 @@ function finishRender(
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
-  lineThickness: number = MAP_CONFIG.ACTIVITY_LINE_THICKNESS
+  lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS
 ): void {
   if (renderAbortRef.current) {
     return;
@@ -207,8 +207,8 @@ function renderHeatmapInternal(
     const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
     const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-    const canvasWidth = Math.round((bottomRight.x - topLeft.x) * MAP_CONFIG.PIXEL_DENSITY);
-    const canvasHeight = Math.round((bottomRight.y - topLeft.y) * MAP_CONFIG.PIXEL_DENSITY);
+    const canvasWidth = Math.round((bottomRight.x - topLeft.x) * HEATMAP_CONFIG.PIXEL_DENSITY);
+    const canvasHeight = Math.round((bottomRight.y - topLeft.y) * HEATMAP_CONFIG.PIXEL_DENSITY);
 
     const dimensions: CanvasDimensions = {
       canvasWidth,
@@ -283,7 +283,7 @@ export function drawActivitiesAsHeatmap(
 ): () => void {
   const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
 
-  const lineThickness = MAP_CONFIG.ACTIVITY_LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
+  const lineThickness = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS * HEATMAP_CONFIG.PIXEL_DENSITY;
   let zoomChangeTimeout: NodeJS.Timeout | null = null;
 
   const renderHeatmap = (): void => {
@@ -300,7 +300,7 @@ export function drawActivitiesAsHeatmap(
 
     zoomChangeTimeout = setTimeout(() => {
       renderHeatmap();
-    }, MAP_CONFIG.HEATMAP_RENDER_DELAY);
+    }, HEATMAP_CONFIG.HEATMAP_RENDER_DELAY);
   };
 
   if (map) {

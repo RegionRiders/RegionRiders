@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { MapConfig } from '@/components/ActivityMap/types';
+import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { LeafletConfig } from '@/components/ActivityMap/types';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
@@ -33,14 +33,14 @@ const logger = createComponentLogger('useLeafletMap');
  */
 export function useLeafletMap(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  options: Partial<MapConfig> = {}
+  options: Partial<LeafletConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
+  const config: LeafletConfig = useMemo(() => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }), [options]);
 
   // Initial map creation effect
   useEffect(() => {
