@@ -3,6 +3,7 @@
 import { memo, useMemo, useRef, useState } from 'react';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
+import LayersPanel from './controls/LayersPanel/LayersPanel';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import MapContainer from './MapContainer';
 import MapOrchestrator from './MapOrchestrator';
@@ -13,55 +14,52 @@ import 'leaflet/dist/leaflet.css';
 const MapContainerMemo = memo(MapContainer);
 
 export default function ActivityMap() {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+
   const { tracks } = useGPXData();
   const { map, isReady, error } = useLeafletMap(mapContainerRef);
 
   const [activityMode, setActivityMode] = useState<ActivityRenderMode>('heatmap');
+  const [showHeatmap, setShowHeatmap] = useState<boolean>(true);
+  const [showBorders, setShowBorders] = useState<boolean>(true);
+
   const memoizedTracks = useMemo(() => tracks, [tracks]);
 
   if (error) {
     return (
       <div className={styles.error}>
-        <h3 className={styles.errorTitle}>Failed to load map</h3>
-        <p className={styles.errorMessage}>{error}</p>
+        Failed to load map
+        <pre>{String(error)}</pre>
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      {/* Mode Selector */}
-      <div className={styles.modeSelector}>
-        <div className={styles.radioGroup}>
-          <div className={styles.radioOption}>
-            <input
-              type="radio"
-              id="heatmap"
-              value="heatmap"
-              checked={activityMode === 'heatmap'}
-              onChange={(e) => setActivityMode(e.target.value as ActivityRenderMode)}
-            />
-            <label htmlFor="heatmap">Heatmap</label>
-          </div>
-          <div className={styles.radioOption}>
-            <input
-              type="radio"
-              id="lines"
-              value="lines"
-              checked={activityMode === 'lines'}
-              onChange={(e) => setActivityMode(e.target.value as ActivityRenderMode)}
-            />
-            <label htmlFor="lines">Lines</label>
-          </div>
+      <div className={styles.wrapper}>
+        <div className={styles.controls}>
+          <LayersPanel
+            activityMode={activityMode}
+            showHeatmap={showHeatmap}
+            showBorders={showBorders}
+            onActivityModeChange={setActivityMode}
+            onShowHeatmapChange={setShowHeatmap}
+            onShowBordersChange={setShowBorders}
+          />
         </div>
+
+        <MapContainerMemo ref={mapContainerRef} />
+
+        {isReady && map && (
+          <MapOrchestrator
+            map={map}
+            tracks={memoizedTracks}
+            showHeatmap={showHeatmap}
+            showBorders={showBorders}
+            activityMode={activityMode}
+          />
+        )}
       </div>
-
-      <MapContainerMemo ref={mapContainerRef} />
-
-      {isReady && map ? (
-        <MapOrchestrator map={map} tracks={memoizedTracks} activityMode={activityMode} />
-      ) : null}
     </div>
   );
 }
