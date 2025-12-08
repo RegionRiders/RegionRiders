@@ -12,4 +12,7 @@ export default withBundleAnalyzer({
   // Empty turbopack config to acknowledge we're using Turbopack
   // This prevents webpack config errors and allows Turbopack to handle pino correctly
   turbopack: {},
+  // turbopack attempts to bundle some server packages by default
+  // We need to mark them as external to prevent issues
+  serverExternalPackages: ['pino', 'thread-stream'],
 });
