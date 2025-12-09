@@ -92,7 +92,11 @@ describe('Database Configuration', () => {
       process.env.POSTGRES_DB = 'regionriders';
       process.env.POSTGRES_USER = 'regionriders_user';
       process.env.POSTGRES_PASSWORD = 'regionriders_password';
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
     });
 
     it('should return correct database configuration', () => {
@@ -107,7 +111,11 @@ describe('Database Configuration', () => {
     });
 
     it('should disable SSL in production with localhost', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       process.env.POSTGRES_HOST = 'localhost';
 
       const config = getDatabaseConfig();
@@ -116,7 +124,11 @@ describe('Database Configuration', () => {
     });
 
     it('should enable SSL in production with remote host', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       process.env.POSTGRES_HOST = 'remote.example.com';
 
       const config = getDatabaseConfig();
@@ -160,7 +172,11 @@ describe('Database Configuration', () => {
       process.env.POSTGRES_DB = 'regionriders';
       process.env.POSTGRES_USER = 'regionriders_user';
       process.env.POSTGRES_PASSWORD = 'regionriders_password';
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
     });
 
     it('should construct correct database URL', () => {
@@ -172,7 +188,11 @@ describe('Database Configuration', () => {
     });
 
     it('should include SSL parameter in production with remote host', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       process.env.POSTGRES_HOST = 'remotehost.example.com';
 
       const url = getDatabaseUrl();
@@ -181,7 +201,11 @@ describe('Database Configuration', () => {
     });
 
     it('should not include SSL parameter in production with local host', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       process.env.POSTGRES_HOST = 'localhost';
 
       const url = getDatabaseUrl();
