@@ -5,11 +5,14 @@
 import { exchangeToken, type StravaTokenResponse } from '@/lib/strava';
 import { GET } from './route';
 
+// Mock NextRequest properly
 class NextRequest {
   url: string;
+
   constructor(input: string) {
     this.url = input;
   }
+
   get nextUrl() {
     return new URL(this.url);
   }
@@ -27,12 +30,20 @@ describe('GET /api/strava/callback', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock environment variable for tests
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3000';
+  });
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it('should exchange code for tokens', async () => {
     (exchangeToken as jest.Mock).mockResolvedValue(mockToken);
 
-    const req = new NextRequest('http://localhost/api/strava/callback?code=abc123');
+    const req = new NextRequest(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?code=abc123`
+    );
     const res = await GET(req as any);
 
     expect(exchangeToken).toHaveBeenCalledWith('abc123');
@@ -47,7 +58,7 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should return 400 when no code', async () => {
-    const req = new NextRequest('http://localhost/api/strava/callback');
+    const req = new NextRequest(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback`);
     const res = await GET(req as any);
 
     expect(exchangeToken).not.toHaveBeenCalled();
@@ -62,7 +73,9 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should return 400 on error param', async () => {
-    const req = new NextRequest('http://localhost/api/strava/callback?error=access_denied');
+    const req = new NextRequest(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?error=access_denied`
+    );
     const res = await GET(req as any);
 
     expect(exchangeToken).not.toHaveBeenCalled();

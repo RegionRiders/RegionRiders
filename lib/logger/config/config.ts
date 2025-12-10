@@ -32,6 +32,17 @@ const developmentConfig: LoggerOptions = {
     level: (label) => {
       return { level: label.toUpperCase() };
     },
+    log: (object) => {
+      // Format component field with brackets [ComponentName]
+      if ('component' in object && typeof object.component === 'string') {
+        const { component, ...rest } = object;
+        return {
+          ...rest,
+          component: `[${component}]`,
+        };
+      }
+      return object;
+    },
   },
   timestamp: pino.stdTimeFunctions.isoTime,
 };
@@ -45,6 +56,17 @@ const productionConfig: LoggerOptions = {
   formatters: {
     level: (label) => {
       return { level: label };
+    },
+    log: (object) => {
+      // Format component field with brackets [ComponentName]
+      if ('component' in object && typeof object.component === 'string') {
+        const { component, ...rest } = object;
+        return {
+          ...rest,
+          component: `[${component}]`,
+        };
+      }
+      return object;
     },
   },
   timestamp: pino.stdTimeFunctions.isoTime,

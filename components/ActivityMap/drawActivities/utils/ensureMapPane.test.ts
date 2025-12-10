@@ -1,0 +1,99 @@
+import L from 'leaflet';
+import { ensureMapPane } from './ensureMapPane';
+
+// Mock logger
+jest.mock('@/lib/logger/client', () => ({
+  createComponentLogger: jest.fn(() => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  })),
+}));
+
+describe('ensureMapPane', () => {
+  it('should return early if map is not provided', () => {
+    ensureMapPane(null as unknown as L.Map, 'testPane', 400);
+    // Should not throw
+  });
+
+  it('should return early if map.getPane is not available', () => {
+    const mockMap = {} as L.Map;
+    ensureMapPane(mockMap, 'testPane', 400);
+    // Should not throw
+  });
+
+  it('should not create pane if it already exists', () => {
+    const mockPane = { style: { zIndex: '200' } } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => mockPane),
+      createPane: jest.fn(),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'existingPane', 400);
+
+    expect(mockMap.getPane).toHaveBeenCalledWith('existingPane');
+    expect(mockMap.createPane).not.toHaveBeenCalled();
+  });
+
+  it('should create pane if it does not exist', () => {
+    const newPane = { style: {} } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => newPane),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'newPane', 500);
+
+    expect(mockMap.getPane).toHaveBeenCalledWith('newPane');
+    expect(mockMap.createPane).toHaveBeenCalledWith('newPane');
+  });
+
+  it('should set z-index on newly created pane', () => {
+    const newPane = { style: {} } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => newPane),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'newPane', 600);
+
+    expect(newPane.style.zIndex).toBe('600');
+  });
+
+  it('should handle numeric z-index values', () => {
+    const newPane = { style: {} } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => newPane),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'pane', 999);
+
+    expect(newPane.style.zIndex).toBe('999');
+  });
+
+  it('should handle string z-index values', () => {
+    const newPane = { style: {} } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => newPane),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'pane', '800');
+
+    expect(newPane.style.zIndex).toBe('800');
+  });
+
+  it('should handle different pane names', () => {
+    const newPane = { style: {} } as HTMLElement;
+    const mockMap = {
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => newPane),
+    } as unknown as L.Map;
+
+    ensureMapPane(mockMap, 'customPaneName', 700);
+
+    expect(mockMap.createPane).toHaveBeenCalledWith('customPaneName');
+  });
+});
