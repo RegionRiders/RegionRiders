@@ -1,4 +1,4 @@
-import { CanvasDimensions } from '@/components/ActivityMap/drawActivities/types';
+import { CanvasDimensions } from '@/components/ActivityMap/drawActivities/activityTypes';
 import { BrowserLogger } from '@/lib/logger/logger.client';
 
 /**

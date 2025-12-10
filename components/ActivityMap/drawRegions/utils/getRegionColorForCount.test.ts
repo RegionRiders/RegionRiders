@@ -1,4 +1,4 @@
-import { ColorThreshold } from '@/components/ActivityMap/types';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { getRegionColorForCount } from './getRegionColorForCount';
 
 // Hardcoded test thresholds - independent of actual implementation

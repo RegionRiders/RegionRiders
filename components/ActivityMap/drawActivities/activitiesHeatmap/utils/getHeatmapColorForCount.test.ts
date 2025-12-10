@@ -1,4 +1,4 @@
-import { ColorThreshold, RGBA } from '@/components/ActivityMap/types';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { getHeatmapColorForCount } from './getHeatmapColorForCount';
 
 const TEST_THRESHOLDS: ColorThreshold[] = [
