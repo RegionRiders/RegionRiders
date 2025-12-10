@@ -1,12 +1,13 @@
 import { getRegionColorForCount } from './getRegionColorForCount';
+import { ColorThreshold } from '@/components/ActivityMap/types';
 
 // Hardcoded test thresholds - independent of actual implementation
-const TEST_THRESHOLDS = [
-  { threshold: 1, color: [34, 197, 94] }, // green
-  { threshold: 2, color: [234, 179, 8] }, // yellow
-  { threshold: 5, color: [249, 115, 22] }, // orange
-  { threshold: 10, color: [220, 38, 38] }, // red
-  { threshold: 20, color: [255, 255, 255] }, // white
+const TEST_THRESHOLDS: ColorThreshold[] = [
+  { threshold: 1, color: [34, 197, 94] as const }, // green
+  { threshold: 2, color: [234, 179, 8] as const }, // yellow
+  { threshold: 5, color: [249, 115, 22] as const }, // orange
+  { threshold: 10, color: [220, 38, 38] as const }, // red
+  { threshold: 20, color: [255, 255, 255] as const }, // white
 ];
 
 describe('getRegionColorForCount', () => {
@@ -85,10 +86,10 @@ describe('getRegionColorForCount', () => {
 
   describe('custom thresholds', () => {
     it('should use provided custom thresholds', () => {
-      const customThresholds = [
-        { threshold: 0, color: [0, 0, 0] },
-        { threshold: 10, color: [128, 128, 128] },
-        { threshold: 50, color: [255, 255, 255] },
+      const customThresholds: ColorThreshold[] = [
+        { threshold: 0, color: [0, 0, 0] as const },
+        { threshold: 10, color: [128, 128, 128] as const },
+        { threshold: 50, color: [255, 255, 255] as const },
       ];
 
       const result = getRegionColorForCount(5, customThresholds);
@@ -97,9 +98,9 @@ describe('getRegionColorForCount', () => {
     });
 
     it('should respect custom threshold values', () => {
-      const customThresholds = [
-        { threshold: 1, color: [100, 100, 100] },
-        { threshold: 10, color: [200, 200, 200] },
+      const customThresholds: ColorThreshold[] = [
+        { threshold: 1, color: [100, 100, 100] as const },
+        { threshold: 10, color: [200, 200, 200] as const },
       ];
 
       const atFirst = getRegionColorForCount(1, customThresholds);
@@ -107,9 +108,9 @@ describe('getRegionColorForCount', () => {
     });
 
     it('should interpolate with custom thresholds', () => {
-      const customThresholds = [
-        { threshold: 0, color: [0, 0, 0] },
-        { threshold: 100, color: [100, 100, 100] },
+      const customThresholds: ColorThreshold[] = [
+        { threshold: 0, color: [0, 0, 0] as const },
+        { threshold: 100, color: [100, 100, 100] as const },
       ];
 
       const midpoint = getRegionColorForCount(50, customThresholds);
