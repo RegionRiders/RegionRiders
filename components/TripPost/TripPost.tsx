@@ -2,6 +2,7 @@ import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } fr
 import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
+import {Dispatch, SetStateAction} from "react";
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -102,7 +103,7 @@ const Activities = ({
   );
 };
 
-const TripPost = ({ data }: { data: Trip }) => (
+const TripPost = ({ data, onSelect }: { data: Trip, onSelect: (trip: Trip) => void }) => (
   <Card shadow="sm" radius="md" withBorder>
     <SimpleGrid cols={2} mb="xs">
       <Card.Section>
@@ -110,7 +111,7 @@ const TripPost = ({ data }: { data: Trip }) => (
       </Card.Section>
 
       <Stack ml="md" gap={0}>
-        <Text fw="bold" size="xl" mb={0}>
+        <Text fw="bold" size="xl" mb={0} onClick={() => onSelect(data)}>
           {data.title}
         </Text>
         <Text c="dimmed" size="sm" mb="xs">
