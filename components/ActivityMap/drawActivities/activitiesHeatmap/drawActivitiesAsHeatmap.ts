@@ -2,105 +2,19 @@
 
 import type { RefObject } from 'react';
 import L from 'leaflet';
-import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { HEATMAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { createCanvasContext } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasSetup';
 import { validateCanvasDimensions } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasValidation';
+import { logDimensionError } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/dimensionLogging';
+import { processTracksChunked } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/trackProcessor';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { CanvasDimensions, HeatmapRefs, RenderState } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
 import { createLatLngToPixelConverter } from './utils/canvasProjection';
-import { drawLineToAccumulator } from './utils/drawLineToAccumulator';
 import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
-
-/**
- * Logs canvas dimension validation error with proper object formatting
- */
-function logDimensionError(dimensions: CanvasDimensions, zoom: number, message: string): void {
-  const errorDetails = {
-    canvasWidth: dimensions.canvasWidth,
-    canvasHeight: dimensions.canvasHeight,
-    topLeft: `{x: ${dimensions.topLeft.x}, y: ${dimensions.topLeft.y}}`,
-    bottomRight: `{x: ${dimensions.bottomRight.x}, y: ${dimensions.bottomRight.y}}`,
-    zoom,
-  };
-  logger.warn(`${message}: ${JSON.stringify(errorDetails)}`);
-}
-
-/**
- * Creates canvas and context for heatmap rendering
- */
-function createCanvasContext(
-  width: number,
-  height: number
-): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) {
-    logger.error('Failed to get canvas context');
-    return null;
-  }
-
-  return { canvas, ctx };
-}
-
-/**
- * Processes tracks in chunks using requestAnimationFrame for non-blocking rendering
- */
-function processTracksChunked(
-  tracksArray: GPXTrack[],
-  accumulator: Float32Array,
-  canvasWidth: number,
-  canvasHeight: number,
-  latlngToPixel: (lat: number, lon: number) => { x: number; y: number },
-  lineThickness: number,
-  renderAbortRef: RefObject<boolean>,
-  onComplete: () => void
-): void {
-  let trackIndex = 0;
-
-  const processChunk = (): void => {
-    if (renderAbortRef.current) {
-      return;
-    }
-
-    while (trackIndex < tracksArray.length) {
-      const track = tracksArray[trackIndex];
-      const points = track.points;
-
-      if (points && points.length > 0) {
-        for (let i = 0; i < points.length - 1; i++) {
-          const p1 = latlngToPixel(points[i].lat, points[i].lon);
-          const p2 = latlngToPixel(points[i + 1].lat, points[i + 1].lon);
-          drawLineToAccumulator(
-            accumulator,
-            canvasWidth,
-            canvasHeight,
-            p1.x,
-            p1.y,
-            p2.x,
-            p2.y,
-            lineThickness
-          );
-        }
-      }
-
-      trackIndex++;
-    }
-
-    if (trackIndex < tracksArray.length) {
-      requestAnimationFrame(processChunk);
-    } else {
-      onComplete();
-    }
-  };
-
-  processChunk();
-}
 
 /**
  * Renders accumulator data as image and adds to map
@@ -110,7 +24,7 @@ function finishRender(
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
-  lineThickness: number = MAP_CONFIG.ACTIVITY_LINE_THICKNESS
+  lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS
 ): void {
   if (renderAbortRef.current) {
     return;
@@ -157,7 +71,7 @@ function finishRender(
   ctx.putImageData(imageData, 0, 0);
   const imageUrl = state.canvas.toDataURL();
 
-  if (currentImageLayerRef.current && map.hasLayer?.(currentImageLayerRef.current)) {
+  if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
     map.removeLayer(currentImageLayerRef.current);
   }
   try {
@@ -207,8 +121,8 @@ function renderHeatmapInternal(
     const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
     const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-    const canvasWidth = Math.round((bottomRight.x - topLeft.x) * MAP_CONFIG.PIXEL_DENSITY);
-    const canvasHeight = Math.round((bottomRight.y - topLeft.y) * MAP_CONFIG.PIXEL_DENSITY);
+    const canvasWidth = Math.round((bottomRight.x - topLeft.x) * HEATMAP_CONFIG.PIXEL_DENSITY);
+    const canvasHeight = Math.round((bottomRight.y - topLeft.y) * HEATMAP_CONFIG.PIXEL_DENSITY);
 
     const dimensions: CanvasDimensions = {
       canvasWidth,
@@ -218,11 +132,11 @@ function renderHeatmapInternal(
     };
 
     if (!validateCanvasDimensions(dimensions)) {
-      logDimensionError(dimensions, currentZoom, 'Invalid canvas dimensions');
+      logDimensionError(dimensions, currentZoom, 'Invalid canvas dimensions', logger);
       return;
     }
 
-    const canvasResult = createCanvasContext(canvasWidth, canvasHeight);
+    const canvasResult = createCanvasContext(canvasWidth, canvasHeight, logger);
     if (!canvasResult) {
       return;
     }
@@ -283,8 +197,8 @@ export function drawActivitiesAsHeatmap(
 ): () => void {
   const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
 
-  const lineThickness = MAP_CONFIG.ACTIVITY_LINE_THICKNESS * MAP_CONFIG.PIXEL_DENSITY;
-  let zoomChangeTimeout: NodeJS.Timeout | null = null;
+  const lineThickness = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS * HEATMAP_CONFIG.PIXEL_DENSITY;
+  let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const renderHeatmap = (): void => {
     if (!map) {
@@ -300,7 +214,7 @@ export function drawActivitiesAsHeatmap(
 
     zoomChangeTimeout = setTimeout(() => {
       renderHeatmap();
-    }, MAP_CONFIG.HEATMAP_RENDER_DELAY);
+    }, HEATMAP_CONFIG.HEATMAP_RENDER_DELAY);
   };
 
   if (map) {
@@ -327,7 +241,7 @@ export function drawActivitiesAsHeatmap(
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
 
-      if (currentImageLayerRef.current && map?.hasLayer?.(currentImageLayerRef.current)) {
+      if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
         try {
           map.removeLayer(currentImageLayerRef.current);
         } catch (e) {

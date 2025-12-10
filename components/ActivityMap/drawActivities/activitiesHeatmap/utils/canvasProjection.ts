@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { HEATMAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { PixelPoint } from '@/components/ActivityMap/drawActivities/activityTypes';
 
 /**
@@ -17,8 +17,8 @@ export function createLatLngToPixelConverter(
   return (lat: number, lon: number): PixelPoint => {
     const point = map.project({ lat, lng: lon }, map.getZoom());
     return {
-      x: (point.x - topLeft.x) * MAP_CONFIG.PIXEL_DENSITY,
-      y: (point.y - topLeft.y) * MAP_CONFIG.PIXEL_DENSITY,
+      x: (point.x - topLeft.x) * HEATMAP_CONFIG.PIXEL_DENSITY,
+      y: (point.y - topLeft.y) * HEATMAP_CONFIG.PIXEL_DENSITY,
     };
   };
 }

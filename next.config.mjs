@@ -41,4 +41,7 @@ export default withBundleAnalyzer({
       },
     ];
   },
+  // turbopack attempts to bundle some server packages by default
+  // We need to mark them as external to prevent issues
+  serverExternalPackages: ['pino', 'thread-stream'],
 });

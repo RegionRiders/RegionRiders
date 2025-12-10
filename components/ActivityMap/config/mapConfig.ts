@@ -1,14 +1,14 @@
 import { convert1to255value } from '@/components/ActivityMap/utils/convert1to255value';
-import { ColorThreshold, MapConfig } from '../mapTypes';
+import { ColorThreshold, HeatmapConfig, LeafletConfig } from '../mapTypes';
 
-export const MAP_CONFIG = {
+export const HEATMAP_CONFIG: HeatmapConfig = {
   HEATMAP_RENDER_DELAY: 0,
   PIXEL_DENSITY: 1,
   ACTIVITY_LINE_THICKNESS: 2,
   REGION_LINE_THICKNESS: 3,
 } as const;
 
-export const DEFAULT_MAP_CONFIG: MapConfig = {
+export const DEFAULT_LEAFLET_CONFIG: LeafletConfig = {
   center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
   zoom: 11,
   maxZoom: 20,

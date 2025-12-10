@@ -14,8 +14,7 @@ import 'leaflet/dist/leaflet.css';
 const MapContainerMemo = memo(MapContainer);
 
 export default function ActivityMap() {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const { tracks } = useGPXData();
   const { map, isReady, error } = useLeafletMap(mapContainerRef);
 
@@ -28,8 +27,8 @@ export default function ActivityMap() {
   if (error) {
     return (
       <div className={styles.error}>
-        Failed to load map
-        <pre>{String(error)}</pre>
+        <h3 className={styles.errorTitle}>Failed to load map</h3>
+        <p className={styles.errorMessage}>{error}</p>
       </div>
     );
   }
@@ -47,6 +46,7 @@ export default function ActivityMap() {
             onShowBordersChange={setShowBorders}
           />
         </div>
+      </div>
 
         <MapContainerMemo ref={mapContainerRef} />
 
@@ -60,6 +60,5 @@ export default function ActivityMap() {
           />
         )}
       </div>
-    </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { DEFAULT_MAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { MapConfig } from '@/components/ActivityMap/mapTypes';
+import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
+import { LeafletConfig } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
@@ -33,14 +33,17 @@ const logger = createComponentLogger('useLeafletMap');
  */
 export function useLeafletMap(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  options: Partial<MapConfig> = {}
+  options: Partial<LeafletConfig> = {}
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const config: MapConfig = useMemo(() => ({ ...DEFAULT_MAP_CONFIG, ...options }), [options]);
+  const config: LeafletConfig = useMemo(
+    () => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }),
+    [options]
+  );
 
   // Initial map creation effect
   useEffect(() => {
@@ -54,14 +57,14 @@ export function useLeafletMap(
     try {
       // create leaflet map instance
       mapRef.current = L.map(containerRef.current, {
-        center: config.center!,
-        zoom: config.zoom!,
+        center: config.center,
+        zoom: config.zoom,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
       });
 
       // add tile layer for map background
-      tileLayerRef.current = L.tileLayer(config.tileLayerUrl!, {
+      tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
         attribution: config.attribution,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,

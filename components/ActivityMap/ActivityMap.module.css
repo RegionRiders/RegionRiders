@@ -7,7 +7,7 @@
 .error {
     padding: 2rem;
     text-align: center;
-    color: #dc2626;
+    color: var(--color-error, #dc2626);
 }
 
 .errorTitle {
@@ -17,7 +17,7 @@
 }
 
 .errorMessage {
-    color: #991b1b;
+    color: var(--color-error-dark, #991b1b);
 }
 
 .modeSelector {
@@ -25,10 +25,10 @@
     top: 1rem;
     right: 1rem;
     z-index: 1000;
-    background: white;
+    background: var(--color-bg-control, white);
     padding: 0.75rem;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgb(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm, 0 2px 4px rgb(0, 0, 0, 0.1));
 }
 
 .radioGroup {
