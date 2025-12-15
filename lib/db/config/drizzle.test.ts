@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import { getPool } from './client';
 import { getDb } from '@/lib/db';
+import { getPool } from './client';
 
 describe('Drizzle ORM Database Instance', () => {
   it('returns a drizzle instance with schema', () => {

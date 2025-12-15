@@ -299,12 +299,15 @@ describe('Activity Operations', () => {
 
   describe('deleteActivity', () => {
     it('should delete activity', async () => {
-      const result = await deleteActivity(createdActivityId);
+      const uniqueActivity = { ...mockActivity, stravaActivityId: `strava_act_${Date.now()}` };
+      const activity = await createActivity(uniqueActivity);
+
+      const result = await deleteActivity(activity.id);
 
       expect(result).toBe(true);
 
-      const activity = await getActivityById(createdActivityId);
-      expect(activity).toBeUndefined();
+      const deletedActivity = await getActivityById(activity.id);
+      expect(deletedActivity).toBeUndefined();
     });
 
     it('should return false for non-existent id', async () => {
