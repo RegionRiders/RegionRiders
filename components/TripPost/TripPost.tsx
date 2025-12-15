@@ -2,7 +2,7 @@ import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } fr
 import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
-import {Dispatch, SetStateAction} from "react";
+import {dateNoTime, dateOnlyTime, dateWithTime} from "@/components/Utils/DateFormattingFunctions";
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -21,12 +21,6 @@ const TripStat = ({ header, value }: { header: string; value: string }) => (
     </Group>
   </>
 );
-
-const pad = (n: number) => n.toString().padStart(2, '0');
-const dateNoTime = (date: Date) => date.toISOString().slice(0, 10);
-const dateWithTime = (date: Date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-const dateOnlyTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
 const Activities = ({
   activities,

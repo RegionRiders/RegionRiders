@@ -1,6 +1,7 @@
 import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text } from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
 import { Activity } from '@/types/activity';
+import {dateWithTime} from "@/components/Utils/DateFormattingFunctions";
 
 const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   <Stack gap="md">
@@ -31,7 +32,7 @@ const ActivityPost = ({ data, imageUrl }: { data: Activity; imageUrl?: string })
 
           {/*Start date*/}
           <Text c="dimmed" size="xs">
-            {data.startDate.toUTCString()}
+            {dateWithTime(data.startDate)}
           </Text>
         </Group>
 
