@@ -14,7 +14,7 @@ updates:
     assignees:
       - "4fra"
     labels:
-      - "dependencies"
+      - "type: Dependencies"
       - "automated"
     commit-message:
       prefix: "chore"
