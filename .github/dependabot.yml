@@ -36,7 +36,7 @@ updates:
       day: "monday"
       time: "06:00"
     labels:
-      - "dependencies"
+      - "type: Dependencies"
       - "github-actions"
     commit-message:
       prefix: "ci"
