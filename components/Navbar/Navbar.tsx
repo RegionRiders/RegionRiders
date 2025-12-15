@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tabs, Text } from '@mantine/core';
+import { AppShell, Tabs, Text } from '@mantine/core';
 import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
 import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
@@ -10,6 +10,7 @@ import { Welcome } from '@/components/Welcome/Welcome';
 import { User } from '@/types/user';
 import { UserMenu } from './UserMenu';
 import classes from './Navbar.module.css';
+
 
 export interface NavbarProps {
   user?: User;
@@ -36,21 +37,30 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   const [, setAuthCode] = useState<string | null>(null);
 
   return (
-    <Tabs defaultValue={defaultTab}>
-      <Tabs.List className={classes.tabsList}>
-        <Logo />
-        <NavbarTab value="map" text="Map" />
-        <NavbarTab value="activities" text="Activities" />
-        <NavbarTab value="trips" text="Trips" />
+      <Tabs defaultValue={defaultTab}>
+        <AppShell header={{ height: "4rem" }}
+                  navbar={{ width: "auto", breakpoint: 'md'}}
+                  aside={{ width: "30vw", breakpoint: 'md'}}
+                  withBorder={false}
+                  >
+          <AppShell.Header>
+            <Tabs.List className={classes.tabsList} h="4rem">
+              <Logo />
+              <NavbarTab value="map" text="Map" />
+              <NavbarTab value="activities" text="Activities" />
+              <NavbarTab value="trips" text="Trips" />
 
-        <div className={classes.userSection}>
-          {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
-        </div>
-      </Tabs.List>
+              <div className={classes.userSection}>
+                {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
+              </div>
+            </Tabs.List>
+          </AppShell.Header>
 
-      <NavbarTabContent value="map" Content={Welcome} />
-      <NavbarTabContent value="activities" Content={ActivitiesListElement} />
-      <NavbarTabContent value="trips" Content={TripsListElement} />
-    </Tabs>
+
+          <NavbarTabContent value="map" Content={Welcome} />
+          <NavbarTabContent value="activities" Content={ActivitiesListElement} />
+          <NavbarTabContent value="trips" Content={TripsListElement} />
+        </AppShell>
+      </Tabs>
   );
 }
