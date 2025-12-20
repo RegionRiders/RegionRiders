@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Image, UnstyledButton } from '@mantine/core';
 import classes from './Logo.module.css';
 
