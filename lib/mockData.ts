@@ -61,7 +61,7 @@ export const mockActivities: Activity[] = [
     distance: '0.13 km',
     time: '00:00:32',
     average: '7.02 km/h',
-    startDate: new Date('2015-03-16T23:50:16'),
+    startDate: new Date('2015-03-22T23:50:16'),
     endDate: '2019-07-23 11:36',
   },
   {
@@ -72,7 +72,7 @@ export const mockActivities: Activity[] = [
     distance: '0.13 km',
     time: '00:00:32',
     average: '7.02 km/h',
-    startDate: new Date('2015-03-18T18:25:55'),
+    startDate: new Date('2015-03-24T18:25:55'),
     endDate: '2019-07-23 11:36',
   },
   {
@@ -83,7 +83,7 @@ export const mockActivities: Activity[] = [
     distance: '0.13 km',
     time: '00:00:32',
     average: '7.02 km/h',
-    startDate: new Date('2015-03-19T09:44:57'),
+    startDate: new Date('2015-03-25T09:44:57'),
     endDate: '2019-07-23 11:36',
   },
 ];
@@ -103,7 +103,7 @@ export const mockTrips: Trip[] = [
     distance: '0.71 km',
     startDate: new Date("2015-03-15"),
     endDate: new Date("2015-03-25"),
-    activities: mockActivities.slice(0, 3),
+    activities: mockActivities,
   },
   {
     id: 'trip-3c4d5e',
@@ -111,7 +111,7 @@ export const mockTrips: Trip[] = [
     distance: '0.71 km',
     startDate: new Date("2015-03-15"),
     endDate: new Date("2015-03-25"),
-    activities: mockActivities.slice(0, 3),
+    activities: mockActivities,
   },
   {
     id: 'trip-4d5e6f',
@@ -119,7 +119,7 @@ export const mockTrips: Trip[] = [
     distance: '0.71 km',
     startDate: new Date("2015-03-15"),
     endDate: new Date("2015-03-25"),
-    activities: mockActivities.slice(0, 3),
+    activities: mockActivities,
   },
   {
     id: 'trip-5e6f7g',
@@ -127,7 +127,7 @@ export const mockTrips: Trip[] = [
     distance: '0.71 km',
     startDate: new Date("2015-03-15"),
     endDate: new Date("2015-03-25"),
-    activities: mockActivities.slice(0, 3),
+    activities: mockActivities,
   },
   {
     id: 'trip-6f7g8h',
@@ -135,6 +135,6 @@ export const mockTrips: Trip[] = [
     distance: '0.71 km',
     startDate: new Date("2015-03-15"),
     endDate: new Date("2015-03-25"),
-    activities: mockActivities.slice(0, 3),
+    activities: mockActivities,
   },
 ];

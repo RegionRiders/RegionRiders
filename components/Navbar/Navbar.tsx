@@ -43,9 +43,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   return (
       <Tabs defaultValue={defaultTab}>
         <AppShell header={{ height: "4rem" }}
-                  navbar={{ width: "35vw", breakpoint: 'md'}}
+                  navbar={{ width: !desktopOpened ? "35vw" : "100vw", breakpoint: 'md'}}
                   aside={{ width: "65vw", breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
-                  withBorder={false}
                   >
           <AppShell.Header>
             <Tabs.List className={classes.tabsList} h="4rem">

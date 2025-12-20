@@ -10,11 +10,16 @@ import { Trip } from "@/types/trip";
 
 export function TripsListElement(toggleTrip: () => void) {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
-  const handleTripChange = (data: Trip) => {
-    setSelectedTrip(data);
-
+  const handleTripChange = (data: Trip | null) => {
     if (selectedTrip === null) {
       toggleTrip();
+    }
+
+    if (data === null) {
+      setSelectedTrip(null);
+      toggleTrip();
+    } else {
+      setSelectedTrip(data);
     }
   };
 
@@ -33,7 +38,7 @@ export function TripsListElement(toggleTrip: () => void) {
       <AppShell.Aside>
         <Group py="md">
           <Group p="sm">
-            <CloseButton size="lg" ml="auto" />
+            <CloseButton size="lg" ml="auto" onClick={() => handleTripChange(null)}/>
             <Text fw="bold" size="xl">
               {selectedTrip?.title}
             </Text>

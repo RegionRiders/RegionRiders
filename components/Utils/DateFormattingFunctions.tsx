@@ -3,3 +3,8 @@ export const dateNoTime = (date: Date) => date.toISOString().slice(0, 10);
 export const dateWithTime = (date: Date) =>
    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 export const dateOnlyTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+export const dayDifference = (dateA: Date, dateB: Date) => {
+  console.log(Math.floor(dateA.valueOf() / 1000 / 60 / 60 / 24));
+  console.log(Math.floor(dateB.valueOf() / 1000 / 60 / 60 / 24));
+   return Math.floor(dateA.valueOf() / 1000 / 60 / 60 / 24) - Math.floor(dateB.valueOf() / 1000 / 60 / 60 / 24);
+}
