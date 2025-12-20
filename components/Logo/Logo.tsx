@@ -17,18 +17,16 @@ const Logo = ({
   const appliedHeight = height ?? (width === undefined ? 50 : undefined);
 
   return (
-    <Link href={href} passHref>
-      <UnstyledButton component="a" className={classes.logoButton}>
-        <Image
-          src={src}
-          alt="RegionRiders Logo"
-          width={appliedWidth}
-          height={appliedHeight}
-          fit="contain"
-          className={classes.logoImage}
-        />
-      </UnstyledButton>
-    </Link>
+    <UnstyledButton component="a" className={classes.logoButton} href={href}>
+      <Image
+        src={src}
+        alt="RegionRiders Logo"
+        width={appliedWidth}
+        height={appliedHeight}
+        fit="contain"
+        className={classes.logoImage}
+      />
+    </UnstyledButton>
   );
 };
 
