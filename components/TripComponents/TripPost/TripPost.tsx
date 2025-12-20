@@ -37,24 +37,10 @@ const Activities = ({
     date1.getMonth() === date2.getMonth() &&
     date1.getDay() === date2.getDay();
 
-  const days = Math.abs(
-    Math.floor(
-      (new Date(
-        tripEndDate.getFullYear(),
-        tripEndDate.getMonth(),
-        tripEndDate.getDate()
-      ).getTime() -
-        new Date(
-          tripStartDate.getFullYear(),
-          tripStartDate.getMonth(),
-          tripStartDate.getDate()
-        ).getTime()) /
-        (1000 * 60 * 60 * 24)
-    )
-  );
+  const days = dayDifference(tripEndDate, tripStartDate) + 1;
 
   let prevActivityDate: Date | null = null;
-  let dayCount = 0;
+  let dayCount = 1;
 
   return (
     <>
