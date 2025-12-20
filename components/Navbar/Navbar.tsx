@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, {ReactElement, useState} from 'react';
 import { AppShell, Tabs, Text } from '@mantine/core';
 import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
 import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
-import { TripsListElement } from '@/components/TripsListElement/TripsListElement';
+import { TripsListElement } from '@/components/TripComponents/TripsListElement/TripsListElement';
 import { Welcome } from '@/components/Welcome/Welcome';
 import { User } from '@/types/user';
 import { UserMenu } from './UserMenu';
 import classes from './Navbar.module.css';
+import {useDisclosure} from "@mantine/hooks";
 
 
 export interface NavbarProps {
@@ -26,9 +27,9 @@ const NavbarTab = ({ value, text }: { value: string; text: string }) => (
   </Tabs.Tab>
 );
 
-const NavbarTabContent = ({ value, Content }: { value: string; Content: React.ComponentType }) => (
+const NavbarTabContent = ({ value, Content }: { value: string; Content: ReactElement }) => (
   <Tabs.Panel value={value}>
-    <Content />
+    {Content}
   </Tabs.Panel>
 );
 
@@ -36,11 +37,14 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+
   return (
       <Tabs defaultValue={defaultTab}>
         <AppShell header={{ height: "4rem" }}
-                  navbar={{ width: "auto", breakpoint: 'md'}}
-                  aside={{ width: "30vw", breakpoint: 'md'}}
+                  navbar={{ width: "35vw", breakpoint: 'md'}}
+                  aside={{ width: "65vw", breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
                   withBorder={false}
                   >
           <AppShell.Header>
@@ -57,9 +61,9 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
           </AppShell.Header>
 
 
-          <NavbarTabContent value="map" Content={Welcome} />
-          <NavbarTabContent value="activities" Content={ActivitiesListElement} />
-          <NavbarTabContent value="trips" Content={TripsListElement} />
+          <NavbarTabContent value="map" Content={Welcome()} />
+          <NavbarTabContent value="activities" Content={ActivitiesListElement()} />
+          <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop)} />
         </AppShell>
       </Tabs>
   );

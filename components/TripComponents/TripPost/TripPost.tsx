@@ -3,6 +3,7 @@ import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
 import {dateNoTime, dateOnlyTime, dateWithTime} from "@/components/Utils/DateFormattingFunctions";
+import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/TripDateFormatter";
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -81,7 +82,7 @@ const Activities = ({
                 <Group>
                   <ActivityTypeIcon type={activity.activityType} size={25} />
                   <Anchor href="https://http.cat/images/404.jpg">
-                    <Text truncate="end" w={250}>
+                    <Text truncate="end">
                       {activity.title}
                     </Text>
                   </Anchor>
@@ -105,12 +106,10 @@ const TripPost = ({ data, onSelect }: { data: Trip, onSelect: (trip: Trip) => vo
       </Card.Section>
 
       <Stack ml="md" gap={0}>
-        <Text fw="bold" size="xl" mb={0} onClick={() => onSelect(data)}>
+        <Text fw="bold" size="xl" mb={0} onClick={() => {onSelect(data)}}>
           {data.title}
         </Text>
-        <Text c="dimmed" size="sm" mb="xs">
-          🚥{dateWithTime(data.startDate)} 🏁{dateWithTime(data.endDate)}
-        </Text>
+        <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
         <TripStat header="Distance:" value={data.distance} />
       </Stack>
