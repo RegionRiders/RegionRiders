@@ -101,6 +101,8 @@ const TripPost = ({ data, onSelect }: { data: Trip, onSelect: (trip: Trip) => vo
         <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
         <TripStat header="Distance:" value={data.distance} />
+        <TripStat header="Regions discovered:" value="placeholder" />
+        <TripStat header="Regions visited:" value="placeholder" />
       </Stack>
     </SimpleGrid>
 
