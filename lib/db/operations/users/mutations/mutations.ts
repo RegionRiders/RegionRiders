@@ -4,7 +4,7 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { getDb, users } from '@/lib/db';
+import { fingerprint, getDb, sanitizeUserUpdateData, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { NewUser, User, UserTokenUpdate } from '../types';
 
@@ -19,7 +19,10 @@ export async function createUser(data: NewUser): Promise<User> {
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, data }, 'Error creating user');
+    dbLogger.error(
+      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      'Error creating user'
+    );
     throw error;
   }
 }
@@ -45,7 +48,10 @@ export async function updateUser(
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, id, data }, 'Error updating user');
+    dbLogger.error(
+      { error, userIdFingerprint: fingerprint(id), sanitizedData: sanitizeUserUpdateData(data) },
+      'Error updating user'
+    );
     throw error;
   }
 }
@@ -73,7 +79,7 @@ export async function updateUserTokens(
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error updating user tokens');
+    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error updating user tokens');
     throw error;
   }
 }
@@ -96,7 +102,7 @@ export async function deactivateUser(id: string): Promise<User | undefined> {
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error deactivating user');
+    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error deactivating user');
     throw error;
   }
 }
@@ -111,7 +117,7 @@ export async function deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error deleting user');
+    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error deleting user');
     throw error;
   }
 }
@@ -129,13 +135,11 @@ export async function upsertUser(data: NewUser): Promise<User> {
     }
 
     // Build the SET payload for ON CONFLICT DO UPDATE. Exclude immutable keys.
+    const { id, createdAt, ...updatableFields } = data;
     const setPayload: Partial<Omit<User, 'id' | 'createdAt'>> = {
-      ...data,
+      ...updatableFields,
       updatedAt: new Date(),
-    } as any;
-
-    delete (setPayload as any).id;
-    delete (setPayload as any).createdAt;
+    };
 
     const [user] = await db
       .insert(users)
@@ -148,7 +152,10 @@ export async function upsertUser(data: NewUser): Promise<User> {
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, stravaId: data.stravaId }, 'Error upserting user');
+    dbLogger.error(
+      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      'Error upserting user'
+    );
     throw error;
   }
 }
@@ -164,7 +171,10 @@ export async function findOrCreateUser(data: NewUser): Promise<User> {
     }
     return await createUser(data);
   } catch (error) {
-    dbLogger.error({ error, stravaId: data.stravaId }, 'Error in findOrCreateUser');
+    dbLogger.error(
+      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      'Error in findOrCreateUser'
+    );
     throw error;
   }
 }

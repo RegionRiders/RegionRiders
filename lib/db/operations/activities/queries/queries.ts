@@ -5,7 +5,7 @@
 
 import { cache } from 'react';
 import { and, desc, eq } from 'drizzle-orm';
-import { activities, getDb } from '@/lib/db';
+import { activities, fingerprint, getDb } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { Activity, GetActivitiesOptions } from '../types';
 import { buildActivityConditions } from '../utils';
@@ -20,7 +20,7 @@ export const getActivityById = cache(async (id: string): Promise<Activity | unde
     const [activity] = await db.select().from(activities).where(eq(activities.id, id)).limit(1);
     return activity;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error fetching activity by ID');
+    dbLogger.error({ error, activityIdFingerprint: fingerprint(id) }, 'Error fetching activity by ID');
     return undefined;
   }
 });
@@ -40,7 +40,10 @@ export const getActivityByStravaId = cache(
         .limit(1);
       return activity;
     } catch (error) {
-      dbLogger.error({ error, stravaActivityId }, 'Error fetching activity by Strava ID');
+      dbLogger.error(
+        { error, stravaActivityIdFingerprint: fingerprint(stravaActivityId) },
+        'Error fetching activity by Strava ID'
+      );
       return undefined;
     }
   }
@@ -56,6 +59,10 @@ export const getActivitiesByUserId = cache(
       const db = getDb();
       const { limit = 50, offset = 0 } = options || {};
 
+      // liMIT pagination parameters to safe ranges
+      const safeLimit = Math.max(1, Math.min(limit, 100));
+      const safeOffset = Math.max(0, offset);
+
       const conditions = buildActivityConditions(userId, options || {});
       const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
 
@@ -64,10 +71,13 @@ export const getActivitiesByUserId = cache(
         .from(activities)
         .where(whereClause)
         .orderBy(desc(activities.startDate))
-        .limit(limit)
-        .offset(offset);
+        .limit(safeLimit)
+        .offset(safeOffset);
     } catch (error) {
-      dbLogger.error({ error, userId, options }, 'Error fetching activities by user ID');
+      dbLogger.error(
+        { error, userIdFingerprint: fingerprint(userId), options },
+        'Error fetching activities by user ID'
+      );
       return [];
     }
   }
@@ -83,12 +93,15 @@ export const getAllActivities = cache(
       const db = getDb();
       const { limit = 50, offset = 0 } = options || {};
 
+      const safeLimit = Math.max(1, Math.min(limit, 100));
+      const safeOffset = Math.max(0, offset);
+
       return await db
         .select()
         .from(activities)
         .orderBy(desc(activities.startDate))
-        .limit(limit)
-        .offset(offset);
+        .limit(safeLimit)
+        .offset(safeOffset);
     } catch (error) {
       dbLogger.error({ error, options }, 'Error fetching all activities');
       return [];

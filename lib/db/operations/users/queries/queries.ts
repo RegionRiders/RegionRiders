@@ -5,7 +5,7 @@
 
 import { cache } from 'react';
 import { desc, eq } from 'drizzle-orm';
-import { getDb, users } from '@/lib/db';
+import { fingerprint, getDb, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { GetUsersOptions, User } from '../types';
 
@@ -19,7 +19,7 @@ export const getUserById = cache(async (id: string): Promise<User | undefined> =
     const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return user;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error fetching user by ID');
+    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error fetching user by ID');
     return undefined;
   }
 });
@@ -34,7 +34,10 @@ export const getUserByStravaId = cache(async (stravaId: string): Promise<User | 
     const [user] = await db.select().from(users).where(eq(users.stravaId, stravaId)).limit(1);
     return user;
   } catch (error) {
-    dbLogger.error({ error, stravaId }, 'Error fetching user by Strava ID');
+    dbLogger.error(
+      { error, stravaIdFingerprint: fingerprint(stravaId) },
+      'Error fetching user by Strava ID'
+    );
     return undefined;
   }
 });
@@ -49,7 +52,7 @@ export const getUserByEmail = cache(async (email: string): Promise<User | undefi
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     return user;
   } catch (error) {
-    dbLogger.error({ error }, 'Error fetching user by email');
+    dbLogger.error({ error, emailFingerprint: fingerprint(email) }, 'Error fetching user by email');
     return undefined;
   }
 });
@@ -59,19 +62,24 @@ export const getUserByEmail = cache(async (email: string): Promise<User | undefi
  * Cached for the duration of the request (React cache)
  */
 export const getAllUsers = cache(async (options?: GetUsersOptions): Promise<User[]> => {
+  const { limit = 50, offset = 0, activeOnly = false } = options || {};
+
+  // Clamp pagination parameters to safe ranges
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.max(0, offset);
+
   try {
     const db = getDb();
-    const { limit = 50, offset = 0, activeOnly = false } = options || {};
 
-    let query = db.select().from(users);
+    const baseQuery = db.select().from(users);
+    const filteredQuery = activeOnly ? baseQuery.where(eq(users.isActive, true)) : baseQuery;
 
-    if (activeOnly) {
-      query = query.where(eq(users.isActive, true)) as any;
-    }
-
-    return await query.orderBy(desc(users.createdAt)).limit(limit).offset(offset);
+    return await filteredQuery.orderBy(desc(users.createdAt)).limit(safeLimit).offset(safeOffset);
   } catch (error) {
-    dbLogger.error({ error, options }, 'Error fetching users');
+    dbLogger.error(
+      { error, limit: safeLimit, offset: safeOffset, activeOnly },
+      'Error fetching users'
+    );
     return [];
   }
 });

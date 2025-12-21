@@ -4,7 +4,7 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { activities, getDb } from '@/lib/db';
+import { activities, fingerprint, getDb, sanitizeActivityUpdateData } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { Activity, NewActivity } from '../types';
 
@@ -19,7 +19,10 @@ export async function createActivity(data: NewActivity): Promise<Activity> {
 
     return activity;
   } catch (error) {
-    dbLogger.error({ error, data }, 'Error creating activity');
+    dbLogger.error(
+      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
+      'Error creating activity'
+    );
     throw error;
   }
 }
@@ -45,7 +48,14 @@ export async function updateActivity(
 
     return activity;
   } catch (error) {
-    dbLogger.error({ error, id, data }, 'Error updating activity');
+    dbLogger.error(
+      {
+        error,
+        activityIdFingerprint: fingerprint(id),
+        sanitizedData: sanitizeActivityUpdateData(data),
+      },
+      'Error updating activity'
+    );
     throw error;
   }
 }
@@ -60,7 +70,7 @@ export async function deleteActivity(id: string): Promise<boolean> {
     const result = await db.delete(activities).where(eq(activities.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    dbLogger.error({ error, id }, 'Error deleting activity');
+    dbLogger.error({ error, activityIdFingerprint: fingerprint(id) }, 'Error deleting activity');
     throw error;
   }
 }
@@ -75,7 +85,10 @@ export async function deleteActivitiesByUserId(userId: string): Promise<number> 
     const result = await db.delete(activities).where(eq(activities.userId, userId));
     return result.rowCount || 0;
   } catch (error) {
-    dbLogger.error({ error, userId }, 'Error deleting activities by user ID');
+    dbLogger.error(
+      { error, userIdFingerprint: fingerprint(userId) },
+      'Error deleting activities by user ID'
+    );
     throw error;
   }
 }
@@ -97,16 +110,12 @@ export async function upsertActivity(data: NewActivity): Promise<Activity> {
 
     // Prepare the SET payload for ON CONFLICT DO UPDATE.
     // Exclude immutable keys that should never be overwritten by the upsert.
+    const { id, userId, createdAt, ...updatableFields } = data;
     const setPayload: Partial<Omit<Activity, 'id' | 'userId' | 'createdAt'>> = {
-      ...data,
+      ...updatableFields,
       // Ensure updatedAt is always set when upserting
       updatedAt: new Date(),
-    } as any;
-
-    // Defensive: remove keys that may exist on the insert type but must not be part of the update
-    delete (setPayload as any).id;
-    delete (setPayload as any).userId;
-    delete (setPayload as any).createdAt;
+    };
 
     // Perform a single INSERT ... ON CONFLICT (strava_activity_id) DO UPDATE SET ... RETURNING *
     const [activity] = await db
@@ -120,7 +129,10 @@ export async function upsertActivity(data: NewActivity): Promise<Activity> {
 
     return activity;
   } catch (error) {
-    dbLogger.error({ error, stravaActivityId: data.stravaActivityId }, 'Error upserting activity');
+    dbLogger.error(
+      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
+      'Error upserting activity'
+    );
     throw error;
   }
 }
@@ -139,7 +151,7 @@ export async function findOrCreateActivity(data: NewActivity): Promise<Activity>
     return await createActivity(data);
   } catch (error) {
     dbLogger.error(
-      { error, stravaActivityId: data.stravaActivityId },
+      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
       'Error in findOrCreateActivity'
     );
     throw error;
