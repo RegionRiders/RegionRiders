@@ -5,7 +5,7 @@ PostgreSQL.
 
 ## 📁 Structure
 
-```
+```text
 lib/db/
 ├── config/          # Database configuration and connection settings
 ├── schema/          # Database table schemas and models
@@ -479,4 +479,3 @@ When making database changes:
 - **Connection pooling** is managed automatically by the PostgreSQL client
 - **Type safety** is enforced throughout the database layer
 - **Schema changes** require new migrations in production environments
-
