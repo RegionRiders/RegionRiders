@@ -48,17 +48,17 @@ export default function ActivityMap() {
         </div>
       </div>
 
-        <MapContainerMemo ref={mapContainerRef} />
+      <MapContainerMemo ref={mapContainerRef} />
 
-        {isReady && map && (
-          <MapOrchestrator
-            map={map}
-            tracks={memoizedTracks}
-            showHeatmap={showHeatmap}
-            showBorders={showBorders}
-            activityMode={activityMode}
-          />
-        )}
-      </div>
+      {isReady && map && (
+        <MapOrchestrator
+          map={map}
+          tracks={memoizedTracks}
+          showHeatmap={showHeatmap}
+          showBorders={showBorders}
+          activityMode={activityMode}
+        />
+      )}
+    </div>
   );
 }

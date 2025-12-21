@@ -4,72 +4,6 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.layersButton {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1;
-    background: none;
-    border: 3px solid white;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: hidden;
-    padding: 0;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgb(0, 0, 0, 0.15);
-}
-
-.layersButton:hover {
-    box-shadow: 0 4px 12px rgb(0, 0, 0, 0.2);
-    transform: translateY(-2px);
-}
-
-
-.layersButtonImageWrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.layersButtonImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.layersButtonGradient {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 40%;
-    background: linear-gradient(to top, rgb(0, 0, 0, 0.6), transparent);
-    pointer-events: none;
-}
-
-.layersButtonLabel {
-    position: absolute;
-    bottom: 8px;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgb(0, 0, 0, 0.5);
-    z-index: 2;
-}
-
 .panelWrapper {
     position: absolute;
     bottom: 120%;
@@ -97,11 +31,11 @@
 }
 
 @media (max-width: 768px) {
-    .panelWrapper {
-        width: 280px;
+    .container {
+        width: 100px;
     }
 
-    .layersButton {
-        width: 100px;
+    .panelWrapper {
+        width: 280px;
     }
 }
