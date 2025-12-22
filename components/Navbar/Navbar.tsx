@@ -63,7 +63,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   return (
     <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
       <AppShell header={{ height: "4rem" }}
-                aside={{ width: "65vw", breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
+                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
                 >
         <AppShell.Header>
           <Tabs.List className={classes.tabsList} h="4rem">
@@ -81,7 +81,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
         <NavbarTabContent value="map" Content={Welcome()} />
         <NavbarTabContent value="activities" Content={ActivitiesListElement()} />
-        <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop)} />
+        <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop, desktopOpened)} />
       </AppShell>
     </Tabs>
   );

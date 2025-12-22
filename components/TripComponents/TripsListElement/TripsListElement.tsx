@@ -9,19 +9,24 @@ import { Trip } from "@/types/trip";
 import TripDetails from "@/components/TripComponents/TripDetails/TripDetails";
 
 
-export function TripsListElement(toggleTrip: () => void) {
+export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean) {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
-  const handleTripChange = (data: Trip | null) => {
+  const handleTripChange = (newTrip: Trip | null) => {
     if (selectedTrip === null) {
       toggleTrip();
     }
 
-    if (data === null) {
+    if (isTripToggled) {
+      setSelectedTrip(newTrip);
+      toggleTrip();
+    }
+
+    if (newTrip === null) {
       setSelectedTrip(null);
       toggleTrip();
     } else {
-      setSelectedTrip(data);
+      setSelectedTrip(newTrip);
     }
   };
 
