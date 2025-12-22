@@ -1,7 +1,7 @@
 'use client';
 
 import {useState} from "react";
-import { AppShell, ScrollArea } from "@mantine/core";
+import { AppShell } from "@mantine/core";
 import { PostsList } from '@/components/PostsList/PostsList';
 import { TripPost } from '@/components/TripComponents/TripPost/TripPost';
 import { mockTrips } from '@/lib/mockData';
@@ -27,15 +27,13 @@ export function TripsListElement(toggleTrip: () => void) {
 
   return (
     <>
-      <AppShell.Navbar>
-        <AppShell.Section component={ScrollArea}>
+      <AppShell.Main>
           <PostsList
             Content={mockTrips.map((trip) => (
               <TripPost key={trip.id} data={trip} onSelect={(data: Trip) => {handleTripChange(data)}}/>
             ))}
           />
-        </AppShell.Section>
-      </AppShell.Navbar>
+      </AppShell.Main>
 
       <AppShell.Aside>
         <TripDetails selectedTrip={selectedTrip} handleTripChange={(trip: Trip | null) => {handleTripChange(trip)}} />

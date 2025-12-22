@@ -3,20 +3,18 @@
 import { ActivityPost } from '@/components/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
 import { mockActivities } from '@/lib/mockData';
-import {AppShell, ScrollArea} from "@mantine/core";
+import {AppShell} from "@mantine/core";
 
 export function ActivitiesListElement() {
   return (
     <>
-      <AppShell.Navbar>
-        <AppShell.Section component={ScrollArea}>
-          <PostsList
-            Content={mockActivities.map((activity) => (
-              <ActivityPost key={activity.id} data={activity} />
-            ))}
-          />
-        </AppShell.Section>
-      </AppShell.Navbar>
+      <AppShell.Main>
+        <PostsList
+          Content={mockActivities.map((activity) => (
+            <ActivityPost key={activity.id} data={activity} />
+          ))}
+        />
+      </AppShell.Main>
 
       <AppShell.Aside>
         hej :3

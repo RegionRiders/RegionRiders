@@ -37,33 +37,52 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
+  const [asideWidth, setAsideWidth] = useState<string>("0vw");
+
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
 
+  const changeContentWidth = (activeTab: string | null) => {
+    switch (activeTab) {
+      case 'map':
+        setAsideWidth("0vw");
+        break;
+      case 'activities':
+        setAsideWidth("50vw");
+        break;
+      case 'trips':
+        setAsideWidth("65vw");
+        break;
+    }
+
+    if (!desktopOpened) {
+      toggleDesktop();
+    }
+  }
+
   return (
-      <Tabs defaultValue={defaultTab}>
-        <AppShell header={{ height: "4rem" }}
-                  navbar={{ width: !desktopOpened ? "35vw" : "100vw", breakpoint: 'md'}}
-                  aside={{ width: "65vw", breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
-                  >
-          <AppShell.Header>
-            <Tabs.List className={classes.tabsList} h="4rem">
-              <Logo />
-              <NavbarTab value="map" text="Map" />
-              <NavbarTab value="activities" text="Activities" />
-              <NavbarTab value="trips" text="Trips" />
+    <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
+      <AppShell header={{ height: "4rem" }}
+                aside={{ width: "65vw", breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
+                >
+        <AppShell.Header>
+          <Tabs.List className={classes.tabsList} h="4rem">
+            <Logo />
+            <NavbarTab value="map" text="Map" />
+            <NavbarTab value="activities" text="Activities" />
+            <NavbarTab value="trips" text="Trips" />
 
-              <div className={classes.userSection}>
-                {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
-              </div>
-            </Tabs.List>
-          </AppShell.Header>
+            <div className={classes.userSection}>
+              {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
+            </div>
+          </Tabs.List>
+        </AppShell.Header>
 
 
-          <NavbarTabContent value="map" Content={Welcome()} />
-          <NavbarTabContent value="activities" Content={ActivitiesListElement()} />
-          <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop)} />
-        </AppShell>
-      </Tabs>
+        <NavbarTabContent value="map" Content={Welcome()} />
+        <NavbarTabContent value="activities" Content={ActivitiesListElement()} />
+        <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop)} />
+      </AppShell>
+    </Tabs>
   );
 }
