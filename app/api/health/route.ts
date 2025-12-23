@@ -37,7 +37,7 @@ export async function GET() {
     if (responseTime > 1000) {
       checks.checks.database = 'degraded';
       checks.status = 'degraded';
-      overallStatus = 200
+      overallStatus = 200;
     }
   } catch (error) {
     checks.checks.database = 'unhealthy';
