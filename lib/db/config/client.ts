@@ -34,11 +34,7 @@ export function getPool(): Pool {
     max: config.maxConnections,
     idleTimeoutMillis: config.idleTimeoutMillis,
     connectionTimeoutMillis: config.connectionTimeoutMillis,
-    ssl: config.ssl
-      ? {
-          rejectUnauthorized: process.env.NODE_ENV === 'production',
-        }
-      : false,
+    ssl: config.ssl,
   });
 
   pool.on('error', (err: Error) => {

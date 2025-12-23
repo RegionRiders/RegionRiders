@@ -110,7 +110,7 @@ describe('Database Configuration', () => {
       expect(config.ssl).toBe(false);
     });
 
-    it('should disable SSL in production with localhost', () => {
+    it('should enable SSL in production with localhost', () => {
       Object.defineProperty(process.env, 'NODE_ENV', {
         value: 'production',
         writable: true,
@@ -120,7 +120,7 @@ describe('Database Configuration', () => {
 
       const config = getDatabaseConfig();
 
-      expect(config.ssl).toBe(false);
+      expect(config.ssl).toBe(true);
     });
 
     it('should enable SSL in production with remote host', () => {
@@ -200,7 +200,7 @@ describe('Database Configuration', () => {
       expect(url).toContain('?sslmode=require');
     });
 
-    it('should not include SSL parameter in production with local host', () => {
+    it('should include SSL parameter in production with local host', () => {
       Object.defineProperty(process.env, 'NODE_ENV', {
         value: 'production',
         writable: true,
@@ -210,7 +210,7 @@ describe('Database Configuration', () => {
 
       const url = getDatabaseUrl();
 
-      expect(url).not.toContain('?sslmode=require');
+      expect(url).toContain('?sslmode=require');
     });
   });
 

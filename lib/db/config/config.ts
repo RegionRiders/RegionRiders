@@ -32,23 +32,6 @@ export function validateDatabaseEnv(): void {
 }
 
 /**
- * Checks if the given host is a local address
- * @param host The hostname or IP address
- * @returns True if the host is localhost or a local IP
- */
-function isLocalHost(host: string): boolean {
-  const normalizedHost = host.toLowerCase().trim();
-  return (
-    normalizedHost === 'localhost' ||
-    normalizedHost === '127.0.0.1' ||
-    normalizedHost === '::1' ||
-    normalizedHost === '0.0.0.0' ||
-    normalizedHost.startsWith('127.') ||
-    normalizedHost.startsWith('localhost:')
-  );
-}
-
-/**
  * Gets the database configuration from environment variables
  * @returns {DatabaseConfig} Database configuration object
  */
@@ -56,11 +39,10 @@ export function getDatabaseConfig(): DatabaseConfig {
   validateDatabaseEnv();
 
   const host = process.env.POSTGRES_HOST!;
-  const isProduction = process.env.NODE_ENV === 'production';
 
-  // SSL is enabled in production ONLY if the host is not local
-  // Local databases (even in production) typically don't have SSL configured
-  const ssl = isProduction && !isLocalHost(host);
+  // SSL is enabled in production, disabled otherwise
+  // This provides encryption for production deployments while keeping local development simple
+  const ssl = process.env.NODE_ENV === 'production';
 
   return {
     host,
