@@ -14,7 +14,7 @@ export default defineConfig({
     user: process.env.POSTGRES_USER || 'regionriders_user',
     password: process.env.POSTGRES_PASSWORD || 'regionriders_pass',
     database: process.env.POSTGRES_DB || 'regionriders',
-    ssl: false,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
   },
   verbose: true,
   strict: true,
