@@ -26,7 +26,8 @@
     "db:up": "docker-compose up -d postgres",
     "db:down": "docker-compose down",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres",
-    "db:setup": "./scripts/setup-db.sh"
+    "db:setup": "./scripts/setup-db.sh",
+    "db:test-ssl": "node scripts/test-ssl-connection.js"
   },
   "dependencies": {
     "@mantine/core": "8.3.5",
@@ -34,7 +35,8 @@
     "@next/bundle-analyzer": "^16.0.0",
     "@tabler/icons-react": "^3.35.0",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.1",
+    "express-rate-limit": "^8.2.1",
     "next": "16.0.0",
     "pg": "^8.16.3",
     "pino": "^10.1.0",
