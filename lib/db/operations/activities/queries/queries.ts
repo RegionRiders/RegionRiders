@@ -20,7 +20,10 @@ export const getActivityById = cache(async (id: string): Promise<Activity | unde
     const [activity] = await db.select().from(activities).where(eq(activities.id, id)).limit(1);
     return activity;
   } catch (error) {
-    dbLogger.error({ error, activityIdFingerprint: fingerprint(id) }, 'Error fetching activity by ID');
+    dbLogger.error(
+      { error, activityIdFingerprint: fingerprint(id) },
+      'Error fetching activity by ID'
+    );
     return undefined;
   }
 });

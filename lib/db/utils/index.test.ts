@@ -6,7 +6,12 @@
  * Tests for database utility functions
  */
 
-import { fingerprint, sanitizeActivityUpdateData, sanitizeUserUpdateData, isValidUuid } from './index';
+import {
+  fingerprint,
+  isValidUuid,
+  sanitizeActivityUpdateData,
+  sanitizeUserUpdateData,
+} from './index';
 
 describe('sanitizeUserUpdateData', () => {
   it('should only include allowed fields', () => {
