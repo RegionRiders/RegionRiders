@@ -53,6 +53,15 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
 fi
 success "Docker Compose found"
 
+# Check if Yarn is available
+info "Checking Yarn installation..."
+if ! command -v yarn &> /dev/null; then
+    error "Yarn is not installed!"
+    echo "Please install Yarn: https://yarnpkg.com/getting-started/install"
+    exit 1
+fi
+success "Yarn found"
+
 # Check if .env.local exists
 if [ ! -f .env.local ]; then
     warning ".env.local not found. Copying from .env.example..."
@@ -117,4 +126,3 @@ echo "  • View database logs: docker-compose logs -f postgres"
 echo "  • Stop database: yarn db:down"
 echo "  • Reset database: yarn db:reset"
 echo ""
-
