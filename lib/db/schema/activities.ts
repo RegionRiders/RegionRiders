@@ -13,6 +13,7 @@ import {
   timestamp,
   uuid,
   varchar,
+  text,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
@@ -24,7 +25,7 @@ export const activities = pgTable(
     userId: uuid('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    stravaActivityId: varchar('strava_activity_id', { length: 255 }).unique(),
+    stravaActivityId: varchar('strava_activity_id', { length: 50 }).unique(),
 
     // Basic information (always required)
     name: varchar('name', { length: 255 }).notNull(),
@@ -66,22 +67,22 @@ export const activities = pgTable(
     isPrivate: boolean('is_private').default(false).notNull(),
 
     // Map data (large - 2-10KB per activity, consider lazy loading)
-    mapPolyline: varchar('map_polyline', { length: 10000 }), // Full resolution route
-    mapSummaryPolyline: varchar('map_summary_polyline', { length: 2000 }), // Simplified route
+    mapPolyline: text('map_polyline'), // Full resolution route - use text for unlimited length
+    mapSummaryPolyline: text('map_summary_polyline'),
 
     // Flexible storage for API-specific or future data
-    metadata: jsonb('metadata').$type<Record<string, any>>(),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
     // Audit timestamps
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
-    userIdIdx: index('activities_user_id_idx').on(table.userId),
-    stravaActivityIdIdx: index('activities_strava_activity_id_idx').on(table.stravaActivityId),
-    startDateIdx: index('activities_start_date_idx').on(table.startDate),
-    typeIdx: index('activities_type_idx').on(table.type),
-  })
+  (table) => [
+    index('activities_user_id_idx').on(table.userId),
+    index('activities_strava_activity_id_idx').on(table.stravaActivityId),
+    index('activities_start_date_idx').on(table.startDate),
+    index('activities_type_idx').on(table.type),
+  ]
 );
 
 export type Activity = typeof activities.$inferSelect;
