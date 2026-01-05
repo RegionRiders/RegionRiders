@@ -1,5 +1,5 @@
 import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
-import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
+import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
 import {dateNoTime, dateOnlyTime, dayDifference} from "@/components/Utils/DateFormattingFunctions";

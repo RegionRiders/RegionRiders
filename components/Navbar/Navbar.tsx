@@ -2,7 +2,7 @@
 
 import React, {ReactElement, useState} from 'react';
 import { AppShell, Tabs, Text } from '@mantine/core';
-import { ActivitiesListElement } from '@/components/ActivitiesListElement/ActivitiesListElement';
+import { ActivitiesListElement } from '@/components/ActivityComponents/ActivitiesListElement/ActivitiesListElement';
 import { Logo } from '@/components/Logo/Logo';
 import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
 import { TripsListElement } from '@/components/TripComponents/TripsListElement/TripsListElement';
