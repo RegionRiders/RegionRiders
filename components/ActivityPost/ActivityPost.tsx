@@ -1,7 +1,8 @@
-import { Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text } from '@mantine/core';
+import {Box, Burger, Card, Flex, Group, Image, Menu, SimpleGrid, Stack, Text} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityTypeIcon/ActivityTypeIcon';
+import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';
-import {dateWithTime} from "@/components/Utils/DateFormattingFunctions";
+
 
 const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   <Stack gap="md">
@@ -10,45 +11,47 @@ const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   </Stack>
 );
 
-const ActivityPost = ({ data, imageUrl }: { data: Activity; imageUrl?: string }) => (
-  <Card shadow="sm" radius="md" withBorder>
-    <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
-      {/*Activity route preview image*/}
-      <Box>
-        <Card.Section>
-          <Image src={imageUrl || '/assets/placeholders/activity.jpg'} h={100} w={100} />
-        </Card.Section>
-      </Box>
+const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity) => void }) => (
+  <Group>
+    <Card shadow="sm" radius="md" withBorder>
+      <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
+        {/*Activity route preview image*/}
+        <Box>
+          <Card.Section>
+            <Image src={imageUrl || '/assets/placeholders/activity.jpg'} h={100} w={100} />
+          </Card.Section>
+        </Box>
 
-      <Stack align="flex-start" justify="center" display="block">
-        <Group>
-          {/*Icon*/}
-          <ActivityTypeIcon type={data.activityType} size={200} />
+        <Stack align="flex-start" justify="center" display="block">
+          <Group>
+            {/*Icon*/}
+            <ActivityTypeIcon type={data.activityType} size={200} />
 
-          {/*Title*/}
-          <Text fw={650} truncate="end" w={225}>
-            {data.title}
+            {/*Title*/}
+            <Text fw={650} truncate="end" w={225} onClick={() => {onSelect(data)}}>
+              {data.title}
+            </Text>
+
+            {/*Start date*/}
+            <Text c="dimmed" size="xs">
+              {dateWithTime(data.startDate)}
+            </Text>
+          </Group>
+
+          {/*Description*/}
+          <Text size="sm" c="dimmed" lineClamp={2} maw={350}>
+            {data.desc}
           </Text>
+        </Stack>
 
-          {/*Start date*/}
-          <Text c="dimmed" size="xs">
-            {dateWithTime(data.startDate)}
-          </Text>
-        </Group>
-
-        {/*Description*/}
-        <Text size="sm" c="dimmed" lineClamp={2} maw={350}>
-          {data.desc}
-        </Text>
-      </Stack>
-
-      <SimpleGrid cols={3} spacing="xs">
-        <ActivityStat name="Distance" value={data.distance} />
-        <ActivityStat name="Time" value={data.time} />
-        <ActivityStat name="Average" value={data.average} />
-      </SimpleGrid>
-    </Flex>
-  </Card>
+        <SimpleGrid cols={3} spacing="xs">
+          <ActivityStat name="Distance" value={data.distance} />
+          <ActivityStat name="Time" value={data.time} />
+          <ActivityStat name="Average" value={data.average} />
+        </SimpleGrid>
+      </Flex>
+    </Card>
+  </Group>
 );
 
 export { ActivityPost };

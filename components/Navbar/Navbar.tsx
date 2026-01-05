@@ -53,6 +53,9 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
       case 'trips':
         setAsideWidth("65vw");
         break;
+      default:
+        setAsideWidth("0vw");
+        break;
     }
 
     if (!desktopOpened) {
@@ -80,7 +83,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
 
         <NavbarTabContent value="map" Content={Welcome()} />
-        <NavbarTabContent value="activities" Content={ActivitiesListElement()} />
+        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleDesktop, desktopOpened)} />
         <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop, desktopOpened)} />
       </AppShell>
     </Tabs>
