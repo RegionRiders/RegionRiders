@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handle500Error, handleApiError } from '@/lib/api';
-import { exchangeToken } from '@/lib/strava';
-import { validateState } from '@/lib/oauth/state';
 import { findOrCreateUser } from '@/lib/db/operations/users';
-import { rateLimit } from '@/lib/proxy/rateLimit';
+import { validateState } from '@/lib/oauth/state';
+import { exchangeToken } from '@/lib/strava';
 
 /**
  * GET /api/strava/callback
@@ -13,12 +12,6 @@ import { rateLimit } from '@/lib/proxy/rateLimit';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Apply rate limiting to prevent abuse
-    const rateLimitResult = await rateLimit.auth(request);
-    if (rateLimitResult instanceof NextResponse) {
-      return rateLimitResult;
-    }
-
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -69,19 +62,12 @@ export async function GET(request: NextRequest) {
     // TODO: Redirect to dashboard or success page
     // For now, return success response
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Successfully authorized with Strava',
       athlete_id: tokenData.athlete.id,
       user_id: user.id,
     });
-
-    // Add rate limit headers
-    Object.entries(rateLimitResult.headers).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-
-    return response;
   } catch (error) {
     return handle500Error(error, `Strava API: ${'Token Exchange'}`);
   }

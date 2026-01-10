@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+import { findOrCreateUser } from '@/lib/db/operations/users';
+import { validateState } from '@/lib/oauth/state';
 import { exchangeToken, type StravaTokenResponse } from '@/lib/strava';
 import { GET } from './route';
 
@@ -16,6 +18,10 @@ class NextRequest {
 }
 
 jest.mock('@/lib/strava');
+jest.mock('@/lib/oauth/state', () => ({
+  validateState: jest.fn(),
+}));
+jest.mock('@/lib/db/operations/users');
 
 describe('GET /api/strava/callback', () => {
   const mockToken: StravaTokenResponse = {
@@ -30,19 +36,36 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should exchange code for tokens', async () => {
+    (validateState as jest.Mock).mockResolvedValue(true);
     (exchangeToken as jest.Mock).mockResolvedValue(mockToken);
+    (findOrCreateUser as jest.Mock).mockResolvedValue({ id: 12345 });
 
-    const req = new NextRequest('http://localhost/api/strava/callback?code=abc123');
+    const req = new NextRequest(
+      'http://localhost/api/strava/callback?code=abc123&state=mock-state'
+    );
     const res = await GET(req as any);
 
+    expect(validateState).toHaveBeenCalledWith('mock-state');
     expect(exchangeToken).toHaveBeenCalledWith('abc123');
+    expect(findOrCreateUser).toHaveBeenCalledWith({
+      stravaId: '12345',
+      email: undefined,
+      firstName: undefined,
+      lastName: undefined,
+      profilePicture: undefined,
+      accessToken: 'token123',
+      refreshToken: 'refresh456',
+      tokenExpiresAt: new Date(1234567890 * 1000),
+      isActive: true,
+    });
     expect(res.status).toBe(200);
 
     const data = await res.json();
     expect(data).toEqual({
       success: true,
-      message: 'Successfully authorized with Strava.',
+      message: 'Successfully authorized with Strava',
       athlete_id: 12345,
+      user_id: 12345,
     });
   });
 
