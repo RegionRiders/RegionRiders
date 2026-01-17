@@ -1,5 +1,6 @@
 import {CloseButton, Group, Image, Stack, Text} from "@mantine/core";
 import {Activity} from "@/types/activity";
+import {ActivityTypeIcon} from "@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon";
 
 const ActivityDetails = ({selectedActivity, handleActivityChange} : {selectedActivity: (Activity | null), handleActivityChange: (trip: Activity | null) => void}) => {
   return (
@@ -17,6 +18,7 @@ const ActivityDetails = ({selectedActivity, handleActivityChange} : {selectedAct
         <Stack ml="md" gap={0}>
           <Text ml="md" fw="bold" size="xl">
             {selectedActivity?.title}
+            {selectedActivity?.activityType}
           </Text>
         </Stack>
       </Group>

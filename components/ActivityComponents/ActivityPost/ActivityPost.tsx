@@ -11,7 +11,7 @@ const ActivityStat = ({ name, value }: { name: string; value: string }) => (
   </Stack>
 );
 
-const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity) => void }) => (
+const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
   <Group>
     <Card shadow="sm" radius="md" withBorder>
       <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
@@ -51,6 +51,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
         </SimpleGrid>
       </Flex>
     </Card>
+
   </Group>
 );
 
