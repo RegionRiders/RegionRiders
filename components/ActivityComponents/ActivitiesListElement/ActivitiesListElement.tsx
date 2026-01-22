@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from "react";
-import { AppShell, Burger, Checkbox, Group, Menu } from "@mantine/core";
+import {AppShell, Burger, Checkbox, Group, Loader, Menu} from "@mantine/core";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
-import { mockActivities } from '@/lib/mockData';
+import {mockActivities} from '@/lib/mockData';
 import { Activity } from "@/types/activity";
-
+import InfiniteScroll from "react-infinite-scroll-component";
+import {PostsLoading} from "@/components/PostsList/PostsLoading";
 
 export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean) {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -63,25 +64,42 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     </div>
   );
 
+  const [visibleActivities, setVisibleActivities] = useState<Activity[]>(mockActivities.slice(0, 2));
+  const [hasMoreActivities, setHasMoreActivities] = useState<boolean>(true);
+
+  const fetchActivities = () => {
+    setTimeout(() => {
+      const nextTrips = mockActivities.slice(visibleActivities.length, visibleActivities.length + 2);
+
+      setVisibleActivities(prev => [...prev, ...nextTrips]);
+
+      if (visibleActivities.length + nextTrips.length >= mockActivities.length) {
+        setHasMoreActivities(false);
+      }
+    }, 1500)
+  }
+
   return (
     <>
       <AppShell.Main>
-        <PostsList
-          Content={mockActivities.map((activity) => (
-            <Group key={activity.id}>
-              <ActivitySelectCheckbox />
+        <InfiniteScroll next={fetchActivities} hasMore={hasMoreActivities} loader={<PostsLoading/>} dataLength={visibleActivities.length} style={{ overflow: "hidden" }}>
+          <PostsList
+            Content={visibleActivities.map((activity) => (
+              <Group key={activity.id}>
+                <ActivitySelectCheckbox />
 
-              <ActivityPost
-                data={activity}
-                onSelect={(data: Activity | null) => {
-                  handleActivityChange(data);
-                }}
-              />
+                <ActivityPost
+                  data={activity}
+                  onSelect={(data: Activity | null) => {
+                    handleActivityChange(data);
+                  }}
+                />
 
-              <ActivityPostMenu />
-            </Group>
-          ))}
-        />
+                <ActivityPostMenu />
+              </Group>
+            ))}
+          />
+        </InfiniteScroll>
       </AppShell.Main>
 
       <AppShell.Aside>

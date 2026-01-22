@@ -8,7 +8,7 @@ import { mockTrips } from '@/lib/mockData';
 import { Trip } from "@/types/trip";
 import TripDetails from "@/components/TripComponents/TripDetails/TripDetails";
 import InfiniteScroll from "react-infinite-scroll-component";
-import classes from "./TripsListElement.module.css";
+import {PostsLoading} from "@/components/PostsList/PostsLoading";
 
 
 export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean) {
@@ -44,13 +44,13 @@ export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean)
       if (visibleTrips.length + nextTrips.length >= mockTrips.length) {
         setHasMoreTrips(false);
       }
-    }, 500)
+    }, 1500)
   }
 
   return (
     <>
       <AppShell.Main>
-        <InfiniteScroll next={fetchTrips} hasMore={hasMoreTrips} loader={<Loader/>} dataLength={visibleTrips.length} style={{ overflow: "hidden" }}>
+        <InfiniteScroll next={fetchTrips} hasMore={hasMoreTrips} loader={<PostsLoading/>} dataLength={visibleTrips.length} style={{ overflow: "hidden" }}>
           <PostsList
             Content={visibleTrips.map((trip) => (
               <TripPost key={trip.id} data={trip} onSelect={(data: Trip) => {handleTripChange(data)}}/>
