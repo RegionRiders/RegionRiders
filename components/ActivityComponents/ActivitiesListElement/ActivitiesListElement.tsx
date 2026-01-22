@@ -68,18 +68,17 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
       <AppShell.Main>
         <PostsList
           Content={mockActivities.map((activity) => (
-            <Group>
-              <ActivitySelectCheckbox key={activity.id} />
+            <Group key={activity.id}>
+              <ActivitySelectCheckbox />
 
               <ActivityPost
-                key={activity.id}
                 data={activity}
                 onSelect={(data: Activity | null) => {
                   handleActivityChange(data);
                 }}
               />
 
-              <ActivityPostMenu key={activity.id} />
+              <ActivityPostMenu />
             </Group>
           ))}
         />
