@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from "react";
+import { AppShell, Burger, Checkbox, Container, Divider, Flex, Group, Menu } from "@mantine/core";
+import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
 import { mockActivities } from '@/lib/mockData';
-import {AppShell, Burger, Checkbox, Group, Menu} from "@mantine/core";
-import {useState} from "react";
-import {Activity} from "@/types/activity";
-import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
+import { Activity } from "@/types/activity";
+
 
 export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean) {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [tripCreation, setTripCreation] = useState<boolean>(false);
 
   const handleActivityChange = (newActivity: Activity | null) => {
     if (newActivity !== null && selectedActivity === null) {
@@ -37,7 +39,29 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
 
   const handleTripCreation = () => {
     handleActivityChange(null);
+    setTripCreation(true);
   }
+  
+  const ActivityPostMenu = () => (
+    <div hidden={tripCreation}>
+      <Menu shadow="md" position="right">
+        <Menu.Target>
+          <Burger />
+        </Menu.Target>
+
+        <Menu.Dropdown>
+          <Menu.Item>Add to trip</Menu.Item>
+          <Menu.Item onClick={handleTripCreation}>Create new trip</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    </div>
+  );
+  
+  const ActivitySelectCheckbox = () => (
+    <div hidden={!tripCreation}>
+      <Checkbox />
+    </div>
+  );
 
   return (
     <>
@@ -45,33 +69,27 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
         <PostsList
           Content={mockActivities.map((activity) => (
             <Group>
-              <div>
-                <Checkbox />
-              </div>
+              <ActivitySelectCheckbox key={activity.id} />
 
-              <ActivityPost key={activity.id} data={activity} onSelect={(data: Activity | null) => {handleActivityChange(data)}}/>
-              <Menu shadow="md" position="right">
-                <Menu.Target>
-                  <Burger/>
-                </Menu.Target>
+              <ActivityPost
+                key={activity.id}
+                data={activity}
+                onSelect={(data: Activity | null) => {
+                  handleActivityChange(data);
+                }}
+              />
 
-                <Menu.Dropdown>
-                  <Menu.Item>
-                    Add to trip
-                  </Menu.Item>
-                  <Menu.Item onClick={handleTripCreation}>
-                    Create new trip
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
+              <ActivityPostMenu key={activity.id} />
             </Group>
-
           ))}
         />
       </AppShell.Main>
 
       <AppShell.Aside>
-        <ActivityDetails selectedActivity={selectedActivity} handleActivityChange={handleActivityChange} />
+        <ActivityDetails
+          selectedActivity={selectedActivity}
+          handleActivityChange={handleActivityChange}
+        />
       </AppShell.Aside>
     </>
   );

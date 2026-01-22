@@ -39,8 +39,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
   const [asideWidth, setAsideWidth] = useState<string>("0vw");
 
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
-  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+  const [mobileAsideOpened, { toggle: toggleAsideMobile }] = useDisclosure();
+  const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
   const changeContentWidth = (activeTab: string | null) => {
     switch (activeTab) {
@@ -58,15 +58,15 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         break;
     }
 
-    if (!desktopOpened) {
-      toggleDesktop();
+    if (!desktopAsideOpened) {
+      toggleAsideDesktop();
     }
   }
 
   return (
     <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
       <AppShell header={{ height: "4rem" }}
-                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: mobileOpened, desktop: desktopOpened} }}
+                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: mobileAsideOpened, desktop: desktopAsideOpened} }}
                 >
         <AppShell.Header>
           <Tabs.List className={classes.tabsList} h="4rem">
@@ -83,8 +83,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
 
         <NavbarTabContent value="map" Content={Welcome()} />
-        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleDesktop, desktopOpened)} />
-        <NavbarTabContent value="trips" Content={TripsListElement(toggleDesktop, desktopOpened)} />
+        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleAsideDesktop, desktopAsideOpened)} />
+        <NavbarTabContent value="trips" Content={TripsListElement(toggleAsideDesktop, desktopAsideOpened)} />
       </AppShell>
     </Tabs>
   );
