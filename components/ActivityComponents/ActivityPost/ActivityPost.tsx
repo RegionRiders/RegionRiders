@@ -1,4 +1,4 @@
-import {Box, Burger, Card, Flex, Group, Image, Menu, SimpleGrid, Stack, Text} from '@mantine/core';
+import {Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';

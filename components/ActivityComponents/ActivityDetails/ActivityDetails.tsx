@@ -1,6 +1,5 @@
 import {CloseButton, Group, Image, Stack, Text} from "@mantine/core";
 import {Activity} from "@/types/activity";
-import {ActivityTypeIcon} from "@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon";
 
 const ActivityDetails = ({selectedActivity, handleActivityChange} : {selectedActivity: (Activity | null), handleActivityChange: (trip: Activity | null) => void}) => {
   return (

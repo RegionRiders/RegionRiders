@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { AppShell, Burger, Checkbox, Container, Divider, Flex, Group, Menu } from "@mantine/core";
+import { AppShell, Burger, Checkbox, Group, Menu } from "@mantine/core";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
