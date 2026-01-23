@@ -36,7 +36,7 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should exchange code for tokens', async () => {
-    (validateState as jest.Mock).mockResolvedValue(true);
+    (validateState as jest.Mock).mockResolvedValue({ valid: true });
     (exchangeToken as jest.Mock).mockResolvedValue(mockToken);
     (findOrCreateUser as jest.Mock).mockResolvedValue({ id: 12345 });
 
@@ -97,5 +97,24 @@ describe('GET /api/strava/callback', () => {
     expect(data.error).toBe('Error');
     expect(data.timestamp).toBeDefined();
     expect(data.context).toBe('Strava API: Authorization Callback');
+  });
+
+  it('should return 400 on invalid state', async () => {
+    (validateState as jest.Mock).mockResolvedValue({ valid: false, reason: 'State mismatch' });
+    const req = new NextRequest(
+      'http://localhost/api/strava/callback?code=abc123&state=invalid-state'
+    );
+    const res = await GET(req as any);
+
+    expect(exchangeToken).not.toHaveBeenCalled();
+    expect(validateState).toHaveBeenCalledWith('invalid-state');
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.statusCode).toBe(400);
+    expect(data.message).toBe('Invalid or expired state parameter');
+    expect(data.error).toBe('Error');
+    expect(data.timestamp).toBeDefined();
+    expect(data.context).toBe('Strava API: CSRF Validation Failed');
   });
 });
