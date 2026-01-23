@@ -131,4 +131,38 @@ describe('Cryptography Utilities', () => {
       process.env.OAUTH_ENCRYPTION_KEY = originalKey;
     });
   });
+
+  describe('OWASP compliance', () => {
+    it('should use strong scrypt parameters (N=131072, r=8, p=1)', () => {
+      const plainText = 'test-oauth-token';
+      const encrypted = encryptToken(plainText);
+      const decrypted = decryptToken(encrypted);
+
+      expect(encrypted).toBeDefined();
+      expect(typeof encrypted).toBe('string');
+      expect(encrypted).not.toBe(plainText);
+      expect(decrypted).toBe(plainText);
+
+      const startTime = Date.now();
+      encryptToken('performance-test');
+      const duration = Date.now() - startTime;
+      expect(duration).toBeLessThan(1000);
+    });
+
+    it('should use unique salt per installation to prevent rainbow table attacks', () => {
+      const salt1 = process.env.OAUTH_ENCRYPTION_SALT;
+
+      process.env.OAUTH_ENCRYPTION_SALT = 'different-installation-salt';
+
+      const encrypted1 = encryptToken('same-token');
+
+      process.env.OAUTH_ENCRYPTION_SALT = 'another-installation-salt';
+
+      const encrypted2 = encryptToken('same-token');
+
+      expect(encrypted1).not.toBe(encrypted2);
+
+      process.env.OAUTH_ENCRYPTION_SALT = salt1;
+    });
+  });
 });

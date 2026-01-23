@@ -72,6 +72,16 @@ function getEncryptionKey(): Buffer {
     throw new Error('OAUTH_ENCRYPTION_KEY environment variable is required');
   }
 
-  // Use scrypt to derive a 32-byte key from the environment variable
-  return scryptSync(keyEnv, saltEnv, 32);
+  // Use OWASP-recommended scrypt parameters for OAuth token protection
+  // N=131072 (2^17): CPU/memory cost (~128 MiB RAM, ~0.5s on modern CPUs)
+  // r=8: Block size (1024 bytes)
+  // p=1: Parallelization factor
+  // maxmem: Memory limit ~144 MiB (128 * N * r = 128 MiB requirement + overhead)
+  // See: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#scrypt
+  return scryptSync(keyEnv, saltEnv, 32, {
+    N: 131072,
+    r: 8,
+    p: 1,
+    maxmem: 144 * 1024 * 1024,
+  });
 }
