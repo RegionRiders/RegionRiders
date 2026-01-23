@@ -10,7 +10,7 @@
  */
 
 import { cookies } from 'next/headers';
-import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 const STATE_COOKIE_NAME = 'oauth_state';
 const STATE_TTL = 600; // 10 minutes in seconds
@@ -123,10 +123,16 @@ export async function validateState(providedState: string | null): Promise<{
       return { valid: false, reason: 'State already used' };
     }
 
-    // Timing-safe comparison using SHA-256 hashing to prevent length-based timing attacks
-    const providedHash = createHash('sha256').update(providedState).digest();
-    const storedHash = createHash('sha256').update(metadata.state).digest();
-    const statesMatch = timingSafeEqual(providedHash, storedHash);
+    // Timing-safe comparison with length check
+    // OAuth states are already 64-char random hex strings (32 bytes of entropy)
+    // No need for additional hashing - direct buffer comparison is sufficient
+    if (providedState.length !== metadata.state.length) {
+      return { valid: false, reason: 'State mismatch' };
+    }
+
+    const providedBuffer = Buffer.from(providedState, 'utf8');
+    const storedBuffer = Buffer.from(metadata.state, 'utf8');
+    const statesMatch = timingSafeEqual(providedBuffer, storedBuffer);
 
     if (!statesMatch) {
       return { valid: false, reason: 'State mismatch' };
