@@ -66,10 +66,14 @@ export function decryptToken(encryptedData: string): string {
  */
 function getEncryptionKey(): Buffer {
   const keyEnv = process.env.OAUTH_ENCRYPTION_KEY;
-  const saltEnv = process.env.OAUTH_ENCRYPTION_SALT || 'regionriders-default-salt';
+  const saltEnv = process.env.OAUTH_ENCRYPTION_SALT;
 
   if (!keyEnv) {
     throw new Error('OAUTH_ENCRYPTION_KEY environment variable is required');
+  }
+
+  if (!saltEnv) {
+    throw new Error('OAUTH_ENCRYPTION_SALT environment variable is required');
   }
 
   // Use OWASP-recommended scrypt parameters for OAuth token protection

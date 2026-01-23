@@ -112,23 +112,28 @@ describe('Cryptography Utilities', () => {
       process.env.OAUTH_ENCRYPTION_KEY = originalKey;
     });
 
-    it('should use default salt when OAUTH_ENCRYPTION_SALT is not set', () => {
+    it('should throw error when OAUTH_ENCRYPTION_SALT is missing', () => {
       const originalSalt = process.env.OAUTH_ENCRYPTION_SALT;
-      const originalKey = process.env.OAUTH_ENCRYPTION_KEY;
-
-      // Use different key/salt combination to test default salt behavior
-      process.env.OAUTH_ENCRYPTION_KEY = 'different-test-key';
       delete process.env.OAUTH_ENCRYPTION_SALT;
 
-      const plainText = 'test-token';
-      const encrypted = encryptToken(plainText);
-      const decrypted = decryptToken(encrypted);
-
-      expect(decrypted).toBe(plainText);
+      expect(() => encryptToken('test')).toThrow(
+        'OAUTH_ENCRYPTION_SALT environment variable is required'
+      );
 
       // Restore
       process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
-      process.env.OAUTH_ENCRYPTION_KEY = originalKey;
+    });
+
+    it('should reject empty OAUTH_ENCRYPTION_SALT', () => {
+      const originalSalt = process.env.OAUTH_ENCRYPTION_SALT;
+      process.env.OAUTH_ENCRYPTION_SALT = '';
+
+      expect(() => encryptToken('test')).toThrow(
+        'OAUTH_ENCRYPTION_SALT environment variable is required'
+      );
+
+      // Restore
+      process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
     });
   });
 
