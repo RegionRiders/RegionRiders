@@ -36,17 +36,41 @@ const colors = {
   bgBlue: '\x1b[44m',
 };
 
-function success(text) { return process.env.NO_COLOR ? text : `${colors.green}${text}${colors.reset}`; }
-function error(text) { return process.env.NO_COLOR ? text : `${colors.red}${text}${colors.reset}`; }
-function warning(text) { return process.env.NO_COLOR ? text : `${colors.yellow}${text}${colors.reset}`; }
-function info(text) { return process.env.NO_COLOR ? text : `${colors.blue}${text}${colors.reset}`; }
-function highlight(text) { return process.env.NO_COLOR ? text : `${colors.cyan}${colors.bright}${text}${colors.reset}`; }
-function dim(text) { return process.env.NO_COLOR ? text : `${colors.gray}${text}${colors.reset}`; }
-function pass(text) { return process.env.NO_COLOR ? `[${text}]` : `${colors.bgGreen}${colors.white}${text}${colors.reset}`; }
-function fail(text) { return process.env.NO_COLOR ? `[${text}]` : `${colors.bgRed}${colors.white}${text}${colors.reset}`; }
+function success(text) {
+  return process.env.NO_COLOR ? text : `${colors.green}${text}${colors.reset}`;
+}
+function error(text) {
+  return process.env.NO_COLOR ? text : `${colors.red}${text}${colors.reset}`;
+}
+function warning(text) {
+  return process.env.NO_COLOR ? text : `${colors.yellow}${text}${colors.reset}`;
+}
+function info(text) {
+  return process.env.NO_COLOR ? text : `${colors.blue}${text}${colors.reset}`;
+}
+function highlight(text) {
+  return process.env.NO_COLOR ? text : `${colors.cyan}${colors.bright}${text}${colors.reset}`;
+}
+function dim(text) {
+  return process.env.NO_COLOR ? text : `${colors.gray}${text}${colors.reset}`;
+}
+function pass(text) {
+  return process.env.NO_COLOR
+    ? `[${text}]`
+    : `${colors.bgGreen}${colors.white}${text}${colors.reset}`;
+}
+function fail(text) {
+  return process.env.NO_COLOR
+    ? `[${text}]`
+    : `${colors.bgRed}${colors.white}${text}${colors.reset}`;
+}
 
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
+
+// Track original values before applying defaults for security warnings
+const hasEncryptionKey = !!process.env.OAUTH_ENCRYPTION_KEY;
+const hasEncryptionSalt = !!process.env.OAUTH_ENCRYPTION_SALT;
 
 // Use production-ready defaults that match main codebase
 process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
@@ -54,8 +78,10 @@ process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
 process.env.POSTGRES_DB = process.env.POSTGRES_DB || 'regionriders';
 process.env.POSTGRES_USER = process.env.POSTGRES_USER || 'regionriders_user';
 process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'regionriders_pass';
-process.env.OAUTH_ENCRYPTION_KEY = process.env.OAUTH_ENCRYPTION_KEY || 'test-encryption-key-for-jest-only-not-for-production';
-process.env.OAUTH_ENCRYPTION_SALT = process.env.OAUTH_ENCRYPTION_SALT || 'regionriders-default-salt'; // Match main codebase
+process.env.OAUTH_ENCRYPTION_KEY =
+  process.env.OAUTH_ENCRYPTION_KEY || 'test-encryption-key-for-jest-only-not-for-production';
+process.env.OAUTH_ENCRYPTION_SALT =
+  process.env.OAUTH_ENCRYPTION_SALT || 'regionriders-default-salt'; // Match main codebase
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Database config matching main codebase
@@ -165,9 +191,7 @@ async function testSSLConnection() {
       database: config.database,
       user: config.user,
       password: config.password,
-      ssl: config.ssl
-        ? { rejectUnauthorized: process.env.NODE_ENV === 'production' }
-        : false,
+      ssl: config.ssl ? { rejectUnauthorized: process.env.NODE_ENV === 'production' } : false,
       connectionTimeoutMillis: config.connectionTimeoutMillis,
       max: config.maxConnections,
       idleTimeoutMillis: config.idleTimeoutMillis,
@@ -178,7 +202,9 @@ async function testSSLConnection() {
     const client = await pool.connect();
     console.log(success('Successfully connected to database'));
 
-    const sslResult = await client.query('SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()');
+    const sslResult = await client.query(
+      'SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()'
+    );
     const isSSL = sslResult.rows[0]?.ssl;
 
     if (isSSL) {
@@ -215,35 +241,38 @@ async function testSSLConnection() {
     console.log('\n' + info('Security Checklist:'));
     console.log(`   ${pass('PASS')} Database connection established`);
     console.log(`   ${isSSL ? pass('PASS') : fail('FAIL')} SSL encryption enabled`);
-    console.log(`   ${process.env.OAUTH_ENCRYPTION_KEY ? pass('PASS') : fail('FAIL')} OAuth encryption configured`);
-    console.log(`   ${process.env.OAUTH_ENCRYPTION_SALT ? pass('PASS') : fail('FAIL')} Unique encryption salt configured`);
+    console.log(`   ${hasEncryptionKey ? pass('PASS') : fail('FAIL')} OAuth encryption configured`);
+    console.log(
+      `   ${hasEncryptionSalt ? pass('PASS') : fail('FAIL')} Unique encryption salt configured`
+    );
 
     if (!isSSL) {
       console.log('\n' + warning('WARNING: Database connection is not using SSL!'));
-      console.log('   This may be acceptable for local development, but production should use SSL.');
+      console.log(
+        '   This may be acceptable for local development, but production should use SSL.'
+      );
     }
 
-    if (!process.env.OAUTH_ENCRYPTION_KEY) {
+    if (!hasEncryptionKey) {
       console.log('\n' + warning('WARNING: OAUTH_ENCRYPTION_KEY not set!'));
       console.log('   OAuth tokens will not be encrypted at rest.');
     }
 
-    if (!process.env.OAUTH_ENCRYPTION_SALT) {
+    if (!hasEncryptionSalt) {
       console.log('\n' + warning('WARNING: OAUTH_ENCRYPTION_SALT not set!'));
       console.log('   Using default salt - consider setting a unique salt for better security.');
     }
-
-  } catch (error) {
+  } catch (err) {
     console.error('\n' + error('SSL connection test failed!'));
-    console.error('Error:', error.message);
+    console.error('Error:', err.message);
 
-    if (error.code === 'ENOTFOUND') {
+    if (err.code === 'ENOTFOUND') {
       console.error('Check that POSTGRES_HOST is correct and reachable');
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (err.code === 'ECONNREFUSED') {
       console.error('Check that PostgreSQL is running and POSTGRES_PORT is correct');
-    } else if (error.code === '28P01') {
+    } else if (err.code === '28P01') {
       console.error('Check POSTGRES_USER and POSTGRES_PASSWORD credentials');
-    } else if (error.message.includes('SSL')) {
+    } else if (err.message.includes('SSL')) {
       console.error('SSL connection failed - check SSL configuration and certificates');
     }
 
