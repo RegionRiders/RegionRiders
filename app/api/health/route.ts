@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
 import { sql } from 'drizzle-orm';
+import { getDb } from '@/lib/db';
 
 /**
  * Health Check Endpoint
@@ -52,6 +52,7 @@ export async function GET() {
     'POSTGRES_USER',
     'POSTGRES_PASSWORD',
     'OAUTH_ENCRYPTION_KEY',
+    'OAUTH_ENCRYPTION_SALT',
     'STRAVA_CLIENT_ID',
     'STRAVA_CLIENT_SECRET',
   ];
