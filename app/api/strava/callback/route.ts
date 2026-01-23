@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Validate CSRF state parameter
     const isValidState = await validateState(state);
-    if (!isValidState) {
+    if (!isValidState.valid) {
       return handleApiError(
         { statusCode: 400, message: 'Invalid or expired state parameter' },
         'Strava API: CSRF Validation Failed'
