@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import {AppShell, Burger, Checkbox, Group, Loader, Menu} from "@mantine/core";
+import {AppShell, Burger, Checkbox, Group, Menu} from "@mantine/core";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
@@ -64,12 +64,13 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     </div>
   );
 
-  const [visibleActivities, setVisibleActivities] = useState<Activity[]>(mockActivities.slice(0, 2));
+  const postsAmountPerLoad = 20;
+  const [visibleActivities, setVisibleActivities] = useState<Activity[]>(mockActivities.slice(0, postsAmountPerLoad));
   const [hasMoreActivities, setHasMoreActivities] = useState<boolean>(true);
 
   const fetchActivities = () => {
     setTimeout(() => {
-      const nextTrips = mockActivities.slice(visibleActivities.length, visibleActivities.length + 2);
+      const nextTrips = mockActivities.slice(visibleActivities.length, visibleActivities.length + postsAmountPerLoad);
 
       setVisibleActivities(prev => [...prev, ...nextTrips]);
 

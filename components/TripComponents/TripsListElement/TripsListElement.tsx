@@ -32,12 +32,13 @@ export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean)
     }
   };
 
-  const [visibleTrips, setVisibleTrips] = useState<Trip[]>(mockTrips.slice(0, 2));
+  const postsAmountPerLoad = 2;
+  const [visibleTrips, setVisibleTrips] = useState<Trip[]>(mockTrips.slice(0, postsAmountPerLoad));
   const [hasMoreTrips, setHasMoreTrips] = useState<boolean>(true);
 
   const fetchTrips = () => {
     setTimeout(() => {
-      const nextTrips = mockTrips.slice(visibleTrips.length, visibleTrips.length + 2);
+      const nextTrips = mockTrips.slice(visibleTrips.length, visibleTrips.length + postsAmountPerLoad);
 
       setVisibleTrips(prev => [...prev, ...nextTrips]);
 
