@@ -10,7 +10,7 @@
  */
 
 import { cookies } from 'next/headers';
-import { randomBytes, timingSafeEqual } from 'crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 
 const STATE_COOKIE_NAME = 'oauth_state';
 const STATE_TTL = 600; // 10 minutes in seconds
@@ -52,7 +52,7 @@ export async function storeState(state: string): Promise<void> {
   const metadata: StateMetadata = {
     state,
     createdAt: Date.now(),
-    expiresAt: Date.now() + (STATE_TTL * 1000),
+    expiresAt: Date.now() + STATE_TTL * 1000,
     used: false,
   };
 
@@ -123,8 +123,10 @@ export async function validateState(providedState: string | null): Promise<{
       return { valid: false, reason: 'State already used' };
     }
 
-    // Timing-safe comparison
-    const statesMatch = timingSafeEqual(Buffer.from(providedState), Buffer.from(metadata.state));
+    // Timing-safe comparison using SHA-256 hashing to prevent length-based timing attacks
+    const providedHash = createHash('sha256').update(providedState).digest();
+    const storedHash = createHash('sha256').update(metadata.state).digest();
+    const statesMatch = timingSafeEqual(providedHash, storedHash);
 
     if (!statesMatch) {
       return { valid: false, reason: 'State mismatch' };
@@ -135,7 +137,6 @@ export async function validateState(providedState: string | null): Promise<{
     await clearState();
 
     return { valid: true, metadata };
-
   } catch (error) {
     // Log error in production
     console.error('State validation error:', error);
