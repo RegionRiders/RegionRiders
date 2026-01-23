@@ -169,5 +169,51 @@ describe('Cryptography Utilities', () => {
 
       process.env.OAUTH_ENCRYPTION_SALT = salt1;
     });
+
+    it('should provide detailed error in development mode', () => {
+      const originalEnv = process.env.NODE_ENV;
+
+      try {
+        Object.defineProperty(process.env, 'NODE_ENV', {
+          value: 'development',
+          writable: true,
+          configurable: true,
+        });
+
+        decryptToken('invalid:format:data');
+      } catch (error) {
+        const err = error as Error;
+        expect(err.message).toContain('Invalid encrypted data format:');
+      } finally {
+        Object.defineProperty(process.env, 'NODE_ENV', {
+          value: originalEnv,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
+
+    it('should hide error details in production mode', () => {
+      const originalEnv = process.env.NODE_ENV;
+
+      try {
+        Object.defineProperty(process.env, 'NODE_ENV', {
+          value: 'production',
+          writable: true,
+          configurable: true,
+        });
+
+        decryptToken('invalid:format:data');
+      } catch (error) {
+        const err = error as Error;
+        expect(err.message).toBe('Invalid encrypted data format');
+      } finally {
+        Object.defineProperty(process.env, 'NODE_ENV', {
+          value: originalEnv,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
   });
 });

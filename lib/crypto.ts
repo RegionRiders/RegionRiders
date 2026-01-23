@@ -56,7 +56,12 @@ export function decryptToken(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    throw new Error('Invalid encrypted data format');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Invalid encrypted data format');
+    }
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid encrypted data format: ${errorMessage}`);
   }
 }
 
