@@ -1,0 +1,6 @@
+.tripCreationSection {
+    position: fixed;
+    z-index: 199;
+    background: #fff;
+    width: 100%;
+}
