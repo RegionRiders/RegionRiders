@@ -87,7 +87,7 @@ max_attempts=30
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    if docker-compose exec -T postgres pg_isready -U ${POSTGRES_USER:-regionriders_user} > /dev/null 2>&1; then
+    if docker-compose exec -T postgres pg_isready > /dev/null 2>&1; then
         success "PostgreSQL is ready!"
         break
     fi
