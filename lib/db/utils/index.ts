@@ -7,6 +7,12 @@ import { encryptToken } from '@/lib/crypto';
 import type { Activity, User } from '@/lib/db';
 
 /**
+ * UUID v4 format validation regex
+ * Matches standard UUID format: 8-4-4-12 hexadecimal characters
+ */
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
  * Conditionally encrypt a token field
  * Returns encrypted token if value is provided, otherwise returns original value
  * @param token - Token value to encrypt (string, null, or undefined)
@@ -52,6 +58,7 @@ type SanitizedUserUpdateData = {
   metadata?: Record<string, any>;
   updatedAt?: Date;
 };
+
 type SanitizedActivityUpdateData = {
   stravaActivityId?: string;
   name?: string;
@@ -80,12 +87,12 @@ type SanitizedActivityUpdateData = {
 
 /**
  * Generate a stable, non-reversible fingerprint for logging user identifiers.
- * Returns the first 16 characters of an SHA-256 hash.
+ * Returns to first 16 characters of an SHA-256 hash.
  * This allows debugging without exposing raw PII.
  *
- * WARNING: Using only 16 characters makes this vulnerable
- * to brute-force attacks for small input spaces like sequential IDs!!!!!!!!!!111
- * This is suitable ONLY for debugging logs, not for any security-sensitive operations.
+ * WARNING: Using only 16 characters (64 bits) provides limited collision resistance
+ * and may be vulnerable to brute-force attacks for small input spaces.
+ * This is suitable ONLY for debugging logs, not for security-sensitive operations.
  */
 export function fingerprint(value: string | number | null | undefined): string | undefined {
   if (value === undefined || value === null) {
@@ -142,6 +149,5 @@ export function isValidUuid(value: string): boolean {
   if (!value) {
     return false;
   }
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(value);
+  return UUID_V4_REGEX.test(value);
 }

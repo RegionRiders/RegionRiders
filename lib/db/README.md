@@ -113,13 +113,13 @@ Each schema file exports:
 Example usage:
 
 ```typescript
-import {users, type User, type NewUser} from '@/lib/db/schema';
+import { users, type NewUser, type User } from '@/lib/db/schema';
 
 // Type-safe insert
 const newUser: NewUser = {
-    stravaId: 12345,
-    email: 'rider@example.com',
-    // ...
+  stravaId: 12345,
+  email: 'rider@example.com',
+  // ...
 };
 
 // Type-safe select
@@ -154,7 +154,7 @@ if (!user) {
 Stores user account information from Strava OAuth:
 
 | Column         | Type         | Description                    |
-|----------------|--------------|--------------------------------|
+| -------------- | ------------ | ------------------------------ |
 | id             | serial       | Primary key                    |
 | stravaId       | integer      | Unique Strava user ID          |
 | email          | varchar(255) | User email address             |
@@ -172,7 +172,7 @@ Stores user account information from Strava OAuth:
 Stores Strava activity data:
 
 | Column             | Type         | Description                     |
-|--------------------|--------------|---------------------------------|
+| ------------------ | ------------ | ------------------------------- |
 | id                 | serial       | Primary key                     |
 | stravaId           | bigint       | Unique Strava activity ID       |
 | userId             | integer      | Foreign key to users            |
@@ -237,9 +237,9 @@ Access at `https://local.drizzle.studio`
 ### Basic Query
 
 ```typescript
-import {getDb} from '@/lib/db';
-import {users} from '@/lib/db/schema';
-import {eq} from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { getDb } from '@/lib/db';
+import { users } from '@/lib/db/schema';
 
 // Find a user by ID
 const db = getDb();
@@ -249,14 +249,14 @@ const user = await db.select().from(users).where(eq(users.id, 1));
 ### Insert Data
 
 ```typescript
-import {getDb} from '@/lib/db';
-import {users, type NewUser} from '@/lib/db/schema';
+import { getDb } from '@/lib/db';
+import { users, type NewUser } from '@/lib/db/schema';
 
 const newUser: NewUser = {
-    stravaId: 12345,
-    email: 'rider@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
+  stravaId: 12345,
+  email: 'rider@example.com',
+  firstName: 'John',
+  lastName: 'Doe',
 };
 
 const db = getDb();
@@ -266,58 +266,51 @@ const [created] = await db.insert(users).values(newUser).returning();
 ### Update Data
 
 ```typescript
-import {getDb} from '@/lib/db';
-import {users} from '@/lib/db/schema';
-import {eq} from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { getDb } from '@/lib/db';
+import { users } from '@/lib/db/schema';
 
 const db = getDb();
-await db
-    .update(users)
-    .set({firstName: 'Jane'})
-    .where(eq(users.id, 1));
+await db.update(users).set({ firstName: 'Jane' }).where(eq(users.id, 1));
 ```
 
 ### Join Queries
 
 ```typescript
-import {getDb} from '@/lib/db';
-import {users, activities} from '@/lib/db/schema';
-import {eq} from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { getDb } from '@/lib/db';
+import { activities, users } from '@/lib/db/schema';
 
 const db = getDb();
 const userWithActivities = await db
-    .select()
-    .from(users)
-    .leftJoin(activities, eq(users.id, activities.userId))
-    .where(eq(users.id, 1));
+  .select()
+  .from(users)
+  .leftJoin(activities, eq(users.id, activities.userId))
+  .where(eq(users.id, 1));
 ```
 
 ### Using Operations
 
 ```typescript
-import {
-    findUserByStravaId,
-    createActivity,
-    getUserActivities,
-} from '@/lib/db/operations';
+import { createActivity, findUserByStravaId, getUserActivities } from '@/lib/db/operations';
 
 // Find user
 const user = await findUserByStravaId(12345);
 
 // Create activity
 const activity = await createActivity({
-    stravaId: 67890n,
-    userId: user.id,
-    name: 'Morning Ride',
-    type: 'Ride',
-    distance: '25000',
-    // ...
+  stravaId: 67890n,
+  userId: user.id,
+  name: 'Morning Ride',
+  type: 'Ride',
+  distance: '25000',
+  // ...
 });
 
 // Get user's activities
 const activities = await getUserActivities(user.id, {
-    limit: 10,
-    offset: 0,
+  limit: 10,
+  offset: 0,
 });
 ```
 
@@ -353,7 +346,7 @@ services:
     image: postgres:16-alpine
     container_name: regionriders-postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_DB: regionriders
       POSTGRES_USER: regionriders_user
@@ -384,7 +377,7 @@ docker-compose down -v
 
 - **SSL**: Automatically enabled for production non-local hosts
 - **Credentials**: Stored in environment variables, never committed to git
-- **Tokens**: Strava tokens should be encrypted before storage (implement encryption layer)
+- **Tokens**: Strava OAuth tokens are encrypted at rest using AES-256-GCM with scrypt key derivation
 
 ### Best Practices
 

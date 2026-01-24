@@ -6,6 +6,7 @@
 import { cache } from 'react';
 import { and, desc, eq } from 'drizzle-orm';
 import { activities, fingerprint, getDb } from '@/lib/db';
+import { PAGINATION } from '@/lib/db/config/constants';
 import { dbLogger } from '@/lib/logger';
 import type { Activity, GetActivitiesOptions } from '../types';
 import { buildActivityConditions } from '../utils';
@@ -60,11 +61,11 @@ export const getActivitiesByUserId = cache(
   async (userId: string, options?: GetActivitiesOptions): Promise<Activity[]> => {
     try {
       const db = getDb();
-      const { limit = 50, offset = 0 } = options || {};
+      const { limit = PAGINATION.DEFAULT_LIMIT, offset = PAGINATION.MIN_OFFSET } = options || {};
 
       // Limit pagination parameters to safe ranges
-      const safeLimit = Math.max(1, Math.min(limit, 100));
-      const safeOffset = Math.max(0, offset);
+      const safeLimit = Math.max(PAGINATION.MIN_LIMIT, Math.min(limit, PAGINATION.MAX_LIMIT));
+      const safeOffset = Math.max(PAGINATION.MIN_OFFSET, offset);
 
       const conditions = buildActivityConditions(userId, options || {});
       const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
@@ -94,10 +95,10 @@ export const getAllActivities = cache(
   async (options?: { limit?: number; offset?: number }): Promise<Activity[]> => {
     try {
       const db = getDb();
-      const { limit = 50, offset = 0 } = options || {};
+      const { limit = PAGINATION.DEFAULT_LIMIT, offset = PAGINATION.MIN_OFFSET } = options || {};
 
-      const safeLimit = Math.max(1, Math.min(limit, 100));
-      const safeOffset = Math.max(0, offset);
+      const safeLimit = Math.max(PAGINATION.MIN_LIMIT, Math.min(limit, PAGINATION.MAX_LIMIT));
+      const safeOffset = Math.max(PAGINATION.MIN_OFFSET, offset);
 
       return await db
         .select()
