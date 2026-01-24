@@ -45,10 +45,11 @@ export async function updateUser(
 ): Promise<User | undefined> {
   try {
     const db = getDb();
+    const sanitized = sanitizeUserUpdateData(data);
     const [user] = await db
       .update(users)
       .set({
-        ...data,
+        ...sanitized,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

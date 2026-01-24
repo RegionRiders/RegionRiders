@@ -128,6 +128,7 @@ export async function validateState(providedState: string | null): Promise<{
     // OAuth states are already 64-char random hex strings (32 bytes of entropy)
     // No need for additional hashing - direct buffer comparison is sufficient
     if (providedState.length !== metadata.state.length) {
+      await clearState();
       return { valid: false, reason: 'State mismatch' };
     }
 
@@ -136,6 +137,7 @@ export async function validateState(providedState: string | null): Promise<{
     const statesMatch = timingSafeEqual(providedBuffer, storedBuffer);
 
     if (!statesMatch) {
+      await clearState();
       return { valid: false, reason: 'State mismatch' };
     }
 
