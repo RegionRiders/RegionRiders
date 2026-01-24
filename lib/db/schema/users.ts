@@ -3,7 +3,16 @@
  * Defines the users table structure using Drizzle ORM
  */
 
-import { boolean, index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
   'users',

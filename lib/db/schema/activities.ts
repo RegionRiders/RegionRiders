@@ -10,10 +10,10 @@ import {
   jsonb,
   pgTable,
   real,
+  text,
   timestamp,
   uuid,
   varchar,
-  text,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 

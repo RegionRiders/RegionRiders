@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
-import { getAuthorizationUrl } from '@/lib/strava';
 import { generateState, storeState } from '@/lib/oauth/state';
+import { getAuthorizationUrl } from '@/lib/strava';
 
 /**
  * GET /api/strava/auth
