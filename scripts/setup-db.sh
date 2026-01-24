@@ -4,6 +4,7 @@
 # Sets up the PostgreSQL database for RegionRiders
 
 set -e
+set -u
 
 # Colors for output
 RED='\033[0;31m'
@@ -27,6 +28,22 @@ warning() {
 
 error() {
     echo -e "${RED}ERROR:${NC} $1"
+}
+
+get_env_var() {
+    local var_name="$1"
+    local default_value="$2"
+    local env_file=".env.local"
+
+    if [ -f "$env_file" ]; then
+        local value=$(grep "^${var_name}=" "$env_file" 2>/dev/null | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+        if [ -n "$value" ]; then
+            echo "$value"
+            return 0
+        fi
+    fi
+
+    echo "$default_value"
 }
 
 # Header
@@ -82,12 +99,15 @@ echo ""
 info "Waiting for PostgreSQL to be ready..."
 sleep 5
 
+# Get database user from .env.local
+POSTGRES_USER=$(get_env_var "POSTGRES_USER" "regionriders_user")
+
 # Check if database is responding
 max_attempts=30
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    if docker-compose exec -T postgres pg_isready > /dev/null 2>&1; then
+    if docker-compose exec -T postgres pg_isready -U "$POSTGRES_USER" > /dev/null 2>&1; then
         success "PostgreSQL is ready!"
         break
     fi
