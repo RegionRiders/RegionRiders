@@ -38,7 +38,14 @@ export function encryptTokenField(token: string | null | undefined): string | nu
   return encryptToken(token);
 }
 
-const ALLOWED_USER_UPDATE_FIELDS = ['isActive', 'profilePicture', 'metadata', 'updatedAt'] as const;
+const ALLOWED_USER_UPDATE_FIELDS = [
+  'firstName',
+  'lastName',
+  'isActive',
+  'profilePicture',
+  'metadata',
+  'updatedAt',
+] as const;
 const ALLOWED_ACTIVITY_UPDATE_FIELDS = [
   'stravaActivityId',
   'name',
@@ -66,6 +73,8 @@ const ALLOWED_ACTIVITY_UPDATE_FIELDS = [
 ] as const;
 
 type SanitizedUserUpdateData = {
+  firstName?: string;
+  lastName?: string;
   isActive?: boolean;
   profilePicture?: string;
   metadata?: Record<string, any>;
