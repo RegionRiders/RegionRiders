@@ -2,7 +2,7 @@
  * User CRUD Operations Tests
  */
 
-import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { closePool, type NewUser } from '@/lib/db';
 import {
   createUser,
