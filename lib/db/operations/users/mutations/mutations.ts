@@ -4,8 +4,7 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { encryptToken } from '@/lib/crypto';
-import { fingerprint, getDb, sanitizeUserUpdateData, users } from '@/lib/db';
+import { encryptTokenField, fingerprint, getDb, sanitizeUserUpdateData, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { NewUser, User, UserTokenUpdate } from '../types';
 
@@ -20,16 +19,9 @@ export async function createUser(data: NewUser): Promise<User> {
     // Encrypt sensitive OAuth tokens before storing
     const encryptedData = {
       ...data,
-      accessToken: data.accessToken ? encryptToken(data.accessToken) : data.accessToken,
-      refreshToken: data.refreshToken ? encryptToken(data.refreshToken) : data.refreshToken,
+      accessToken: encryptTokenField(data.accessToken),
+      refreshToken: encryptTokenField(data.refreshToken),
     };
-
-    // Exclude stravaId if it's null to avoid NOT NULL constraint violation
-    if (encryptedData.stravaId === null) {
-      const { stravaId, ...dataWithoutStravaId } = encryptedData;
-      const [user] = await db.insert(users).values(dataWithoutStravaId).returning();
-      return user;
-    }
 
     const [user] = await db.insert(users).values(encryptedData).returning();
 
@@ -85,8 +77,8 @@ export async function updateUserTokens(
     const [user] = await db
       .update(users)
       .set({
-        accessToken: tokens.accessToken ? encryptToken(tokens.accessToken) : tokens.accessToken,
-        refreshToken: tokens.refreshToken ? encryptToken(tokens.refreshToken) : tokens.refreshToken,
+        accessToken: encryptTokenField(tokens.accessToken),
+        refreshToken: encryptTokenField(tokens.refreshToken),
         tokenExpiresAt: tokens.tokenExpiresAt,
         updatedAt: new Date(),
       })
@@ -161,19 +153,15 @@ export async function upsertUser(data: NewUser): Promise<User> {
       .insert(users)
       .values({
         ...data,
-        accessToken: data.accessToken ? encryptToken(data.accessToken) : data.accessToken,
-        refreshToken: data.refreshToken ? encryptToken(data.refreshToken) : data.refreshToken,
+        accessToken: encryptTokenField(data.accessToken),
+        refreshToken: encryptTokenField(data.refreshToken),
       })
       .onConflictDoUpdate({
         target: users.stravaId,
         set: {
           ...setPayload,
-          accessToken: setPayload.accessToken
-            ? encryptToken(setPayload.accessToken)
-            : setPayload.accessToken,
-          refreshToken: setPayload.refreshToken
-            ? encryptToken(setPayload.refreshToken)
-            : setPayload.refreshToken,
+          accessToken: encryptTokenField(setPayload.accessToken),
+          refreshToken: encryptTokenField(setPayload.refreshToken),
         },
       })
       .returning();

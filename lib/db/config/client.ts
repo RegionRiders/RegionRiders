@@ -76,7 +76,7 @@ export async function getClient(): Promise<PoolClient> {
  * @param params Query parameters (use parameterized queries to prevent SQL injection)
  * @returns Query result
  */
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   const pool = getPool();
   return pool.query(text, params);
 }

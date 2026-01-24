@@ -3,7 +3,21 @@
  */
 
 import { createHash } from 'crypto';
+import { encryptToken } from '@/lib/crypto';
 import type { Activity, User } from '@/lib/db';
+
+/**
+ * Conditionally encrypt a token field
+ * Returns encrypted token if value is provided, otherwise returns original value
+ * @param token - Token value to encrypt (string, null, or undefined)
+ * @returns Encrypted token or original value
+ */
+export function encryptTokenField(token: string | null | undefined): string | null | undefined {
+  if (!token) {
+    return token;
+  }
+  return encryptToken(token);
+}
 
 const ALLOWED_USER_UPDATE_FIELDS = ['isActive', 'profilePicture', 'metadata', 'updatedAt'] as const;
 const ALLOWED_ACTIVITY_UPDATE_FIELDS = [
