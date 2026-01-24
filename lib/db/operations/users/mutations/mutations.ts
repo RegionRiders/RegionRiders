@@ -28,7 +28,7 @@ export async function createUser(data: NewUser): Promise<User> {
     return user;
   } catch (error) {
     dbLogger.error(
-      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      { error, stravaIdFingerprint: fingerprint(data.stravaId), operation: 'createUser' },
       'Error creating user'
     );
     throw error;
@@ -57,7 +57,14 @@ export async function updateUser(
     return user;
   } catch (error) {
     dbLogger.error(
-      { error, userIdFingerprint: fingerprint(id), sanitizedData: sanitizeUserUpdateData(data) },
+      {
+        error,
+        userIdFingerprint: fingerprint(id),
+        sanitizedData: sanitizeUserUpdateData(data),
+        operation: 'updateUser',
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+      },
       'Error updating user'
     );
     throw error;
@@ -87,7 +94,17 @@ export async function updateUserTokens(
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error updating user tokens');
+    dbLogger.error(
+      {
+        error,
+        userIdFingerprint: fingerprint(id),
+        operation: 'updateUserTokens',
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken,
+        hasTokenExpiresAt: !!tokens.tokenExpiresAt,
+      },
+      'Error updating user tokens'
+    );
     throw error;
   }
 }
@@ -110,7 +127,10 @@ export async function deactivateUser(id: string): Promise<User | undefined> {
 
     return user;
   } catch (error) {
-    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error deactivating user');
+    dbLogger.error(
+      { error, userIdFingerprint: fingerprint(id), operation: 'deactivateUser' },
+      'Error deactivating user'
+    );
     throw error;
   }
 }
@@ -125,7 +145,10 @@ export async function deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    dbLogger.error({ error, userIdFingerprint: fingerprint(id) }, 'Error deleting user');
+    dbLogger.error(
+      { error, userIdFingerprint: fingerprint(id), operation: 'deleteUser' },
+      'Error deleting user'
+    );
     throw error;
   }
 }
@@ -169,7 +192,13 @@ export async function upsertUser(data: NewUser): Promise<User> {
     return user;
   } catch (error) {
     dbLogger.error(
-      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      {
+        error,
+        stravaIdFingerprint: fingerprint(data.stravaId),
+        operation: 'upsertUser',
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+      },
       'Error upserting user'
     );
     throw error;
@@ -188,7 +217,13 @@ export async function findOrCreateUser(data: NewUser): Promise<User> {
     return await createUser(data);
   } catch (error) {
     dbLogger.error(
-      { error, stravaIdFingerprint: fingerprint(data.stravaId) },
+      {
+        error,
+        stravaIdFingerprint: fingerprint(data.stravaId),
+        operation: 'findOrCreateUser',
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+      },
       'Error in findOrCreateUser'
     );
     throw error;

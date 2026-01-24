@@ -7,22 +7,29 @@ import { encryptToken } from '@/lib/crypto';
 import type { Activity, User } from '@/lib/db';
 
 /**
- * UUID v4 format validation regex
- * Matches standard UUID format: 8-4-4-12 hexadecimal characters
- * Format: xxxxxxxx-xxxx-xxxx-xxxxxxxx
+ * UUID format validation regex
+ * Matches standard UUID format: 8-4-4-4-12 hexadecimal characters
+ * Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
  *   - time_low (8 hex)
  *   - time_mid (4 hex)
  *   - time_hi_and_version (4 hex)
  *   - clock_seq_hi_and_reserved (4 hex)
  *   - clock_seq_low (12 hex)
  */
-const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4,8}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Conditionally encrypt a token field
  * Returns encrypted token if value is provided, otherwise returns original value
  * @param token - Token value to encrypt (string, null, or undefined)
  * @returns Encrypted token or original value
+ *
+ * @example
+ * ```ts
+ * encryptTokenField('my-token'); // Returns encrypted string
+ * encryptTokenField(null); // Returns null
+ * encryptTokenField(undefined); // Returns undefined
+ * ```
  */
 export function encryptTokenField(token: string | null | undefined): string | null | undefined {
   if (!token) {
@@ -99,6 +106,16 @@ type SanitizedActivityUpdateData = {
  * WARNING: Using only 16 characters (64 bits) provides limited collision resistance
  * and may be vulnerable to brute-force attacks for small input spaces.
  * This is suitable ONLY for debugging logs, not for security-sensitive operations.
+ *
+ * @param value - Value to fingerprint (string, number, null, or undefined)
+ * @returns 16-character hex hash or undefined
+ *
+ * @example
+ * ```ts
+ * fingerprint('user@example.com'); // Returns: "a1b2c3d4e5f6g7h8"
+ * fingerprint(12345); // Returns: "f0e1d2c3b4a59687"
+ * fingerprint(null); // Returns: undefined
+ * ```
  */
 export function fingerprint(value: string | number | null | undefined): string | undefined {
   if (value === undefined || value === null) {
@@ -147,13 +164,22 @@ export function sanitizeActivityUpdateData(
 }
 
 /**
- * Validate if a string is a valid UUID v4 format
+ * Validate if a string is a valid UUID format
+ * Matches standard UUID format (8-4-4-4-12 hexadecimal characters)
+ *
  * @param value - String to validate
  * @returns true if valid UUID, false otherwise
+ *
+ * @example
+ * ```ts
+ * isValidUuid('550e8400-e29b-41d4-a716-446655440000'); // true
+ * isValidUuid('00000000-0000-0000-0000-000000000000'); // true
+ * isValidUuid('not-a-uuid'); // false
+ * ```
  */
 export function isValidUuid(value: string): boolean {
   if (!value) {
     return false;
   }
-  return UUID_V4_REGEX.test(value);
+  return UUID_REGEX.test(value);
 }

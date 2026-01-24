@@ -123,8 +123,8 @@ describe('Cryptography Utilities', () => {
           const encrypted1 = encryptToken(text);
 
           // Change environment variables
-          process.env.OAUTH_ENCRYPTION_KEY = 'new-test-key-' + Math.random();
-          process.env.OAUTH_ENCRYPTION_SALT = 'new-test-salt-' + Math.random();
+          process.env.OAUTH_ENCRYPTION_KEY = `new-test-key-${Math.random()}`;
+          process.env.OAUTH_ENCRYPTION_SALT = `new-test-salt-${Math.random()}`;
 
           // Encrypt with new key (cache should be invalidated)
           const encrypted2 = encryptToken(text);
@@ -269,6 +269,229 @@ describe('Cryptography Utilities', () => {
           configurable: true,
         });
       }
+    });
+  });
+
+  describe('edge cases', () => {
+    describe('concurrent encryption', () => {
+      it('should handle 100 parallel encryption calls correctly', async () => {
+        const text = 'concurrent-test-token';
+        const promises = Array.from({ length: 100 }, () => encryptToken(text));
+        const encryptedValues = await Promise.all(promises);
+
+        expect(encryptedValues).toHaveLength(100);
+
+        encryptedValues.forEach((encrypted) => {
+          expect(encrypted).toBeDefined();
+          expect(typeof encrypted).toBe('string');
+          expect(encrypted).not.toBe(text);
+
+          const decrypted = decryptToken(encrypted);
+          expect(decrypted).toBe(text);
+        });
+      });
+
+      it('should maintain cache consistency under concurrent access', async () => {
+        const text = 'cache-consistency-test';
+        const promises = Array.from({ length: 50 }, () => encryptToken(text));
+        const results = await Promise.all(promises);
+
+        results.forEach((encrypted) => {
+          const decrypted = decryptToken(encrypted);
+          expect(decrypted).toBe(text);
+        });
+      });
+    });
+
+    describe('input validation', () => {
+      it('should throw TypeError for non-string input to encryptToken', () => {
+        expect(() => encryptToken(123 as any)).toThrow(TypeError);
+        expect(() => encryptToken({} as any)).toThrow(TypeError);
+        expect(() => encryptToken([] as any)).toThrow(TypeError);
+      });
+
+      it('should throw TypeError for non-string input to decryptToken', () => {
+        expect(() => decryptToken(123 as any)).toThrow(TypeError);
+        expect(() => decryptToken({} as any)).toThrow(TypeError);
+        expect(() => decryptToken([] as any)).toThrow(TypeError);
+      });
+
+      it('should handle very long strings (10KB)', () => {
+        const longString = 'x'.repeat(10_000);
+        const encrypted = encryptToken(longString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(longString);
+      });
+
+      it('should handle very long strings (100KB)', () => {
+        const longString = 'y'.repeat(100_000);
+        const encrypted = encryptToken(longString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(longString);
+      });
+
+      it('should handle unicode emoji characters', () => {
+        const emojiString = 'token-with-emoji-🚀🎉🎊-and-more-😀😂🤔';
+        const encrypted = encryptToken(emojiString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(emojiString);
+      });
+
+      it('should handle CJK characters', () => {
+        const cjkString = 'token-with-chinese-中文-日文-한글-characters';
+        const encrypted = encryptToken(cjkString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(cjkString);
+      });
+
+      it('should handle RTL text (Arabic)', () => {
+        const arabicString = 'token-with-arabic-مرحبا-العربية';
+        const encrypted = encryptToken(arabicString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(arabicString);
+      });
+
+      it('should handle special characters', () => {
+        const specialChars = '!@#$%^&*()_+-=[]{}|;:",.<>?/~`';
+        const encrypted = encryptToken(specialChars);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(specialChars);
+      });
+
+      it('should handle newlines and tabs', () => {
+        const newlineString = 'line1\nline2\rline3\ttabbed';
+        const encrypted = encryptToken(newlineString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(newlineString);
+      });
+
+      it('should handle null bytes', () => {
+        const nullByteString = 'token\x00with\x00null\x00bytes';
+        const encrypted = encryptToken(nullByteString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(nullByteString);
+      });
+
+      it('should handle whitespace-only strings', () => {
+        const whitespaceString = '   \t\n\r   ';
+        const encrypted = encryptToken(whitespaceString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(whitespaceString);
+      });
+
+      it('should handle mixed encodings', () => {
+        const mixedString = 'English-中文-日本語-한국어-العربية-🚀';
+        const encrypted = encryptToken(mixedString);
+        const decrypted = decryptToken(encrypted);
+        expect(decrypted).toBe(mixedString);
+      });
+    });
+
+    describe('cache invalidation edge cases', () => {
+      it('should invalidate cache when only key changes', () => {
+        const originalKey = process.env.OAUTH_ENCRYPTION_KEY;
+        const originalSalt = process.env.OAUTH_ENCRYPTION_SALT;
+
+        try {
+          const text = 'cache-key-test';
+          const encrypted1 = encryptToken(text);
+
+          process.env.OAUTH_ENCRYPTION_KEY = `different-key-${Math.random()}`;
+
+          const encrypted2 = encryptToken(text);
+          expect(encrypted1).not.toBe(encrypted2);
+
+          const decrypted2 = decryptToken(encrypted2);
+          expect(decrypted2).toBe(text);
+        } finally {
+          process.env.OAUTH_ENCRYPTION_KEY = originalKey;
+          process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
+          clearEncryptionKeyCache();
+        }
+      });
+
+      it('should invalidate cache when only salt changes', () => {
+        const originalKey = process.env.OAUTH_ENCRYPTION_KEY;
+        const originalSalt = process.env.OAUTH_ENCRYPTION_SALT;
+
+        try {
+          const text = 'cache-salt-test';
+          const encrypted1 = encryptToken(text);
+
+          process.env.OAUTH_ENCRYPTION_SALT = `different-salt-${Math.random()}`;
+
+          const encrypted2 = encryptToken(text);
+          expect(encrypted1).not.toBe(encrypted2);
+
+          const decrypted2 = decryptToken(encrypted2);
+          expect(decrypted2).toBe(text);
+        } finally {
+          process.env.OAUTH_ENCRYPTION_KEY = originalKey;
+          process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
+          clearEncryptionKeyCache();
+        }
+      });
+
+      it('should handle key changing to same value (no re-derivation)', () => {
+        const text = 'same-value-test';
+        const encrypted1 = encryptToken(text);
+
+        // eslint-disable-next-line no-self-assign
+        process.env.OAUTH_ENCRYPTION_KEY = process.env.OAUTH_ENCRYPTION_KEY;
+        // eslint-disable-next-line no-self-assign
+        process.env.OAUTH_ENCRYPTION_SALT = process.env.OAUTH_ENCRYPTION_SALT;
+
+        const encrypted2 = encryptToken(text);
+
+        expect(encrypted2).not.toBe(encrypted1);
+
+        const decrypted1 = decryptToken(encrypted1);
+        const decrypted2 = decryptToken(encrypted2);
+        expect(decrypted1).toBe(text);
+        expect(decrypted2).toBe(text);
+      });
+    });
+
+    describe('error handling', () => {
+      it('should throw error for missing IV in encrypted data', () => {
+        expect(() => decryptToken('::encrypted')).toThrow('Invalid encrypted data format');
+      });
+
+      it('should throw error for missing auth tag in encrypted data', () => {
+        expect(() => decryptToken('invalidbase64::encrypted')).toThrow(
+          'Invalid encrypted data format'
+        );
+      });
+
+      it('should throw error for missing encrypted data', () => {
+        expect(() => decryptToken('ivbase64:tagbase64:')).toThrow('Invalid encrypted data format');
+      });
+
+      it('should throw error for extra parts in encrypted data', () => {
+        expect(() => decryptToken('iv:tag:data:extra')).toThrow('Invalid encrypted data format');
+      });
+
+      it('should handle invalid base64 in IV', () => {
+        expect(() => decryptToken('not-base64!:tagbase64:encrypted')).toThrow();
+      });
+
+      it('should handle invalid base64 in auth tag', () => {
+        expect(() => decryptToken('ivbase64:not-base64!:encrypted')).toThrow();
+      });
+
+      it('should handle invalid base64 in encrypted data', () => {
+        expect(() => decryptToken('ivbase64:tagbase64:not-base64!')).toThrow();
+      });
+
+      it('should throw error for wrong auth tag length', () => {
+        const validEncrypted = encryptToken('test');
+        const parts = validEncrypted.split(':');
+
+        parts[1] = Buffer.alloc(8).toString('base64');
+        const wrongTagLength = parts.join(':');
+
+        expect(() => decryptToken(wrongTagLength)).toThrow();
+      });
     });
   });
 });
