@@ -15,7 +15,7 @@
     "jest:watch": "jest --watch",
     "test:unit": "cross-env DB_TEST_SKIP=true jest",
     "test:db": "jest --testPathPattern='lib/db'",
-    "test:integration": "jest --testPathPattern='(lib/db|app/api)'",
+    "test:integration": "jest --testPathPatterns='(lib/db|app/api)'",
     "test:all": "npm run prettier:check && npm run lint && npm run typecheck && jest",
     "prettier:check": "prettier --check \"**/*.{ts,tsx}\"",
     "prettier:write": "prettier --write \"**/*.{ts,tsx}\"",
