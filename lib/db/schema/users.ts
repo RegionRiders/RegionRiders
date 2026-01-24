@@ -25,11 +25,11 @@ export const users = pgTable(
     profilePicture: text('profile_picture'), // URLs might be long, use text
     accessToken: text('access_token'), // these tokens too
     refreshToken: text('refresh_token'),
-    tokenExpiresAt: timestamp('token_expires_at'),
+    tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
     isActive: boolean('is_active').default(true).notNull(),
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index('users_email_idx').on(table.email),

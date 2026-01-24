@@ -30,7 +30,7 @@ export const activities = pgTable(
     // Basic information (always required)
     name: varchar('name', { length: 255 }).notNull(),
     type: varchar('type', { length: 50 }).notNull(), // e.g., 'Ride', 'Run', 'Walk'
-    startDate: timestamp('start_date').notNull(),
+    startDate: timestamp('start_date', { withTimezone: true }).notNull(),
 
     // Optional metadata
     description: varchar('description', { length: 1000 }),
@@ -73,9 +73,9 @@ export const activities = pgTable(
     // Flexible storage for API-specific or future data
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
-    // Audit timestamps
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    // Audit timestamps (timezone-aware for cross-region reliability)
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index('activities_user_id_idx').on(table.userId),
