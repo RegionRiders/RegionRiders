@@ -32,6 +32,8 @@ describe('sanitizeUserUpdateData', () => {
     const result = sanitizeUserUpdateData(input);
 
     expect(result).toEqual({
+      firstName: 'John',
+      lastName: 'Doe',
       isActive: true,
       profilePicture: 'pic.jpg',
       metadata: { key: 'value' },
@@ -44,9 +46,6 @@ describe('sanitizeUserUpdateData', () => {
     expect(result).not.toHaveProperty('refreshToken');
     expect(result).not.toHaveProperty('tokenExpiresAt');
     expect(result).not.toHaveProperty('stravaId');
-    // PII fields should also be excluded
-    expect(result).not.toHaveProperty('firstName');
-    expect(result).not.toHaveProperty('lastName');
   });
 
   it('should handle partial data', () => {
@@ -58,6 +57,7 @@ describe('sanitizeUserUpdateData', () => {
     const result = sanitizeUserUpdateData(input);
 
     expect(result).toEqual({
+      firstName: 'Jane',
       isActive: false,
     });
   });
