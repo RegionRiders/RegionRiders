@@ -69,6 +69,26 @@ describe('GET /api/strava/callback', () => {
     });
   });
 
+  it('should return 400 on invalid state', async () => {
+    (validateState as jest.Mock).mockResolvedValue({ valid: false, reason: 'State expired' });
+
+    const req = new NextRequest(
+      'http://localhost/api/strava/callback?code=abc123&state=expired-state'
+    );
+    const res = await GET(req as any);
+
+    expect(validateState).toHaveBeenCalledWith('expired-state');
+    expect(exchangeToken).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.statusCode).toBe(400);
+    expect(data.message).toBe('Invalid or expired state parameter');
+    expect(data.error).toBe('Error');
+    expect(data.timestamp).toBeDefined();
+    expect(data.context).toBe('Strava API: CSRF Validation Failed');
+  });
+
   it('should return 400 when no code', async () => {
     const req = new NextRequest('http://localhost/api/strava/callback');
     const res = await GET(req as any);
