@@ -9,8 +9,14 @@ import type { Activity, User } from '@/lib/db';
 /**
  * UUID v4 format validation regex
  * Matches standard UUID format: 8-4-4-12 hexadecimal characters
+ * Format: xxxxxxxx-xxxx-xxxx-xxxxxxxx
+ *   - time_low (8 hex)
+ *   - time_mid (4 hex)
+ *   - time_hi_and_version (4 hex)
+ *   - clock_seq_hi_and_reserved (4 hex)
+ *   - clock_seq_low (12 hex)
  */
-const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4,8}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Conditionally encrypt a token field
