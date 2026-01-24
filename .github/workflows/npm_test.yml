@@ -10,55 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  db-setup:
-    runs-on: ubuntu-latest
-    outputs:
-      db-ready: ${{ steps.setup.outputs.ready }}
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: regionriders
-          POSTGRES_USER: regionriders_user
-          POSTGRES_PASSWORD: regionriders_pass
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: regionriders
-      POSTGRES_USER: regionriders_user
-      POSTGRES_PASSWORD: regionriders_pass
-      OAUTH_ENCRYPTION_KEY: test-encryption-key-for-ci-only-not-for-production
-      OAUTH_ENCRYPTION_SALT: test-salt-for-ci-only
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
-
-      - name: Install dependencies
-        run: yarn
-
-      - name: Push database schema
-        run: yarn db:push
-
-      - name: Verify database setup
-        id: setup
-        run: echo "ready=true" >> $GITHUB_OUTPUT
-
   test_pull_request:
-    needs: db-setup
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -91,8 +43,8 @@ jobs:
           cache-dependency-path: '**/yarn.lock'
       - name: Install dependencies
         run: yarn
-      - name: Push database schema
-        run: yarn db:push
+      - name: Run database migrations
+        run: yarn db:migrate
       - name: Run build
         run: npm run build
       - name: Run tests
