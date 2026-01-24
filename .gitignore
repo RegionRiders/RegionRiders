@@ -149,7 +149,7 @@ logs/
 
 
 # Database
-drizzle/
+# drizzle/ - Migration files are now version controlled (v3 structure)
 *.db
 *.sqlite
 *.sqlite3
