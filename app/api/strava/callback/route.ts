@@ -69,6 +69,6 @@ export async function GET(request: NextRequest) {
       user_id: user.id,
     });
   } catch (error) {
-    return handle500Error(error, `Strava API: ${'Token Exchange'}`);
+    return handle500Error(error, 'Strava API: Token Exchange');
   }
 }

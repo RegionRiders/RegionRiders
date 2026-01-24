@@ -62,7 +62,7 @@ export const getActivitiesByUserId = cache(
       const db = getDb();
       const { limit = 50, offset = 0 } = options || {};
 
-      // liMIT pagination parameters to safe ranges
+      // Limit pagination parameters to safe ranges
       const safeLimit = Math.max(1, Math.min(limit, 100));
       const safeOffset = Math.max(0, offset);
 

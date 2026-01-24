@@ -11,6 +11,7 @@
 
 import { cookies } from 'next/headers';
 import { randomBytes, timingSafeEqual } from 'crypto';
+import { dbLogger } from '@/lib/logger';
 
 const STATE_COOKIE_NAME = 'oauth_state';
 const STATE_TTL = 600; // 10 minutes in seconds
@@ -19,7 +20,7 @@ const MAX_STATE_LENGTH = 128; // Prevent DoS with oversized states
 /**
  * OAuth state metadata for tracking and validation
  */
-interface StateMetadata {
+export interface StateMetadata {
   state: string;
   createdAt: number;
   expiresAt: number;
@@ -144,8 +145,7 @@ export async function validateState(providedState: string | null): Promise<{
 
     return { valid: true, metadata };
   } catch (error) {
-    // Log error in production
-    console.error('State validation error:', error);
+    dbLogger.error({ error }, 'State validation error');
     await clearState();
     return { valid: false, reason: 'Validation error' };
   }
