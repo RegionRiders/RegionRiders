@@ -20,7 +20,14 @@ export async function createActivity(data: NewActivity): Promise<Activity> {
     return activity;
   } catch (error) {
     dbLogger.error(
-      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
+      {
+        error,
+        stravaActivityIdFingerprint: fingerprint(data.stravaActivityId),
+        operation: 'createActivity',
+        hasStartDate: !!data.startDate,
+        hasDistance: !!data.distance,
+        hasMovingTime: !!data.movingTime,
+      },
       'Error creating activity'
     );
     throw error;
@@ -53,6 +60,10 @@ export async function updateActivity(
         error,
         activityIdFingerprint: fingerprint(id),
         sanitizedData: sanitizeActivityUpdateData(data),
+        operation: 'updateActivity',
+        hasStartDate: !!data.startDate,
+        hasDistance: !!data.distance,
+        hasMovingTime: !!data.movingTime,
       },
       'Error updating activity'
     );
@@ -70,7 +81,10 @@ export async function deleteActivity(id: string): Promise<boolean> {
     const result = await db.delete(activities).where(eq(activities.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    dbLogger.error({ error, activityIdFingerprint: fingerprint(id) }, 'Error deleting activity');
+    dbLogger.error(
+      { error, activityIdFingerprint: fingerprint(id), operation: 'deleteActivity' },
+      'Error deleting activity'
+    );
     throw error;
   }
 }
@@ -86,7 +100,11 @@ export async function deleteActivitiesByUserId(userId: string): Promise<number> 
     return result.rowCount || 0;
   } catch (error) {
     dbLogger.error(
-      { error, userIdFingerprint: fingerprint(userId) },
+      {
+        error,
+        userIdFingerprint: fingerprint(userId),
+        operation: 'deleteActivitiesByUserId',
+      },
       'Error deleting activities by user ID'
     );
     throw error;
@@ -130,7 +148,14 @@ export async function upsertActivity(data: NewActivity): Promise<Activity> {
     return activity;
   } catch (error) {
     dbLogger.error(
-      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
+      {
+        error,
+        stravaActivityIdFingerprint: fingerprint(data.stravaActivityId),
+        operation: 'upsertActivity',
+        hasStartDate: !!data.startDate,
+        hasDistance: !!data.distance,
+        hasMovingTime: !!data.movingTime,
+      },
       'Error upserting activity'
     );
     throw error;
@@ -151,7 +176,14 @@ export async function findOrCreateActivity(data: NewActivity): Promise<Activity>
     return await createActivity(data);
   } catch (error) {
     dbLogger.error(
-      { error, stravaActivityIdFingerprint: fingerprint(data.stravaActivityId) },
+      {
+        error,
+        stravaActivityIdFingerprint: fingerprint(data.stravaActivityId),
+        operation: 'findOrCreateActivity',
+        hasStartDate: !!data.startDate,
+        hasDistance: !!data.distance,
+        hasMovingTime: !!data.movingTime,
+      },
       'Error in findOrCreateActivity'
     );
     throw error;
@@ -172,7 +204,10 @@ export async function bulkCreateActivities(data: NewActivity[]): Promise<Activit
 
     return await db.insert(activities).values(data).returning();
   } catch (error) {
-    dbLogger.error({ error, count: data.length }, 'Error bulk creating activities');
+    dbLogger.error(
+      { error, count: data.length, operation: 'bulkCreateActivities' },
+      'Error bulk creating activities'
+    );
     throw error;
   }
 }
