@@ -41,7 +41,11 @@ describe('GET /api/strava/callback', () => {
   });
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_API_BASE_URL = originalEnv;
+    if (originalEnv === undefined) {
+      delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_API_BASE_URL = originalEnv;
+    }
   });
 
   it('should exchange code for tokens', async () => {
