@@ -9,9 +9,11 @@ import { GET } from './route';
 
 class NextRequest {
   url: string;
+
   constructor(input: string) {
     this.url = input;
   }
+
   get nextUrl() {
     return new URL(this.url);
   }
@@ -31,8 +33,15 @@ describe('GET /api/strava/callback', () => {
     athlete: { id: 12345 },
   };
 
+  const originalEnv = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3000';
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = originalEnv;
   });
 
   it('should exchange code for tokens', async () => {
@@ -41,7 +50,7 @@ describe('GET /api/strava/callback', () => {
     (findOrCreateUser as jest.Mock).mockResolvedValue({ id: 12345 });
 
     const req = new NextRequest(
-      'http://localhost/api/strava/callback?code=abc123&state=mock-state'
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?code=abc123&state=mock-state`
     );
     const res = await GET(req as any);
 
@@ -73,7 +82,7 @@ describe('GET /api/strava/callback', () => {
     (validateState as jest.Mock).mockResolvedValue({ valid: false, reason: 'State expired' });
 
     const req = new NextRequest(
-      'http://localhost/api/strava/callback?code=abc123&state=expired-state'
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?code=abc123&state=expired-state`
     );
     const res = await GET(req as any);
 
@@ -90,7 +99,7 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should return 400 when no code', async () => {
-    const req = new NextRequest('http://localhost/api/strava/callback');
+    const req = new NextRequest(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback`);
     const res = await GET(req as any);
 
     expect(exchangeToken).not.toHaveBeenCalled();
@@ -105,7 +114,9 @@ describe('GET /api/strava/callback', () => {
   });
 
   it('should return 400 on error param', async () => {
-    const req = new NextRequest('http://localhost/api/strava/callback?error=access_denied');
+    const req = new NextRequest(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?error=access_denied`
+    );
     const res = await GET(req as any);
 
     expect(exchangeToken).not.toHaveBeenCalled();
@@ -122,7 +133,7 @@ describe('GET /api/strava/callback', () => {
   it('should return 400 on invalid state', async () => {
     (validateState as jest.Mock).mockResolvedValue({ valid: false, reason: 'State mismatch' });
     const req = new NextRequest(
-      'http://localhost/api/strava/callback?code=abc123&state=invalid-state'
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?code=abc123&state=invalid-state`
     );
     const res = await GET(req as any);
 

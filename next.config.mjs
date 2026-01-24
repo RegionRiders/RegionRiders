@@ -10,8 +10,6 @@ export default withBundleAnalyzer({
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
-  // Empty turbopack config to acknowledge we're using Turbopack
-  // This prevents webpack config errors and allows Turbopack to handle pino correctly
   turbopack: {},
 
   images: {
@@ -28,47 +26,66 @@ export default withBundleAnalyzer({
     formats: ['image/webp', 'image/avif'],
   },
 
-  // Security headers
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     const csp = Object.entries(isDev ? developmentCSP : productionCSP)
       .map(([key, values]) => `${key} ${values.join(' ')}`)
       .join('; ');
 
-    return [
+    const securityHeaders = [
       {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: csp,
-          },
-        ],
+        key: 'X-DNS-Prefetch-Control',
+        value: 'on',
+      },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+      {
+        key: 'X-Frame-Options',
+        value: 'SAMEORIGIN',
+      },
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff',
+      },
+      {
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin',
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=()',
+      },
+      {
+        key: 'Content-Security-Policy',
+        value: csp,
       },
     ];
+
+    const corsHeaders = isDev
+      ? [
+          {
+            source: '/data/:path*',
+            headers: [
+              { key: 'Access-Control-Allow-Origin', value: 'http://localhost:6006' },
+              { key: 'Access-Control-Allow-Methods', value: 'GET, OPTIONS' },
+              { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+            ],
+          },
+          {
+            source: '/api/:path*',
+            headers: [
+              { key: 'Access-Control-Allow-Origin', value: 'http://localhost:6006' },
+              { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+              { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+            ],
+          },
+        ]
+      : [];
+
+    return [{ source: '/:path*', headers: securityHeaders }, ...corsHeaders];
   },
+
+  serverExternalPackages: ['pino', 'thread-stream'],
 });

@@ -144,6 +144,10 @@ logs/
 # storybook
 /storybook-static
 
+# Jest localStorage file for Node.js 25.2.0+
+/tmp/jest-localstorage.json
+
+
 # Database
 drizzle/
 *.db

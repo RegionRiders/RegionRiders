@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+
 import { getStravaClient } from '../config';
 import { getAuthorizationUrl } from './getAuthUrl';
 
@@ -20,11 +21,17 @@ describe('getAuthorizationUrl', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getStravaClient as jest.Mock).mockReturnValue(mockStravaClient);
+    // Set environment variable for tests
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3000';
+  });
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it('should return authorization URL with default scope', async () => {
     const expectedUrl =
-      'https://www.strava.com/oauth/authorize?client_id=123&redirect_uri=http://localhost&response_type=code&scope=read,activity:read_all';
+      'https://www.strava.com/oauth/authorize?client_id=123&redirect_uri=http://localhost:3000/api/strava/callback&response_type=code&scope=read,activity:read_all';
     mockGetRequestAccessURL.mockResolvedValue(expectedUrl);
 
     const result = await getAuthorizationUrl();

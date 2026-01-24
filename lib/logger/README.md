@@ -14,41 +14,108 @@ configurations.
 - **Sensitive data redaction** (passwords, tokens, API keys)
 - **Child loggers** with context for different parts of the application
 - **Browser-safe logging** for client-side code
+- **Client/Server split** to prevent Node.js dependencies from bundling client-side
+
+## Important: Server-First Architecture
+
+This logger follows Next.js App Router best practices where **server components are the default**. The main export
+provides the full server-side pino logger.
+
+### For Server-Side Code (Default - API Routes, Server Components, Tests)
+
+```typescript
+import { apiLogger, logger, stravaLogger } from '@/lib/logger';
+```
+
+This is the default and recommended import for most use cases. It provides the full pino logger with all features.
+
+### For Client-Side Code (Client Components, Browser)
+
+```typescript
+import { createBrowserLogger, logger } from '@/lib/logger/client';
+```
+
+Use this explicit import when you need logging in client components. It provides a browser-safe console-based logger.
+
+### Explicit Server Import (Optional - For Clarity)
+
+```typescript
+import { logger } from '@/lib/logger';
+```
+
+This is still available if you want to be explicit that you're using the server logger, but it's not necessary since the
+default is already server-side.
+
+### Why Server-First?
+
+1. **Next.js Philosophy**: App Router components are server components by default
+2. **Most Common**: 90%+ of logging happens on the server (API routes, backend logic)
+3. **Full Featured**: Server logger has all pino features (structured logging, log levels, etc.)
+4. **Smaller Client Bundles**: Clients only import logger when explicitly needed
+5. **Safety**: Prevents accidental Node.js dependency bundling in client code
+   explicitly import from `@/lib/logger`.
 
 ## Usage
 
 ### Basic Logging
 
 ```typescript
-import {logger} from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Log levels: trace, debug, info, warn, error, fatal
 logger.info('Application started');
 logger.error('Something went wrong');
-logger.debug({userId: '123'}, 'User action');
+logger.debug({ userId: '123' }, 'User action');
 ```
 
 ### Context-Specific Loggers
 
 ```typescript
-import {apiLogger, stravaLogger, authLogger} from '@/lib/logger';
+import { apiLogger, authLogger, stravaLogger } from '@/lib/logger';
 
-apiLogger.info({method: 'GET', path: '/api/users'}, 'API request');
-stravaLogger.debug({athleteId: 123}, 'Fetching athlete data');
+apiLogger.info({ method: 'GET', path: '/api/users' }, 'API request');
+stravaLogger.debug({ athleteId: 123 }, 'Fetching athlete data');
 authLogger.warn('Invalid token');
 ```
+
+### Component/Module-Specific Loggers
+
+For components, hooks, or modules, use `createComponentLogger` to automatically add `[ComponentName]` prefix to all
+logs:
+
+```typescript
+import { createComponentLogger } from '@/lib/logger/client'; // or '@/lib/logger' for server
+
+// Create a logger for your component/module
+const logger = createComponentLogger('useRegionLoading');
+
+// All logs will automatically include [useRegionLoading] prefix
+logger.debug('Loading regions...'); // Output: [useRegionLoading] Loading regions...
+logger.info(`Loaded ${count} regions`); // Output: [useRegionLoading] Loaded 5 regions
+logger.error('Failed to load'); // Output: [useRegionLoading] Failed to load
+```
+
+This is the **recommended pattern** for all components and modules instead of manually adding prefixes like
+`logger.debug('[ComponentName] message')`.
+
+**Benefits:**
+
+- ✅ Consistent formatting across the codebase
+- ✅ Easy to filter logs by component in production
+- ✅ Cleaner code without manual prefix strings
+- ✅ Automatic formatting in both browser console and server logs
 
 ### Error Logging
 
 ```typescript
-import {logError, apiLogger} from '@/lib/logger';
+import { apiLogger, logError } from '@/lib/logger';
 
 try {
-    // Your code
+  // Your code
 } catch (error) {
-    logError(apiLogger, error, 'Failed to process request');
-    // or with additional context
-    logError(apiLogger, error, {userId: '123', action: 'delete'});
+  logError(apiLogger, error, 'Failed to process request');
+  // or with additional context
+  logError(apiLogger, error, { userId: '123', action: 'delete' });
 }
 ```
 
@@ -59,7 +126,7 @@ try {
 For components that may render on both server and client:
 
 ```typescript
-import {createBrowserLogger} from '@/lib/logger';
+import { createBrowserLogger } from '@/lib/logger';
 
 const logger = createBrowserLogger();
 logger.info('This works on both server and browser');
@@ -146,10 +213,10 @@ From most to least verbose:
 ## Creating Custom Child Loggers
 
 ```typescript
-import {logger} from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
-const paymentLogger = logger.child({context: 'payment'});
-paymentLogger.info({amount: 100, currency: 'USD'}, 'Processing payment');
+const paymentLogger = logger.child({ context: 'payment' });
+paymentLogger.info({ amount: 100, currency: 'USD' }, 'Processing payment');
 ```
 
 ## Sensitive Data Redaction
@@ -165,7 +232,7 @@ The following fields are automatically redacted in production logs:
 
 ```typescript
 // This will be redacted in production
-logger.info({password: 'secret123', username: 'user'}, 'Login attempt');
+logger.info({ password: 'secret123', username: 'user' }, 'Login attempt');
 // Output: {"username":"user","msg":"Login attempt"}
 ```
 
@@ -198,7 +265,7 @@ console.error('Error:', error);
 With:
 
 ```typescript
-logger.info({userId}, 'User logged in');
+logger.info({ userId }, 'User logged in');
 logError(logger, error, 'Login failed');
 ```
 

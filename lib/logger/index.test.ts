@@ -1,3 +1,4 @@
+import { Writable } from 'stream';
 import pino, { type LoggerOptions } from 'pino';
 import {
   createChildLogger,
@@ -9,18 +10,74 @@ import {
   isTest,
   LOG_DIR,
 } from './config';
+import { createBrowserLogger } from './logger.client';
 import {
   apiLogger,
   authLogger,
-  createBrowserLogger,
   createLogger,
   createRequestLogger,
   dbLogger,
   logApiRequest,
   logger,
   stravaLogger,
-} from './instances';
+} from './logger.server';
 import { logError } from './utils';
+
+// Helper functions to reduce duplication
+function createTestWritable(output: string[]): Writable {
+  return new Writable({
+    write(
+      chunk: Buffer | string,
+      _encoding: BufferEncoding,
+      callback: (error?: Error | null) => void
+    ) {
+      output.push(chunk.toString());
+      callback();
+    },
+  });
+}
+
+function expectLoggerMethods(loggerInstance: any) {
+  expect(loggerInstance).toBeDefined();
+  expect(typeof loggerInstance.info).toBe('function');
+  expect(typeof loggerInstance.error).toBe('function');
+  expect(typeof loggerInstance.warn).toBe('function');
+  expect(typeof loggerInstance.debug).toBe('function');
+}
+
+const baseProductionConfig = {
+  level: 'info' as const,
+  formatters: {
+    level: (label: string) => ({ level: label }),
+    log: (object: Record<string, unknown>) => {
+      if ('component' in object && typeof object.component === 'string') {
+        const { component, ...rest } = object;
+        return { ...rest, component: `[${component}]` };
+      }
+      return object;
+    },
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+  redact: {
+    paths: ['password', 'token', 'authorization', 'cookie', 'apiKey', 'secret'],
+    remove: true,
+  },
+};
+
+const developmentConfig = {
+  level: 'debug' as const,
+  formatters: {
+    level: (label: string) => ({ level: label.toUpperCase() }),
+    log: (object: Record<string, unknown>) => {
+      if ('component' in object && typeof object.component === 'string') {
+        const { component, ...rest } = object;
+        return { ...rest, component: `[${component}]` };
+      }
+      return object;
+    },
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+};
 
 describe('Logger Module - Main Exports', () => {
   describe('Config Exports', () => {
@@ -73,11 +130,7 @@ describe('Logger Module - Main Exports', () => {
 
   describe('Instance Exports', () => {
     it('should export logger instance', () => {
-      expect(logger).toBeDefined();
-      expect(typeof logger.info).toBe('function');
-      expect(typeof logger.error).toBe('function');
-      expect(typeof logger.warn).toBe('function');
-      expect(typeof logger.debug).toBe('function');
+      expectLoggerMethods(logger);
     });
 
     it('should export apiLogger instance', () => {
@@ -334,6 +387,102 @@ describe('Logger Module - Main Exports', () => {
       );
 
       spy.mockRestore();
+    });
+  });
+
+  describe('Sensitive data redaction', () => {
+    it('should redact sensitive fields in production config', () => {
+      const output: string[] = [];
+      const writable = createTestWritable(output);
+
+      const productionConfig = {
+        ...baseProductionConfig,
+      };
+
+      const logger = pino(productionConfig, writable);
+
+      logger.info(
+        { password: 'secret123', token: 'abc', authorization: 'bearer', normal: 'data' },
+        'test message'
+      );
+
+      const logEntry = JSON.parse(output[0]);
+
+      expect(logEntry.normal).toBe('data');
+      expect(logEntry.password).toBeUndefined();
+      expect(logEntry.token).toBeUndefined();
+      expect(logEntry.authorization).toBeUndefined();
+    });
+
+    it('should not redact non-sensitive fields', () => {
+      const output: string[] = [];
+      const writable = createTestWritable(output);
+
+      const productionConfig = {
+        ...baseProductionConfig,
+      };
+
+      const logger = pino(productionConfig, writable);
+
+      logger.info({ username: 'user', email: 'test@example.com' }, 'user login');
+
+      const logEntry = JSON.parse(output[0]);
+
+      expect(logEntry.username).toBe('user');
+      expect(logEntry.email).toBe('test@example.com');
+    });
+  });
+
+  describe('Component field formatting', () => {
+    it('should format component field with brackets in production config', () => {
+      const output: string[] = [];
+      const writable = createTestWritable(output);
+
+      const productionConfig = {
+        ...baseProductionConfig,
+      };
+
+      const logger = pino(productionConfig, writable);
+
+      logger.info({ component: 'TestComponent', action: 'load' }, 'component action');
+
+      const logEntry = JSON.parse(output[0]);
+
+      expect(logEntry.component).toBe('[TestComponent]');
+      expect(logEntry.action).toBe('load');
+    });
+
+    it('should format component field with brackets in development config', () => {
+      const output: string[] = [];
+      const writable = createTestWritable(output);
+
+      const logger = pino(developmentConfig, writable);
+
+      logger.debug({ component: 'AnotherComponent', data: 'test' }, 'debug message');
+
+      const logEntry = JSON.parse(output[0]);
+
+      expect(logEntry.component).toBe('[AnotherComponent]');
+      expect(logEntry.data).toBe('test');
+      expect(logEntry.level).toBe('DEBUG');
+    });
+
+    it('should not format component if not a string', () => {
+      const output: string[] = [];
+      const writable = createTestWritable(output);
+
+      const productionConfig = {
+        ...baseProductionConfig,
+      };
+
+      const logger = pino(productionConfig, writable);
+
+      logger.info({ component: 123, message: 'test' }, 'numeric component');
+
+      const logEntry = JSON.parse(output[0]);
+
+      expect(logEntry.component).toBe(123);
+      expect(logEntry.message).toBe('test');
     });
   });
 });
