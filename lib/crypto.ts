@@ -5,6 +5,11 @@
 
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 
+// Cache for derived encryption key
+let cachedKey: Buffer | null = null;
+let cachedKeyEnv: string | null = null;
+let cachedSaltEnv: string | null = null;
+
 /**
  * Encrypts sensitive data using AES-256-GCM
  * @param text Plain text to encrypt
@@ -68,6 +73,9 @@ export function decryptToken(encryptedData: string): string {
 /**
  * Gets the encryption key from environment variable
  * Uses a per-installation salt for better security
+ *
+ * Performance: Keys are cached to avoid expensive scrypt derivation (~0.5s per call)
+ * Cache is invalidated when environment variables change (development mode only)
  */
 function getEncryptionKey(): Buffer {
   const keyEnv = process.env.OAUTH_ENCRYPTION_KEY;
@@ -81,16 +89,39 @@ function getEncryptionKey(): Buffer {
     throw new Error('OAUTH_ENCRYPTION_SALT environment variable is required');
   }
 
+  // Return cached key if environment variables haven't changed
+  if (cachedKey && cachedKeyEnv === keyEnv && cachedSaltEnv === saltEnv) {
+    return cachedKey;
+  }
+
   // Use OWASP-recommended scrypt parameters for OAuth token protection
   // N=131072 (2^17): CPU/memory cost (~128 MiB RAM, ~0.5s on modern CPUs)
   // r=8: Block size (1024 bytes)
   // p=1: Parallelization factor
   // maxmem: Memory limit ~144 MiB (128 * N * r = 128 MiB requirement + overhead)
   // See: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#scrypt
-  return scryptSync(keyEnv, saltEnv, 32, {
+  const derivedKey = scryptSync(keyEnv, saltEnv, 32, {
     N: 131072,
     r: 8,
     p: 1,
     maxmem: 144 * 1024 * 1024,
   });
+
+  // Cache derived key
+  cachedKey = derivedKey;
+  cachedKeyEnv = keyEnv;
+  cachedSaltEnv = saltEnv;
+
+  return derivedKey;
+}
+
+/**
+ * Clears cached encryption key
+ * Useful for testing or when rotating encryption credentials
+ * @internal
+ */
+export function clearEncryptionKeyCache(): void {
+  cachedKey = null;
+  cachedKeyEnv = null;
+  cachedSaltEnv = null;
 }

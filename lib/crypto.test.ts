@@ -7,7 +7,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { decryptToken, encryptToken } from './crypto';
+import { clearEncryptionKeyCache, decryptToken, encryptToken } from './crypto';
 
 describe('Cryptography Utilities', () => {
   const originalEnv = { ...process.env };
@@ -95,6 +95,61 @@ describe('Cryptography Utilities', () => {
         const encrypted = encryptToken(token);
         const decrypted = decryptToken(encrypted);
         expect(decrypted).toBe(token);
+      });
+    });
+
+    describe('getEncryptionKey caching', () => {
+      it('should cache derived key for same environment variables', () => {
+        const text = 'test-token';
+
+        // First call - key derivation
+        const encrypted1 = encryptToken(text);
+        const decrypted1 = decryptToken(encrypted1);
+        expect(decrypted1).toBe(text);
+
+        // Second call - should use cached key (same result)
+        const encrypted2 = encryptToken(text);
+        const decrypted2 = decryptToken(encrypted2);
+        expect(decrypted2).toBe(text);
+      });
+
+      it('should invalidate cache when environment variables change', () => {
+        const originalKey = process.env.OAUTH_ENCRYPTION_KEY;
+        const originalSalt = process.env.OAUTH_ENCRYPTION_SALT;
+
+        try {
+          // Encrypt with first key
+          const text = 'test-token';
+          const encrypted1 = encryptToken(text);
+
+          // Change environment variables
+          process.env.OAUTH_ENCRYPTION_KEY = 'new-test-key-' + Math.random();
+          process.env.OAUTH_ENCRYPTION_SALT = 'new-test-salt-' + Math.random();
+
+          // Encrypt with new key (cache should be invalidated)
+          const encrypted2 = encryptToken(text);
+
+          // Should produce different encrypted values
+          expect(encrypted1).not.toBe(encrypted2);
+        } finally {
+          process.env.OAUTH_ENCRYPTION_KEY = originalKey;
+          process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
+          clearEncryptionKeyCache();
+        }
+      });
+
+      it('should allow manual cache clearing', () => {
+        const text = 'test-token';
+        const encrypted1 = encryptToken(text);
+
+        // Clear cache
+        clearEncryptionKeyCache();
+
+        // Encrypt again - should derive new key
+        const encrypted2 = encryptToken(text);
+
+        // Should produce different encrypted values (new IV due to fresh encryption)
+        expect(encrypted1).not.toBe(encrypted2);
       });
     });
   });
