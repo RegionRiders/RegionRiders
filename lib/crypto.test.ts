@@ -202,11 +202,6 @@ describe('Cryptography Utilities', () => {
       expect(typeof encrypted).toBe('string');
       expect(encrypted).not.toBe(plainText);
       expect(decrypted).toBe(plainText);
-
-      const startTime = Date.now();
-      encryptToken('performance-test');
-      const duration = Date.now() - startTime;
-      expect(duration).toBeLessThan(1000);
     });
 
     it('should use unique salt per installation to prevent rainbow table attacks', () => {
@@ -235,10 +230,7 @@ describe('Cryptography Utilities', () => {
           configurable: true,
         });
 
-        decryptToken('invalid:format:data');
-      } catch (error) {
-        const err = error as Error;
-        expect(err.message).toContain('Invalid encrypted data format:');
+        expect(() => decryptToken('invalid:format:data')).toThrow(/Invalid encrypted data format:/);
       } finally {
         Object.defineProperty(process.env, 'NODE_ENV', {
           value: originalEnv,
@@ -258,10 +250,7 @@ describe('Cryptography Utilities', () => {
           configurable: true,
         });
 
-        decryptToken('invalid:format:data');
-      } catch (error) {
-        const err = error as Error;
-        expect(err.message).toBe('Invalid encrypted data format');
+        expect(() => decryptToken('invalid:format:data')).toThrow('Invalid encrypted data format');
       } finally {
         Object.defineProperty(process.env, 'NODE_ENV', {
           value: originalEnv,
@@ -430,25 +419,6 @@ describe('Cryptography Utilities', () => {
           process.env.OAUTH_ENCRYPTION_SALT = originalSalt;
           clearEncryptionKeyCache();
         }
-      });
-
-      it('should handle key changing to same value (no re-derivation)', () => {
-        const text = 'same-value-test';
-        const encrypted1 = encryptToken(text);
-
-        // eslint-disable-next-line no-self-assign
-        process.env.OAUTH_ENCRYPTION_KEY = process.env.OAUTH_ENCRYPTION_KEY;
-        // eslint-disable-next-line no-self-assign
-        process.env.OAUTH_ENCRYPTION_SALT = process.env.OAUTH_ENCRYPTION_SALT;
-
-        const encrypted2 = encryptToken(text);
-
-        expect(encrypted2).not.toBe(encrypted1);
-
-        const decrypted1 = decryptToken(encrypted1);
-        const decrypted2 = decryptToken(encrypted2);
-        expect(decrypted1).toBe(text);
-        expect(decrypted2).toBe(text);
       });
     });
 

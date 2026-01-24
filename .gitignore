@@ -152,3 +152,4 @@ drizzle/
 postgres_data/
 .pgdata/
 
+test-results.txt
