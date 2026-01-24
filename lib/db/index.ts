@@ -13,4 +13,10 @@ export * from './schema';
 export * from './operations';
 
 // Utils
-export * from './utils';
+export {
+  encryptTokenField,
+  fingerprint,
+  sanitizeUserUpdateData,
+  sanitizeActivityUpdateData,
+  isValidUuid,
+} from './utils';

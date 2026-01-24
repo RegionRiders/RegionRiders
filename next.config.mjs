@@ -1,4 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { developmentCSP, productionCSP } from './lib/security/csp.mjs';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -29,6 +30,11 @@ export default withBundleAnalyzer({
 
   // Security headers
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+    const csp = Object.entries(isDev ? developmentCSP : productionCSP)
+      .map(([key, values]) => `${key} ${values.join(' ')}`)
+      .join('; ');
+
     return [
       {
         source: '/:path*',
@@ -60,6 +66,10 @@ export default withBundleAnalyzer({
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: csp,
           },
         ],
       },

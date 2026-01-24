@@ -4,7 +4,8 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { encryptTokenField, fingerprint, getDb, sanitizeUserUpdateData, users } from '@/lib/db';
+import { encryptTokenField, fingerprint, getDb, users } from '@/lib/db';
+import { sanitizeUserUpdateData } from '@/lib/db/utils/sanitization';
 import { dbLogger } from '@/lib/logger';
 import type { NewUser, User, UserTokenUpdate } from '../types';
 
