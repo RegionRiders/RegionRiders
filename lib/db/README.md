@@ -321,11 +321,20 @@ The database module includes comprehensive tests for all components.
 ### Run All Tests
 
 ```bash
-# Run all tests
+# Run all tests (unit tests only with DB_TEST_SKIP=true)
 yarn test
 
 # Run only unit tests (skips database tests)
 yarn test:unit
+
+# Run database integration tests only
+yarn test:db
+
+# Run all integration tests (database + API)
+yarn test:integration
+
+# Run full test suite including database tests
+yarn test:all
 
 # Watch mode
 yarn jest:watch
@@ -334,7 +343,7 @@ yarn jest:watch
 ### Test Environment
 
 Tests use a separate test database to avoid conflicts. The `DB_TEST_SKIP=true` environment variable skips
-database-dependent tests during CI/CD.
+database-dependent tests during CI/CD. Use `yarn test:db` or `yarn test:all` to run database tests locally.
 
 ## 🐳 Docker Setup
 
