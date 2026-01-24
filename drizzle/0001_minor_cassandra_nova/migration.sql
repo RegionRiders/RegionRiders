@@ -1,11 +1,18 @@
 -- Add data validation before shrinking columns to prevent hard failures
 DO $$
+DECLARE
+  max_strava_id_len INTEGER;
+  max_strava_activity_id_len INTEGER;
 BEGIN
-  IF EXISTS (SELECT 1 FROM "users" WHERE length("strava_id") > 50) THEN
-    RAISE EXCEPTION 'Cannot shrink users.strava_id: existing data exceeds 50 characters (max: 50, found: %)', length("strava_id");
+  SELECT MAX(length(strava_id)) INTO max_strava_id_len FROM users;
+  SELECT MAX(length(strava_activity_id)) INTO max_strava_activity_id_len FROM activities;
+
+  IF max_strava_id_len > 50 THEN
+    RAISE EXCEPTION 'Cannot shrink users.strava_id: existing data exceeds 50 characters (max: 50, found: %)', max_strava_id_len;
   END IF;
-  IF EXISTS (SELECT 1 FROM "activities" WHERE length("strava_activity_id") > 50) THEN
-    RAISE EXCEPTION 'Cannot shrink activities.strava_activity_id: existing data exceeds 50 characters (max: 50, found: %)', length("strava_activity_id");
+
+  IF max_strava_activity_id_len > 50 THEN
+    RAISE EXCEPTION 'Cannot shrink activities.strava_activity_id: existing data exceeds 50 characters (max: 50, found: %)', max_strava_activity_id_len;
   END IF;
 END $$;
 

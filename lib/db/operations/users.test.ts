@@ -202,10 +202,10 @@ describe('User Operations', () => {
       expect(user).toBeDefined();
       expect(user?.accessToken).toBeDefined();
       expect(user?.refreshToken).toBeDefined();
-      expect(user?.tokenExpiresAt?.getTime()).toBeCloseTo(
-        newTokens.tokenExpiresAt.getTime(),
-        -3600000
-      ); // Allow 1 hour tolerance for timezone differences
+      const timeDifference = Math.abs(
+        (user?.tokenExpiresAt?.getTime() ?? 0) - newTokens.tokenExpiresAt.getTime()
+      );
+      expect(timeDifference).toBeLessThanOrEqual(3600000); // 1 hour tolerance for timezone differences
     });
   });
 
