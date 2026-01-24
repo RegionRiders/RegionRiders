@@ -248,6 +248,7 @@ describe('User Operations', () => {
     });
 
     it('should handle upsertUser without stravaId', async () => {
+      // stravaId is nullable per schema (users.ts:12) - designed to allow users created before OAuth completion
       const userWithoutStravaId: NewUser = {
         stravaId: null as any, // Testing behavior when stravaId is not provided
         email: 'nostrava@example.com',
