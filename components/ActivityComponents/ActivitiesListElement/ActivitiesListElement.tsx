@@ -1,29 +1,18 @@
 'use client';
 
 import { useState } from "react";
-import {
-  AppShell,
-  Burger,
-  Button,
-  Checkbox,
-  CloseButton,
-  Divider,
-  Group,
-  Menu,
-  Modal,
-  Text,
-  TextInput
-} from "@mantine/core";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { AppShell, Burger, Button, Checkbox, CloseButton, Divider, Group, Menu, Modal, Text, TextInput } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
 import { PostsList } from '@/components/PostsList/PostsList';
-import {mockActivities} from '@/lib/mockData';
+import { PostsLoading } from "@/components/PostsList/PostsLoading";
+import { dateWithTime } from "@/components/Utils/DateFormattingFunctions";
+import { mockActivities } from '@/lib/mockData';
 import { Activity } from "@/types/activity";
-import InfiniteScroll from "react-infinite-scroll-component";
-import {PostsLoading} from "@/components/PostsList/PostsLoading";
 import classes from "./ActivitiesListElement.module.css";
-import {useDisclosure} from "@mantine/hooks";
-import {dateWithTime} from "@/components/Utils/DateFormattingFunctions";
+
 
 export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean) {
 
@@ -106,30 +95,54 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     </div>
   );
   
-  const ActivitySelectCheckbox = () => (
-    <div hidden={!tripCreationMode}>
-      <Checkbox/>
-    </div>
-  );
+  const ActivitySelectCheckbox = ({ activityId }: { activityId: string }) => {
+    const correspondingActivity = visibleActivities.find((a) => a.id === activityId)!
+    const removeElement = () => {
+      setSelectedActivities(l => l.filter(a => a.id !== activityId));
+    }
+    const isChecked = () => selectedActivities.includes(correspondingActivity);
+
+    return (
+      <div hidden={!tripCreationMode}>
+        <Checkbox
+          checked={isChecked()}
+          onChange={() =>
+            {
+              if (isChecked()) {
+                removeElement();
+              } else {
+                setSelectedActivities((prev) => [...prev, correspondingActivity])
+              }
+            }
+          }
+        />
+      </div>
+    );
+  };
 
   const TripCreationMenu = () => {
-    // sort oldest to newest
-    setSelectedActivities(prev => [...prev].sort((a, b) => a.startDate.getTime() - b.startDate.getTime()))
+    const sortedSelectedActivities = [...selectedActivities].sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
 
     return (
       <>
-        <Modal opened={tripCreationMenuOpened} onClose={tripCreationMenuHandlers.close} title="Create new trip">
+        <Modal
+          opened={tripCreationMenuOpened}
+          onClose={tripCreationMenuHandlers.close}
+          title="Create new trip"
+        >
           <TextInput label="Trip Name" />
           <Text>
-            {selectedActivities.length ? dateWithTime(selectedActivities[0].startDate) : null}
+            {selectedActivities.length ? dateWithTime(sortedSelectedActivities[0].startDate) : null}
           </Text>
           <Text>
-            {selectedActivities.length ? dateWithTime(selectedActivities[selectedActivities.length - 1].startDate) : null}
+            {selectedActivities.length
+              ? dateWithTime(sortedSelectedActivities[sortedSelectedActivities.length - 1].startDate)
+              : null}
           </Text>
         </Modal>
       </>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -151,7 +164,7 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
           <PostsList
             Content={visibleActivities.map((activity) => (
               <Group key={activity.id}>
-                <ActivitySelectCheckbox />
+                <ActivitySelectCheckbox activityId={activity.id}/>
 
                 <ActivityPost
                   data={activity}
