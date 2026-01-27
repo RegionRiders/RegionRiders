@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useMemo, useState} from "react";
+import {useState} from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   AppShell,
@@ -24,9 +24,10 @@ import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/Activ
 import { PostsList } from '@/components/PostsList/PostsList';
 import { PostsLoading } from "@/components/PostsList/PostsLoading";
 import { dateWithTime } from "@/components/Utils/DateFormattingFunctions";
-import { mockActivities } from '@/lib/mockData';
+import {mockActivities, mockTrips} from '@/lib/mockData';
 import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
+import {Trip} from "@/types/trip";
 
 
 export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean) {
@@ -86,8 +87,21 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     } else {
       setTripCreationMode(false);
       setSelectedActivities([]);
+      tripCreationMenuHandlers.close();
     }
   }
+
+  const createTrip = (title: string) => {
+    mockTrips.push({
+      id: "trip-random",
+      title,
+      distance: "1.73 km",
+      startDate: selectedActivities[0].startDate,
+      endDate: selectedActivities[selectedActivities.length - 1].startDate,
+      activities: selectedActivities
+    })
+  }
+
 
 
   const postsAmountPerLoad = 20;
@@ -168,7 +182,10 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
             </Modal.Header>
 
             <Modal.Body>
-              <form onSubmit={tripForm.onSubmit(console.log)}>
+              <form onSubmit={tripForm.onSubmit(() => {
+                createTrip(tripForm.getValues().tripName);
+                toggleTripCreation();
+              })}>
                 <Stack gap="md">
 
                   <TextInput
@@ -228,12 +245,15 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
             <Text>
               Warning: created trip will not be saved!
             </Text>
-            <Button onClick={tripCreationModeHandlers.close}>
-              No
-            </Button>
-            <Button variant="filled" onClick={() => {tripCreationModeHandlers.close(); toggleTripCreation();}}>
-              Yes
-            </Button>
+            <Group>
+              <Button onClick={tripCreationModeHandlers.close}>
+                No
+              </Button>
+              <Button onClick={() => {tripCreationModeHandlers.close(); toggleTripCreation();}}>
+                Yes
+              </Button>
+            </Group>
+
           </Stack>
         </Modal.Body>
       </Modal.Content>
