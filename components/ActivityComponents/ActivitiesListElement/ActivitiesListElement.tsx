@@ -64,6 +64,7 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
 
 
   const [tripCreationMode, setTripCreationMode] = useState<boolean>(false);
+  const [tripCreationModeClosed, tripCreationModeHandlers] = useDisclosure(false);
   const [tripCreationMenuOpened, tripCreationMenuHandlers] = useDisclosure(false);
   const [selectedActivities, setSelectedActivities] = useState<Activity[]>([]);
   const tripForm = useForm({
@@ -78,19 +79,15 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
   })
 
   const toggleTripCreation = (activityId?: string) => {
-    handleActivityChange(null);
-    setTripCreationMode(true);
-
     if (activityId !== undefined) {
+      handleActivityChange(null);
+      setTripCreationMode(true);
       setSelectedActivities((prev) => [...prev, getActivityById(visibleActivities, activityId)])
+    } else {
+      setTripCreationMode(false);
+      setSelectedActivities([]);
     }
   }
-
-  const createTrip = () => {
-
-  }
-
-  //const openTripCreationMenu =
 
 
   const postsAmountPerLoad = 20;
@@ -212,13 +209,45 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     );
   };
 
+  const CloseTripCreationMode = () => (
+    <Modal.Root
+      opened={tripCreationModeClosed}
+      onClose={tripCreationModeHandlers.close}
+    >
+      <Modal.Overlay/>
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Exit trip creation</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Stack gap="md">
+            <Text>
+              Are you sure you want to exit trip creation?
+            </Text>
+            <Text>
+              Warning: created trip will not be saved!
+            </Text>
+            <Button onClick={tripCreationModeHandlers.close}>
+              No
+            </Button>
+            <Button variant="filled" onClick={() => {tripCreationModeHandlers.close(); toggleTripCreation();}}>
+              Yes
+            </Button>
+          </Stack>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  )
+
   return (
     <>
       {TripCreationMenu()}
+      {CloseTripCreationMode()}
 
       <div className={classes.tripCreationSection} hidden={!tripCreationMode}>
         <Group h="4rem" mx="10px">
-          <CloseButton size="xl" onClick={() => setTripCreationMode(false)}/>
+          <CloseButton size="xl" onClick={() => tripCreationModeHandlers.open()}/>
 
           <Button variant="filled" onClick={tripCreationMenuHandlers.open} ml="auto" disabled={selectedActivities.length === 0}>
             Create Trip
