@@ -14,6 +14,8 @@ interface MapOrchestratorProps {
   showHeatmap?: boolean;
   showBorders?: boolean;
   activityMode?: ActivityRenderMode;
+  activityThickness?: number;
+  heatmapDensity?: number;
 }
 
 /**
@@ -26,13 +28,14 @@ export default function MapOrchestrator({
   showHeatmap = true,
   showBorders = true,
   activityMode = 'heatmap',
+  activityThickness = 3,
+  heatmapDensity = 2,
 }: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
   const { visitData } = useRegionAnalysis(tracks, regions);
 
-  useActivityRendering(map, tracks, showHeatmap, activityMode);
+  useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity); // Pass new props
   useRegionRendering(map, regions, visitData, showBorders);
 
-  // This component is a side effect coordinator, doesn't render
   return null;
 }

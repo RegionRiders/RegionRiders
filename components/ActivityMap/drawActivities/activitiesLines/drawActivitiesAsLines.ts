@@ -67,7 +67,7 @@ export function drawActivitiesAsLines(
 
         const polyline = L.polyline(latlngs, {
           color: '#FF6B6B',
-          weight: 2,
+          weight: refs.lineThickness,
           opacity: 0.6,
           renderer: canvasRenderer,
           interactive: true,

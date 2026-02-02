@@ -29,11 +29,14 @@ export interface RenderRefs {
 // Heatmap-specific refs
 export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
+  heatmapDensity: number;
+  lineThickness: number;
 }
 
 // Line-specific refs (for lines module)
-export interface LinesRefs extends RenderRefs {}
-// Can be extended later if you add more line-only refs
+export interface LinesRefs extends RenderRefs {
+  lineThickness: number;
+}
 
 export interface PixelPoint {
   x: number;

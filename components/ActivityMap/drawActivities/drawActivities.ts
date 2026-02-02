@@ -1,4 +1,3 @@
-// drawActivities.ts
 'use client';
 
 import type { RefObject } from 'react';
@@ -15,22 +14,26 @@ export function drawActivities(
   tracks: Map<string, GPXTrack>,
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
-  renderTimeoutRef: RefObject<NodeJS.Timeout | null>,
-  mode: ActivityRenderMode = 'heatmap'
+  renderTimeoutRef: RefObject<ReturnType<typeof setTimeout> | null>,
+  mode: ActivityRenderMode = 'heatmap',
+  activityThickness: number = 3,
+  heatmapDensity: number = 2
 ): () => void {
   if (mode === 'heatmap') {
     const heatmapRefs: HeatmapRefs = {
       currentImageLayerRef,
       renderAbortRef,
       renderTimeoutRef,
+      heatmapDensity,
+      lineThickness: activityThickness,
     };
-
     return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
   }
+
   const linesRefs: LinesRefs = {
     renderAbortRef,
     renderTimeoutRef,
+    lineThickness: activityThickness,
   };
-
   return drawActivitiesAsLines(map, tracks, linesRefs);
 }

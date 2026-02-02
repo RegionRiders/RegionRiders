@@ -8,15 +8,13 @@ import { drawActivities, type ActivityRenderMode } from '../drawActivities/drawA
 
 const logger = createComponentLogger('useActivityRendering');
 
-/**
- * Hook to handle activity rendering (heatmap or lines)
- * Manages canvas/layer lifecycle
- */
 export function useActivityRendering(
   map: L.Map | null,
   tracks: Map<string, GPXTrack>,
   showActivities: boolean = true,
-  mode: ActivityRenderMode = 'heatmap'
+  mode: ActivityRenderMode = 'heatmap',
+  activityThickness: number = 3,
+  heatmapDensity: number = 2
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,7 +34,9 @@ export function useActivityRendering(
       currentImageLayerRef,
       renderAbortRef,
       renderTimeoutRef,
-      mode
+      mode,
+      activityThickness,
+      heatmapDensity
     );
-  }, [map, tracks, showActivities, mode]);
+  }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity]);
 }

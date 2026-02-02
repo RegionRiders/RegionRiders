@@ -22,6 +22,8 @@ export default function ActivityMap() {
   const [activityMode, setActivityMode] = useState<ActivityRenderMode>('heatmap');
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true);
   const [showBorders, setShowBorders] = useState<boolean>(true);
+  const [activityThickness, setActivityThickness] = useState(3);
+  const [heatmapDensity, setHeatmapDensity] = useState(2);
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);
 
@@ -42,9 +44,13 @@ export default function ActivityMap() {
             activityMode={activityMode}
             showHeatmap={showHeatmap}
             showBorders={showBorders}
+            activityThickness={activityThickness}
+            heatmapDensity={heatmapDensity}
             onActivityModeChange={setActivityMode}
             onShowHeatmapChange={setShowHeatmap}
             onShowBordersChange={setShowBorders}
+            onActivityThicknessChange={setActivityThickness}
+            onHeatmapDensityChange={setHeatmapDensity}
           />
         </div>
       </div>
@@ -58,6 +64,8 @@ export default function ActivityMap() {
           showHeatmap={showHeatmap}
           showBorders={showBorders}
           activityMode={activityMode}
+          activityThickness={activityThickness}
+          heatmapDensity={heatmapDensity}
         />
       )}
     </div>
