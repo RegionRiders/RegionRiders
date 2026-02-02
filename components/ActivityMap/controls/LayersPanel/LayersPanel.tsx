@@ -1,9 +1,8 @@
 'use client';
 
-import { IconBoxMultiple } from '@tabler/icons-react';
-import { Button, Card, Group, Stack, Switch, Text } from '@mantine/core';
+import { Accordion, Button, Card, Group, Switch, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import MapStyleButton from './utils/MapStyleButton/MapStyleButton';
+import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import styles from './LayersPanel.module.css';
 
 interface LayersPanelProps {
@@ -34,54 +33,75 @@ function LayersPanelContent({
 >) {
   return (
     <Card shadow="sm" radius="md" className={styles.panel} withBorder>
-      <Stack gap="sm">
-        <div>
-          <Text fw={600} size="sm">
-            Activity Visualization
-          </Text>
-          <Group mt="xs" gap="xs">
-            <Button
-              size="sm"
-              variant={activityMode === 'heatmap' ? 'filled' : 'default'}
-              onClick={() => onActivityModeChange?.('heatmap')}
-            >
-              Heatmap
-            </Button>
-            <Button
-              size="sm"
-              variant={activityMode === 'lines' ? 'filled' : 'default'}
-              onClick={() => onActivityModeChange?.('lines')}
-            >
-              Lines
-            </Button>
-          </Group>
-        </div>
-        <div>
-          <Text fw={600} size="sm">
-            Map Layers
-          </Text>
-          <Stack gap="4" mt="xs">
-            <Group justify="space-between">
-              <Text size="sm">Activity Layer</Text>
-              <Switch
-                checked={showHeatmap}
-                onChange={(e) => onShowHeatmapChange?.(e.currentTarget.checked)}
-                aria-label="Toggle activity layer visibility"
-              />
-            </Group>
-            <Group justify="space-between">
-              <Text size="sm">Region Borders</Text>
+      <Accordion>
+        {/* Regions Section */}
+        <Accordion.Item value="regions">
+          <Accordion.Control>
+            <Group justify="space-between" w="100%">
+              <Text fw={600} size="sm">
+                Regions
+              </Text>
               <Switch
                 checked={showBorders}
                 onChange={(e) => onShowBordersChange?.(e.currentTarget.checked)}
-                aria-label="Toggle region borders visibility"
+                aria-label="Toggle region borders"
               />
             </Group>
-          </Stack>
-        </div>
-      </Stack>
+          </Accordion.Control>
+          <Accordion.Panel>{/* Add future Regions content here */}</Accordion.Panel>
+        </Accordion.Item>
+
+        {/* Activities Section */}
+        <Accordion.Item value="activities">
+          <Accordion.Control>
+            <Group justify="space-between" w="100%">
+              <Text fw={600} size="sm">
+                Activities
+              </Text>
+              <Switch
+                checked={showHeatmap}
+                onChange={(e) => onShowHeatmapChange?.(e.currentTarget.checked)}
+                aria-label="Toggle activity layer"
+              />
+            </Group>
+          </Accordion.Control>
+          <Accordion.Panel>
+            <Text size="sm">Activity Visualization</Text>
+            <Group mt="xs" gap="xs">
+              <Button
+                size="sm"
+                variant={activityMode === 'heatmap' ? 'filled' : 'default'}
+                onClick={() => onActivityModeChange?.('heatmap')}
+              >
+                Heatmap
+              </Button>
+              <Button
+                size="sm"
+                variant={activityMode === 'lines' ? 'filled' : 'default'}
+                onClick={() => onActivityModeChange?.('lines')}
+              >
+                Lines
+              </Button>
+            </Group>
+          </Accordion.Panel>
+        </Accordion.Item>
+
+        {/* Map Style Section */}
+        <Accordion.Item value="mapstyle">
+          <Accordion.Control>
+            <Text fw={600} size="sm">
+              Map Style
+            </Text>
+          </Accordion.Control>
+          <Accordion.Panel>hello</Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     </Card>
   );
+}
+
+function IconBoxMultiple() {
+  return null;
 }
 
 export default function LayersPanel({
