@@ -67,7 +67,7 @@ export function drawActivitiesAsLines(
 
         const polyline = L.polyline(latlngs, {
           color: '#FF6B6B',
-          weight: refs.lineThickness,
+          weight: refs.lineThickness || 2,
           opacity: 0.6,
           renderer: canvasRenderer,
           interactive: true,
@@ -75,7 +75,7 @@ export function drawActivitiesAsLines(
         });
 
         // Use utility functions for event handling
-        attachActivityHoverEvents(polyline);
+        attachActivityHoverEvents(polyline, refs.lineThickness);
         attachActivityClickHandler(polyline, map, trackId, track);
 
         activityGroup!.addLayer(polyline);

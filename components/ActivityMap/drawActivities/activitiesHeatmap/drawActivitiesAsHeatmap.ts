@@ -121,8 +121,17 @@ function renderHeatmapInternal(
     const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
     const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-    const canvasWidth = Math.round((bottomRight.x - topLeft.x) * HEATMAP_CONFIG.PIXEL_DENSITY);
-    const canvasHeight = Math.round((bottomRight.y - topLeft.y) * HEATMAP_CONFIG.PIXEL_DENSITY);
+    const resolutionMap: Record<number, number> = {
+      1: 0.25,
+      2: 0.5,
+      3: 1.0,
+      4: 2,
+    };
+
+    const pixelDensity = resolutionMap[refs.heatmapDensity || 2] || 0.5;
+
+    const canvasWidth = Math.max(1, Math.round((bottomRight.x - topLeft.x) * pixelDensity));
+    const canvasHeight = Math.max(1, Math.round((bottomRight.y - topLeft.y) * pixelDensity));
 
     const dimensions: CanvasDimensions = {
       canvasWidth,
@@ -143,7 +152,7 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(map, topLeft);
+    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, pixelDensity);
     const tracksArray = Array.from(tracks.values());
 
     refs.renderAbortRef.current = false;
@@ -197,18 +206,13 @@ export function drawActivitiesAsHeatmap(
 ): () => void {
   const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
 
-  const baseThickness = refs.lineThickness;
-  const densityMultiplier = refs.heatmapDensity || 2;
-
-  const lineThickness = baseThickness * densityMultiplier;
-
   let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const renderHeatmap = (): void => {
     if (!map) {
       return;
     }
-    renderHeatmapInternal(map, tracks, refs, lineThickness);
+    renderHeatmapInternal(map, tracks, refs, refs.lineThickness);
   };
 
   const handleMapChange = (): void => {

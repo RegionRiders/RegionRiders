@@ -5,14 +5,14 @@ import { GPXTrack } from '@/lib/types';
  * Attaches hover event handlers to a polyline
  * Changes color and weight on mouseover/mouseout
  */
-export function attachActivityHoverEvents(polyline: L.Polyline): void {
+export function attachActivityHoverEvents(polyline: L.Polyline, baseWeight: number = 2): void {
   polyline.on('mouseover', function (this: L.Polyline) {
-    this.setStyle({ color: '#4ADE80', weight: 4, opacity: 1 });
+    this.setStyle({ color: '#4ADE80', weight: baseWeight * 2, opacity: 1 });
     this.bringToFront();
   });
 
   polyline.on('mouseout', function (this: L.Polyline) {
-    this.setStyle({ color: '#FF6B6B', weight: 2, opacity: 0.6 });
+    this.setStyle({ color: '#FF6B6B', weight: baseWeight, opacity: 0.6 });
   });
 }
 

@@ -124,8 +124,8 @@ function LayersPanelContent({
                 </Text>
                 <Slider
                   w="100%"
-                  min={0}
-                  max={3}
+                  min={1}
+                  max={4}
                   step={1}
                   value={heatmapDensity ?? 2}
                   onChange={onHeatmapDensityChange}
