@@ -11,9 +11,10 @@ import styles from './ActivityMap.module.css';
 import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
-import { RegionRenderMode } from '@/components/ActivityMap/drawRegions/drawRegions';
 
 const MapContainerMemo = memo(MapContainer);
+
+export type RegionRenderMode = 'heatmap' | 'lines';
 
 export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);

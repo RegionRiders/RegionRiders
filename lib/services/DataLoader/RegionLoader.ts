@@ -25,7 +25,7 @@ export class RegionLoader {
     countries?: string[]
   ): Promise<Regions[]> {
     const startTime = performance.now();
-    logger.info(`Loading regions ${countries?.join(',') || 'all'}`);
+    logger.debug(`Loading regions ${countries?.join(',') || 'all'}`);
 
     try {
       const countryFiles = countryConfig.getAvailableCountries();

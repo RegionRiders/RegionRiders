@@ -1,21 +1,21 @@
 import { GPXTrack, Regions } from '@/lib/types';
-import { processTrack } from './processing';
-import { buildSpatialGrid } from './spatial';
-import { getBoundingBox } from './spatial/boundingBox';
+import { pointInPolygon } from './geometry/pointInPolygon';
+import { RegionSpatialIndex } from './spatial/spatialIndex';
 import { AnalysisConfig, RegionVisitData } from './types';
 
 const DEFAULT_CONFIG: AnalysisConfig = {
-  gridSize: 0.1, // ~11km cells
+  gridSize: 0.1, // kept for compatibility, not used with RBush
 };
 
 /**
  * analyzes gpx tracks to find which regions were visited
- * uses spatial grid + ray casting for accurate boundary detection
+ * uses RBush spatial index + ray casting for accurate boundary detection
+ * OPTIMIZED: uses spatial index to check only nearby regions instead of all regions
  *
  * @param tracks - gpx tracks with lat/lon points
  * @param regions - geographic regions to check
  * @param onProgress - optional progress callback (0-100)
- * @param config - optional grid size tuning
+ * @param config - optional grid size tuning (not used with RBush)
  * @returns map of a region id to visit stats
  */
 export function analyzeRegionVisits(
@@ -41,18 +41,49 @@ export function analyzeRegionVisits(
     });
   });
 
-  // build spatial index for fast lookups
   onProgress?.(10, 'building spatial index...');
-  const grid = buildSpatialGrid(regions, config.gridSize);
-  const regionBounds = new Map();
-  regions.forEach((r) => regionBounds.set(r.id, getBoundingBox(r.id, r.geometry)));
+  const spatialIndex = new RegionSpatialIndex(regions);
 
-  // process each track
   onProgress?.(20, `processing ${tracks.length} tracks...`);
   const validTracks = tracks.filter((t) => t.points?.length > 0);
 
+  let totalPointsChecked = 0;
+  let totalCandidatesChecked = 0;
+
   for (let i = 0; i < validTracks.length; i++) {
-    processTrack(validTracks[i], grid, regionBounds, visitMap, regions, config, trackIdSets);
+    const track = validTracks[i];
+    const visitedRegions = new Set<string>();
+
+    for (const point of track.points) {
+      totalPointsChecked++;
+
+      const candidateRegions = spatialIndex.findCandidateRegions(point.lon, point.lat);
+      totalCandidatesChecked += candidateRegions.length;
+
+      for (const region of candidateRegions) {
+        if (visitedRegions.has(region.id)) {
+          continue;
+        }
+
+        const visitData = visitMap.get(region.id);
+        if (!visitData) {
+          continue;
+        }
+
+        if (pointInPolygon(point, region.geometry)) {
+          visitedRegions.add(region.id);
+          visitData.visitCount++;
+
+          const trackSet = trackIdSets.get(region.id);
+          if (!trackSet?.has(track.id)) {
+            trackSet?.add(track.id);
+            visitData.trackIds.push(track.id);
+          }
+        }
+      }
+    }
+
+    // Progress reporting
     if (i % Math.max(1, Math.floor(validTracks.length / 10)) === 0) {
       const progress = Math.floor((i / validTracks.length) * 60) + 20;
       onProgress?.(progress, `processed ${i + 1}/${validTracks.length} tracks`);
@@ -70,7 +101,14 @@ export function analyzeRegionVisits(
   });
 
   const duration = (performance.now() - startTime).toFixed(2);
-  onProgress?.(100, `complete: ${visitedCount} regions in ${duration}ms`);
+  const avgCandidates =
+    totalPointsChecked > 0 ? (totalCandidatesChecked / totalPointsChecked).toFixed(1) : 0;
+
+  onProgress?.(
+    100,
+    `complete: ${visitedCount} regions in ${duration}ms (avg ${avgCandidates} candidates/point)`
+  );
+
   return visitMap;
 }
 

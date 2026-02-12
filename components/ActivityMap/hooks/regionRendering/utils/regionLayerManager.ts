@@ -1,6 +1,7 @@
 'use client';
 
 import L from 'leaflet';
+import { getRegionColorForCount } from '@/components/ActivityMap/hooks/regionRendering/utils/getRegionColorForCount';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
@@ -60,7 +61,7 @@ export class RegionLayerManager {
   /**
    * Update styles for all existing layers (e.g., when visit data changes)
    */
-  updateStyles(visitData: Map<string, RegionVisitData>, weight?: number): void {
+  updateStyles(visitData: Map<string, RegionVisitData>, weight: number): void {
     for (const [regionId, layer] of this.layerMap.entries()) {
       const visit = visitData.get(regionId);
       this.updateLayerStyle(layer, visit, weight);
@@ -121,13 +122,13 @@ export class RegionLayerManager {
   private updateLayerStyle(
     layer: L.GeoJSON,
     visit: RegionVisitData | undefined,
-    weight?: number
+    weight: number
   ): void {
     const style = this.calculateStyle(visit, weight);
     layer.setStyle(style);
   }
 
-  private calculateStyle(visit: RegionVisitData | undefined, weight?: number): L.PathOptions {
+  private calculateStyle(visit: RegionVisitData | undefined, weight: number): L.PathOptions {
     const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
     const count = visited ? visit.visitCount : 0;
 
@@ -136,7 +137,7 @@ export class RegionLayerManager {
     return {
       fillColor,
       color: strokeColor,
-      weight: weight ?? 2,
+      weight,
       opacity: 1,
       fillOpacity: 1,
       lineCap: 'round',
@@ -145,8 +146,6 @@ export class RegionLayerManager {
   }
 
   private getColorsForCount(count: number): { fillColor: string; strokeColor: string } {
-    // Import locally to avoid circular dependencies
-    const { getRegionColorForCount } = require('./getRegionColorForCount');
     const [r, g, b, a] = getRegionColorForCount(count);
 
     return {

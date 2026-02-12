@@ -9,45 +9,31 @@ const logger = createComponentLogger('useRegionAnalysis');
 
 /**
  * Hook to analyze which regions have been visited
- * Only recalculates when tracks change, NOT when regions change
- * This prevents unnecessary analysis on map pan/zoom
  */
 export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Regions[]) {
   const [visitData, setVisitData] = useState<Map<string, RegionVisitData>>(new Map());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Only track changes in tracks, not regions
   const lastTrackKeysRef = useRef<string>('');
-  const allRegionsRef = useRef<Regions[]>([]);
+  const lastRegionKeysRef = useRef<string>('');
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Accumulate all regions we've ever seen
   useEffect(() => {
-    if (regions.length === 0) {
-      return;
-    }
-
-    const existingIds = new Set(allRegionsRef.current.map((r) => r.id));
-    const newRegions = regions.filter((r) => !existingIds.has(r.id));
-
-    if (newRegions.length > 0) {
-      allRegionsRef.current = [...allRegionsRef.current, ...newRegions];
-      logger.debug(
-        `Accumulated ${newRegions.length} new regions (total: ${allRegionsRef.current.length})`
-      );
-    }
-  }, [regions]);
-
-  // Only analyze when tracks change
-  useEffect(() => {
-    if (tracks.size === 0 || allRegionsRef.current.length === 0) {
+    if (tracks.size === 0 || regions.length === 0) {
       return;
     }
 
     const trackKeySignature = Array.from(tracks.keys()).sort().join('|');
+    const regionKeySignature = regions
+      .map((r) => r.id)
+      .sort()
+      .join('|');
 
-    // Skip if tracks haven't changed
-    if (lastTrackKeysRef.current === trackKeySignature) {
+    // Skip if nothing changed
+    if (
+      lastTrackKeysRef.current === trackKeySignature &&
+      lastRegionKeysRef.current === regionKeySignature
+    ) {
       return;
     }
 
@@ -63,16 +49,17 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
     analysisTimeoutRef.current = setTimeout(() => {
       const startTime = performance.now();
 
-      analyzeRegionVisitsAsync(Array.from(tracks.values()), allRegionsRef.current)
+      logger.debug(`Starting analysis: ${tracks.size} tracks × ${regions.length} regions`);
+
+      analyzeRegionVisitsAsync(Array.from(tracks.values()), regions)
         .then((newVisitData) => {
           if (isMounted) {
             setVisitData(newVisitData);
             const duration = (performance.now() - startTime).toFixed(2);
             const visitedCount = Array.from(newVisitData.values()).filter((v) => v.visited).length;
-            logger.info(
-              `Analyzed ${visitedCount}/${allRegionsRef.current.length} regions visited (${duration}ms)`
-            );
+            logger.debug(`✅ Analyzed ${visitedCount}/${regions.length} regions in ${duration}ms`);
             lastTrackKeysRef.current = trackKeySignature;
+            lastRegionKeysRef.current = regionKeySignature;
             setIsAnalyzing(false);
           }
         })
@@ -88,7 +75,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
         clearTimeout(analysisTimeoutRef.current);
       }
     };
-  }, [tracks]);
+  }, [tracks, regions]);
 
   return { visitData, isAnalyzing };
 }

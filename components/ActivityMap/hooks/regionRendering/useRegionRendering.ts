@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/regionRendering/utils/calculateWeightForZoom';
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
@@ -17,11 +18,6 @@ export function useRegionRendering(
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSizeRef = useRef<number>(0);
-
-  // Calculate weight based on zoom level
-  const calculateWeightForZoom = useCallback((zoom: number): number => {
-    return 2 ** ((zoom - 10) / 2.5);
-  }, []);
 
   // Initialize layer manager
   useEffect(() => {
@@ -55,15 +51,13 @@ export function useRegionRendering(
     }
 
     const startTime = performance.now();
-    const weight = calculateWeightForZoom(map.getZoom());
 
-    // Sync regions - only creates/removes changed layers
-    layerManagerRef.current.syncRegions(regions, visitData, weight);
+    layerManagerRef.current.syncRegions(regions, visitData, calculateWeightForZoom(map.getZoom()));
 
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [map, regions, showBorders, calculateWeightForZoom, visitData]);
+  }, [map, regions, showBorders, calculateWeightForZoom]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {
@@ -79,7 +73,7 @@ export function useRegionRendering(
     const startTime = performance.now();
 
     // Update only styles, no layer recreation
-    layerManagerRef.current.updateStyles(visitData);
+    layerManagerRef.current.updateStyles(visitData, calculateWeightForZoom(map.getZoom()));
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
