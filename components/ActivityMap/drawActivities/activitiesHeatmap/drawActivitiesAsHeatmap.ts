@@ -121,17 +121,8 @@ function renderHeatmapInternal(
     const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
     const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-    const resolutionMap: Record<number, number> = {
-      1: 0.25,
-      2: 0.5,
-      3: 1.0,
-      4: 2,
-    };
-
-    const pixelDensity = resolutionMap[refs.heatmapDensity || 2] || 0.5;
-
-    const canvasWidth = Math.max(1, Math.round((bottomRight.x - topLeft.x) * pixelDensity));
-    const canvasHeight = Math.max(1, Math.round((bottomRight.y - topLeft.y) * pixelDensity));
+    const canvasWidth = Math.max(1, Math.round((bottomRight.x - topLeft.x) * refs.heatmapDensity));
+    const canvasHeight = Math.max(1, Math.round((bottomRight.y - topLeft.y) * refs.heatmapDensity));
 
     const dimensions: CanvasDimensions = {
       canvasWidth,
@@ -152,7 +143,7 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, pixelDensity);
+    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity);
     const tracksArray = Array.from(tracks.values());
 
     refs.renderAbortRef.current = false;

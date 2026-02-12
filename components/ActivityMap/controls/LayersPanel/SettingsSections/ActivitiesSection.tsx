@@ -37,8 +37,8 @@ export function ActivitiesSection({
       <Accordion.Panel>
         <Stack gap="md">
           <div>
-            <Text size="sm">Activity Visualization</Text>
-            <Group mt="xs" gap="xs">
+            <Text size="sm">Visualization Mode</Text>
+            <Group gap="xs">
               <Button
                 size="sm"
                 variant={activityMode === 'heatmap' ? 'filled' : 'default'}
@@ -57,9 +57,7 @@ export function ActivitiesSection({
           </div>
 
           <div>
-            <Text size="sm" mb="xs">
-              Activity thickness: {activityThickness ?? 3}px
-            </Text>
+            <Text size="sm"> Line thickness: {activityThickness ?? 3}px</Text>
             <Slider
               w="100%"
               min={1}
@@ -67,32 +65,36 @@ export function ActivitiesSection({
               step={1}
               value={activityThickness ?? 3}
               onChange={onActivityThicknessChange}
-              marks={[
-                { value: 1, label: '1px' },
-                { value: 5, label: '5px' },
-                { value: 10, label: '10px' },
-              ]}
             />
           </div>
 
-          <div>
-            <Text size="sm" mb="xs">
-              Heatmap pixel density: {heatmapDensity ?? 2}
-            </Text>
-            <Slider
-              w="100%"
-              min={1}
-              max={4}
-              step={1}
-              value={heatmapDensity ?? 2}
-              onChange={onHeatmapDensityChange}
-              marks={[
-                { value: 1, label: 'Low' },
-                { value: 2, label: 'Med' },
-                { value: 3, label: 'High' },
-              ]}
-            />
-          </div>
+          {activityMode === 'heatmap' && (
+            <div>
+              <Text size="sm"> Heatmap pixel density: {heatmapDensity ?? 2}</Text>
+              <Slider
+                w="100%"
+                min={0.25}
+                max={5}
+                step={0.25}
+                value={heatmapDensity ?? 2}
+                onChange={onHeatmapDensityChange}
+              />
+            </div>
+          )}
+
+          {activityMode === 'lines' && (
+            <div>
+              <Text size="sm"> Lines ColorScheme</Text>
+              placeholder {/* TODO */}
+            </div>
+          )}
+
+          {activityMode === 'heatmap' && (
+            <div>
+              <Text size="sm"> Heatmap ColorScheme</Text>
+              placeholder {/* TODO */}
+            </div>
+          )}
         </Stack>
       </Accordion.Panel>
     </Accordion.Item>

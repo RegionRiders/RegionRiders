@@ -34,7 +34,7 @@ export default function MapOrchestrator({
   const { regions } = useRegionLoading(map);
   const { visitData } = useRegionAnalysis(tracks, regions);
 
-  useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity); // Pass new props
+  useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity);
   useRegionRendering(map, regions, visitData, showBorders);
 
   return null;
