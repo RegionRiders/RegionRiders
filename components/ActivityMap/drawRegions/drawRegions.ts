@@ -5,6 +5,8 @@ import { getRegionColorForCount } from '@/components/ActivityMap/drawRegions/uti
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
+export type RegionRenderMode = 'heatmap' | 'lines';
+
 /**
  * renders region boundaries on a map with colors based on visit count
  * creates leaflet geojson layers with click handlers
@@ -14,6 +16,7 @@ import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
  * @param visitData - visit statistics for coloring
  * @param onRegionClick - optional click handler for interaction
  * @param initialWeight - stroke width (default: 2)
+ * @param mode - display mode of the regions
  * @returns array of leaflet layers for cleanup
  */
 export function drawRegions(
@@ -25,7 +28,8 @@ export function drawRegions(
     visitInfo: RegionVisitData | undefined,
     layer: L.GeoJSON
   ) => void,
-  initialWeight: number = 2
+  initialWeight: number = 2,
+  mode: RegionRenderMode = 'heatmap'
 ): L.GeoJSON[] {
   const layers: L.GeoJSON[] = [];
 
@@ -33,18 +37,18 @@ export function drawRegions(
     const visit = visitData.get(region.id);
     const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
-    let fillColor: string;
-    let strokeColor: string;
+    const fillColor = `rgba(100,100,100,0.25)`;
+    const strokeColor = `rgba(100,100,100,1)`;
 
-    if (visited && typeof visit?.visitCount === 'number') {
-      const [r, g, b, a] = getRegionColorForCount(visit.visitCount);
-      fillColor = `rgba(${r},${g},${b},${a})`;
-      strokeColor = `rgba(${r},${g},${b},1)`;
-    } else {
-      const [r, g, b, a] = getRegionColorForCount(0);
-      fillColor = `rgba(${r},${g},${b},${a})`;
-      strokeColor = `rgba(${r},${g},${b},1)`;
-    }
+    // if (visited && typeof visit?.visitCount === 'number') {
+    //   const [r, g, b, a] = getRegionColorForCount(visit.visitCount);
+    //   fillColor = `rgba(${r},${g},${b},${a})`;
+    //   strokeColor = `rgba(${r},${g},${b},1)`;
+    // } else {
+    //   const [r, g, b, a] = getRegionColorForCount(0);
+    //   fillColor = `rgba(${r},${g},${b},${a})`;
+    //   strokeColor = `rgba(${r},${g},${b},1)`;
+    // }
 
     const layer = L.geoJSON(region.geometry, {
       style: {

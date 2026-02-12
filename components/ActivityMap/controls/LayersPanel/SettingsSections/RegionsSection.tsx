@@ -1,9 +1,14 @@
-import { Accordion, Group, Switch, Text } from '@mantine/core';
+import { Accordion, Button, Group, Stack, Switch, Text } from '@mantine/core';
 
 export function RegionsSection({
   showBorders,
   onShowBordersChange,
-}: Pick<LayersPanelProps, 'onShowBordersChange' | 'showBorders'>) {
+  regionMode,
+  onRegionModeChange,
+}: Pick<
+  LayersPanelProps,
+  'onShowBordersChange' | 'showBorders' | 'regionMode' | 'onRegionModeChange'
+>) {
   return (
     <Accordion.Item value="regions">
       <Accordion.Control>
@@ -18,7 +23,29 @@ export function RegionsSection({
           </Text>
         </Group>
       </Accordion.Control>
-      <Accordion.Panel>{/* Add future Regions content here */}</Accordion.Panel>
+      <Accordion.Panel>
+        <Stack gap="md">
+          <div>
+            <Text size="sm">Visualization Mode</Text>
+            <Group gap="xs">
+              <Button
+                size="sm"
+                variant={regionMode === 'heatmap' ? 'filled' : 'default'}
+                onClick={() => onRegionModeChange?.('heatmap')}
+              >
+                Heatmap
+              </Button>
+              <Button
+                size="sm"
+                variant={regionMode === 'lines' ? 'filled' : 'default'}
+                onClick={() => onRegionModeChange?.('lines')}
+              >
+                Lines
+              </Button>
+            </Group>
+          </div>
+        </Stack>
+      </Accordion.Panel>
     </Accordion.Item>
   );
 }

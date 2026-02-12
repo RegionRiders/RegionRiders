@@ -11,6 +11,7 @@ import styles from './ActivityMap.module.css';
 import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
+import { RegionRenderMode } from '@/components/ActivityMap/drawRegions/drawRegions';
 
 const MapContainerMemo = memo(MapContainer);
 
@@ -24,6 +25,7 @@ export default function ActivityMap() {
   const [showBorders, setShowBorders] = useState<boolean>(true);
   const [activityThickness, setActivityThickness] = useState(3);
   const [heatmapDensity, setHeatmapDensity] = useState(2);
+  const [regionMode, setRegionMode] = useState<RegionRenderMode>('heatmap');
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);
 
@@ -51,6 +53,8 @@ export default function ActivityMap() {
             onShowBordersChange={setShowBorders}
             onActivityThicknessChange={setActivityThickness}
             onHeatmapDensityChange={setHeatmapDensity}
+            regionMode={regionMode}
+            onRegionModeChange={setRegionMode}
           />
         </div>
       </div>

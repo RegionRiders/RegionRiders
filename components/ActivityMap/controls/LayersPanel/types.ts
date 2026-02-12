@@ -6,8 +6,10 @@ interface LayersPanelProps {
   showHeatmap?: boolean;
   showBorders?: boolean;
   placeholderImageUrl?: string;
-  onActivityThicknessChange?: (thickness: number) => void; // 1-10
+  onActivityThicknessChange?: (thickness: number) => void;
   activityThickness?: number;
-  onHeatmapDensityChange?: (density: number) => void; // 1-3
+  onHeatmapDensityChange?: (density: number) => void;
   heatmapDensity?: number;
+  regionMode?: 'heatmap' | 'lines';
+  onRegionModeChange?: (mode: 'heatmap' | 'lines') => void;
 }

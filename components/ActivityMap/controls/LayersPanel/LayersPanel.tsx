@@ -18,6 +18,8 @@ function LayersPanelContent({
   activityThickness,
   onHeatmapDensityChange,
   heatmapDensity,
+  regionMode,
+  onRegionModeChange,
 }: Pick<
   LayersPanelProps,
   | 'onActivityModeChange'
@@ -31,11 +33,18 @@ function LayersPanelContent({
   | 'activityThickness'
   | 'onHeatmapDensityChange'
   | 'heatmapDensity'
+  | 'regionMode'
+  | 'onRegionModeChange'
 >) {
   return (
     <Card shadow="sm" radius="md" className={styles.panel} withBorder>
       <Accordion multiple>
-        <RegionsSection showBorders={showBorders} onShowBordersChange={onShowBordersChange} />
+        <RegionsSection
+          showBorders={showBorders}
+          onShowBordersChange={onShowBordersChange}
+          regionMode={regionMode}
+          onRegionModeChange={onRegionModeChange}
+        />
 
         <ActivitiesSection
           activityThickness={activityThickness}
@@ -70,6 +79,8 @@ export default function LayersPanel({
   onActivityThicknessChange,
   heatmapDensity,
   onHeatmapDensityChange,
+  regionMode,
+  onRegionModeChange,
 }: LayersPanelProps) {
   const [opened, { toggle }] = useDisclosure(false);
 
@@ -94,6 +105,8 @@ export default function LayersPanel({
           onActivityThicknessChange={onActivityThicknessChange}
           onHeatmapDensityChange={onHeatmapDensityChange}
           heatmapDensity={heatmapDensity}
+          regionMode={regionMode}
+          onRegionModeChange={onRegionModeChange}
         />
       </div>
     </div>
