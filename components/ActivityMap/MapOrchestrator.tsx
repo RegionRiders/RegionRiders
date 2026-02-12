@@ -3,10 +3,10 @@
 import type { Map as LeafletMap } from 'leaflet';
 import { GPXTrack } from '@/lib/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
-import { useActivityRendering } from './hooks/useActivityRendering';
-import { useRegionAnalysis } from './hooks/useRegionAnalysis';
-import { useRegionLoading } from './hooks/useRegionLoading';
-import { useRegionRendering } from './hooks/useRegionRendering';
+import { useActivityRendering } from './hooks/activityRendering/useActivityRendering';
+import { useRegionAnalysis } from './hooks/regionRendering/useRegionAnalysis';
+import { useRegionLoading } from './hooks/regionRendering/useRegionLoading';
+import { useRegionRendering } from './hooks/regionRendering/useRegionRendering';
 
 interface MapOrchestratorProps {
   map: LeafletMap | null;
@@ -18,10 +18,6 @@ interface MapOrchestratorProps {
   heatmapDensity?: number;
 }
 
-/**
- * Orchestrator component that coordinates map rendering
- * Delegates specific concerns to focused hooks
- */
 export default function MapOrchestrator({
   map,
   tracks,
@@ -32,7 +28,7 @@ export default function MapOrchestrator({
   heatmapDensity = 2,
 }: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
-  const { visitData } = useRegionAnalysis(tracks, regions);
+  const { visitData, isAnalyzing } = useRegionAnalysis(tracks, regions);
 
   useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity);
   useRegionRendering(map, regions, visitData, showBorders);

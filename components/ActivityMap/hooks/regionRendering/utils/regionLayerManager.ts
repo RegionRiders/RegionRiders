@@ -1,0 +1,164 @@
+'use client';
+
+import L from 'leaflet';
+import { Regions } from '@/lib/types';
+import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
+
+/**
+ * Manages lifecycle of region layers with intelligent caching and updates
+ * Avoids unnecessary layer recreation by tracking and reusing existing layers
+ */
+export class RegionLayerManager {
+  private layerMap = new Map<string, L.GeoJSON>();
+  private layerGroup: L.LayerGroup;
+
+  constructor(private map: L.Map) {
+    this.layerGroup = L.layerGroup().addTo(map);
+  }
+
+  /**
+   * Sync regions with current layer state
+   * Only creates new layers, updates existing ones, removes stale ones
+   */
+  syncRegions(
+    regions: Regions[],
+    visitData: Map<string, RegionVisitData>,
+    weight: number,
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
+  ): void {
+    const currentRegionIds = new Set(regions.map((r) => r.id));
+
+    // Remove layers for regions no longer in viewport
+    for (const [regionId, layer] of this.layerMap.entries()) {
+      if (!currentRegionIds.has(regionId)) {
+        this.layerGroup.removeLayer(layer);
+        this.layerMap.delete(regionId);
+      }
+    }
+
+    // Add or update regions
+    regions.forEach((region) => {
+      const existingLayer = this.layerMap.get(region.id);
+      const visit = visitData.get(region.id);
+
+      if (existingLayer) {
+        // Update existing layer style
+        this.updateLayerStyle(existingLayer, visit, weight);
+      } else {
+        // Create new layer
+        const newLayer = this.createRegionLayer(region, visit, weight, onRegionClick);
+        this.layerGroup.addLayer(newLayer);
+        this.layerMap.set(region.id, newLayer);
+      }
+    });
+  }
+
+  /**
+   * Update styles for all existing layers (e.g., when visit data changes)
+   */
+  updateStyles(visitData: Map<string, RegionVisitData>, weight?: number): void {
+    for (const [regionId, layer] of this.layerMap.entries()) {
+      const visit = visitData.get(regionId);
+      this.updateLayerStyle(layer, visit, weight);
+    }
+  }
+
+  /**
+   * Update weight for all layers (zoom changes)
+   */
+  updateWeight(weight: number): void {
+    for (const layer of this.layerMap.values()) {
+      layer.setStyle({ weight });
+    }
+  }
+
+  /**
+   * Clear all layers
+   */
+  clear(): void {
+    this.layerGroup.clearLayers();
+    this.layerMap.clear();
+  }
+
+  /**
+   * Remove from map and cleanup
+   */
+  destroy(): void {
+    this.clear();
+    this.map.removeLayer(this.layerGroup);
+  }
+
+  private createRegionLayer(
+    region: Regions,
+    visit: RegionVisitData | undefined,
+    weight: number,
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
+  ): L.GeoJSON {
+    const style = this.calculateStyle(visit, weight);
+
+    const layer = L.geoJSON(region.geometry, {
+      style,
+      onEachFeature: (_feature, leafletLayer) => {
+        if (onRegionClick) {
+          leafletLayer.on('click', () => {
+            onRegionClick(region, visit, layer);
+          });
+        }
+      },
+    });
+
+    return layer;
+  }
+
+  private updateLayerStyle(
+    layer: L.GeoJSON,
+    visit: RegionVisitData | undefined,
+    weight?: number
+  ): void {
+    const style = this.calculateStyle(visit, weight);
+    layer.setStyle(style);
+  }
+
+  private calculateStyle(visit: RegionVisitData | undefined, weight?: number): L.PathOptions {
+    const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
+    const count = visited ? visit.visitCount : 0;
+
+    const { fillColor, strokeColor } = this.getColorsForCount(count);
+
+    return {
+      fillColor,
+      color: strokeColor,
+      weight: weight ?? 2,
+      opacity: 1,
+      fillOpacity: 1,
+      lineCap: 'round',
+      lineJoin: 'round',
+    };
+  }
+
+  private getColorsForCount(count: number): { fillColor: string; strokeColor: string } {
+    // Import locally to avoid circular dependencies
+    const { getRegionColorForCount } = require('./getRegionColorForCount');
+    const [r, g, b, a] = getRegionColorForCount(count);
+
+    return {
+      fillColor: `rgba(${r},${g},${b},${a})`,
+      strokeColor: `rgba(${r},${g},${b},1)`,
+    };
+  }
+
+  /**
+   * Get count of currently managed layers
+   */
+  getLayerCount(): number {
+    return this.layerMap.size;
+  }
+}

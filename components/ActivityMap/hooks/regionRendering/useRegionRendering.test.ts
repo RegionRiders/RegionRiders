@@ -4,7 +4,7 @@ import { Regions } from '@/lib/types';
 import { useRegionRendering } from './useRegionRendering';
 
 // Mock the drawing function
-jest.mock('../drawRegions/drawRegions', () => ({
+jest.mock('../../drawRegions/drawRegions', () => ({
   drawRegions: jest.fn(() => [
     {
       setStyle: jest.fn(),

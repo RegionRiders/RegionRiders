@@ -15,6 +15,7 @@ const logger = createComponentLogger('useRegionLoading');
 export function useRegionLoading(map: L.Map | null) {
   const [regions, setRegions] = useState<Regions[]>([]);
   const lastBoundsRef = useRef<string | null>(null);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadRegionsForViewport = useCallback(async () => {
     if (!map) {
@@ -31,8 +32,14 @@ export function useRegionLoading(map: L.Map | null) {
         west: bounds.getWest(),
       };
 
-      // store a simple signature to compare after async load
+      // Store a simple signature to compare after async load
       const boundsSignature = `${viewportBounds.north}|${viewportBounds.south}|${viewportBounds.east}|${viewportBounds.west}`;
+
+      // Skip if bounds haven't changed
+      if (lastBoundsRef.current === boundsSignature) {
+        return;
+      }
+
       lastBoundsRef.current = boundsSignature;
 
       const loadedRegions = await DataLoader.loadRegions(viewportBounds);
@@ -45,7 +52,6 @@ export function useRegionLoading(map: L.Map | null) {
 
       const duration = (performance.now() - startTime).toFixed(2);
       logger.debug(`Loaded ${loadedRegions.length} regions (${duration}ms)`);
-
       setRegions(loadedRegions);
     } catch (error) {
       logger.error(`Failed to load regions: ${error}`);
@@ -58,20 +64,27 @@ export function useRegionLoading(map: L.Map | null) {
       return;
     }
 
+    // Initial load
     void loadRegionsForViewport();
 
-    let moveTimeout: NodeJS.Timeout;
     const handleMoveEnd = () => {
-      clearTimeout(moveTimeout);
-      moveTimeout = setTimeout(() => {
+      // Clear previous timeout
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+
+      // Debounce viewport changes
+      loadTimeoutRef.current = setTimeout(() => {
         void loadRegionsForViewport();
-      }, 800);
+      }, 500);
     };
 
     map.on('moveend', handleMoveEnd);
 
     return () => {
-      clearTimeout(moveTimeout);
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
       map.off('moveend', handleMoveEnd);
     };
   }, [map, loadRegionsForViewport]);
