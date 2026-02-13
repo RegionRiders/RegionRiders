@@ -46,14 +46,20 @@ jest.mock('../utils/ensureMapPane', () => ({
   ensureMapPane: jest.fn(),
 }));
 
-jest.mock('./utils/filterVisibleTracks', () => ({
-  filterVisibleTracks: jest.fn((tracks: Map<string, GPXTrack>) => Array.from(tracks.entries())),
-}));
+jest.mock(
+  '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/filterVisibleTracks',
+  () => ({
+    filterVisibleTracks: jest.fn((tracks: Map<string, GPXTrack>) => Array.from(tracks.entries())),
+  })
+);
 
-jest.mock('./utils/activityLineEvents', () => ({
-  attachActivityHoverEvents: jest.fn(),
-  attachActivityClickHandler: jest.fn(),
-}));
+jest.mock(
+  '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/activityLineEvents',
+  () => ({
+    attachActivityHoverEvents: jest.fn(),
+    attachActivityClickHandler: jest.fn(),
+  })
+);
 
 describe('drawActivitiesAsLines', () => {
   let mockMap: any;

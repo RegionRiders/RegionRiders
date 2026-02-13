@@ -2,9 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/drawActivitiesAsHeatmap';
+import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/drawActivitiesAsLines';
+import type {
+  HeatmapRefs,
+  LinesRefs,
+} from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
-import { drawActivities, type ActivityRenderMode } from '../../drawActivities/drawActivities';
+
+export type ActivityRenderMode = 'heatmap' | 'lines';
 
 const logger = createComponentLogger('useActivityRendering');
 
@@ -28,15 +35,24 @@ export function useActivityRendering(
 
     logger.debug(`Rendering ${tracks.size} tracks in ${mode} mode`);
 
-    return drawActivities(
-      map,
-      tracks,
-      currentImageLayerRef,
+    // Heatmap
+    if (mode === 'heatmap') {
+      const heatmapRefs: HeatmapRefs = {
+        currentImageLayerRef,
+        renderAbortRef,
+        renderTimeoutRef,
+        heatmapDensity,
+        lineThickness: activityThickness,
+      };
+      return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
+    }
+
+    // DEFAULT: Draw as lines
+    const linesRefs: LinesRefs = {
       renderAbortRef,
       renderTimeoutRef,
-      mode,
-      activityThickness,
-      heatmapDensity
-    );
+      lineThickness: activityThickness,
+    };
+    return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity]);
 }

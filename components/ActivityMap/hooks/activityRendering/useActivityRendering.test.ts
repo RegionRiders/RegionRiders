@@ -1,12 +1,12 @@
 import { renderHook } from '@testing-library/react';
 import L from 'leaflet';
 import { GPXTrack } from '@/lib/types';
-import { drawActivities } from '../../drawActivities/drawActivities';
+import { drawActivities } from './drawActivities';
 import { useActivityRendering } from './useActivityRendering';
 
 // Mock dependencies
 jest.mock('leaflet');
-jest.mock('../../drawActivities/drawActivities');
+jest.mock('./drawActivities');
 jest.mock('@/lib/logger/client', () => ({
   createComponentLogger: jest.fn(() => ({
     debug: jest.fn(),

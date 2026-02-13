@@ -2,7 +2,7 @@
 
 import type { Map as LeafletMap } from 'leaflet';
 import { GPXTrack } from '@/lib/types';
-import type { ActivityRenderMode } from './drawActivities/drawActivities';
+import type { ActivityRenderMode } from './hooks/activityRendering/drawActivities';
 import { useActivityRendering } from './hooks/activityRendering/useActivityRendering';
 import { useRegionAnalysis } from './hooks/regionRendering/useRegionAnalysis';
 import { useRegionLoading } from './hooks/regionRendering/useRegionLoading';

@@ -1,12 +1,15 @@
 'use client';
 
 import L from 'leaflet';
-import { LinesRefs } from '@/components/ActivityMap/drawActivities/activityTypes';
+import {
+  attachActivityClickHandler,
+  attachActivityHoverEvents,
+} from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/activityLineEvents';
+import { filterVisibleTracks } from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/filterVisibleTracks';
+import { LinesRefs } from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import type { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
-import { attachActivityClickHandler, attachActivityHoverEvents } from './utils/activityLineEvents';
-import { filterVisibleTracks } from './utils/filterVisibleTracks';
 
 const logger = createComponentLogger('drawActivitiesAsLines');
 

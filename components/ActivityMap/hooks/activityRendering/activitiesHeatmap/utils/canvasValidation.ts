@@ -1,4 +1,4 @@
-import { CanvasDimensions } from '@/components/ActivityMap/drawActivities/activityTypes';
+import { CanvasDimensions } from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
 
 /**
  * Validates a Leaflet Point for finite, valid coordinates

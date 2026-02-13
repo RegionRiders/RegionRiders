@@ -3,16 +3,16 @@
 import type { RefObject } from 'react';
 import L from 'leaflet';
 import { HEATMAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { createCanvasContext } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasSetup';
-import { validateCanvasDimensions } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/canvasValidation';
-import { logDimensionError } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/dimensionLogging';
-import { processTracksChunked } from '@/components/ActivityMap/drawActivities/activitiesHeatmap/utils/trackProcessor';
+import { createLatLngToPixelConverter } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasProjection';
+import { createCanvasContext } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasSetup';
+import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasValidation';
+import { logDimensionError } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/dimensionLogging';
+import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/getHeatmapColorForCount';
+import { processTracksChunked } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/trackProcessor';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { CanvasDimensions, HeatmapRefs, RenderState } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
-import { createLatLngToPixelConverter } from './utils/canvasProjection';
-import { getHeatmapColorForCount } from './utils/getHeatmapColorForCount';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 
