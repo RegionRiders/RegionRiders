@@ -6,7 +6,9 @@ import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/regionRen
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
-import { RegionLayerManager } from './utils/regionLayerManager';
+import { RegionLayerManager } from './renderingModes/regionLayerManager';
+
+export type RegionRenderMode = 'heatmap' | 'lines';
 
 const logger = createComponentLogger('useRegionRendering');
 
@@ -14,7 +16,8 @@ export function useRegionRendering(
   map: L.Map | null,
   regions: Regions[],
   visitData: Map<string, RegionVisitData>,
-  showBorders: boolean = true
+  showBorders: boolean = true,
+  mode: RegionRenderMode = 'lines'
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSizeRef = useRef<number>(0);
@@ -52,7 +55,12 @@ export function useRegionRendering(
 
     const startTime = performance.now();
 
-    layerManagerRef.current.syncRegions(regions, visitData, calculateWeightForZoom(map.getZoom()));
+    layerManagerRef.current.syncRegions(
+      regions,
+      mode,
+      visitData,
+      calculateWeightForZoom(map.getZoom())
+    );
 
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
@@ -73,7 +81,7 @@ export function useRegionRendering(
     const startTime = performance.now();
 
     // Update only styles, no layer recreation
-    layerManagerRef.current.updateStyles(visitData, calculateWeightForZoom(map.getZoom()));
+    layerManagerRef.current.updateStyles(mode, visitData, calculateWeightForZoom(map.getZoom()));
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;

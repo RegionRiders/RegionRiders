@@ -1,7 +1,8 @@
 'use client';
 
 import L from 'leaflet';
-import { getRegionColorForCount } from '@/components/ActivityMap/hooks/regionRendering/utils/getRegionColorForCount';
+import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/regionRendering/renderingModes/getRegionColorsHeatmap';
+import { RegionRenderMode } from '@/components/ActivityMap/hooks/regionRendering/useRegionRendering';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
@@ -23,6 +24,7 @@ export class RegionLayerManager {
    */
   syncRegions(
     regions: Regions[],
+    mode: RegionRenderMode,
     visitData: Map<string, RegionVisitData>,
     weight: number,
     onRegionClick?: (
@@ -48,10 +50,10 @@ export class RegionLayerManager {
 
       if (existingLayer) {
         // Update existing layer style
-        this.updateLayerStyle(existingLayer, visit, weight);
+        this.updateLayerStyle(existingLayer, mode, visit, weight);
       } else {
         // Create new layer
-        const newLayer = this.createRegionLayer(region, visit, weight, onRegionClick);
+        const newLayer = this.createRegionLayer(region, mode, visit, weight, onRegionClick);
         this.layerGroup.addLayer(newLayer);
         this.layerMap.set(region.id, newLayer);
       }
@@ -61,10 +63,14 @@ export class RegionLayerManager {
   /**
    * Update styles for all existing layers (e.g., when visit data changes)
    */
-  updateStyles(visitData: Map<string, RegionVisitData>, weight: number): void {
+  updateStyles(
+    mode: RegionRenderMode,
+    visitData: Map<string, RegionVisitData>,
+    weight: number
+  ): void {
     for (const [regionId, layer] of this.layerMap.entries()) {
       const visit = visitData.get(regionId);
-      this.updateLayerStyle(layer, visit, weight);
+      this.updateLayerStyle(layer, mode, visit, weight);
     }
   }
 
@@ -95,6 +101,7 @@ export class RegionLayerManager {
 
   private createRegionLayer(
     region: Regions,
+    mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
     onRegionClick?: (
@@ -103,7 +110,7 @@ export class RegionLayerManager {
       layer: L.GeoJSON
     ) => void
   ): L.GeoJSON {
-    const style = this.calculateStyle(visit, weight);
+    const style = this.calculateStyle(mode, visit, weight);
 
     const layer = L.geoJSON(region.geometry, {
       style,
@@ -121,18 +128,31 @@ export class RegionLayerManager {
 
   private updateLayerStyle(
     layer: L.GeoJSON,
+    mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number
   ): void {
-    const style = this.calculateStyle(visit, weight);
+    const style = this.calculateStyle(mode, visit, weight);
     layer.setStyle(style);
   }
 
-  private calculateStyle(visit: RegionVisitData | undefined, weight: number): L.PathOptions {
-    const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
-    const count = visited ? visit.visitCount : 0;
+  private calculateStyle(
+    mode: RegionRenderMode,
+    visit: RegionVisitData | undefined,
+    weight: number
+  ): L.PathOptions {
+    let fillColor: string;
+    let strokeColor: string;
 
-    const { fillColor, strokeColor } = this.getColorsForCount(count);
+    // Heatmap
+    if (mode === 'heatmap') {
+      ({ fillColor, strokeColor } = getRegionColorsHeatmap(visit));
+    }
+    // DEFAULT: lines
+    else {
+      //TODO: NORMAL LINES COLOR FUNCTION
+      ({ fillColor, strokeColor } = getRegionColorsHeatmap(visit));
+    }
 
     return {
       fillColor,
@@ -142,15 +162,6 @@ export class RegionLayerManager {
       fillOpacity: 1,
       lineCap: 'round',
       lineJoin: 'round',
-    };
-  }
-
-  private getColorsForCount(count: number): { fillColor: string; strokeColor: string } {
-    const [r, g, b, a] = getRegionColorForCount(count);
-
-    return {
-      fillColor: `rgba(${r},${g},${b},${a})`,
-      strokeColor: `rgba(${r},${g},${b},1)`,
     };
   }
 
