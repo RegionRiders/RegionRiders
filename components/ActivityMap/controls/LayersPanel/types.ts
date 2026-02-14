@@ -10,6 +10,6 @@ interface LayersPanelProps {
   activityThickness?: number;
   onHeatmapDensityChange?: (density: number) => void;
   heatmapDensity?: number;
-  regionMode?: 'heatmap' | 'lines';
-  onRegionModeChange?: (mode: 'heatmap' | 'lines') => void;
+  regionMode?: 'heatmap' | 'static';
+  onRegionModeChange?: (mode: 'heatmap' | 'static') => void;
 }

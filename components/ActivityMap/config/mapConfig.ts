@@ -26,10 +26,15 @@ export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 150, color: [255, 255, 255, convert1to255value(1)] }, // white
 ];
 
-export const REGION_VISIT_COLOR_THRESHOLDS: ColorThreshold[] = [
+export const REGION_VISIT_HEARMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 0, color: [60, 60, 60, 0] }, // transparent
   { threshold: 1, color: [220, 20, 20, 0.1] }, // red
   { threshold: 5, color: [255, 165, 0, 0.1] }, // orange
   { threshold: 10, color: [255, 255, 0, 0.1] }, // yellow
   { threshold: 25, color: [255, 255, 255, 0.1] }, // white
+];
+
+export const REGION_VISIT_STATIC_COLOR_THRESHOLDS: ColorThreshold[] = [
+  { threshold: 0, color: [60, 60, 60, 0] },
+  { threshold: 1, color: [76, 107, 34, 0.2] },
 ];

@@ -2,6 +2,7 @@
 
 import L from 'leaflet';
 import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/regionRendering/renderingModes/getRegionColorsHeatmap';
+import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/regionRendering/renderingModes/getRegionColorsStatic';
 import { RegionRenderMode } from '@/components/ActivityMap/hooks/regionRendering/useRegionRendering';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
@@ -148,10 +149,9 @@ export class RegionLayerManager {
     if (mode === 'heatmap') {
       ({ fillColor, strokeColor } = getRegionColorsHeatmap(visit));
     }
-    // DEFAULT: lines
+    // DEFAULT: static
     else {
-      //TODO: NORMAL LINES COLOR FUNCTION
-      ({ fillColor, strokeColor } = getRegionColorsHeatmap(visit));
+      ({ fillColor, strokeColor } = getRegionColorsStatic(visit));
     }
 
     return {

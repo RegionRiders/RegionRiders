@@ -37,10 +37,10 @@ export function RegionsSection({
               </Button>
               <Button
                 size="sm"
-                variant={regionMode === 'lines' ? 'filled' : 'default'}
-                onClick={() => onRegionModeChange?.('lines')}
+                variant={regionMode === 'static' ? 'filled' : 'default'}
+                onClick={() => onRegionModeChange?.('static')}
               >
-                Lines
+                Static
               </Button>
             </Group>
           </div>

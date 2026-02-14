@@ -70,6 +70,7 @@ export default function ActivityMap() {
           activityMode={activityMode}
           activityThickness={activityThickness}
           heatmapDensity={heatmapDensity}
+          regionMode={regionMode}
         />
       )}
     </div>

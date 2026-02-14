@@ -8,7 +8,7 @@ import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { RegionLayerManager } from './renderingModes/regionLayerManager';
 
-export type RegionRenderMode = 'heatmap' | 'lines';
+export type RegionRenderMode = 'heatmap' | 'static';
 
 const logger = createComponentLogger('useRegionRendering');
 
@@ -17,7 +17,7 @@ export function useRegionRendering(
   regions: Regions[],
   visitData: Map<string, RegionVisitData>,
   showBorders: boolean = true,
-  mode: RegionRenderMode = 'lines'
+  mode: RegionRenderMode = 'static'
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSizeRef = useRef<number>(0);
@@ -65,7 +65,7 @@ export function useRegionRendering(
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [map, regions, showBorders, calculateWeightForZoom]);
+  }, [map, regions, showBorders, mode, calculateWeightForZoom]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {

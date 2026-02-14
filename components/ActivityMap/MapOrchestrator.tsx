@@ -29,10 +29,10 @@ export default function MapOrchestrator({
   activityMode = 'heatmap',
   activityThickness = 3,
   heatmapDensity = 2,
-  regionMode = 'lines',
+  regionMode = 'static',
 }: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
-  const { visitData, isAnalyzing } = useRegionAnalysis(tracks, regions);
+  const { visitData } = useRegionAnalysis(tracks, regions);
 
   useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity);
   useRegionRendering(map, regions, visitData, showBorders, regionMode);
