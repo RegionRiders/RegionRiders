@@ -44,20 +44,38 @@ export class RegionLayerManager {
       }
     }
 
+    // Sort regions based on mode to control render order
+    const sortedRegions = this.sortRegionsByMode(regions, visitData);
+
     // Add or update regions
-    regions.forEach((region) => {
+    sortedRegions.forEach((region) => {
       const existingLayer = this.layerMap.get(region.id);
       const visit = visitData.get(region.id);
 
       if (existingLayer) {
         // Update existing layer style
         this.updateLayerStyle(existingLayer, mode, visit, weight);
+        existingLayer.bringToFront();
       } else {
         // Create new layer
         const newLayer = this.createRegionLayer(region, mode, visit, weight, onRegionClick);
         this.layerGroup.addLayer(newLayer);
         this.layerMap.set(region.id, newLayer);
       }
+    });
+  }
+
+  private sortRegionsByMode(
+    regions: Regions[],
+    visitData: Map<string, RegionVisitData>
+  ): Regions[] {
+    return [...regions].sort((a, b) => {
+      const visitA = visitData.get(a.id);
+      const visitB = visitData.get(b.id);
+
+      const countA = visitA?.visitCount ?? 0;
+      const countB = visitB?.visitCount ?? 0;
+      return countA - countB;
     });
   }
 
