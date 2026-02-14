@@ -19,6 +19,7 @@ interface MapOrchestratorProps {
   activityThickness?: number;
   heatmapDensity?: number;
   regionMode?: RegionRenderMode;
+  regionBorderThickness?: number;
 }
 
 export default function MapOrchestrator({
@@ -30,12 +31,13 @@ export default function MapOrchestrator({
   activityThickness = 3,
   heatmapDensity = 2,
   regionMode = 'static',
+  regionBorderThickness = 2,
 }: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
   const { visitData } = useRegionAnalysis(tracks, regions);
 
   useActivityRendering(map, tracks, showHeatmap, activityMode, activityThickness, heatmapDensity);
-  useRegionRendering(map, regions, visitData, showBorders, regionMode);
+  useRegionRendering(map, regions, visitData, showBorders, regionMode, regionBorderThickness);
 
   return null;
 }

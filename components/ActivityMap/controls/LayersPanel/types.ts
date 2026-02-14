@@ -12,4 +12,6 @@ interface LayersPanelProps {
   heatmapDensity?: number;
   regionMode?: 'heatmap' | 'static';
   onRegionModeChange?: (mode: 'heatmap' | 'static') => void;
+  regionBorderThickness?: number;
+  onRegionBorderThicknessChange?: (thickness: number) => void;
 }

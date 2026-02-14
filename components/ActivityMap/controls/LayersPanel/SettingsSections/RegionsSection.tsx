@@ -1,13 +1,20 @@
-import { Accordion, Button, Group, Stack, Switch, Text } from '@mantine/core';
+import { Accordion, Button, Group, Slider, Stack, Switch, Text } from '@mantine/core';
 
 export function RegionsSection({
   showBorders,
   onShowBordersChange,
   regionMode,
   onRegionModeChange,
+  regionBorderThickness,
+  onRegionBorderThicknessChange,
 }: Pick<
   LayersPanelProps,
-  'onShowBordersChange' | 'showBorders' | 'regionMode' | 'onRegionModeChange'
+  | 'onShowBordersChange'
+  | 'showBorders'
+  | 'regionMode'
+  | 'onRegionModeChange'
+  | 'regionBorderThickness'
+  | 'onRegionBorderThicknessChange'
 >) {
   return (
     <Accordion.Item value="regions">
@@ -43,6 +50,18 @@ export function RegionsSection({
                 Static
               </Button>
             </Group>
+          </div>
+
+          <div>
+            <Text size="sm"> Border thickness: {regionBorderThickness ?? 3}</Text>
+            <Slider
+              w="100%"
+              min={0}
+              max={10}
+              step={0.1}
+              value={regionBorderThickness ?? 3}
+              onChange={onRegionBorderThicknessChange}
+            />
           </div>
         </Stack>
       </Accordion.Panel>

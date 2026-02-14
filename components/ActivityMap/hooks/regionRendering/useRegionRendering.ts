@@ -17,7 +17,8 @@ export function useRegionRendering(
   regions: Regions[],
   visitData: Map<string, RegionVisitData>,
   showBorders: boolean = true,
-  mode: RegionRenderMode = 'static'
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = 2
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSizeRef = useRef<number>(0);
@@ -59,13 +60,13 @@ export function useRegionRendering(
       regions,
       mode,
       visitData,
-      calculateWeightForZoom(map.getZoom())
+      calculateWeightForZoom(map.getZoom(), regionBorderThickness)
     );
 
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [map, regions, showBorders, mode, calculateWeightForZoom]);
+  }, [regions, showBorders, mode, regionBorderThickness]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {
@@ -81,7 +82,12 @@ export function useRegionRendering(
     const startTime = performance.now();
 
     // Update only styles, no layer recreation
-    layerManagerRef.current.updateStyles(mode, visitData, calculateWeightForZoom(map.getZoom()));
+    logger.debug(`zoom ${map.getZoom()} visit data`);
+    layerManagerRef.current.updateStyles(
+      mode,
+      visitData,
+      calculateWeightForZoom(map.getZoom(), regionBorderThickness)
+    );
 
     const duration = (performance.now() - startTime).toFixed(2);
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
@@ -89,22 +95,4 @@ export function useRegionRendering(
 
     lastVisitDataSizeRef.current = visitData.size;
   }, [map, visitData]);
-
-  // Handle zoom changes - only update weight
-  useEffect(() => {
-    if (!map || !layerManagerRef.current) {
-      return;
-    }
-
-    const handleZoom = () => {
-      const weight = calculateWeightForZoom(map.getZoom());
-      layerManagerRef.current?.updateWeight(weight);
-    };
-
-    map.on('zoomend', handleZoom);
-
-    return () => {
-      map.off('zoomend', handleZoom);
-    };
-  }, [map, calculateWeightForZoom]);
 }
