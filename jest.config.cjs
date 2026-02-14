@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
-  setupFiles: ['<rootDir>/jest.polyfills.cjs'],
+  setupFiles: ['<rootDir>/jest.polyfills.cjs', '<rootDir>/test-utils/setup-env.ts'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   globalTeardown: '<rootDir>/jest.teardown.cjs',
   moduleNameMapper: {
@@ -17,6 +17,19 @@ const customJestConfig = {
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/',
+    // Skip integration tests that require database when DB_TEST_SKIP env is set
+    ...(process.env.DB_TEST_SKIP === 'true'
+      ? [
+          '<rootDir>/lib/db/operations/users.test.ts',
+          '<rootDir>/lib/db/operations/activities.test.ts',
+          '<rootDir>/lib/db/config/client.test.ts',
+          '<rootDir>/lib/db/config/drizzle.test.ts',
+        ]
+      : []),
+  ],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },

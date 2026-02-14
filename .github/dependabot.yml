@@ -14,7 +14,7 @@ updates:
     assignees:
       - "4fra"
     labels:
-      - "dependencies"
+      - "type: Dependencies"
       - "automated"
     commit-message:
       prefix: "chore"
@@ -36,7 +36,7 @@ updates:
       day: "monday"
       time: "06:00"
     labels:
-      - "dependencies"
+      - "type: Dependencies"
       - "github-actions"
     commit-message:
       prefix: "ci"
