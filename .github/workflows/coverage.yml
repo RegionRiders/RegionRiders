@@ -16,6 +16,28 @@ concurrency:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: regionriders
+          POSTGRES_USER: regionriders_user
+          POSTGRES_PASSWORD: regionriders_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: regionriders
+      POSTGRES_USER: regionriders_user
+      POSTGRES_PASSWORD: regionriders_pass
+      OAUTH_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      OAUTH_ENCRYPTION_SALT: 0123456789abcdef0123456789abcdef
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -29,6 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn
+
+      - name: Run database migrations
+        run: yarn db:migrate
 
       - name: Generate coverage report
         run: npx jest --coverage

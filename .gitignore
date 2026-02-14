@@ -147,3 +147,13 @@ logs/
 # Jest localStorage file for Node.js 25.2.0+
 /tmp/jest-localstorage.json
 
+
+# Database
+# drizzle/ - Migration files are now version controlled (v3 structure)
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+.pgdata/
+
+test-results.txt

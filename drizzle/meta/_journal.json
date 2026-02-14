@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1763389707120,
+      "tag": "0000_closed_zaladane",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768045564043,
+      "tag": "0001_minor_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769295290084,
+      "tag": "0002_square_lily_hollister",
+      "breakpoints": true
+    }
+  ]
+}

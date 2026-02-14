@@ -1,0 +1,114 @@
+/**
+ * Activity Query Operations
+ * Read-only operations for fetching activity data
+ */
+
+import { cache } from 'react';
+import { and, desc, eq } from 'drizzle-orm';
+import { activities, fingerprint, getDb } from '@/lib/db';
+import { PAGINATION } from '@/lib/db/config/constants';
+import { dbLogger } from '@/lib/logger';
+import type { Activity, GetActivitiesOptions } from '../types';
+import { buildActivityConditions } from '../utils';
+
+/**
+ * Get an activity by ID
+ * Cached for the duration of the request (React cache)
+ */
+export const getActivityById = cache(async (id: string): Promise<Activity | undefined> => {
+  try {
+    const db = getDb();
+    const [activity] = await db.select().from(activities).where(eq(activities.id, id)).limit(1);
+    return activity;
+  } catch (error) {
+    dbLogger.error(
+      { error, activityIdFingerprint: fingerprint(id) },
+      'Error fetching activity by ID'
+    );
+    return undefined;
+  }
+});
+
+/**
+ * Get an activity by Strava Activity ID
+ * Cached for the duration of the request (React cache)
+ */
+export const getActivityByStravaId = cache(
+  async (stravaActivityId: string): Promise<Activity | undefined> => {
+    try {
+      const db = getDb();
+      const [activity] = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.stravaActivityId, stravaActivityId))
+        .limit(1);
+      return activity;
+    } catch (error) {
+      dbLogger.error(
+        { error, stravaActivityIdFingerprint: fingerprint(stravaActivityId) },
+        'Error fetching activity by Strava ID'
+      );
+      return undefined;
+    }
+  }
+);
+
+/**
+ * Get all activities for a user
+ * Cached for the duration of the request (React cache)
+ */
+export const getActivitiesByUserId = cache(
+  async (userId: string, options?: GetActivitiesOptions): Promise<Activity[]> => {
+    try {
+      const db = getDb();
+      const { limit = PAGINATION.DEFAULT_LIMIT, offset = PAGINATION.MIN_OFFSET } = options || {};
+
+      // Limit pagination parameters to safe ranges
+      const safeLimit = Math.max(PAGINATION.MIN_LIMIT, Math.min(limit, PAGINATION.MAX_LIMIT));
+      const safeOffset = Math.max(PAGINATION.MIN_OFFSET, offset);
+
+      const conditions = buildActivityConditions(userId, options || {});
+      const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+
+      return await db
+        .select()
+        .from(activities)
+        .where(whereClause)
+        .orderBy(desc(activities.startDate))
+        .limit(safeLimit)
+        .offset(safeOffset);
+    } catch (error) {
+      dbLogger.error(
+        { error, userIdFingerprint: fingerprint(userId), options },
+        'Error fetching activities by user ID'
+      );
+      return [];
+    }
+  }
+);
+
+/**
+ * Get all activities with pagination
+ * Cached for the duration of the request (React cache)
+ */
+export const getAllActivities = cache(
+  async (options?: { limit?: number; offset?: number }): Promise<Activity[]> => {
+    try {
+      const db = getDb();
+      const { limit = PAGINATION.DEFAULT_LIMIT, offset = PAGINATION.MIN_OFFSET } = options || {};
+
+      const safeLimit = Math.max(PAGINATION.MIN_LIMIT, Math.min(limit, PAGINATION.MAX_LIMIT));
+      const safeOffset = Math.max(PAGINATION.MIN_OFFSET, offset);
+
+      return await db
+        .select()
+        .from(activities)
+        .orderBy(desc(activities.startDate))
+        .limit(safeLimit)
+        .offset(safeOffset);
+    } catch (error) {
+      dbLogger.error({ error, options }, 'Error fetching all activities');
+      return [];
+    }
+  }
+);
