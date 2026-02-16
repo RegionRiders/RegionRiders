@@ -17,7 +17,6 @@ const MapContainerMemo = memo(MapContainer);
 export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { tracks } = useGPXData();
-  const { map, isReady, error } = useLeafletMap(mapContainerRef);
 
   const [settings, setSettings] = useState<MapSettings>({
     activityMode: 'heatmap',
@@ -27,11 +26,18 @@ export default function ActivityMap() {
     regionMode: 'heatmap',
     showRegions: true,
     regionBorderThickness: 2,
+    tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
   });
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
+
+  const { map, isReady, error } = useLeafletMap(mapContainerRef, {
+    tileLayerUrl: settings.tileLayerUrl,
+    attribution: settings.attribution,
+  });
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);
 

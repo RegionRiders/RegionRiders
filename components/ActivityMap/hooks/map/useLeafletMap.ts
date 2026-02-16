@@ -47,7 +47,6 @@ export function useLeafletMap(
 
   // Initial map creation effect
   useEffect(() => {
-    // prevent re-initialization if map already exists or container not ready
     if (mapRef.current || !containerRef.current) {
       return;
     }
@@ -55,7 +54,6 @@ export function useLeafletMap(
     logger.info('Initializing map...');
 
     try {
-      // create leaflet map instance
       mapRef.current = L.map(containerRef.current, {
         center: config.center,
         zoom: config.zoom,
@@ -63,14 +61,12 @@ export function useLeafletMap(
         minZoom: config.minZoom,
       });
 
-      // add tile layer for map background
       tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
         attribution: config.attribution,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
       }).addTo(mapRef.current);
 
-      // wait for map to be fully initialized
       mapRef.current.whenReady(() => {
         setIsReady(true);
         setError(null);
@@ -83,7 +79,6 @@ export function useLeafletMap(
       setIsReady(false);
     }
 
-    // cleanup function runs when component unmounts
     return () => {
       if (mapRef.current) {
         logger.info('Cleaning up map...');
@@ -95,27 +90,23 @@ export function useLeafletMap(
     };
   }, []);
 
-  // Update tile layer and map limits when respective configs change
   useEffect(() => {
     if (!mapRef.current || !isReady) {
       return;
     }
 
+    logger.info('Updating tile layer...');
+
     if (tileLayerRef.current) {
       mapRef.current.removeLayer(tileLayerRef.current);
     }
 
-    tileLayerRef.current = L.tileLayer(config.tileLayerUrl!, {
+    tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
       attribution: config.attribution,
       maxZoom: config.maxZoom,
       minZoom: config.minZoom,
     }).addTo(mapRef.current);
-
-    if (mapRef.current.options) {
-      mapRef.current.options.maxZoom = config.maxZoom!;
-      mapRef.current.options.minZoom = config.minZoom!;
-    }
-  }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
+  }, [options, config, isReady]);
 
   return {
     map: mapRef.current,

@@ -19,7 +19,7 @@ function LayersPanelContent({ settings, onSettingChange }: LayersPanelProps) {
 
         <ActivitiesSection settings={settings} onSettingChange={onSettingChange} />
 
-        <MapStyleSection />
+        <MapStyleSection settings={settings} onSettingChange={onSettingChange} />
       </Accordion>
     </Card>
   );

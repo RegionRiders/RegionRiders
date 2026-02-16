@@ -11,7 +11,7 @@ export const HEATMAP_CONFIG: HeatmapConfig = {
 export const DEFAULT_LEAFLET_CONFIG: LeafletConfig = {
   center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
   zoom: 11,
-  maxZoom: 20,
+  maxZoom: 18,
   minZoom: 3,
   tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
   attribution: '© OpenStreetMap contributors © CARTO',
@@ -26,7 +26,7 @@ export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 150, color: [255, 255, 255, convert1to255value(1)] }, // white
 ];
 
-export const REGION_VISIT_HEARMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
+export const REGION_VISIT_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 0, color: [60, 60, 60, 0] }, // transparent
   { threshold: 1, color: [220, 20, 20, 0.1] }, // red
   { threshold: 5, color: [255, 165, 0, 0.1] }, // orange

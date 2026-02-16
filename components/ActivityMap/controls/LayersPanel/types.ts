@@ -12,6 +12,10 @@ export interface MapSettings {
   regionMode: RegionRenderMode;
   showRegions: boolean;
   regionBorderThickness: number;
+
+  // Map settings
+  tileLayerUrl: string;
+  attribution: string;
 }
 
 export interface LayersPanelProps {
