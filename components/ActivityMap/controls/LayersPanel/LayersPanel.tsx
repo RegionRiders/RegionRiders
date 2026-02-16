@@ -11,16 +11,13 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import styles from './LayersPanel.module.css';
 
-function IconBoxMultiple(props: { size: number; stroke: number }) {
-  return null;
-}
-function LayersPanelContent({ settings, onSettingChange, placeholderImageUrl }: LayersPanelProps) {
+function LayersPanelContent({ settings, onSettingChange }: LayersPanelProps) {
   return (
     <Card shadow="sm" radius="md" className={styles.panel} withBorder>
       <Accordion multiple>
-        <RegionsSection settings={settings} onSettingsChange={onSettingChange} />
+        <RegionsSection settings={settings} onSettingChange={onSettingChange} />
 
-        <ActivitiesSection settings={settings} onSettingsChange={onSettingChange} />
+        <ActivitiesSection settings={settings} onSettingChange={onSettingChange} />
 
         <MapStyleSection />
       </Accordion>
@@ -34,9 +31,11 @@ export default function LayersPanel(props: LayersPanelProps) {
   return (
     <div className={styles.container}>
       <MapStyleButton
-        imageUrl={props.placeholderImageUrl}
+        imageUrl={
+          props.placeholderImageUrl ??
+          'https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80'
+        }
         label="Layers"
-        icon={<IconBoxMultiple size={16} stroke={2} />}
         onClick={toggle}
         active={opened}
       />

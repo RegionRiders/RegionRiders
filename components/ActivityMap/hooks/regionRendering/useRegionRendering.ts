@@ -15,7 +15,7 @@ export function useRegionRendering(
   map: L.Map | null,
   regions: Regions[],
   visitData: Map<string, RegionVisitData>,
-  showBorders: boolean = true,
+  showRegions: boolean = true,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = 2
 ) {
@@ -48,7 +48,7 @@ export function useRegionRendering(
       return;
     }
 
-    if (!showBorders) {
+    if (!showRegions) {
       layerManagerRef.current.clear();
       return;
     }
@@ -65,7 +65,7 @@ export function useRegionRendering(
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [regions, showBorders, mode, regionBorderThickness]);
+  }, [regions, showRegions, mode, regionBorderThickness]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {

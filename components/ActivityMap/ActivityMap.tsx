@@ -10,11 +10,7 @@ import styles from './ActivityMap.module.css';
 import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
-import {
-  ActivityRenderMode,
-  MapSettings,
-  RegionRenderMode,
-} from '@/components/ActivityMap/controls/LayersPanel/types';
+import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 const MapContainerMemo = memo(MapContainer);
 
@@ -25,11 +21,11 @@ export default function ActivityMap() {
 
   const [settings, setSettings] = useState<MapSettings>({
     activityMode: 'heatmap',
-    showHeatmap: true,
+    showActivities: true,
     activityThickness: 3,
     heatmapDensity: 2,
     regionMode: 'heatmap',
-    showBorders: true,
+    showRegions: true,
     regionBorderThickness: 2,
   });
 

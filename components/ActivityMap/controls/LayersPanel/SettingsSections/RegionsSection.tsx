@@ -2,28 +2,16 @@ import { Accordion, Button, Group, Slider, Stack, Switch, Text } from '@mantine/
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 export function RegionsSection({
-  showBorders,
-  onShowBordersChange,
-  regionMode,
-  onRegionModeChange,
-  regionBorderThickness,
-  onRegionBorderThicknessChange,
-}: Pick<
-  LayersPanelProps,
-  | 'onShowBordersChange'
-  | 'showBorders'
-  | 'regionMode'
-  | 'onRegionModeChange'
-  | 'regionBorderThickness'
-  | 'onRegionBorderThicknessChange'
->) {
+  settings,
+  onSettingChange,
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   return (
     <Accordion.Item value="regions">
       <Accordion.Control>
         <Group justify="space-between" w="100%">
           <Switch
-            checked={showBorders}
-            onChange={(e) => onShowBordersChange?.(e.currentTarget.checked)}
+            checked={settings.showRegions}
+            onChange={(e) => onSettingChange('showRegions', e.currentTarget.checked)}
             aria-label="Toggle region borders"
           />
           <Text fw={600} size="sm" mr="auto">
@@ -38,15 +26,15 @@ export function RegionsSection({
             <Group gap="xs">
               <Button
                 size="sm"
-                variant={regionMode === 'heatmap' ? 'filled' : 'default'}
-                onClick={() => onRegionModeChange?.('heatmap')}
+                variant={settings.regionMode === 'heatmap' ? 'filled' : 'default'}
+                onClick={() => onSettingChange('regionMode', 'heatmap')}
               >
                 Heatmap
               </Button>
               <Button
                 size="sm"
-                variant={regionMode === 'static' ? 'filled' : 'default'}
-                onClick={() => onRegionModeChange?.('static')}
+                variant={settings.regionMode === 'static' ? 'filled' : 'default'}
+                onClick={() => onSettingChange('regionMode', 'static')}
               >
                 Static
               </Button>
@@ -54,14 +42,14 @@ export function RegionsSection({
           </div>
 
           <div>
-            <Text size="sm"> Border thickness: {regionBorderThickness ?? 3}</Text>
+            <Text size="sm"> Border thickness: {settings.regionBorderThickness}</Text>
             <Slider
               w="100%"
               min={0}
               max={10}
               step={0.1}
-              value={regionBorderThickness ?? 3}
-              onChange={onRegionBorderThicknessChange}
+              value={settings.regionBorderThickness}
+              onChange={(value) => onSettingChange('regionBorderThickness', value)}
             />
           </div>
         </Stack>

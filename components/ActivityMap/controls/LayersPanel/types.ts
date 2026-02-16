@@ -4,13 +4,13 @@ export type ActivityRenderMode = 'heatmap' | 'lines';
 export interface MapSettings {
   // Activity settings
   activityMode: ActivityRenderMode;
-  showHeatmap: boolean;
+  showActivities: boolean;
   activityThickness: number;
   heatmapDensity: number;
 
   // Region settings
   regionMode: RegionRenderMode;
-  showBorders: boolean;
+  showRegions: boolean;
   regionBorderThickness: number;
 }
 
