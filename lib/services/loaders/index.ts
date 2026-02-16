@@ -6,8 +6,8 @@ import { RegionLoader } from './RegionLoader';
  * main data loading service - facade for gpx and region loaders
  * @example
  * ```
- * const tracks = await loaders.loadGPXTracks('api');
- * const regions = await loaders.loadRegions(bounds);
+ * const tracks = await DataLoader.loadGPXTracks('local', { limit: 50, offset: 0 });
+ * const regions = await DataLoader.loadRegions(bounds);
  * ```
  */
 export class DataLoader {
@@ -16,9 +16,20 @@ export class DataLoader {
    */
   static async loadGPXTracks(
     source: 'local' | 'api' = 'api',
-    files?: string[]
+    options?: {
+      files?: string[];
+      limit?: number;
+      offset?: number;
+    }
   ): Promise<Map<string, GPXTrack>> {
-    return GPXLoader.loadTracks(source, files);
+    return GPXLoader.loadTracks(source, options);
+  }
+
+  /**
+   * Get total count of available tracks
+   */
+  static async getTotalTrackCount(): Promise<number> {
+    return GPXLoader.getTotalFileCount();
   }
 
   /**
