@@ -59,7 +59,7 @@ export function ActivitiesSection({
               <Slider
                 w="100%"
                 min={0.25}
-                max={5}
+                max={3}
                 step={0.25}
                 value={settings.heatmapDensity ?? 2}
                 onChange={(value) => onSettingChange('heatmapDensity', value)}
