@@ -1,7 +1,7 @@
 'use client';
 
 import type { Map as LeafletMap } from 'leaflet';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
@@ -10,6 +10,7 @@ import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useReg
 import { GPXTrack } from '@/lib/types';
 import { filterTracksWithLimit, getBoundsSignature } from '@/lib/utils/viewportUtils';
 import { createComponentLogger } from '@/lib/logger/client';
+import { PerformanceConfig } from '@/lib/config/performanceConfig';
 
 const logger = createComponentLogger('MapOrchestrator');
 
@@ -21,26 +22,39 @@ interface MapOrchestratorProps {
 
 export default function MapOrchestrator({ map, tracks, settings }: MapOrchestratorProps) {
   const [boundsSignature, setBoundsSignature] = useState<string>('');
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update bounds signature when map moves
+  // Update bounds signature when map moves (debounced)
   useEffect(() => {
     if (!map) return;
 
     const updateBounds = () => {
-      const newSignature = getBoundsSignature(map.getBounds());
-      setBoundsSignature(newSignature);
+      // Clear previous debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Debounce the bounds update to avoid excessive recalculations
+      debounceTimerRef.current = setTimeout(() => {
+        const newSignature = getBoundsSignature(map.getBounds());
+        setBoundsSignature(newSignature);
+      }, PerformanceConfig.RENDERING.DEBOUNCE_MS);
     };
 
-    // Initial bounds
-    updateBounds();
+    // Initial bounds (no debounce)
+    const initialSignature = getBoundsSignature(map.getBounds());
+    setBoundsSignature(initialSignature);
 
-    // Update on map movement
+    // Update on map movement (debounced)
     map.on('moveend', updateBounds);
     map.on('zoomend', updateBounds);
 
     return () => {
       map.off('moveend', updateBounds);
       map.off('zoomend', updateBounds);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
   }, [map]);
 
