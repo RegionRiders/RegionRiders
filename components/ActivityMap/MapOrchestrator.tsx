@@ -1,14 +1,15 @@
 'use client';
 
 import type { Map as LeafletMap } from 'leaflet';
-import { GPXTrack } from '@/lib/types';
 import {
   ActivityRenderMode,
-  useActivityRendering,
-} from './hooks/activityRendering/useActivityRendering';
+  RegionRenderMode,
+} from '@/components/ActivityMap/controls/LayersPanel/types';
+import { GPXTrack } from '@/lib/types';
+import { useActivityRendering } from './hooks/activityRendering/useActivityRendering';
 import { useRegionAnalysis } from './hooks/regionRendering/useRegionAnalysis';
 import { useRegionLoading } from './hooks/regionRendering/useRegionLoading';
-import { RegionRenderMode, useRegionRendering } from './hooks/regionRendering/useRegionRendering';
+import { useRegionRendering } from './hooks/regionRendering/useRegionRendering';
 
 interface MapOrchestratorProps {
   map: LeafletMap | null;

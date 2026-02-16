@@ -2,66 +2,25 @@
 
 import { Accordion, Card } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import {
+  ActivitiesSection,
+  MapStyleSection,
+  RegionsSection,
+} from '@/components/ActivityMap/controls/LayersPanel/SettingsSections';
+import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
-import { ActivitiesSection, MapStyleSection, RegionsSection } from './SettingsSections';
 import styles from './LayersPanel.module.css';
 
-function LayersPanelContent({
-  onActivityModeChange,
-  onShowHeatmapChange,
-  onShowBordersChange,
-  activityMode,
-  showHeatmap,
-  showBorders,
-  placeholderImageUrl,
-  onActivityThicknessChange,
-  activityThickness,
-  onHeatmapDensityChange,
-  heatmapDensity,
-  regionMode,
-  onRegionModeChange,
-  regionBorderThickness,
-  onRegionBorderThicknessChange,
-}: Pick<
-  LayersPanelProps,
-  | 'onActivityModeChange'
-  | 'onShowHeatmapChange'
-  | 'onShowBordersChange'
-  | 'activityMode'
-  | 'showHeatmap'
-  | 'showBorders'
-  | 'placeholderImageUrl'
-  | 'onActivityThicknessChange'
-  | 'activityThickness'
-  | 'onHeatmapDensityChange'
-  | 'heatmapDensity'
-  | 'regionMode'
-  | 'onRegionModeChange'
-  | 'regionBorderThickness'
-  | 'onRegionBorderThicknessChange'
->) {
+function IconBoxMultiple(props: { size: number; stroke: number }) {
+  return null;
+}
+function LayersPanelContent({ settings, onSettingChange, placeholderImageUrl }: LayersPanelProps) {
   return (
     <Card shadow="sm" radius="md" className={styles.panel} withBorder>
       <Accordion multiple>
-        <RegionsSection
-          showBorders={showBorders}
-          onShowBordersChange={onShowBordersChange}
-          regionMode={regionMode}
-          onRegionModeChange={onRegionModeChange}
-          regionBorderThickness={regionBorderThickness}
-          onRegionBorderThicknessChange={onRegionBorderThicknessChange}
-        />
+        <RegionsSection settings={settings} onSettingsChange={onSettingChange} />
 
-        <ActivitiesSection
-          activityThickness={activityThickness}
-          onActivityThicknessChange={onActivityThicknessChange}
-          onHeatmapDensityChange={onHeatmapDensityChange}
-          heatmapDensity={heatmapDensity}
-          onActivityModeChange={onActivityModeChange}
-          onShowHeatmapChange={onShowHeatmapChange}
-          activityMode={activityMode}
-          showHeatmap={showHeatmap}
-        />
+        <ActivitiesSection settings={settings} onSettingsChange={onSettingChange} />
 
         <MapStyleSection />
       </Accordion>
@@ -69,55 +28,20 @@ function LayersPanelContent({
   );
 }
 
-function IconBoxMultiple(props: { size: number; stroke: number }) {
-  return null;
-}
-
-export default function LayersPanel({
-  onActivityModeChange,
-  onShowHeatmapChange,
-  onShowBordersChange,
-  activityMode = 'heatmap',
-  showHeatmap = true,
-  showBorders = true,
-  placeholderImageUrl = 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400&h=400&fit=crop',
-  activityThickness,
-  onActivityThicknessChange,
-  heatmapDensity,
-  onHeatmapDensityChange,
-  regionMode,
-  onRegionModeChange,
-  regionBorderThickness,
-  onRegionBorderThicknessChange,
-}: LayersPanelProps) {
+export default function LayersPanel(props: LayersPanelProps) {
   const [opened, { toggle }] = useDisclosure(false);
 
   return (
     <div className={styles.container}>
       <MapStyleButton
-        imageUrl={placeholderImageUrl}
+        imageUrl={props.placeholderImageUrl}
         label="Layers"
         icon={<IconBoxMultiple size={16} stroke={2} />}
         onClick={toggle}
         active={opened}
       />
       <div className={`${styles.panelWrapper} ${opened ? styles.panelWrapperOpen : ''}`}>
-        <LayersPanelContent
-          onActivityModeChange={onActivityModeChange}
-          onShowHeatmapChange={onShowHeatmapChange}
-          onShowBordersChange={onShowBordersChange}
-          activityMode={activityMode}
-          showHeatmap={showHeatmap}
-          showBorders={showBorders}
-          activityThickness={activityThickness}
-          onActivityThicknessChange={onActivityThicknessChange}
-          onHeatmapDensityChange={onHeatmapDensityChange}
-          heatmapDensity={heatmapDensity}
-          regionMode={regionMode}
-          onRegionModeChange={onRegionModeChange}
-          regionBorderThickness={regionBorderThickness}
-          onRegionBorderThicknessChange={onRegionBorderThicknessChange}
-        />
+        <LayersPanelContent {...props} />
       </div>
     </div>
   );

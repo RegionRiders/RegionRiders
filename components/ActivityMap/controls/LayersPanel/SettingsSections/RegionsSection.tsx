@@ -1,4 +1,5 @@
 import { Accordion, Button, Group, Slider, Stack, Switch, Text } from '@mantine/core';
+import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 export function RegionsSection({
   showBorders,

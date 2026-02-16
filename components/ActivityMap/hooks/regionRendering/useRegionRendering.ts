@@ -2,13 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/regionRendering/utils/calculateWeightForZoom';
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { RegionLayerManager } from './renderingModes/regionLayerManager';
-
-export type RegionRenderMode = 'heatmap' | 'static';
 
 const logger = createComponentLogger('useRegionRendering');
 
