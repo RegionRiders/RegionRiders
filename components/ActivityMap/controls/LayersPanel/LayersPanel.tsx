@@ -37,6 +37,7 @@ export default function LayersPanel(props: LayersPanelProps) {
         }
         label="Layers"
         onClick={toggle}
+        fullWidth
         active={opened}
       />
       <div className={`${styles.panelWrapper} ${opened ? styles.panelWrapperOpen : ''}`}>

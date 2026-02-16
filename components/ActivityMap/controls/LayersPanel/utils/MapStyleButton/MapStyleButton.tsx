@@ -9,6 +9,7 @@ interface MapStyleButtonProps {
   icon?: ReactNode;
   onClick: () => void;
   active?: boolean;
+  fullWidth?: boolean;
   'aria-label'?: string;
 }
 
@@ -17,12 +18,13 @@ export default function MapStyleButton({
   label,
   onClick,
   active = false,
+  fullWidth = false,
   'aria-label': ariaLabel = 'Toggle panel',
 }: MapStyleButtonProps) {
   return (
     <button
       type="button"
-      className={`${styles.mapStyleButton} ${active ? styles.mapStyleButtonActive : ''}`}
+      className={`${styles.mapStyleButton} ${active ? styles.mapStyleButtonActive : ''} ${fullWidth ? styles.mapStyleButtonFullWidth : ''}`}
       onClick={onClick}
       aria-expanded={active}
       aria-label={ariaLabel}
