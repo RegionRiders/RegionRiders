@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { createComponentLogger } from '@/lib/logger/client';
-import { DataLoader } from '@/lib/services/DataLoader';
+import { DataLoader } from '@/lib/services/loaders';
 import { Regions } from '@/lib/types';
 
 const logger = createComponentLogger('useRegionLoading');

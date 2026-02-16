@@ -1,4 +1,6 @@
+import { PerformanceConfig } from '@/lib/config/performanceConfig';
 import { Regions } from '@/lib/types';
+import { LRUCache } from '@/lib/utils/lruCache';
 
 interface Bounds {
   north: number;
@@ -8,11 +10,13 @@ interface Bounds {
 }
 
 /**
- * handles bounding box calculations and viewport intersection checks for region
- * caches computed bounding boxes for performance
+ * handles bounding box calculations and viewport intersection checks for regions
+ * uses LRU cache for computed bounding boxes to prevent unbounded memory growth
  */
 export class BoundsChecker {
-  private boundingBoxCache = new Map<string, Bounds>();
+  private boundingBoxCache = new LRUCache<string, Bounds>(
+    PerformanceConfig.BOUNDS_CACHE.MAX_ENTRIES
+  );
 
   /**
    * checks if the region's bounding box intersects with viewport bounds
@@ -82,5 +86,15 @@ export class BoundsChecker {
    */
   clearCache(): void {
     this.boundingBoxCache.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getStats() {
+    return {
+      cachedBounds: this.boundingBoxCache.size,
+      maxCapacity: PerformanceConfig.BOUNDS_CACHE.MAX_ENTRIES,
+    };
   }
 }

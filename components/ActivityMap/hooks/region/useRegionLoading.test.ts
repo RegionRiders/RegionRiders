@@ -2,11 +2,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
 import { logger } from '@/lib/logger/client';
-import { DataLoader } from '@/lib/services/DataLoader';
+import { DataLoader } from '@/lib/services/loaders';
 import { useRegionLoading } from './useRegionLoading';
 
-// Mock DataLoader
-jest.mock('@/lib/services/DataLoader', () => ({
+// Mock loaders
+jest.mock('@/lib/services/loaders', () => ({
   DataLoader: {
     loadRegions: jest.fn(),
   },

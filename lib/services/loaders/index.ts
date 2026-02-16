@@ -6,8 +6,8 @@ import { RegionLoader } from './RegionLoader';
  * main data loading service - facade for gpx and region loaders
  * @example
  * ```
- * const tracks = await DataLoader.loadGPXTracks('api');
- * const regions = await DataLoader.loadRegions(bounds);
+ * const tracks = await loaders.loadGPXTracks('api');
+ * const regions = await loaders.loadRegions(bounds);
  * ```
  */
 export class DataLoader {

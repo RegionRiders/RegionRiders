@@ -1,6 +1,8 @@
 import { getApiUrl } from '@/lib/client';
+import { PerformanceConfig } from '@/lib/config/performanceConfig';
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
+import { LRUCacheWithTTL } from '@/lib/utils/lruCache';
 
 const logger = createComponentLogger('RegionCache');
 
@@ -14,12 +16,15 @@ export interface CountryData {
 
 /**
  * manages caching of country region data to avoid redundant network requests
- * implements ttl-based expiration and deduplication of concurrent requests
+ * implements LRU eviction and ttl-based expiration
  */
 export class RegionCache {
-  private static readonly CACHE_TTL = 100 * 60 * 1000; // 100 minutes
-  private countryCache = new Map<string, CountryData>();
+  private countryCache = new LRUCacheWithTTL<string, Regions[]>(
+    PerformanceConfig.REGIONS.MAX_CACHED_COUNTRIES,
+    PerformanceConfig.REGIONS.CACHE_TTL_MS
+  );
   private loadingPromises = new Map<string, Promise<Regions[]>>();
+  private totalRegionCount = 0;
 
   /**
    * loads country regions with automatic caching and deduplication
@@ -36,13 +41,18 @@ export class RegionCache {
       return this.loadingPromises.get(fileName)!;
     }
 
-    // check if cached and not expired
+    // check if cached and not expired (LRU handles this)
     const cached = this.countryCache.get(fileName);
-    if (cached && cached.data && cached.cachedAt) {
-      const age = Date.now() - cached.cachedAt;
-      if (age < RegionCache.CACHE_TTL) {
-        return cached.data;
-      }
+    if (cached) {
+      logger.debug(`Cache hit: ${country.name} (${cached.length} regions)`);
+      return cached;
+    }
+
+    // Check if we're approaching region limit
+    if (this.totalRegionCount > PerformanceConfig.REGIONS.MAX_CACHED_REGIONS * 0.9) {
+      logger.warn(
+        `Approaching region limit: ${this.totalRegionCount}/${PerformanceConfig.REGIONS.MAX_CACHED_REGIONS}`
+      );
     }
 
     // fetch and cache
@@ -61,14 +71,13 @@ export class RegionCache {
   private async fetchAndCache(country: CountryData): Promise<Regions[]> {
     const { fileName } = country;
 
-    const existing = this.countryCache.get(fileName);
     try {
       const url = getApiUrl(`/data/regions/${fileName}`);
       const response = await fetch(url);
 
       if (!response.ok) {
         logger.info(`HTTP ${response.status} for ${fileName}`);
-        return existing?.data ?? [];
+        return [];
       }
 
       const geojson = await response.json();
@@ -82,21 +91,16 @@ export class RegionCache {
         properties: feature.properties || {},
       }));
 
-      // cache it
-      this.countryCache.set(fileName, {
-        code: country.code,
-        name: country.name,
-        fileName,
-        data: regions,
-        cachedAt: Date.now(),
-      });
+      // cache it (LRU will auto-evict oldest if needed)
+      this.countryCache.set(fileName, regions);
+      this.totalRegionCount += regions.length;
 
       logger.debug(`Cached ${country.name}: ${regions.length} regions`);
 
       return regions;
     } catch (error) {
       logger.error(`Error loading ${fileName}: ${error}`);
-      return existing?.data ?? [];
+      return [];
     } finally {
       this.loadingPromises.delete(fileName);
     }
@@ -108,12 +112,41 @@ export class RegionCache {
   clear(): void {
     this.countryCache.clear();
     this.loadingPromises.clear();
+    this.totalRegionCount = 0;
+  }
+
+  /**
+   * Clean expired entries
+   */
+  cleanExpired(): number {
+    const removed = this.countryCache.cleanExpired();
+    if (removed > 0) {
+      logger.debug(`Cleaned ${removed} expired countries`);
+      // Recalculate total region count
+      this.recalculateTotalRegions();
+    }
+    return removed;
+  }
+
+  /**
+   * Recalculate total region count
+   */
+  private recalculateTotalRegions(): void {
+    this.totalRegionCount = 0;
+    this.countryCache.forEach((regions) => {
+      this.totalRegionCount += regions.length;
+    });
   }
 
   getStats() {
+    const cacheStats = this.countryCache.getStats();
     return {
-      cachedCountries: this.countryCache.size,
+      cachedCountries: cacheStats.size,
+      expiredCountries: cacheStats.expired,
       loadingCountries: this.loadingPromises.size,
+      totalRegions: this.totalRegionCount,
+      maxCountries: PerformanceConfig.REGIONS.MAX_CACHED_COUNTRIES,
+      maxRegions: PerformanceConfig.REGIONS.MAX_CACHED_REGIONS,
     };
   }
 }

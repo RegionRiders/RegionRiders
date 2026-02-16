@@ -1,12 +1,14 @@
 import { getApiUrl } from '@/lib/client';
+import { PerformanceConfig } from '@/lib/config/performanceConfig';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
+import { loadAllWithLimit } from '@/lib/utils/concurrentLoader';
 import { GPXCache } from '../cache/gpxCache';
 
 const logger = createComponentLogger('GPXLoader');
 
 /**
- * handles loading and parsing of gpx track files with caching
+ * handles loading and parsing of gpx track files with caching and concurrency control
  */
 export class GPXLoader {
   private static cache = new GPXCache();
@@ -15,55 +17,63 @@ export class GPXLoader {
    * loads gpx tracks from local storage or strava api
    *
    * @param source - data source, either 'local' files or 'api' integration
-   * @param files - optional list of specific gpx filenames to load
+   * @param options - loading options (files, limit, offset)
    * @returns promise resolving to a map of parsed gpx tracks keyed by track id
    */
   static async loadTracks(
     source: 'local' | 'api' = 'api',
-    files?: string[]
+    options?: {
+      files?: string[];
+      limit?: number;
+      offset?: number;
+    }
   ): Promise<Map<string, GPXTrack>> {
     const startTime = performance.now();
     logger.info(`Loading GPX tracks from ${source}...`);
 
-    const tracks = source === 'local' ? await this.loadFromLocal(files) : await this.loadFromAPI();
+    const tracks =
+      source === 'local' ? await this.loadFromLocal(options) : await this.loadFromAPI();
 
     const duration = (performance.now() - startTime).toFixed(2);
     logger.info(`Loaded ${tracks.size} tracks in ${duration}ms`);
+
+    // Clean expired cache entries
+    this.cache.cleanExpired();
 
     return tracks;
   }
 
   /**
-   * loads gpx tracks from local file storage with caching
+   * loads gpx tracks from local file storage with caching and concurrency limits
    *
-   * @param files - optional list of specific filenames to load
-   * @returns promise resolving to an array of parsed tracks
+   * @param options - loading options
+   * @returns promise resolving to map of parsed tracks
    * @internal
    */
-  private static async loadFromLocal(files?: string[]): Promise<Map<string, GPXTrack>> {
-    let filesToLoad = files;
+  private static async loadFromLocal(options?: {
+    files?: string[];
+    limit?: number;
+    offset?: number;
+  }): Promise<Map<string, GPXTrack>> {
+    let filesToLoad = options?.files;
+
     if (!filesToLoad || filesToLoad.length === 0) {
       filesToLoad = await this.getLocalFileList();
     }
 
-    logger.info(`Found ${filesToLoad.length} GPX files to load`);
+    // Apply offset and limit for pagination
+    const offset = options?.offset || 0;
+    const limit = options?.limit || PerformanceConfig.GPX.INITIAL_LOAD_LIMIT;
+    filesToLoad = filesToLoad.slice(offset, offset + limit);
 
-    // load all tracks in parallel with caching
-    const promises = filesToLoad.map(async (file) => {
-      try {
-        const track = await this.cache.loadTrack(file);
+    logger.info(`Loading ${filesToLoad.length} GPX files (offset: ${offset}, limit: ${limit})`);
 
-        // Set the name to the filename (without .gpx) for local files
-        const trackId = file.replace('.gpx', '');
-        const localTrack = { ...track, name: trackId, id: trackId };
-
-        return { success: true as const, track: localTrack, file };
-      } catch (error) {
-        return { success: false as const, error: String(error), file };
-      }
-    });
-
-    const results = await Promise.all(promises);
+    // load all tracks with concurrency control
+    const results = await loadAllWithLimit(
+      filesToLoad,
+      (file) => this.cache.loadTrack(file),
+      PerformanceConfig.GPX.MAX_CONCURRENT_LOADS
+    );
 
     // process results into a Map
     const tracksMap = new Map<string, GPXTrack>();
@@ -72,22 +82,26 @@ export class GPXLoader {
     for (const result of results) {
       if (result.success) {
         // Use filename (without .gpx) as key
-        const trackId = result.file.replace('.gpx', '');
-        tracksMap.set(trackId, result.track);
+        const trackId = result.item.replace('.gpx', '');
+        const localTrack = { ...result.result, name: trackId, id: trackId };
+        tracksMap.set(trackId, localTrack);
       } else {
-        const errorMsg = `Failed to load ${result.file}: ${result.error}`;
+        const errorMsg = `Failed to load ${result.item}: ${result.error.message}`;
         errors.push(errorMsg);
-        logger.error(`${errorMsg}`);
+        logger.error(errorMsg);
       }
     }
 
     if (errors.length > 0) {
-      logger.warn(`${errors.length} files failed: ${errors}`);
+      logger.warn(`${errors.length} files failed to load`);
     }
 
     // log cache stats
     const stats = this.cache.getStats();
-    logger.debug(`Cache: ${stats.cachedTracks} cached, ${stats.loadingTracks} loading`);
+    logger.debug(
+      `Cache: ${stats.cachedTracks}/${stats.maxCapacity} tracks, ` +
+        `${stats.expiredTracks} expired, ${stats.loadingTracks} loading`
+    );
 
     return tracksMap;
   }
@@ -120,6 +134,14 @@ export class GPXLoader {
       logger.warn(`Could not load GPX file list: ${error}`);
       return [];
     }
+  }
+
+  /**
+   * Get total count of available files (for pagination)
+   */
+  static async getTotalFileCount(): Promise<number> {
+    const files = await this.getLocalFileList();
+    return files.length;
   }
 
   /**

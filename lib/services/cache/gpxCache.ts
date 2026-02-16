@@ -2,20 +2,20 @@ import { getApiUrl } from '@/lib/client';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { parseGPXFile } from '@/lib/utils/gpxParser';
+import { LRUCacheWithTTL } from '@/lib/utils/lruCache';
+import { PerformanceConfig } from '@/lib/config/performanceConfig';
 
 const logger = createComponentLogger('GPXCache');
-interface GPXCacheEntry {
-  track: GPXTrack;
-  cachedAt: number;
-}
 
 /**
  * manages caching of gpx track files to avoid redundant parsing
- * implements ttl-based expiration and deduplication of concurrent requests
+ * implements LRU eviction and ttl-based expiration
  */
 export class GPXCache {
-  private static readonly CACHE_TTL = 100 * 60 * 1000; // 100 minutes
-  private trackCache = new Map<string, GPXCacheEntry>();
+  private trackCache = new LRUCacheWithTTL<string, GPXTrack>(
+    PerformanceConfig.GPX.MAX_CACHED_TRACKS,
+    PerformanceConfig.GPX.CACHE_TTL_MS
+  );
   private loadingPromises = new Map<string, Promise<GPXTrack>>();
 
   /**
@@ -30,13 +30,11 @@ export class GPXCache {
       return this.loadingPromises.get(fileName)!;
     }
 
-    // check if cached and not expired
+    // check if cached and not expired (LRU cache handles TTL)
     const cached = this.trackCache.get(fileName);
     if (cached) {
-      const age = Date.now() - cached.cachedAt;
-      if (age < GPXCache.CACHE_TTL) {
-        return cached.track;
-      }
+      logger.debug(`Cache hit: ${fileName}`);
+      return cached;
     }
 
     // fetch and cache
@@ -53,26 +51,18 @@ export class GPXCache {
    * @internal
    */
   private async fetchAndCache(fileName: string): Promise<GPXTrack> {
-    const existing = this.trackCache.get(fileName);
     try {
       const url = getApiUrl(`/data/gpx/${fileName}`);
       const track = await parseGPXFile(url);
 
-      // cache it
-      this.trackCache.set(fileName, {
-        track,
-        cachedAt: Date.now(),
-      });
+      // cache it (LRU will auto-evict if needed)
+      this.trackCache.set(fileName, track);
 
       logger.debug(`Cached ${fileName}: ${track.points.length} points`);
 
       return track;
     } catch (error) {
       logger.error(`Error loading ${fileName}: ${error}`);
-      if (existing?.track) {
-        logger.info('Serving stale track from cache after load failure');
-        return existing.track;
-      }
       throw error;
     } finally {
       this.loadingPromises.delete(fileName);
@@ -83,9 +73,12 @@ export class GPXCache {
    * gets cache statistics for debugging
    */
   getStats() {
+    const stats = this.trackCache.getStats();
     return {
-      cachedTracks: this.trackCache.size,
+      cachedTracks: stats.size,
+      expiredTracks: stats.expired,
       loadingTracks: this.loadingPromises.size,
+      maxCapacity: PerformanceConfig.GPX.MAX_CACHED_TRACKS,
     };
   }
 
@@ -96,5 +89,16 @@ export class GPXCache {
     logger.debug('Clearing cache');
     this.trackCache.clear();
     this.loadingPromises.clear();
+  }
+
+  /**
+   * Remove expired entries to free memory
+   */
+  cleanExpired(): number {
+    const removed = this.trackCache.cleanExpired();
+    if (removed > 0) {
+      logger.debug(`Cleaned ${removed} expired tracks`);
+    }
+    return removed;
   }
 }
