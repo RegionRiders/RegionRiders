@@ -16,6 +16,7 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
   const [visitData, setVisitData] = useState<Map<string, RegionVisitData>>(new Map());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const lastTrackSizeRef = useRef<number>(0);
   const lastTrackKeysRef = useRef<string>('');
   const lastRegionKeysRef = useRef<string>('');
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,18 +30,28 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
       return;
     }
 
-    const trackKeySignature = Array.from(tracks.keys()).sort().join('|');
-    const regionKeySignature = regions
-      .map((r) => r.id)
-      .sort()
-      .join('|');
+    // Fast path: check size first before expensive sort
+    if (lastTrackSizeRef.current !== tracks.size) {
+      lastTrackSizeRef.current = tracks.size;
+      // Size changed, so definitely different - skip signature check
+    } else {
+      // Size same, check if keys actually changed (expensive)
+      const trackKeySignature = Array.from(tracks.keys()).sort().join('|');
+      const regionKeySignature = regions
+        .map((r) => r.id)
+        .sort()
+        .join('|');
 
-    // Skip if nothing changed
-    if (
-      lastTrackKeysRef.current === trackKeySignature &&
-      lastRegionKeysRef.current === regionKeySignature
-    ) {
-      return;
+      // Skip if nothing changed
+      if (
+        lastTrackKeysRef.current === trackKeySignature &&
+        lastRegionKeysRef.current === regionKeySignature
+      ) {
+        return;
+      }
+
+      lastTrackKeysRef.current = trackKeySignature;
+      lastRegionKeysRef.current = regionKeySignature;
     }
 
     // Warn if approaching limits
@@ -91,8 +102,6 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
               `(${limitedTracks.length} tracks) in ${duration}ms`
             );
             
-            lastTrackKeysRef.current = trackKeySignature;
-            lastRegionKeysRef.current = regionKeySignature;
             setIsAnalyzing(false);
           }
         })
