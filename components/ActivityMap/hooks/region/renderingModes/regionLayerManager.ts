@@ -2,8 +2,8 @@
 
 import L from 'leaflet';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/regionRendering/renderingModes/getRegionColorsHeatmap';
-import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/regionRendering/renderingModes/getRegionColorsStatic';
+import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsHeatmap';
+import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsStatic';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 

@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/drawLineToAccumulator';
+import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/drawLineToAccumulator';
 import { GPXTrack } from '@/lib/types';
 
 /**

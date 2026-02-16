@@ -2,11 +2,11 @@
 
 import type { Map as LeafletMap } from 'leaflet';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
+import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
+import { useRegionLoading } from '@/components/ActivityMap/hooks/region/useRegionLoading';
+import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useRegionRendering';
 import { GPXTrack } from '@/lib/types';
-import { useActivityRendering } from './hooks/activityRendering/useActivityRendering';
-import { useRegionAnalysis } from './hooks/regionRendering/useRegionAnalysis';
-import { useRegionLoading } from './hooks/regionRendering/useRegionLoading';
-import { useRegionRendering } from './hooks/regionRendering/useRegionRendering';
 
 interface MapOrchestratorProps {
   map: LeafletMap | null;

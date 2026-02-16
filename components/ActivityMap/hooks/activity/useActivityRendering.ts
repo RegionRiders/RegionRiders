@@ -3,12 +3,9 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { ActivityRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/drawActivitiesAsHeatmap';
-import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/drawActivitiesAsLines';
-import type {
-  HeatmapRefs,
-  LinesRefs,
-} from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
+import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
+import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
+import type { HeatmapRefs, LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 

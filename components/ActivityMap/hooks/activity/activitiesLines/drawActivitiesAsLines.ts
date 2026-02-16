@@ -4,9 +4,9 @@ import L from 'leaflet';
 import {
   attachActivityClickHandler,
   attachActivityHoverEvents,
-} from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/activityLineEvents';
-import { filterVisibleTracks } from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/utils/filterVisibleTracks';
-import { LinesRefs } from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
+} from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/activityLineEvents';
+import { filterVisibleTracks } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/filterVisibleTracks';
+import { LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import type { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';

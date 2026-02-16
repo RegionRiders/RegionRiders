@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasValidation';
+import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation';
 import type { GPXTrack } from '@/lib/types';
 import type { HeatmapRefs } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
@@ -31,21 +31,17 @@ jest.mock('../utils/ensureMapPane', () => ({
 }));
 
 jest.mock(
-  '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasValidation',
+  '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation',
   () => ({
     validateCanvasDimensions: jest.fn(() => true),
   })
 );
 
+jest.mock('@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasProjection');
 jest.mock(
-  '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/canvasProjection'
+  '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount'
 );
-jest.mock(
-  '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/getHeatmapColorForCount'
-);
-jest.mock(
-  '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/utils/drawLineToAccumulator'
-);
+jest.mock('@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/drawLineToAccumulator');
 
 describe('drawActivitiesAsHeatmap', () => {
   let mockMap: any;

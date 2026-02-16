@@ -1,4 +1,4 @@
-import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
+import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import { fireEvent, render, screen } from '@/test-utils';
 import ActivityMap from './ActivityMap';
@@ -8,7 +8,7 @@ jest.mock('../../hooks/useGPXData', () => ({
   useGPXData: jest.fn(),
 }));
 
-jest.mock('./hooks/useLeafletMap', () => ({
+jest.mock('./hooks/map/useLeafletMap', () => ({
   useLeafletMap: jest.fn(),
 }));
 

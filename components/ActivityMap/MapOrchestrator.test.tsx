@@ -1,25 +1,25 @@
 import { render } from '@testing-library/react';
+import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
+import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
+import { useRegionLoading } from '@/components/ActivityMap/hooks/region/useRegionLoading';
+import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useRegionRendering';
 import type { Regions } from '@/lib/types';
-import { useActivityRendering } from './hooks/activityRendering/useActivityRendering';
-import { useRegionAnalysis } from './hooks/regionRendering/useRegionAnalysis';
-import { useRegionLoading } from './hooks/regionRendering/useRegionLoading';
-import { useRegionRendering } from './hooks/regionRendering/useRegionRendering';
 import MapOrchestrator from './MapOrchestrator';
 
 // Mock the hooks
-jest.mock('./hooks/activityRendering/useActivityRendering', () => ({
+jest.mock('@/components/ActivityMap/hooks/activity/useActivityRendering', () => ({
   useActivityRendering: jest.fn(),
 }));
 
-jest.mock('./hooks/regionRendering/useRegionAnalysis', () => ({
+jest.mock('@/components/ActivityMap/hooks/region/useRegionAnalysis', () => ({
   useRegionAnalysis: jest.fn(),
 }));
 
-jest.mock('./hooks/regionRendering/useRegionLoading', () => ({
+jest.mock('@/components/ActivityMap/hooks/region/useRegionLoading', () => ({
   useRegionLoading: jest.fn(),
 }));
 
-jest.mock('./hooks/regionRendering/useRegionRendering', () => ({
+jest.mock('@/components/ActivityMap/hooks/region/useRegionRendering', () => ({
   useRegionRendering: jest.fn(),
 }));
 

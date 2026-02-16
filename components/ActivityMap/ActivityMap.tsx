@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useMemo, useRef, useState } from 'react';
-import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
+import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';
 import MapOrchestrator from './MapOrchestrator';
