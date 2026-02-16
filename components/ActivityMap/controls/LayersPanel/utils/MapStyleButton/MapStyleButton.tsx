@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import styles from './MapStyleButton.module.css'; // New CSS file needed
+import styles from './MapStyleButton.module.css';
 
 interface MapStyleButtonProps {
   imageUrl: string;
@@ -15,7 +15,6 @@ interface MapStyleButtonProps {
 export default function MapStyleButton({
   imageUrl,
   label,
-  icon,
   onClick,
   active = false,
   'aria-label': ariaLabel = 'Toggle panel',
@@ -33,7 +32,6 @@ export default function MapStyleButton({
         <div className={styles.mapStyleButtonGradient} />
       </div>
       <div className={styles.mapStyleButtonLabel}>
-        {icon}
         <span>{label}</span>
       </div>
     </button>

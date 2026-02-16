@@ -2,13 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/regionRendering/utils/calculateWeightForZoom';
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 import { RegionLayerManager } from './renderingModes/regionLayerManager';
-
-export type RegionRenderMode = 'heatmap' | 'static';
 
 const logger = createComponentLogger('useRegionRendering');
 
@@ -16,7 +15,7 @@ export function useRegionRendering(
   map: L.Map | null,
   regions: Regions[],
   visitData: Map<string, RegionVisitData>,
-  showBorders: boolean = true,
+  showRegions: boolean = true,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = 2
 ) {
@@ -49,7 +48,7 @@ export function useRegionRendering(
       return;
     }
 
-    if (!showBorders) {
+    if (!showRegions) {
       layerManagerRef.current.clear();
       return;
     }
@@ -66,7 +65,7 @@ export function useRegionRendering(
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [regions, showBorders, mode, regionBorderThickness]);
+  }, [regions, showRegions, mode, regionBorderThickness]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {

@@ -1,32 +1,17 @@
 import { Accordion, Button, Group, Slider, Stack, Switch, Text } from '@mantine/core';
+import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 export function ActivitiesSection({
-  showHeatmap,
-  onShowHeatmapChange,
-  activityMode,
-  onActivityModeChange,
-  activityThickness,
-  onActivityThicknessChange,
-  heatmapDensity,
-  onHeatmapDensityChange,
-}: Pick<
-  LayersPanelProps,
-  | 'onShowHeatmapChange'
-  | 'showHeatmap'
-  | 'onActivityModeChange'
-  | 'activityMode'
-  | 'activityThickness'
-  | 'onActivityThicknessChange'
-  | 'heatmapDensity'
-  | 'onHeatmapDensityChange'
->) {
+  settings,
+  onSettingChange,
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   return (
     <Accordion.Item value="activities">
       <Accordion.Control>
         <Group justify="space-between" w="100%">
           <Switch
-            checked={showHeatmap}
-            onChange={(e) => onShowHeatmapChange?.(e.currentTarget.checked)}
+            checked={settings.showActivities}
+            onChange={(e) => onSettingChange('showActivities', e.currentTarget.checked)}
             aria-label="Toggle activity layer"
           />
           <Text fw={600} size="sm" mr="auto">
@@ -41,15 +26,15 @@ export function ActivitiesSection({
             <Group gap="xs">
               <Button
                 size="sm"
-                variant={activityMode === 'heatmap' ? 'filled' : 'default'}
-                onClick={() => onActivityModeChange?.('heatmap')}
+                variant={settings.activityMode === 'heatmap' ? 'filled' : 'default'}
+                onClick={() => onSettingChange('activityMode', 'heatmap')}
               >
                 Heatmap
               </Button>
               <Button
                 size="sm"
-                variant={activityMode === 'lines' ? 'filled' : 'default'}
-                onClick={() => onActivityModeChange?.('lines')}
+                variant={settings.activityMode === 'lines' ? 'filled' : 'default'}
+                onClick={() => onSettingChange('activityMode', 'lines')}
               >
                 Lines
               </Button>
@@ -57,39 +42,39 @@ export function ActivitiesSection({
           </div>
 
           <div>
-            <Text size="sm"> Line thickness: {activityThickness ?? 3}px</Text>
+            <Text size="sm"> Line thickness: {settings.activityThickness ?? 3}px</Text>
             <Slider
               w="100%"
               min={1}
               max={10}
               step={1}
-              value={activityThickness ?? 3}
-              onChange={onActivityThicknessChange}
+              value={settings.activityThickness ?? 3}
+              onChange={(value) => onSettingChange('activityThickness', value)}
             />
           </div>
 
-          {activityMode === 'heatmap' && (
+          {settings.activityMode === 'heatmap' && (
             <div>
-              <Text size="sm"> Heatmap pixel density: {heatmapDensity ?? 2}</Text>
+              <Text size="sm"> Heatmap pixel density: {settings.heatmapDensity ?? 2}</Text>
               <Slider
                 w="100%"
                 min={0.25}
                 max={5}
                 step={0.25}
-                value={heatmapDensity ?? 2}
-                onChange={onHeatmapDensityChange}
+                value={settings.heatmapDensity ?? 2}
+                onChange={(value) => onSettingChange('heatmapDensity', value)}
               />
             </div>
           )}
 
-          {activityMode === 'lines' && (
+          {settings.activityMode === 'lines' && (
             <div>
               <Text size="sm"> Lines ColorScheme</Text>
               placeholder {/* TODO */}
             </div>
           )}
 
-          {activityMode === 'heatmap' && (
+          {settings.activityMode === 'heatmap' && (
             <div>
               <Text size="sm"> Heatmap ColorScheme</Text>
               placeholder {/* TODO */}

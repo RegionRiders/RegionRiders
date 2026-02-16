@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { ActivityRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activityRendering/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activityRendering/activitiesLines/drawActivitiesAsLines';
 import type {
@@ -10,8 +11,6 @@ import type {
 } from '@/components/ActivityMap/hooks/activityRendering/activityTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
-
-export type ActivityRenderMode = 'heatmap' | 'lines';
 
 const logger = createComponentLogger('useActivityRendering');
 

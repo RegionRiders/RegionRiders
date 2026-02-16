@@ -1,17 +1,21 @@
-interface LayersPanelProps {
-  onActivityModeChange?: (mode: 'heatmap' | 'lines') => void;
-  onShowHeatmapChange?: (show: boolean) => void;
-  onShowBordersChange?: (show: boolean) => void;
-  activityMode?: 'heatmap' | 'lines';
-  showHeatmap?: boolean;
-  showBorders?: boolean;
+export type RegionRenderMode = 'heatmap' | 'static';
+export type ActivityRenderMode = 'heatmap' | 'lines';
+
+export interface MapSettings {
+  // Activity settings
+  activityMode: ActivityRenderMode;
+  showActivities: boolean;
+  activityThickness: number;
+  heatmapDensity: number;
+
+  // Region settings
+  regionMode: RegionRenderMode;
+  showRegions: boolean;
+  regionBorderThickness: number;
+}
+
+export interface LayersPanelProps {
+  settings: MapSettings;
+  onSettingChange: <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => void;
   placeholderImageUrl?: string;
-  onActivityThicknessChange?: (thickness: number) => void;
-  activityThickness?: number;
-  onHeatmapDensityChange?: (density: number) => void;
-  heatmapDensity?: number;
-  regionMode?: 'heatmap' | 'static';
-  onRegionModeChange?: (mode: 'heatmap' | 'static') => void;
-  regionBorderThickness?: number;
-  onRegionBorderThicknessChange?: (thickness: number) => void;
 }
