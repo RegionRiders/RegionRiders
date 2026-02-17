@@ -1,11 +1,13 @@
+import { ReactNode } from 'react';
 import { Button } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 
 interface ColorSwatchButtonProps {
   color: RGBA;
-  index: number;
-  selectedIndex: number;
+  index?: number;
+  selectedIndex?: number;
   onClick?: () => void;
+  children?: ReactNode;
 }
 
 export function ColorSwatchButton({
@@ -13,6 +15,7 @@ export function ColorSwatchButton({
   index,
   selectedIndex,
   onClick = () => {},
+  children,
 }: ColorSwatchButtonProps) {
   const rgbaColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`;
   const rgbaFilledColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 1)`;
@@ -37,7 +40,9 @@ export function ColorSwatchButton({
         padding: 0,
         borderRadius: '3px',
       }}
-      aria-label={`Select color ${index + 1}`}
-    />
+      aria-label={`Select color ${index !== undefined ? index + 1 : 'preview'}`}
+    >
+      {children}
+    </Button>
   );
 }

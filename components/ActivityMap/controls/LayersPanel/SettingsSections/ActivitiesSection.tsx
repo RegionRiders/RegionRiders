@@ -1,4 +1,16 @@
-import { Accordion, Button, Group, SimpleGrid, Slider, Stack, Switch, Text } from '@mantine/core';
+import { IconEdit } from '@tabler/icons-react';
+import {
+  Accordion,
+  Box,
+  Button,
+  Group,
+  SimpleGrid,
+  Slider,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import { ColorSwatchButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSwatchButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
@@ -69,9 +81,10 @@ export function ActivitiesSection({
           )}
 
           {settings.activityMode === 'lines' && (
-            <div>
+            <>
               <Text size="sm"> Lines ColorScheme</Text>
               <SimpleGrid cols={settings.lineColorSwatches.length} spacing="xs">
+                {/*Color buttons*/}
                 {settings.lineColorSwatches.map((color, index) => (
                   <ColorSwatchButton
                     key={index}
@@ -82,7 +95,36 @@ export function ActivitiesSection({
                   />
                 ))}
               </SimpleGrid>
-            </div>
+              <SimpleGrid
+                cols={settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2}
+                spacing="xs"
+              >
+                {/*Selected color*/}
+                <ColorSwatchButton
+                  color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
+                  onClick={() => {}}
+                >
+                  <IconEdit
+                    style={{
+                      position: 'absolute',
+                      alignSelf: 'center',
+                      top: 2,
+                      right: 2,
+                      filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                    }}
+                  />
+                </ColorSwatchButton>
+
+                {/* Simple color editor */}
+                <Box
+                  style={{
+                    gridColumn: `span ${(settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2) - 1}`,
+                  }}
+                >
+                  <TextInput placeholder="rgba(255, 0, 0, 0.5)" />
+                </Box>
+              </SimpleGrid>
+            </>
           )}
 
           {settings.activityMode === 'heatmap' && (
