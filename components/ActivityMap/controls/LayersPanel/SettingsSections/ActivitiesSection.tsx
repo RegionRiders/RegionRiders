@@ -1,4 +1,5 @@
 import { Accordion, Button, Group, SimpleGrid, Slider, Stack, Switch, Text } from '@mantine/core';
+import { ColorSwatchButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSwatchButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 export function ActivitiesSection({
@@ -70,8 +71,16 @@ export function ActivitiesSection({
           {settings.activityMode === 'lines' && (
             <div>
               <Text size="sm"> Lines ColorScheme</Text>
-              <SimpleGrid cols={settings.lineColorSwatches.length}>
-                {/*{settings.lineColorSwatches.map()}*/}
+              <SimpleGrid cols={settings.lineColorSwatches.length} spacing="xs">
+                {settings.lineColorSwatches.map((color, index) => (
+                  <ColorSwatchButton
+                    key={index}
+                    color={color}
+                    index={index}
+                    selectedIndex={settings.selectedLineSwatchIndex}
+                    onClick={() => onSettingChange('selectedLineSwatchIndex', index)}
+                  />
+                ))}
               </SimpleGrid>
             </div>
           )}

@@ -53,5 +53,5 @@ export function useActivityRendering(
       lineColor: activityLineColor,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
-  }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity]);
+  }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity, activityLineColor]);
 }
