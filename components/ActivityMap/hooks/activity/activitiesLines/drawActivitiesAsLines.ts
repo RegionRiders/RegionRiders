@@ -7,6 +7,7 @@ import {
 } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/activityLineEvents';
 import { filterVisibleTracks } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/filterVisibleTracks';
 import { LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { rgbToHex } from '@/components/ActivityMap/utils/rgbToHex';
 import { createComponentLogger } from '@/lib/logger/client';
 import type { GPXPoint, GPXTrack } from '@/lib/types';
 import { ensureMapPane } from '../utils/ensureMapPane';
@@ -68,17 +69,20 @@ export function drawActivitiesAsLines(
       visibleTracks.forEach(([trackId, track]) => {
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
 
+        const color = rgbToHex(refs.lineColor[0], refs.lineColor[1], refs.lineColor[2]);
+        const opacity = refs.lineColor[3];
+
         const polyline = L.polyline(latlngs, {
-          color: '#FF6B6B',
+          color,
           weight: refs.lineThickness || 2,
-          opacity: 0.6,
+          opacity,
           renderer: canvasRenderer,
           interactive: true,
           smoothFactor: 1.5,
         });
 
         // Use utility functions for event handling
-        attachActivityHoverEvents(polyline, refs.lineThickness);
+        attachActivityHoverEvents(polyline, refs.lineThickness, refs.lineColor);
         attachActivityClickHandler(polyline, map, trackId, track);
 
         activityGroup!.addLayer(polyline);

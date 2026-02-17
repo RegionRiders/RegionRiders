@@ -1,3 +1,5 @@
+import { RGBA } from '@/components/ActivityMap/mapTypes';
+
 export type RegionRenderMode = 'heatmap' | 'static';
 export type ActivityRenderMode = 'heatmap' | 'lines';
 
@@ -7,6 +9,8 @@ export interface MapSettings {
   showActivities: boolean;
   activityThickness: number;
   heatmapDensity: number;
+  lineColorSwatches: [RGBA, RGBA, RGBA, RGBA, RGBA, RGBA];
+  selectedLineSwatchIndex: number;
 
   // Region settings
   regionMode: RegionRenderMode;

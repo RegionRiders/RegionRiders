@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import L from 'leaflet';
+import { RGBA } from '@/components/ActivityMap/mapTypes';
 
 export interface CanvasDimensions {
   canvasWidth: number;
@@ -36,6 +37,7 @@ export interface HeatmapRefs extends RenderRefs {
 // Line-specific refs (for lines module)
 export interface LinesRefs extends RenderRefs {
   lineThickness: number;
+  lineColor: RGBA;
 }
 
 export interface PixelPoint {

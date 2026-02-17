@@ -1,18 +1,25 @@
 import L from 'leaflet';
+import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { rgbToHex } from '@/components/ActivityMap/utils/rgbToHex';
 import { GPXTrack } from '@/lib/types';
 
 /**
  * Attaches hover event handlers to a polyline
  * Changes color and weight on mouseover/mouseout
  */
-export function attachActivityHoverEvents(polyline: L.Polyline, baseWeight: number = 2): void {
+export function attachActivityHoverEvents(
+  polyline: L.Polyline,
+  baseWeight: number = 2,
+  baseColor: RGBA
+): void {
   polyline.on('mouseover', function (this: L.Polyline) {
     this.setStyle({ color: '#4ADE80', weight: baseWeight * 2, opacity: 1 });
     this.bringToFront();
   });
 
   polyline.on('mouseout', function (this: L.Polyline) {
-    this.setStyle({ color: '#FF6B6B', weight: baseWeight, opacity: 0.6 });
+    const color = rgbToHex(baseColor[0], baseColor[1], baseColor[2]);
+    this.setStyle({ color, weight: baseWeight, opacity: baseColor[3] });
   });
 }
 

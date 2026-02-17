@@ -6,6 +6,7 @@ import { ActivityRenderMode } from '@/components/ActivityMap/controls/LayersPane
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
 import type { HeatmapRefs, LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
@@ -17,7 +18,8 @@ export function useActivityRendering(
   showActivities: boolean = true,
   mode: ActivityRenderMode = 'heatmap',
   activityThickness: number = 3,
-  heatmapDensity: number = 2
+  heatmapDensity: number = 2,
+  activityLineColor: RGBA = [255, 0, 0, 155]
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +50,7 @@ export function useActivityRendering(
       renderAbortRef,
       renderTimeoutRef,
       lineThickness: activityThickness,
+      lineColor: activityLineColor,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity]);

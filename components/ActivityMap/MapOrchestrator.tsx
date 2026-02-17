@@ -24,7 +24,8 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.showActivities,
     settings.activityMode,
     settings.activityThickness,
-    settings.heatmapDensity
+    settings.heatmapDensity,
+    settings.lineColorSwatches[settings.selectedLineSwatchIndex]
   );
   useRegionRendering(
     map,

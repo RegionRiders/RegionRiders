@@ -1,4 +1,4 @@
-import { Accordion, Button, Group, Slider, Stack, Switch, Text } from '@mantine/core';
+import { Accordion, Button, Group, SimpleGrid, Slider, Stack, Switch, Text } from '@mantine/core';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 export function ActivitiesSection({
@@ -70,7 +70,9 @@ export function ActivitiesSection({
           {settings.activityMode === 'lines' && (
             <div>
               <Text size="sm"> Lines ColorScheme</Text>
-              placeholder {/* TODO */}
+              <SimpleGrid cols={settings.lineColorSwatches.length}>
+                {/*{settings.lineColorSwatches.map()}*/}
+              </SimpleGrid>
             </div>
           )}
 
