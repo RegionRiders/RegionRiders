@@ -9,7 +9,7 @@ export interface MapSettings {
   showActivities: boolean;
   activityThickness: number;
   heatmapDensity: number;
-  lineColorSwatches: [RGBA, RGBA, RGBA, RGBA, RGBA, RGBA];
+  lineColorSwatches: RGBA[];
   selectedLineSwatchIndex: number;
 
   // Region settings

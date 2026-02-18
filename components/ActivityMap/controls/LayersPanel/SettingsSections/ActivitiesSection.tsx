@@ -9,10 +9,10 @@ import {
   Stack,
   Switch,
   Text,
-  TextInput,
 } from '@mantine/core';
 import { ColorSwatchButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSwatchButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { ColorRgbaInput } from './utils/ColorRgbaInput';
 
 export function ActivitiesSection({
   settings,
@@ -121,7 +121,14 @@ export function ActivitiesSection({
                     gridColumn: `span ${(settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2) - 1}`,
                   }}
                 >
-                  <TextInput placeholder="rgba(255, 0, 0, 0.5)" />
+                  <ColorRgbaInput
+                    color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
+                    onChange={(newColor) => {
+                      const newSwatches = [...settings.lineColorSwatches];
+                      newSwatches[settings.selectedLineSwatchIndex] = newColor;
+                      onSettingChange('lineColorSwatches', newSwatches);
+                    }}
+                  />
                 </Box>
               </SimpleGrid>
             </>
