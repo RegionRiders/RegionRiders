@@ -10,6 +10,7 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
+import { ColorPickerModal } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModal';
 import { ColorSwatchButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSwatchButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorRgbaInput } from './utils/ColorRgbaInput';
@@ -99,6 +100,14 @@ export function ActivitiesSection({
                 cols={settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2}
                 spacing="xs"
               >
+                <ColorPickerModal
+                  color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
+                  onColorChange={(newColor) => {
+                    const newSwatches = [...settings.lineColorSwatches];
+                    newSwatches[settings.selectedLineSwatchIndex] = newColor;
+                    onSettingChange('lineColorSwatches', newSwatches);
+                  }}
+                />
                 {/*Selected color*/}
                 <ColorSwatchButton
                   color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
