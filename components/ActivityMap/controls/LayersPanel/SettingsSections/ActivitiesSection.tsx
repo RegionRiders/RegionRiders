@@ -1,4 +1,3 @@
-import { IconEdit } from '@tabler/icons-react';
 import {
   Accordion,
   Box,
@@ -100,6 +99,7 @@ export function ActivitiesSection({
                 cols={settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2}
                 spacing="xs"
               >
+                {/* Selected color full editor */}
                 <ColorPickerModal
                   color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
                   onColorChange={(newColor) => {
@@ -108,23 +108,7 @@ export function ActivitiesSection({
                     onSettingChange('lineColorSwatches', newSwatches);
                   }}
                 />
-                {/*Selected color*/}
-                <ColorSwatchButton
-                  color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
-                  onClick={() => {}}
-                >
-                  <IconEdit
-                    style={{
-                      position: 'absolute',
-                      alignSelf: 'center',
-                      top: 2,
-                      right: 2,
-                      filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
-                    }}
-                  />
-                </ColorSwatchButton>
-
-                {/* Simple color editor */}
+                {/* Selected color simple editor */}
                 <Box
                   style={{
                     gridColumn: `span ${(settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2) - 1}`,

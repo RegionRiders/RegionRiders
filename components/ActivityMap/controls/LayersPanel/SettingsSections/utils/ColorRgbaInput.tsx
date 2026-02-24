@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { TextInput } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { colorToString } from '@/components/ActivityMap/utils/colorToString';
 import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgba';
-import { rgbaToString } from '@/components/ActivityMap/utils/rgbaToString';
 
 interface ColorRgbaInputProps {
   color: RGBA;
@@ -10,12 +10,12 @@ interface ColorRgbaInputProps {
 }
 
 export function ColorRgbaInput({ color, onChange }: ColorRgbaInputProps) {
-  const [inputValue, setInputValue] = useState(() => rgbaToString(color));
+  const [inputValue, setInputValue] = useState(() => colorToString(color));
   const isFocused = useRef(false);
 
   useEffect(() => {
     if (!isFocused.current) {
-      setInputValue(rgbaToString(color));
+      setInputValue(colorToString(color));
     }
   }, [color]);
 
@@ -24,9 +24,9 @@ export function ColorRgbaInput({ color, onChange }: ColorRgbaInputProps) {
     const parsed = parseColorToRgba(inputValue);
     if (parsed) {
       onChange(parsed);
-      setInputValue(rgbaToString(parsed));
+      setInputValue(colorToString(parsed));
     } else {
-      setInputValue(rgbaToString(color));
+      setInputValue(colorToString(color));
     }
   };
 
