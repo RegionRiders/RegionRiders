@@ -37,7 +37,7 @@ function rgbaToHsla(r: number, g: number, b: number, a: number): HSLA {
         break;
     }
   }
-  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100), a };
+  return { h: h * 360, s: s * 100, l: l * 100, a };
 }
 
 function hslaToRgba(h: number, s: number, l: number, a: number): RGBA {
@@ -92,77 +92,105 @@ type SliderMode = 'hsla' | 'rgba';
 
 export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [draft, setDraft] = useState<RGBA>(color);
   const [mode, setMode] = useState<SliderMode>('hsla');
 
+  // HSLA stored at full float — authoritative source for HSLA mode
+  const [hsla, setHsla] = useState<HSLA>(() => rgbaToHsla(...color));
+
+  // RGBA stored as integers — authoritative source for RGBA mode
+  const [rgba, setRgba] = useState<RGBA>(color);
+
+  // Derived RGBA from current hsla — used for preview swatch and output in HSLA mode
+  const rgbaFromHsla: RGBA = hslaToRgba(hsla.h, hsla.s, hsla.l, hsla.a);
+
   function handleOpen() {
-    setDraft(color);
+    setHsla(rgbaToHsla(...color));
+    setRgba(color);
     open();
   }
 
-  function handlePickerChange(value: string) {
-    // Mantine emits "hsla(h, s%, l%, a)" — parseColorToRgba doesn't handle this format
-    const hslaMatch = value.match(
-      /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/
-    );
-    if (hslaMatch) {
-      const h = parseFloat(hslaMatch[1]);
-      const s = parseFloat(hslaMatch[2]);
-      const l = parseFloat(hslaMatch[3]);
-      const a = hslaMatch[4] !== undefined ? parseFloat(hslaMatch[4]) : 1;
-      setDraft(hslaToRgba(h, s, l, a));
-      return;
-    }
-    // Fallback for any other format the picker might emit
-    const parsed = parseColorToRgba(value);
-    if (parsed) {
-      setDraft(parsed);
-    }
-  }
-
-  function handleHslaChange(key: keyof HSLA, value: number) {
-    const next = { ...rgbaToHsla(...draft), [key]: value };
-    setDraft(hslaToRgba(next.h, next.s, next.l, next.a));
-  }
-
-  function handleRgbaChange(index: 0 | 1 | 2 | 3, value: number) {
-    const next = [...draft] as RGBA;
-    next[index] = value;
-    setDraft(next);
-  }
-
-  function handleOk() {
-    onColorChange(draft);
+  function handleClose() {
     close();
   }
 
-  const [r, g, b, a] = draft;
-  const { h, s, l } = rgbaToHsla(r, g, b, a);
-  const colorString = rgbaToString(draft);
+  // Native picker emits hsla(...) strings — set hsla directly, sync rgba
+  function handlePickerChange(value: string) {
+    const match = value.match(
+      /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/
+    );
+    if (match) {
+      const next: HSLA = {
+        h: parseFloat(match[1]),
+        s: parseFloat(match[2]),
+        l: parseFloat(match[3]),
+        a: match[4] !== undefined ? parseFloat(match[4]) : 1,
+      };
+      setHsla(next);
+      setRgba(hslaToRgba(next.h, next.s, next.l, next.a));
+      return;
+    }
+    const parsed = parseColorToRgba(value);
+    if (parsed) {
+      setRgba(parsed);
+      setHsla(rgbaToHsla(...parsed));
+    }
+  }
 
-  // Keep the native ColorPicker in hsla format so its built-in
-  // hue + alpha sliders stay fully functional and unduplicated.
-  const pickerValue = `hsla(${h}, ${s}%, ${l}%, ${a})`;
+  // HSLA sliders — write directly to hsla, sync rgba
+  function handleHslaChange(key: keyof HSLA, value: number) {
+    setHsla((prev) => {
+      const next = { ...prev, [key]: value };
+      setRgba(hslaToRgba(next.h, next.s, next.l, next.a));
+      return next;
+    });
+  }
+
+  // RGBA sliders — write directly to rgba, sync hsla
+  function handleRgbaChange(index: 0 | 1 | 2 | 3, value: number) {
+    setRgba((prev) => {
+      const next = [...prev] as RGBA;
+      next[index] = value;
+      setHsla(rgbaToHsla(...next));
+      return next;
+    });
+  }
+
+  // Text input — syncs both
+  function handleTextInput(parsed: RGBA) {
+    setRgba(parsed);
+    setHsla(rgbaToHsla(...parsed));
+  }
+
+  function handleOk() {
+    onColorChange(mode === 'hsla' ? rgbaFromHsla : rgba);
+    close();
+  }
+
+  // Display values — rounded only for labels and slider positions
+  const { h, s, l, a } = hsla;
+  const hD = Math.round(h);
+  const sD = Math.round(s);
+  const lD = Math.round(l);
+  const [r, g, b] = rgba;
+
+  const pickerValue = `hsla(${hD}, ${sD}%, ${lD}%, ${a})`;
 
   return (
     <>
-      {/* Trigger */}
-      <ColorSwatchButton color={draft} onClick={handleOpen} />
+      <ColorSwatchButton color={mode === 'hsla' ? rgbaFromHsla : rgba} onClick={handleOpen} />
 
       <Modal
         opened={opened}
-        onClose={close}
+        onClose={handleClose}
         title="Pick a colour"
-        size="xs"
         centered
         zIndex={9999}
         portalProps={{ target: document.body }}
+        size="xs"
       >
         <Stack gap="xs">
-          {/* Native Mantine picker — includes the 2D gradient, hue slider, and alpha slider */}
           <ColorPicker format="hsla" value={pickerValue} onChange={handlePickerChange} fullWidth />
 
-          {/* Mode toggle for the extra custom sliders below */}
           <SegmentedControl
             value={mode}
             onChange={(v) => setMode(v as SliderMode)}
@@ -174,29 +202,27 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
             size="xs"
           />
 
-          {/* HSLA: only Saturation and Lightness — hue & alpha are native above */}
           {mode === 'hsla' && (
             <>
-              <SliderRow label={`S — ${s}%`}>
+              <SliderRow label={`S — ${sD}%`}>
                 <ColorSlider
                   aria-label="Saturation"
                   value={s / 100}
-                  onChange={(v) => handleHslaChange('s', Math.round(v * 100))}
-                  gradient={`linear-gradient(to right, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`}
+                  onChange={(v) => handleHslaChange('s', v * 100)}
+                  gradient={`linear-gradient(to right, hsl(${hD},0%,${lD}%), hsl(${hD},100%,${lD}%))`}
                 />
               </SliderRow>
-              <SliderRow label={`L — ${l}%`}>
+              <SliderRow label={`L — ${lD}%`}>
                 <ColorSlider
                   aria-label="Lightness"
                   value={l / 100}
-                  onChange={(v) => handleHslaChange('l', Math.round(v * 100))}
-                  gradient={`linear-gradient(to right, #000, hsl(${h},${s}%,50%), #fff)`}
+                  onChange={(v) => handleHslaChange('l', v * 100)}
+                  gradient={`linear-gradient(to right, #000, hsl(${hD},${sD}%,50%), #fff)`}
                 />
               </SliderRow>
             </>
           )}
 
-          {/* RGBA: only R, G, B — alpha is native above */}
           {mode === 'rgba' && (
             <>
               <SliderRow label={`R — ${r}`}>
@@ -226,11 +252,13 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
             </>
           )}
 
-          {/* Text readout */}
-          <ColorRgbaInput color={draft} onChange={setDraft} />
+          <ColorRgbaInput
+            color={mode === 'hsla' ? rgbaFromHsla : rgba}
+            onChange={handleTextInput}
+          />
 
           <Group justify="flex-end" gap="xs">
-            <Button variant="default" size="xs" onClick={close}>
+            <Button variant="default" size="xs" onClick={handleClose}>
               Cancel
             </Button>
             <Button size="xs" onClick={handleOk}>
