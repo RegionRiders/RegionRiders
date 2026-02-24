@@ -1,4 +1,4 @@
-export type ColorFormat = 'rgb' | 'rgba' | 'hex';
+export type ColorFormat = 'rgb' | 'rgba' | 'hex' | 'hsla';
 
 export function detectColorFormat(input: string): ColorFormat | null {
   const trimmed = input.trim();
@@ -31,6 +31,10 @@ export function detectColorFormat(input: string): ColorFormat | null {
   // hex without leading #
   if (/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$|^[0-9a-fA-F]{8}$/.test(trimmed)) {
     return 'hex';
+  }
+
+  if (/^hsla?\(\s*[\d.]+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(?:,\s*[\d.]+\s*)?\)$/.test(trimmed)) {
+    return 'hsla';
   }
 
   return null;

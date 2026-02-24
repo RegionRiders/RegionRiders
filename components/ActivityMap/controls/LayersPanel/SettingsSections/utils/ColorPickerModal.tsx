@@ -1,7 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Button, ColorPicker, Group, Modal, SegmentedControl, Stack, Text } from '@mantine/core';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Button,
+  ColorPicker,
+  Group,
+  Modal,
+  SegmentedControl,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgba';
@@ -182,7 +191,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
       <Modal
         opened={opened}
         onClose={handleClose}
-        title="Pick a colour"
+        title="Pick a color"
         centered
         zIndex={9999}
         portalProps={{ target: document.body }}
@@ -258,10 +267,16 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
             size="xs"
           />
 
-          <ColorRgbaInput
-            color={mode === 'hsla' ? rgbaFromHsla : rgba}
-            onChange={handleTextInput}
-          />
+          {mode === 'rgba' && <ColorRgbaInput color={rgba} onChange={handleTextInput} />}
+          {mode === 'hsla' && (
+            <ColorHslaInput
+              hsla={hsla}
+              onChange={(parsed) => {
+                setHsla(parsed);
+                setRgba(hslaToRgba(parsed.h, parsed.s, parsed.l, parsed.a));
+              }}
+            />
+          )}
 
           <Group justify="flex-end" gap="xs">
             <Button variant="default" size="xs" onClick={handleClose}>
@@ -285,5 +300,50 @@ function SliderRow({ label, children }: { label: string; children: React.ReactNo
         {label}
       </Text>
     </Group>
+  );
+}
+
+function hslaToString({ h, s, l, a }: HSLA): string {
+  return `hsla(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%, ${+a.toFixed(2)})`;
+}
+
+function ColorHslaInput({ hsla, onChange }: { hsla: HSLA; onChange: (hsla: HSLA) => void }) {
+  const [inputValue, setInputValue] = useState(() => hslaToString(hsla));
+  const isFocused = useRef(false);
+
+  useEffect(() => {
+    if (!isFocused.current) {
+      setInputValue(hslaToString(hsla));
+    }
+  }, [hsla]);
+
+  const apply = () => {
+    isFocused.current = false;
+    const match = inputValue.match(
+      /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/
+    );
+    if (match) {
+      onChange({
+        h: parseFloat(match[1]),
+        s: parseFloat(match[2]),
+        l: parseFloat(match[3]),
+        a: match[4] !== undefined ? parseFloat(match[4]) : 1,
+      });
+      return;
+    }
+    // Reset on invalid input
+    setInputValue(hslaToString(hsla));
+  };
+
+  return (
+    <TextInput
+      value={inputValue}
+      onChange={(e) => setInputValue(e.currentTarget.value)}
+      onFocus={() => {
+        isFocused.current = true;
+      }}
+      onBlur={apply}
+      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+    />
   );
 }
