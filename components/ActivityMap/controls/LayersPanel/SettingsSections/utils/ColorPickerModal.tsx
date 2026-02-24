@@ -1,18 +1,13 @@
+'use client';
+
 import { useState } from 'react';
-import {
-  Button,
-  ColorPicker,
-  ColorSwatch,
-  Group,
-  Modal,
-  SegmentedControl,
-  Slider,
-  Stack,
-  Text,
-} from '@mantine/core';
+import { Button, ColorPicker, Group, Modal, SegmentedControl, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { RGBA } from '@/components/ActivityMap/mapTypes';
+import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgba';
+import { ColorSlider } from './_ColorSlider';
+import { ColorRgbaInput } from './ColorRgbaInput';
+import { ColorSwatchButton } from './ColorSwatchButton';
 
 // ─── Conversions ──────────────────────────────────────────────────────────────
 
@@ -86,18 +81,6 @@ function rgbaToString([r, g, b, a]: RGBA) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-// ─── Slider style helper ──────────────────────────────────────────────────────
-
-function gradientTrack(gradient: string) {
-  return {
-    track: {
-      background: gradient,
-      '&::before': { background: 'transparent' },
-    },
-    bar: { background: 'transparent' },
-  };
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface ColorPickerModalProps {
@@ -113,11 +96,24 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
   const [mode, setMode] = useState<SliderMode>('hsla');
 
   function handleOpen() {
-    setDraft(color); // always reset draft to current committed color
+    setDraft(color);
     open();
   }
 
   function handlePickerChange(value: string) {
+    // Mantine emits "hsla(h, s%, l%, a)" — parseColorToRgba doesn't handle this format
+    const hslaMatch = value.match(
+      /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/
+    );
+    if (hslaMatch) {
+      const h = parseFloat(hslaMatch[1]);
+      const s = parseFloat(hslaMatch[2]);
+      const l = parseFloat(hslaMatch[3]);
+      const a = hslaMatch[4] !== undefined ? parseFloat(hslaMatch[4]) : 1;
+      setDraft(hslaToRgba(h, s, l, a));
+      return;
+    }
+    // Fallback for any other format the picker might emit
     const parsed = parseColorToRgba(value);
     if (parsed) {
       setDraft(parsed);
@@ -142,33 +138,31 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
 
   const [r, g, b, a] = draft;
   const { h, s, l } = rgbaToHsla(r, g, b, a);
-  const cssOpaque = `rgba(${r}, ${g}, ${b}, 1)`;
   const colorString = rgbaToString(draft);
+
+  // Keep the native ColorPicker in hsla format so its built-in
+  // hue + alpha sliders stay fully functional and unduplicated.
+  const pickerValue = `hsla(${h}, ${s}%, ${l}%, ${a})`;
 
   return (
     <>
-      <ColorSwatch
-        color={rgbaToString(color)}
-        onClick={handleOpen}
-        style={{ cursor: 'pointer' }}
-        size={28}
-        withShadow
-      />
+      {/* Trigger */}
+      <ColorSwatchButton color={draft} onClick={handleOpen} />
 
       <Modal
         opened={opened}
         onClose={close}
-        title="Pick a color"
+        title="Pick a colour"
         size="xs"
         centered
         zIndex={9999}
         portalProps={{ target: document.body }}
       >
-        <Stack gap="md">
-          {/* 2D picker synced with draft */}
-          <ColorPicker format="rgba" value={colorString} onChange={handlePickerChange} fullWidth />
+        <Stack gap="xs">
+          {/* Native Mantine picker — includes the 2D gradient, hue slider, and alpha slider */}
+          <ColorPicker format="hsla" value={pickerValue} onChange={handlePickerChange} fullWidth />
 
-          {/* Slider mode toggle */}
+          {/* Mode toggle for the extra custom sliders below */}
           <SegmentedControl
             value={mode}
             onChange={(v) => setMode(v as SliderMode)}
@@ -177,150 +171,85 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
               { label: 'RGBA', value: 'rgba' },
             ]}
             fullWidth
+            size="xs"
           />
 
-          {/* HSLA sliders */}
+          {/* HSLA: only Saturation and Lightness — hue & alpha are native above */}
           {mode === 'hsla' && (
-            <Stack gap="xs">
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Hue — {h}°
-                </Text>
-                <Slider
-                  min={0}
-                  max={360}
-                  step={1}
-                  value={h}
-                  onChange={(v) => handleHslaChange('h', v)}
-                  styles={gradientTrack(
-                    'linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))'
-                  )}
+            <>
+              <SliderRow label={`S — ${s}%`}>
+                <ColorSlider
+                  aria-label="Saturation"
+                  value={s / 100}
+                  onChange={(v) => handleHslaChange('s', Math.round(v * 100))}
+                  gradient={`linear-gradient(to right, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`}
                 />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Saturation — {s}%
-                </Text>
-                <Slider
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={s}
-                  onChange={(v) => handleHslaChange('s', v)}
-                  styles={gradientTrack(
-                    `linear-gradient(to right, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`
-                  )}
+              </SliderRow>
+              <SliderRow label={`L — ${l}%`}>
+                <ColorSlider
+                  aria-label="Lightness"
+                  value={l / 100}
+                  onChange={(v) => handleHslaChange('l', Math.round(v * 100))}
+                  gradient={`linear-gradient(to right, #000, hsl(${h},${s}%,50%), #fff)`}
                 />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Lightness — {l}%
-                </Text>
-                <Slider
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={l}
-                  onChange={(v) => handleHslaChange('l', v)}
-                  styles={gradientTrack(
-                    `linear-gradient(to right, #000, hsl(${h},${s}%,50%), #fff)`
-                  )}
-                />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Alpha — {a.toFixed(2)}
-                </Text>
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={a}
-                  onChange={(v) => handleHslaChange('a', v)}
-                  styles={gradientTrack(`linear-gradient(to right, transparent, ${cssOpaque})`)}
-                />
-              </Stack>
-            </Stack>
+              </SliderRow>
+            </>
           )}
 
-          {/* RGBA sliders */}
+          {/* RGBA: only R, G, B — alpha is native above */}
           {mode === 'rgba' && (
-            <Stack gap="xs">
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Red — {r}
-                </Text>
-                <Slider
-                  min={0}
-                  max={255}
-                  step={1}
-                  value={r}
-                  onChange={(v) => handleRgbaChange(0, v)}
-                  styles={gradientTrack(
-                    `linear-gradient(to right, rgba(0,${g},${b},1), rgba(255,${g},${b},1))`
-                  )}
+            <>
+              <SliderRow label={`R — ${r}`}>
+                <ColorSlider
+                  aria-label="Red"
+                  value={r / 255}
+                  onChange={(v) => handleRgbaChange(0, Math.round(v * 255))}
+                  gradient={`linear-gradient(to right, rgba(0,${g},${b},1), rgba(255,${g},${b},1))`}
                 />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Green — {g}
-                </Text>
-                <Slider
-                  min={0}
-                  max={255}
-                  step={1}
-                  value={g}
-                  onChange={(v) => handleRgbaChange(1, v)}
-                  styles={gradientTrack(
-                    `linear-gradient(to right, rgba(${r},0,${b},1), rgba(${r},255,${b},1))`
-                  )}
+              </SliderRow>
+              <SliderRow label={`G — ${g}`}>
+                <ColorSlider
+                  aria-label="Green"
+                  value={g / 255}
+                  onChange={(v) => handleRgbaChange(1, Math.round(v * 255))}
+                  gradient={`linear-gradient(to right, rgba(${r},0,${b},1), rgba(${r},255,${b},1))`}
                 />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Blue — {b}
-                </Text>
-                <Slider
-                  min={0}
-                  max={255}
-                  step={1}
-                  value={b}
-                  onChange={(v) => handleRgbaChange(2, v)}
-                  styles={gradientTrack(
-                    `linear-gradient(to right, rgba(${r},${g},0,1), rgba(${r},${g},255,1))`
-                  )}
+              </SliderRow>
+              <SliderRow label={`B — ${b}`}>
+                <ColorSlider
+                  aria-label="Blue"
+                  value={b / 255}
+                  onChange={(v) => handleRgbaChange(2, Math.round(v * 255))}
+                  gradient={`linear-gradient(to right, rgba(${r},${g},0,1), rgba(${r},${g},255,1))`}
                 />
-              </Stack>
-              <Stack gap={4}>
-                <Text size="xs" c="dimmed">
-                  Alpha — {a.toFixed(2)}
-                </Text>
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={a}
-                  onChange={(v) => handleRgbaChange(3, v)}
-                  styles={gradientTrack(`linear-gradient(to right, transparent, ${cssOpaque})`)}
-                />
-              </Stack>
-            </Stack>
+              </SliderRow>
+            </>
           )}
 
-          {/* RGBA readout */}
-          <Text size="sm" ta="center" c="dimmed" ff="monospace">
-            {colorString}
-          </Text>
+          {/* Text readout */}
+          <ColorRgbaInput color={draft} onChange={setDraft} />
 
-          {/* Actions */}
-          <Group justify="flex-end">
-            <Button variant="default" onClick={close}>
+          <Group justify="flex-end" gap="xs">
+            <Button variant="default" size="xs" onClick={close}>
               Cancel
             </Button>
-            <Button onClick={handleOk}>OK</Button>
+            <Button size="xs" onClick={handleOk}>
+              OK
+            </Button>
           </Group>
         </Stack>
       </Modal>
     </>
+  );
+}
+
+function SliderRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Stack gap={2}>
+      <Text size="xs" c="dimmed">
+        {label}
+      </Text>
+      {children}
+    </Stack>
   );
 }
