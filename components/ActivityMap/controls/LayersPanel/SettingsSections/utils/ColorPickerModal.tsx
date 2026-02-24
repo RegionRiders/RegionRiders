@@ -188,23 +188,18 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
         portalProps={{ target: document.body }}
         size="xs"
       >
-        <Stack gap="xs">
-          <ColorPicker format="hsla" value={pickerValue} onChange={handlePickerChange} fullWidth />
-
-          <SegmentedControl
-            value={mode}
-            onChange={(v) => setMode(v as SliderMode)}
-            data={[
-              { label: 'HSLA', value: 'hsla' },
-              { label: 'RGBA', value: 'rgba' },
-            ]}
+        <Stack gap="calc(0.375rem * var(--mantine-scale))">
+          <ColorPicker
+            format="hsla"
+            value={pickerValue}
+            onChange={handlePickerChange}
             fullWidth
-            size="xs"
+            p={0}
           />
 
           {mode === 'hsla' && (
             <>
-              <SliderRow label={`S — ${sD}%`}>
+              <SliderRow label={`S: ${sD}%`}>
                 <ColorSlider
                   aria-label="Saturation"
                   value={s / 100}
@@ -212,7 +207,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
                   gradient={`linear-gradient(to right, hsl(${hD},0%,${lD}%), hsl(${hD},100%,${lD}%))`}
                 />
               </SliderRow>
-              <SliderRow label={`L — ${lD}%`}>
+              <SliderRow label={`L: ${lD}%`}>
                 <ColorSlider
                   aria-label="Lightness"
                   value={l / 100}
@@ -225,7 +220,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
 
           {mode === 'rgba' && (
             <>
-              <SliderRow label={`R — ${r}`}>
+              <SliderRow label={`R: ${r}`}>
                 <ColorSlider
                   aria-label="Red"
                   value={r / 255}
@@ -233,7 +228,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
                   gradient={`linear-gradient(to right, rgba(0,${g},${b},1), rgba(255,${g},${b},1))`}
                 />
               </SliderRow>
-              <SliderRow label={`G — ${g}`}>
+              <SliderRow label={`G: ${g}`}>
                 <ColorSlider
                   aria-label="Green"
                   value={g / 255}
@@ -241,7 +236,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
                   gradient={`linear-gradient(to right, rgba(${r},0,${b},1), rgba(${r},255,${b},1))`}
                 />
               </SliderRow>
-              <SliderRow label={`B — ${b}`}>
+              <SliderRow label={`B: ${b}`}>
                 <ColorSlider
                   aria-label="Blue"
                   value={b / 255}
@@ -251,6 +246,17 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
               </SliderRow>
             </>
           )}
+
+          <SegmentedControl
+            value={mode}
+            onChange={(v) => setMode(v as SliderMode)}
+            data={[
+              { label: 'HSLA', value: 'hsla' },
+              { label: 'RGBA', value: 'rgba' },
+            ]}
+            fullWidth
+            size="xs"
+          />
 
           <ColorRgbaInput
             color={mode === 'hsla' ? rgbaFromHsla : rgba}
@@ -273,11 +279,11 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
 
 function SliderRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Stack gap={2}>
-      <Text size="xs" c="dimmed">
+    <Group gap="xs" wrap="nowrap" align="center">
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+      <Text size="xs" c="dimmed" w={42} ta="left" style={{ flexShrink: 0 }}>
         {label}
       </Text>
-      {children}
-    </Stack>
+    </Group>
   );
 }
