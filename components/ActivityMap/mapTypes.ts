@@ -15,7 +15,7 @@ export type RGBA = [r: number, g: number, b: number, a: number];
  */
 export interface ColorThreshold {
   threshold: number;
-  color: RGB | RGBA;
+  color: RGBA;
 }
 
 /**

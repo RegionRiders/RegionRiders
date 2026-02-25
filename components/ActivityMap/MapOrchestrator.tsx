@@ -33,7 +33,8 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     visitData,
     settings.showRegions,
     settings.regionMode,
-    settings.regionBorderThickness
+    settings.regionBorderThickness,
+    settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex]
   );
 
   return null;

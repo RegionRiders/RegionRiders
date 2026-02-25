@@ -101,10 +101,15 @@ export function ActivitiesSection({
               >
                 {/* Selected color full editor */}
                 <ColorPickerModalButton
-                  colorSwatch={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
-                  onColorChange={(newColorSwatch) => {
+                  primaryColor={settings.lineColorSwatches[settings.selectedLineSwatchIndex].normal}
+                  secondaryColor={
+                    settings.lineColorSwatches[settings.selectedLineSwatchIndex].hover
+                  }
+                  primaryLabel="Normal Color"
+                  secondaryLabel="Hover Color"
+                  onColorChange={(normal, hover) => {
                     const newSwatches = [...settings.lineColorSwatches];
-                    newSwatches[settings.selectedLineSwatchIndex] = newColorSwatch;
+                    newSwatches[settings.selectedLineSwatchIndex] = { normal, hover };
                     onSettingChange('lineColorSwatches', newSwatches);
                   }}
                 />

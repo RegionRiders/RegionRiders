@@ -43,16 +43,23 @@ export default function ActivityMap() {
         normal: [0, 0, 255, 0.5],
         hover: [100, 100, 255, 0.7],
       },
-      {
-        normal: [0, 0, 0, 0.1],
-        hover: [50, 50, 50, 0.3],
-      },
     ],
     selectedLineSwatchIndex: 0,
     heatmapDensity: 2,
     regionMode: 'heatmap',
     showRegions: true,
     regionBorderThickness: 2,
+    regionStaticColorSwatches: [
+      [
+        { threshold: 0, color: [60, 60, 60, 0] },
+        { threshold: 1, color: [76, 107, 34, 0.2] },
+      ],
+      [
+        { threshold: 0, color: [160, 160, 160, 0] },
+        { threshold: 1, color: [67, 69, 11, 0.2] },
+      ],
+    ],
+    selectedRegionStaticSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
   });

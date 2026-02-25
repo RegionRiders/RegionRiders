@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
 import { Button, Group, Modal, SegmentedControl, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import type { ColorSwatch } from '@/components/ActivityMap/controls/LayersPanel/types';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import {
@@ -14,47 +13,53 @@ import {
 import classes from './ColorPickerModalButton.module.css';
 
 interface ColorPickerModalProps {
-  colorSwatch: ColorSwatch;
-  onColorChange: (colorSwatch: ColorSwatch) => void;
+  primaryColor: RGBA;
+  secondaryColor: RGBA;
+  primaryLabel: string;
+  secondaryLabel: string;
+  onColorChange: (primaryColor: RGBA, secondaryColor: RGBA) => void;
 }
 
-type ColorMode = 'normal' | 'hover';
+type ColorMode = 'primary' | 'secondary';
 
-export function ColorPickerModalButton({ colorSwatch, onColorChange }: ColorPickerModalProps) {
+export function ColorPickerModalButton({
+  primaryColor,
+  secondaryColor,
+  primaryLabel,
+  secondaryLabel,
+  onColorChange,
+}: ColorPickerModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [draftNormal, setDraftNormal] = useState<RGBA>(colorSwatch.normal);
-  const [draftHover, setDraftHover] = useState<RGBA>(colorSwatch.hover);
-  const [colorMode, setColorMode] = useState<ColorMode>('normal');
+  const [draftPrimary, setDraftPrimary] = useState<RGBA>(primaryColor);
+  const [draftSecondary, setDraftSecondary] = useState<RGBA>(secondaryColor);
+  const [colorMode, setColorMode] = useState<ColorMode>('primary');
   const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
 
   function handleOpen() {
-    setDraftNormal(colorSwatch.normal);
-    setDraftHover(colorSwatch.hover);
-    setColorMode('normal');
+    setDraftPrimary(primaryColor);
+    setDraftSecondary(secondaryColor);
+    setColorMode('primary');
     open();
   }
 
   function handleOk() {
-    onColorChange({
-      normal: draftNormal,
-      hover: draftHover,
-    });
+    onColorChange(draftPrimary, draftSecondary);
     close();
   }
 
   function handleColorChange(newColor: RGBA) {
-    if (colorMode === 'normal') {
-      setDraftNormal(newColor);
+    if (colorMode === 'primary') {
+      setDraftPrimary(newColor);
     } else {
-      setDraftHover(newColor);
+      setDraftSecondary(newColor);
     }
   }
 
-  const currentColor = colorMode === 'normal' ? draftNormal : draftHover;
+  const currentColor = colorMode === 'primary' ? draftPrimary : draftSecondary;
 
   return (
     <>
-      <ColorSwatchButton color={colorSwatch.normal} onClick={handleOpen}>
+      <ColorSwatchButton color={primaryColor} onClick={handleOpen}>
         <IconEdit className={classes.editIcon} />
       </ColorSwatchButton>
 
@@ -73,8 +78,8 @@ export function ColorPickerModalButton({ colorSwatch, onColorChange }: ColorPick
               value={colorMode}
               onChange={(value) => setColorMode(value as ColorMode)}
               data={[
-                { label: 'Normal Color', value: 'normal' },
-                { label: 'Hover Color', value: 'hover' },
+                { label: primaryLabel, value: 'primary' },
+                { label: secondaryLabel, value: 'secondary' },
               ]}
               fullWidth
             />

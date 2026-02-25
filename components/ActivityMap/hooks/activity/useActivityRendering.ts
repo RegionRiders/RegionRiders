@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import {
   ActivityRenderMode,
-  ColorSwatch,
+  LineColorSwatch,
 } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
@@ -21,7 +21,7 @@ export function useActivityRendering(
   mode: ActivityRenderMode = 'heatmap',
   activityThickness: number = 3,
   heatmapDensity: number = 2,
-  activityLineColor: ColorSwatch = {
+  activityLineColor: LineColorSwatch = {
     normal: [255, 0, 0, 0.5],
     hover: [255, 100, 100, 0.7],
   }

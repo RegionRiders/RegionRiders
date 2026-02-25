@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsHeatmap';
 import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsStatic';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
@@ -28,6 +29,7 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visitData: Map<string, RegionVisitData>,
     weight: number,
+    regionStaticColor: ColorThreshold[],
     onRegionClick?: (
       region: Regions,
       visitInfo: RegionVisitData | undefined,
@@ -54,11 +56,18 @@ export class RegionLayerManager {
 
       if (existingLayer) {
         // Update existing layer style
-        this.updateLayerStyle(existingLayer, mode, visit, weight);
+        this.updateLayerStyle(existingLayer, mode, visit, weight, regionStaticColor);
         existingLayer.bringToFront();
       } else {
         // Create new layer
-        const newLayer = this.createRegionLayer(region, mode, visit, weight, onRegionClick);
+        const newLayer = this.createRegionLayer(
+          region,
+          mode,
+          visit,
+          weight,
+          regionStaticColor,
+          onRegionClick
+        );
         this.layerGroup.addLayer(newLayer);
         this.layerMap.set(region.id, newLayer);
       }
@@ -85,11 +94,12 @@ export class RegionLayerManager {
   updateStyles(
     mode: RegionRenderMode,
     visitData: Map<string, RegionVisitData>,
-    weight: number
+    weight: number,
+    regionStaticColors: ColorThreshold[]
   ): void {
     for (const [regionId, layer] of this.layerMap.entries()) {
       const visit = visitData.get(regionId);
-      this.updateLayerStyle(layer, mode, visit, weight);
+      this.updateLayerStyle(layer, mode, visit, weight, regionStaticColors);
     }
   }
 
@@ -123,13 +133,14 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
+    regionStaticColor: ColorThreshold[],
     onRegionClick?: (
       region: Regions,
       visitInfo: RegionVisitData | undefined,
       layer: L.GeoJSON
     ) => void
   ): L.GeoJSON {
-    const style = this.calculateStyle(mode, visit, weight);
+    const style = this.calculateStyle(mode, visit, weight, regionStaticColor);
 
     const layer = L.geoJSON(region.geometry, {
       style,
@@ -149,16 +160,18 @@ export class RegionLayerManager {
     layer: L.GeoJSON,
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
-    weight: number
+    weight: number,
+    regionStaticColor: ColorThreshold[]
   ): void {
-    const style = this.calculateStyle(mode, visit, weight);
+    const style = this.calculateStyle(mode, visit, weight, regionStaticColor);
     layer.setStyle(style);
   }
 
   private calculateStyle(
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
-    weight: number
+    weight: number,
+    regionStaticColor: ColorThreshold[]
   ): L.PathOptions {
     let fillColor: string;
     let strokeColor: string;
@@ -169,7 +182,7 @@ export class RegionLayerManager {
     }
     // DEFAULT: static
     else {
-      ({ fillColor, strokeColor } = getRegionColorsStatic(visit));
+      ({ fillColor, strokeColor } = getRegionColorsStatic(visit, regionStaticColor));
     }
 
     return {

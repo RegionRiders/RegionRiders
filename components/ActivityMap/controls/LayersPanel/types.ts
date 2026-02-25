@@ -1,9 +1,9 @@
-import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 
 export type RegionRenderMode = 'heatmap' | 'static';
 export type ActivityRenderMode = 'heatmap' | 'lines';
 
-export interface ColorSwatch {
+export interface LineColorSwatch {
   normal: RGBA;
   hover: RGBA;
 }
@@ -14,13 +14,15 @@ export interface MapSettings {
   showActivities: boolean;
   activityThickness: number;
   heatmapDensity: number;
-  lineColorSwatches: ColorSwatch[];
+  lineColorSwatches: LineColorSwatch[];
   selectedLineSwatchIndex: number;
 
   // Region settings
   regionMode: RegionRenderMode;
   showRegions: boolean;
   regionBorderThickness: number;
+  regionStaticColorSwatches: ColorThreshold[][];
+  selectedRegionStaticSwatchIndex: number;
 
   // Map settings
   tileLayerUrl: string;
