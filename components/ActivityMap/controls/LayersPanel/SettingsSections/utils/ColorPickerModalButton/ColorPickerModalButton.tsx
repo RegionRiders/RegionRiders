@@ -5,15 +5,17 @@ import { IconEdit } from '@tabler/icons-react';
 import { Button, Group, Modal, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
-import { ColorSwatchButton } from './ColorSwatchButton';
-import { ExtendedColorPicker } from './ExtendedColorPicker';
+import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
+import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
+import classes from './ColorPickerModalButton.module.css';
+
 
 interface ColorPickerModalProps {
   color: RGBA;
   onColorChange: (color: RGBA) => void;
 }
 
-export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps) {
+export function ColorPickerModalButton({ color, onColorChange }: ColorPickerModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [draft, setDraft] = useState<RGBA>(color);
 
@@ -30,15 +32,7 @@ export function ColorPickerModal({ color, onColorChange }: ColorPickerModalProps
   return (
     <>
       <ColorSwatchButton color={color} onClick={handleOpen}>
-        <IconEdit
-          style={{
-            position: 'absolute',
-            alignSelf: 'center',
-            top: 2,
-            right: 2,
-            filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
-          }}
-        />
+        <IconEdit className={classes.editIcon} />
       </ColorSwatchButton>
 
       <Modal

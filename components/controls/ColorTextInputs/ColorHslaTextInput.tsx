@@ -1,4 +1,3 @@
-// ColorHslaInput.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -13,7 +12,7 @@ interface ColorHslaInputProps {
   onChange: (h: number, s: number, l: number, a: number) => void;
 }
 
-export function ColorHslaInput({ h, s, l, a, onChange }: ColorHslaInputProps) {
+export function ColorHslaTextInput({ h, s, l, a, onChange }: ColorHslaInputProps) {
   const [inputValue, setInputValue] = useState(() => hslaToString(h, s, l, a));
   const isFocused = useRef(false);
 

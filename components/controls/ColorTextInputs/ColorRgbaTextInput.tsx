@@ -9,7 +9,7 @@ interface ColorRgbaInputProps {
   onChange: (color: RGBA) => void;
 }
 
-export function ColorRgbaInput({ color, onChange }: ColorRgbaInputProps) {
+export function ColorRgbaTextInput({ color, onChange }: ColorRgbaInputProps) {
   const [inputValue, setInputValue] = useState(() => colorToString(color));
   const isFocused = useRef(false);
 

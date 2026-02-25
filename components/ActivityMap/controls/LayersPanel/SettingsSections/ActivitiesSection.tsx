@@ -9,10 +9,10 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
-import { ColorPickerModal } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModal';
-import { ColorSwatchButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSwatchButton';
+import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { ColorRgbaInput } from './utils/ColorRgbaInput';
+import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
+import { ColorRgbaTextInput } from '../../../../controls/ColorTextInputs/ColorRgbaTextInput';
 
 export function ActivitiesSection({
   settings,
@@ -100,7 +100,7 @@ export function ActivitiesSection({
                 spacing="xs"
               >
                 {/* Selected color full editor */}
-                <ColorPickerModal
+                <ColorPickerModalButton
                   color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
                   onColorChange={(newColor) => {
                     const newSwatches = [...settings.lineColorSwatches];
@@ -114,7 +114,7 @@ export function ActivitiesSection({
                     gridColumn: `span ${(settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2) - 1}`,
                   }}
                 >
-                  <ColorRgbaInput
+                  <ColorRgbaTextInput
                     color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
                     onChange={(newColor) => {
                       const newSwatches = [...settings.lineColorSwatches];

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ColorPicker, Group, SegmentedControl, Stack, Text } from '@mantine/core';
+import { ColorPicker, SegmentedControl, Stack, Text } from '@mantine/core';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgba';
-import { hslaToRgba, parseHslaString, rgbaToHsla } from '../../../../utils/hslaUtils';
-import { ColorHslaInput } from './ColorHslaInput';
-import { ColorRgbaInput } from './ColorRgbaInput';
-import { ColorSlider } from './ColorSlider';
+import { hslaToRgba, parseHslaString, rgbaToHsla } from '../../ActivityMap/utils/hslaUtils';
+import { ColorSlider } from '../ColorSlider/ColorSlider';
+import { ColorHslaTextInput } from '../ColorTextInputs/ColorHslaTextInput';
+import { ColorRgbaTextInput } from '../ColorTextInputs/ColorRgbaTextInput';
+import classes from './ExtendedColorPicker.module.css';
 
 export type SliderMode = 'hsla' | 'rgba';
 
@@ -69,7 +70,7 @@ export function ExtendedColorPicker({
   const pickerValue = `hsla(${hD}, ${sD}%, ${lD}%, ${a})`;
 
   return (
-    <Stack gap="calc(0.375rem * var(--mantine-scale))">
+    <Stack className={classes.stack}>
       <ColorPicker
         format="hsla"
         value={pickerValue}
@@ -78,7 +79,7 @@ export function ExtendedColorPicker({
         p={0}
       />
 
-      <Stack gap="calc(0.375rem * var(--mantine-scale))">
+      <Stack className={classes.stack}>
         {mode === 'hsla' && (
           <>
             <SliderRow label={`S: ${sD}%`}>
@@ -141,9 +142,9 @@ export function ExtendedColorPicker({
         size="xs"
       />
 
-      {mode === 'rgba' && <ColorRgbaInput color={rgba} onChange={syncFromRgba} />}
+      {mode === 'rgba' && <ColorRgbaTextInput color={rgba} onChange={syncFromRgba} />}
       {mode === 'hsla' && (
-        <ColorHslaInput
+        <ColorHslaTextInput
           h={h}
           s={s}
           l={l}
@@ -157,11 +158,11 @@ export function ExtendedColorPicker({
 
 function SliderRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Group gap="xs" wrap="nowrap" align="center">
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-      <Text size="xs" c="dimmed" w={42} ta="left" style={{ flexShrink: 0 }}>
+    <div className={classes.sliderRow}>
+      <div className={classes.sliderRowTrack}>{children}</div>
+      <Text size="xs" c="dimmed" className={classes.sliderRowLabel}>
         {label}
       </Text>
-    </Group>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Button } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import classes from './ColorSwatchButton.module.css';
 
 interface ColorSwatchButtonProps {
   color: RGBA;
@@ -25,20 +26,12 @@ export function ColorSwatchButton({
       key={index}
       onClick={onClick}
       variant={selectedIndex === index ? 'filled' : 'default'}
+      className={classes.button}
       style={{
         background: `
-                          linear-gradient(to bottom, ${rgbaColor}, ${rgbaFilledColor}),
-                          repeating-conic-gradient(
-                            #ccc 0% 25%, 
-                            #fff 0% 50%
-                          ) 50% / 10px 10px
-                        `,
-        border:
-          selectedIndex === index
-            ? '2px solid var(--mantine-primary-color-filled)'
-            : '1px solid var(--mantine-color-default-border)',
-        padding: 0,
-        borderRadius: '3px',
+          linear-gradient(to bottom, ${rgbaColor}, ${rgbaFilledColor}),
+          repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 10px 10px
+        `,
       }}
       aria-label={`Select color ${index !== undefined ? index + 1 : 'preview'}`}
     >
