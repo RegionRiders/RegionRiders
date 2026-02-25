@@ -82,7 +82,13 @@ export function drawActivitiesAsLines(
         });
 
         // Use utility functions for event handling
-        attachActivityHoverEvents(polyline, refs.lineThickness, refs.lineColor);
+        attachActivityHoverEvents(
+          polyline,
+          refs.lineThickness,
+          refs.lineColor,
+          refs.lineThickness * 2,
+          refs.lineHoverColor
+        );
         attachActivityClickHandler(polyline, map, trackId, track);
 
         activityGroup!.addLayer(polyline);

@@ -18,6 +18,8 @@ export interface ExtendedColorPickerProps {
   onChange: (color: RGBA) => void;
   defaultMode?: SliderMode;
   layout?: SliderLayout;
+  mode?: SliderMode;
+  onModeChange?: (mode: SliderMode) => void;
 }
 
 export function ExtendedColorPicker({
@@ -25,10 +27,22 @@ export function ExtendedColorPicker({
   onChange,
   defaultMode = 'hsla',
   layout = 'vertical',
+  mode: controlledMode,
+  onModeChange,
 }: ExtendedColorPickerProps) {
-  const [mode, setMode] = useState<SliderMode>(defaultMode);
+  const [internalMode, setInternalMode] = useState<SliderMode>(defaultMode);
   const [hsla, setHsla] = useState(() => rgbaToHsla(...color));
   const [rgba, setRgba] = useState<RGBA>(color);
+
+  // Use controlled mode if provided, otherwise use internal mode
+  const mode = controlledMode !== undefined ? controlledMode : internalMode;
+  const setMode = (newMode: SliderMode) => {
+    if (onModeChange) {
+      onModeChange(newMode);
+    } else {
+      setInternalMode(newMode);
+    }
+  };
 
   function syncFromHsla(next: typeof hsla) {
     setHsla(next);

@@ -3,13 +3,18 @@ import { RGBA } from '@/components/ActivityMap/mapTypes';
 export type RegionRenderMode = 'heatmap' | 'static';
 export type ActivityRenderMode = 'heatmap' | 'lines';
 
+export interface ColorSwatch {
+  normal: RGBA;
+  hover: RGBA;
+}
+
 export interface MapSettings {
   // Activity settings
   activityMode: ActivityRenderMode;
   showActivities: boolean;
   activityThickness: number;
   heatmapDensity: number;
-  lineColorSwatches: RGBA[];
+  lineColorSwatches: ColorSwatch[];
   selectedLineSwatchIndex: number;
 
   // Region settings

@@ -2,11 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { ActivityRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
+import {
+  ActivityRenderMode,
+  ColorSwatch,
+} from '@/components/ActivityMap/controls/LayersPanel/types';
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
 import type { HeatmapRefs, LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
-import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
@@ -19,7 +21,10 @@ export function useActivityRendering(
   mode: ActivityRenderMode = 'heatmap',
   activityThickness: number = 3,
   heatmapDensity: number = 2,
-  activityLineColor: RGBA = [255, 0, 0, 155]
+  activityLineColor: ColorSwatch = {
+    normal: [255, 0, 0, 0.5],
+    hover: [255, 100, 100, 0.7],
+  }
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,7 +55,8 @@ export function useActivityRendering(
       renderAbortRef,
       renderTimeoutRef,
       lineThickness: activityThickness,
-      lineColor: activityLineColor,
+      lineColor: activityLineColor.normal,
+      lineHoverColor: activityLineColor.hover,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity, activityLineColor]);

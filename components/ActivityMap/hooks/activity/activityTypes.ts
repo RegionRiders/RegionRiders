@@ -38,6 +38,7 @@ export interface HeatmapRefs extends RenderRefs {
 export interface LinesRefs extends RenderRefs {
   lineThickness: number;
   lineColor: RGBA;
+  lineHoverColor: RGBA;
 }
 
 export interface PixelPoint {

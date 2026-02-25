@@ -85,10 +85,10 @@ export function ActivitiesSection({
               <Text size="sm"> Lines ColorScheme</Text>
               <SimpleGrid cols={settings.lineColorSwatches.length} spacing="xs">
                 {/*Color buttons*/}
-                {settings.lineColorSwatches.map((color, index) => (
+                {settings.lineColorSwatches.map((colorSwatch, index) => (
                   <ColorSwatchButton
                     key={index}
-                    color={color}
+                    color={colorSwatch.normal}
                     index={index}
                     selectedIndex={settings.selectedLineSwatchIndex}
                     onClick={() => onSettingChange('selectedLineSwatchIndex', index)}
@@ -101,24 +101,27 @@ export function ActivitiesSection({
               >
                 {/* Selected color full editor */}
                 <ColorPickerModalButton
-                  color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
-                  onColorChange={(newColor) => {
+                  colorSwatch={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
+                  onColorChange={(newColorSwatch) => {
                     const newSwatches = [...settings.lineColorSwatches];
-                    newSwatches[settings.selectedLineSwatchIndex] = newColor;
+                    newSwatches[settings.selectedLineSwatchIndex] = newColorSwatch;
                     onSettingChange('lineColorSwatches', newSwatches);
                   }}
                 />
-                {/* Selected color simple editor */}
+                {/* Selected color simple editor (normal color only) */}
                 <Box
                   style={{
                     gridColumn: `span ${(settings.lineColorSwatches.length > 2 ? settings.lineColorSwatches.length : 2) - 1}`,
                   }}
                 >
                   <ColorRgbaTextInput
-                    color={settings.lineColorSwatches[settings.selectedLineSwatchIndex]}
+                    color={settings.lineColorSwatches[settings.selectedLineSwatchIndex].normal}
                     onChange={(newColor) => {
                       const newSwatches = [...settings.lineColorSwatches];
-                      newSwatches[settings.selectedLineSwatchIndex] = newColor;
+                      newSwatches[settings.selectedLineSwatchIndex] = {
+                        ...newSwatches[settings.selectedLineSwatchIndex],
+                        normal: newColor,
+                      };
                       onSettingChange('lineColorSwatches', newSwatches);
                     }}
                   />

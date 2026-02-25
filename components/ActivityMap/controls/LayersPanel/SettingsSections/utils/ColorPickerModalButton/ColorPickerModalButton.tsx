@@ -2,35 +2,59 @@
 
 import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
-import { Button, Group, Modal, Stack } from '@mantine/core';
+import { Button, Group, Modal, SegmentedControl, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import type { ColorSwatch } from '@/components/ActivityMap/controls/LayersPanel/types';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
+import {
+  ExtendedColorPicker,
+  SliderMode,
+} from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 import classes from './ColorPickerModalButton.module.css';
 
 interface ColorPickerModalProps {
-  color: RGBA;
-  onColorChange: (color: RGBA) => void;
+  colorSwatch: ColorSwatch;
+  onColorChange: (colorSwatch: ColorSwatch) => void;
 }
 
-export function ColorPickerModalButton({ color, onColorChange }: ColorPickerModalProps) {
+type ColorMode = 'normal' | 'hover';
+
+export function ColorPickerModalButton({ colorSwatch, onColorChange }: ColorPickerModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [draft, setDraft] = useState<RGBA>(color);
+  const [draftNormal, setDraftNormal] = useState<RGBA>(colorSwatch.normal);
+  const [draftHover, setDraftHover] = useState<RGBA>(colorSwatch.hover);
+  const [colorMode, setColorMode] = useState<ColorMode>('normal');
+  const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
 
   function handleOpen() {
-    setDraft(color);
+    setDraftNormal(colorSwatch.normal);
+    setDraftHover(colorSwatch.hover);
+    setColorMode('normal');
     open();
   }
 
   function handleOk() {
-    onColorChange(draft);
+    onColorChange({
+      normal: draftNormal,
+      hover: draftHover,
+    });
     close();
   }
 
+  function handleColorChange(newColor: RGBA) {
+    if (colorMode === 'normal') {
+      setDraftNormal(newColor);
+    } else {
+      setDraftHover(newColor);
+    }
+  }
+
+  const currentColor = colorMode === 'normal' ? draftNormal : draftHover;
+
   return (
     <>
-      <ColorSwatchButton color={color} onClick={handleOpen}>
+      <ColorSwatchButton color={colorSwatch.normal} onClick={handleOpen}>
         <IconEdit className={classes.editIcon} />
       </ColorSwatchButton>
 
@@ -44,7 +68,25 @@ export function ColorPickerModalButton({ color, onColorChange }: ColorPickerModa
         size="xs"
       >
         <Stack gap="xs">
-          <ExtendedColorPicker color={draft} onChange={setDraft} />
+          <div>
+            <SegmentedControl
+              value={colorMode}
+              onChange={(value) => setColorMode(value as ColorMode)}
+              data={[
+                { label: 'Normal Color', value: 'normal' },
+                { label: 'Hover Color', value: 'hover' },
+              ]}
+              fullWidth
+            />
+          </div>
+
+          <ExtendedColorPicker
+            key={colorMode}
+            color={currentColor}
+            onChange={handleColorChange}
+            mode={sliderMode}
+            onModeChange={setSliderMode}
+          />
 
           <Group justify="flex-end" gap="xs">
             <Button variant="default" size="xs" onClick={close}>

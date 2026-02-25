@@ -23,12 +23,30 @@ export default function ActivityMap() {
     showActivities: true,
     activityThickness: 3,
     lineColorSwatches: [
-      [255, 0, 0, 0.5],
-      [255, 255, 0, 0.5],
-      [0, 255, 0, 0.5],
-      [0, 255, 255, 0.5],
-      [0, 0, 255, 0.5],
-      [0, 0, 0, 0.1],
+      {
+        normal: [255, 0, 0, 0.5],
+        hover: [255, 100, 100, 0.7],
+      },
+      {
+        normal: [255, 255, 0, 0.5],
+        hover: [255, 255, 100, 0.7],
+      },
+      {
+        normal: [0, 255, 0, 0.5],
+        hover: [100, 255, 100, 0.7],
+      },
+      {
+        normal: [0, 255, 255, 0.5],
+        hover: [100, 255, 255, 0.7],
+      },
+      {
+        normal: [0, 0, 255, 0.5],
+        hover: [100, 100, 255, 0.7],
+      },
+      {
+        normal: [0, 0, 0, 0.1],
+        hover: [50, 50, 50, 0.3],
+      },
     ],
     selectedLineSwatchIndex: 0,
     heatmapDensity: 2,

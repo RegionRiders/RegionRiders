@@ -10,10 +10,13 @@ import { GPXTrack } from '@/lib/types';
 export function attachActivityHoverEvents(
   polyline: L.Polyline,
   baseWeight: number = 2,
-  baseColor: RGBA
+  baseColor: RGBA,
+  hoverWeight: number = baseWeight * 2,
+  hoverColor: RGBA
 ): void {
   polyline.on('mouseover', function (this: L.Polyline) {
-    this.setStyle({ color: '#4ADE80', weight: baseWeight * 2, opacity: 1 });
+    const color = rgbToHex(hoverColor[0], hoverColor[1], hoverColor[2]);
+    this.setStyle({ color, weight: hoverWeight, opacity: hoverColor[3] });
     this.bringToFront();
   });
 
