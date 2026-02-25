@@ -11,17 +11,20 @@ import { ColorRgbaTextInput } from '../ColorTextInputs/ColorRgbaTextInput';
 import classes from './ExtendedColorPicker.module.css';
 
 export type SliderMode = 'hsla' | 'rgba';
+export type SliderLayout = 'vertical' | 'horizontal';
 
 export interface ExtendedColorPickerProps {
   color: RGBA;
   onChange: (color: RGBA) => void;
   defaultMode?: SliderMode;
+  layout?: SliderLayout;
 }
 
 export function ExtendedColorPicker({
   color,
   onChange,
   defaultMode = 'hsla',
+  layout = 'vertical',
 }: ExtendedColorPickerProps) {
   const [mode, setMode] = useState<SliderMode>(defaultMode);
   const [hsla, setHsla] = useState(() => rgbaToHsla(...color));
@@ -69,6 +72,118 @@ export function ExtendedColorPicker({
   const [r, g, b] = rgba;
   const pickerValue = `hsla(${hD}, ${sD}%, ${lD}%, ${a})`;
 
+  const isSide = layout === 'horizontal';
+  const orientation = isSide ? 'vertical' : 'horizontal';
+  const dir = isSide ? 'to top' : 'to right';
+
+  const hslaSliders = (
+    <>
+      <SliderCol letter="S" value={`${sD}%`} layout={layout}>
+        <ColorSlider
+          aria-label="Saturation"
+          orientation={orientation}
+          value={s / 100}
+          onChange={(v) => handleHslaChange('s', v * 100)}
+          gradient={`linear-gradient(${dir}, hsl(${hD},0%,${lD}%), hsl(${hD},100%,${lD}%))`}
+        />
+      </SliderCol>
+      <SliderCol letter="L" value={`${lD}%`} layout={layout}>
+        <ColorSlider
+          aria-label="Lightness"
+          orientation={orientation}
+          value={l / 100}
+          onChange={(v) => handleHslaChange('l', v * 100)}
+          gradient={`linear-gradient(${dir}, #000, hsl(${hD},${sD}%,50%), #fff)`}
+        />
+      </SliderCol>
+    </>
+  );
+
+  const rgbaSliders = (
+    <>
+      <SliderCol letter="R" value={String(r)} layout={layout}>
+        <ColorSlider
+          aria-label="Red"
+          orientation={orientation}
+          value={r / 255}
+          onChange={(v) => handleRgbaChange(0, Math.round(v * 255))}
+          gradient={`linear-gradient(${dir}, rgba(0,${g},${b},1), rgba(255,${g},${b},1))`}
+        />
+      </SliderCol>
+      <SliderCol letter="G" value={String(g)} layout={layout}>
+        <ColorSlider
+          aria-label="Green"
+          orientation={orientation}
+          value={g / 255}
+          onChange={(v) => handleRgbaChange(1, Math.round(v * 255))}
+          gradient={`linear-gradient(${dir}, rgba(${r},0,${b},1), rgba(${r},255,${b},1))`}
+        />
+      </SliderCol>
+      <SliderCol letter="B" value={String(b)} layout={layout}>
+        <ColorSlider
+          aria-label="Blue"
+          orientation={orientation}
+          value={b / 255}
+          onChange={(v) => handleRgbaChange(2, Math.round(v * 255))}
+          gradient={`linear-gradient(${dir}, rgba(${r},${g},0,1), rgba(${r},${g},255,1))`}
+        />
+      </SliderCol>
+    </>
+  );
+
+  const textInput =
+    mode === 'rgba' ? (
+      <ColorRgbaTextInput color={rgba} onChange={syncFromRgba} />
+    ) : (
+      <ColorHslaTextInput
+        h={h}
+        s={s}
+        l={l}
+        a={a}
+        onChange={(h, s, l, a) => syncFromHsla({ h, s, l, a })}
+      />
+    );
+
+  const modeToggle = (
+    <SegmentedControl
+      value={mode}
+      onChange={(v) => setMode(v as SliderMode)}
+      data={[
+        { label: 'HSLA', value: 'hsla' },
+        { label: 'RGBA', value: 'rgba' },
+      ]}
+      fullWidth
+      size="xs"
+    />
+  );
+
+  if (isSide) {
+    return (
+      <Stack className={classes.stack}>
+        {/* Top row: ColorPicker + vertical sliders */}
+        <div className={classes.horizontalLayout}>
+          <div className={classes.horizontalLayoutPicker}>
+            <ColorPicker
+              format="hsla"
+              value={pickerValue}
+              onChange={handlePickerChange}
+              p={0}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div className={classes.horizontalLayoutSliders}>
+            {mode === 'hsla' ? hslaSliders : rgbaSliders}
+          </div>
+        </div>
+
+        <div className={classes.bottomRow}>
+          <div className={classes.bottomRowInput}>{textInput}</div>
+          <div className={classes.bottomRowToggle}>{modeToggle}</div>
+        </div>
+      </Stack>
+    );
+  }
+
   return (
     <Stack className={classes.stack}>
       <ColorPicker
@@ -78,91 +193,39 @@ export function ExtendedColorPicker({
         fullWidth
         p={0}
       />
-
-      <Stack className={classes.stack}>
-        {mode === 'hsla' && (
-          <>
-            <SliderRow label={`S: ${sD}%`}>
-              <ColorSlider
-                aria-label="Saturation"
-                value={s / 100}
-                onChange={(v) => handleHslaChange('s', v * 100)}
-                gradient={`linear-gradient(to right, hsl(${hD},0%,${lD}%), hsl(${hD},100%,${lD}%))`}
-              />
-            </SliderRow>
-            <SliderRow label={`L: ${lD}%`}>
-              <ColorSlider
-                aria-label="Lightness"
-                value={l / 100}
-                onChange={(v) => handleHslaChange('l', v * 100)}
-                gradient={`linear-gradient(to right, #000, hsl(${hD},${sD}%,50%), #fff)`}
-              />
-            </SliderRow>
-          </>
-        )}
-
-        {mode === 'rgba' && (
-          <>
-            <SliderRow label={`R: ${r}`}>
-              <ColorSlider
-                aria-label="Red"
-                value={r / 255}
-                onChange={(v) => handleRgbaChange(0, Math.round(v * 255))}
-                gradient={`linear-gradient(to right, rgba(0,${g},${b},1), rgba(255,${g},${b},1))`}
-              />
-            </SliderRow>
-            <SliderRow label={`G: ${g}`}>
-              <ColorSlider
-                aria-label="Green"
-                value={g / 255}
-                onChange={(v) => handleRgbaChange(1, Math.round(v * 255))}
-                gradient={`linear-gradient(to right, rgba(${r},0,${b},1), rgba(${r},255,${b},1))`}
-              />
-            </SliderRow>
-            <SliderRow label={`B: ${b}`}>
-              <ColorSlider
-                aria-label="Blue"
-                value={b / 255}
-                onChange={(v) => handleRgbaChange(2, Math.round(v * 255))}
-                gradient={`linear-gradient(to right, rgba(${r},${g},0,1), rgba(${r},${g},255,1))`}
-              />
-            </SliderRow>
-          </>
-        )}
-      </Stack>
-
-      <SegmentedControl
-        value={mode}
-        onChange={(v) => setMode(v as SliderMode)}
-        data={[
-          { label: 'HSLA', value: 'hsla' },
-          { label: 'RGBA', value: 'rgba' },
-        ]}
-        fullWidth
-        size="xs"
-      />
-
-      {mode === 'rgba' && <ColorRgbaTextInput color={rgba} onChange={syncFromRgba} />}
-      {mode === 'hsla' && (
-        <ColorHslaTextInput
-          h={h}
-          s={s}
-          l={l}
-          a={a}
-          onChange={(h, s, l, a) => syncFromHsla({ h, s, l, a })}
-        />
-      )}
+      <Stack className={classes.stack}>{mode === 'hsla' ? hslaSliders : rgbaSliders}</Stack>
+      {modeToggle}
+      {textInput}
     </Stack>
   );
 }
 
-function SliderRow({ label, children }: { label: string; children: React.ReactNode }) {
+interface SliderColProps {
+  letter: string;
+  value: string;
+  layout: SliderLayout;
+  children: React.ReactNode;
+}
+
+function SliderCol({ letter, value, layout, children }: SliderColProps) {
+  if (layout === 'vertical') {
+    return (
+      <div className={classes.sliderRow}>
+        <div className={classes.sliderRowTrack}>{children}</div>
+        <Text size="xs" c="dimmed" className={classes.sliderRowLabel}>
+          {letter}: {value}
+        </Text>
+      </div>
+    );
+  }
+
+  // horizontal
   return (
-    <div className={classes.sliderRow}>
-      <div className={classes.sliderRowTrack}>{children}</div>
-      <Text size="xs" c="dimmed" className={classes.sliderRowLabel}>
-        {label}
+    <div className={classes.verticalSliderCol}>
+      <Text size="xs" c="dimmed" className={classes.verticalSliderLetter}>
+        {letter}
       </Text>
+      <div className={classes.verticalSliderTrack}>{children}</div>
     </div>
   );
 }

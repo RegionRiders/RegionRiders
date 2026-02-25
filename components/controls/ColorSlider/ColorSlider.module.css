@@ -27,3 +27,22 @@
     pointer-events: none;
     z-index: 1;
 }
+
+.sliderVertical {
+    height: 100%;
+    width: calc(var(--cp-thumb-size, 16px) + 2px);
+    margin-inline: 0;
+    margin-block: calc(var(--cp-thumb-size, 16px) / 2);
+}
+
+.trackVertical {
+    inset-inline: 0;
+    top: calc(var(--cp-thumb-size, 16px) * -1 / 2 - 1px);
+    bottom: calc(var(--cp-thumb-size, 16px) * -1 / 2 - 1px);
+    width: 100%;
+}
+
+.thumbVertical {
+    top: unset;
+    left: calc(50% - var(--cp-thumb-size, 16px) / 2);
+}

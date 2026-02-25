@@ -9,7 +9,6 @@ import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/Color
 import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 import classes from './ColorPickerModalButton.module.css';
 
-
 interface ColorPickerModalProps {
   color: RGBA;
   onColorChange: (color: RGBA) => void;
@@ -38,9 +37,9 @@ export function ColorPickerModalButton({ color, onColorChange }: ColorPickerModa
       <Modal
         opened={opened}
         onClose={close}
-        title="Pick a colour"
+        title="Pick a color"
         centered
-        zIndex={9999}
+        zIndex={10000}
         portalProps={{ target: document.body }}
         size="xs"
       >

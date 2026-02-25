@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useMove } from '@mantine/hooks';
 import classes from './ColorSlider.module.css';
 
@@ -8,6 +8,7 @@ interface ColorSliderProps {
   value: number; // normalised 0–1
   onChange: (value: number) => void;
   gradient: string;
+  orientation?: 'horizontal' | 'vertical';
   'aria-label'?: string;
 }
 
@@ -15,20 +16,25 @@ export function ColorSlider({
   value,
   onChange,
   gradient,
+  orientation = 'horizontal',
   'aria-label': ariaLabel,
 }: ColorSliderProps) {
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  const isVertical = orientation === 'vertical';
 
-  const { ref } = useMove(({ x }) => onChange(clamp(x)));
+  // For vertical: track y, invert so bottom = 0, top = 1
+  const { ref } = useMove(({ x, y }) => onChange(clamp(isVertical ? 1 - y : x)));
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const step = e.shiftKey ? 0.1 : 0.01;
-      if (e.key === 'ArrowRight') {
+      const incKey = isVertical ? 'ArrowUp' : 'ArrowRight';
+      const decKey = isVertical ? 'ArrowDown' : 'ArrowLeft';
+      if (e.key === incKey) {
         e.preventDefault();
         onChange(clamp(value + step));
       }
-      if (e.key === 'ArrowLeft') {
+      if (e.key === decKey) {
         e.preventDefault();
         onChange(clamp(value - step));
       }
@@ -41,8 +47,16 @@ export function ColorSlider({
         onChange(1);
       }
     },
-    [value, onChange]
+    [value, onChange, isVertical]
   );
+
+  const thumbStyle = isVertical
+    ? { bottom: `calc(${value * 100}% - var(--cp-thumb-size, 16px) / 2)` }
+    : { left: `calc(${value * 100}% - var(--cp-thumb-size, 16px) / 2)` };
+
+  const gradientStyle = isVertical
+    ? { backgroundImage: gradient.replace('to right', 'to top') }
+    : { backgroundImage: gradient };
 
   return (
     <div
@@ -52,15 +66,18 @@ export function ColorSlider({
       aria-valuenow={Math.round(value * 100)}
       aria-valuemin={0}
       aria-valuemax={100}
+      aria-orientation={orientation}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className={classes.slider}
+      className={isVertical ? `${classes.slider} ${classes.sliderVertical}` : classes.slider}
     >
-      <div className={classes.track} style={{ backgroundImage: gradient }} />
-
       <div
-        className={classes.thumb}
-        style={{ left: `calc(${value * 100}% - var(--cp-thumb-size, 16px) / 2)` }}
+        className={isVertical ? `${classes.track} ${classes.trackVertical}` : classes.track}
+        style={gradientStyle}
+      />
+      <div
+        className={isVertical ? `${classes.thumb} ${classes.thumbVertical}` : classes.thumb}
+        style={thumbStyle}
       />
     </div>
   );
