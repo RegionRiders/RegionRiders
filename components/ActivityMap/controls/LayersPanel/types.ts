@@ -1,3 +1,4 @@
+import type L from 'leaflet';
 import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 
 export type RegionRenderMode = 'heatmap' | 'static';
@@ -32,5 +33,6 @@ export interface MapSettings {
 export interface LayersPanelProps {
   settings: MapSettings;
   onSettingChange: <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => void;
+  map?: L.Map | null;
   placeholderImageUrl?: string;
 }

@@ -2,11 +2,17 @@ import { Accordion, SimpleGrid, Stack, Text } from '@mantine/core';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
+import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
+import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
+
+const PLACEHOLDER_IMAGE =
+  'https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80';
 
 export function MapStyleSection({
   settings,
   onSettingChange,
-}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
+  viewState,
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & { viewState?: MapViewState | null }) {
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
     onSettingChange('attribution', attribution);
@@ -25,7 +31,11 @@ export function MapStyleSection({
             {Object.entries(TILE_PRESETS).map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl="https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80"
+                imageUrl={
+                  viewState
+                    ? resolveTileUrl(preset.url, viewState.center[0], viewState.center[1], viewState.zoom)
+                    : PLACEHOLDER_IMAGE
+                }
                 label={preset.name}
                 onClick={() => handleStyleChange(preset.url, preset.attribution)}
                 active={settings.tileLayerUrl === preset.url}
