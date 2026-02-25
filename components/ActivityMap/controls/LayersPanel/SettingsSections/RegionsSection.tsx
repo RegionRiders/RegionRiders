@@ -79,10 +79,12 @@ export function RegionsSection({
                 {/*Color buttons*/}
                 {settings.regionStaticColorSwatches.map((colorThresholds, index) => {
                   const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
+                  const visited = colorThresholds.find((ct) => ct.threshold === 1);
                   return (
                     <ColorSwatchButton
                       key={index}
                       color={unvisited?.color || [0, 0, 0, 0]}
+                      secondaryColor={visited?.color || [0, 0, 0, 0]}
                       index={index}
                       selectedIndex={settings.selectedRegionStaticSwatchIndex}
                       onClick={() => onSettingChange('selectedRegionStaticSwatchIndex', index)}

@@ -58,6 +58,18 @@ export default function ActivityMap() {
         { threshold: 0, color: [160, 160, 160, 0] },
         { threshold: 1, color: [67, 69, 11, 0.2] },
       ],
+      [
+        { threshold: 0, color: [160, 160, 160, 0] },
+        { threshold: 1, color: [67, 69, 11, 0.2] },
+      ],
+      [
+        { threshold: 0, color: [160, 160, 160, 0] },
+        { threshold: 1, color: [67, 69, 11, 0.2] },
+      ],
+      [
+        { threshold: 0, color: [160, 160, 160, 0] },
+        { threshold: 1, color: [67, 69, 11, 0.2] },
+      ],
     ],
     selectedRegionStaticSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

@@ -1,7 +1,7 @@
 .editIcon {
     position: absolute;
-    align-self: center;
-    top: 2px;
-    right: 2px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     filter: drop-shadow(0 0 2px rgb(0, 0, 0, 0.5));
 }
