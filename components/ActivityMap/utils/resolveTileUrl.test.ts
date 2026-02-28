@@ -1,4 +1,18 @@
-import { resolveTileUrl } from './resolveTileUrl';
+import { resolveTileUrl, latLngToTile } from './resolveTileUrl';
+
+describe('latLngToTile', () => {
+  it('returns integer tile coordinates', () => {
+    const { x, y } = latLngToTile(54.352, 18.656, 11);
+    expect(Number.isInteger(x)).toBe(true);
+    expect(Number.isInteger(y)).toBe(true);
+  });
+
+  it('returns same coordinates for nearby points within a tile', () => {
+    const a = latLngToTile(54.352, 18.656, 11);
+    const b = latLngToTile(54.3521, 18.6561, 11);
+    expect(a).toEqual(b);
+  });
+});
 
 describe('resolveTileUrl', () => {
   it('replaces {z}, {x}, {y} placeholders with tile coordinates', () => {

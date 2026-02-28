@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Accordion, Card } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -13,6 +14,9 @@ import { MapViewState, useMapViewState } from '@/components/ActivityMap/hooks/ma
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import styles from './LayersPanel.module.css';
+
+const PLACEHOLDER_IMAGE =
+  'https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80';
 
 function LayersPanelContent({
   settings,
@@ -39,11 +43,13 @@ export default function LayersPanel(props: LayersPanelProps) {
   const isSatellite = props.settings.tileLayerUrl === TILE_PRESETS.satellite.url;
   const layerButtonPreset = isSatellite ? TILE_PRESETS.standard : TILE_PRESETS.satellite;
 
-  const layerButtonImageUrl =
-    viewState
-      ? resolveTileUrl(layerButtonPreset.url, viewState.center[0], viewState.center[1], viewState.zoom)
-      : props.placeholderImageUrl ??
-        'https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80';
+  const layerButtonImageUrl = useMemo(
+    () =>
+      viewState
+        ? resolveTileUrl(layerButtonPreset.url, viewState.center[0], viewState.center[1], viewState.zoom)
+        : props.placeholderImageUrl ?? PLACEHOLDER_IMAGE,
+    [viewState, layerButtonPreset.url, props.placeholderImageUrl, props.settings.tileLayerUrl]
+  );
 
   return (
     <div className={styles.container}>
