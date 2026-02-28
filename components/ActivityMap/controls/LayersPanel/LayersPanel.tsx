@@ -25,7 +25,7 @@ function LayersPanelContent({
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & { viewState: MapViewState | null }) {
   return (
     <Card shadow="sm" radius="md" className={styles.panel} withBorder>
-      <Accordion multiple>
+      <Accordion>
         <RegionsSection settings={settings} onSettingChange={onSettingChange} />
 
         <ActivitiesSection settings={settings} onSettingChange={onSettingChange} />
