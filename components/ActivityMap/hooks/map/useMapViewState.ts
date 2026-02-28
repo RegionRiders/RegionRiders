@@ -8,7 +8,7 @@ import { createComponentLogger } from '@/lib/logger/client';
 const logger = createComponentLogger('useMapViewState');
 
 /** Debounce delay (ms) — cancels stale updates during rapid scrolling */
-const MOVEEND_DEBOUNCE_MS = 150;
+const MOVEEND_DEBOUNCE_MS = 1000;
 
 export interface MapViewState {
   center: [number, number];

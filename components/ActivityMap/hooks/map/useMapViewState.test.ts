@@ -60,7 +60,7 @@ describe('useMapViewState', () => {
 
     act(() => {
       moveendHandler!();
-      jest.advanceTimersByTime(150);
+      jest.advanceTimersByTime(1000);
     });
 
     expect(result.current).toEqual({
@@ -102,7 +102,7 @@ describe('useMapViewState', () => {
     });
 
     // After debounce, only the last position is applied
-    act(() => { jest.advanceTimersByTime(150); });
+    act(() => { jest.advanceTimersByTime(1000); });
 
     expect(result.current).toEqual({
       center: [57.0, 21.0],
@@ -136,7 +136,7 @@ describe('useMapViewState', () => {
 
     act(() => {
       moveendHandler!();
-      jest.advanceTimersByTime(150);
+      jest.advanceTimersByTime(1000);
     });
 
     // State reference should be unchanged (update was skipped)

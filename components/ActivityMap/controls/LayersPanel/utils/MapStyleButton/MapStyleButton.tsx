@@ -35,7 +35,11 @@ export default function MapStyleButton({
   }, [imageUrl]);
 
   const handleNextLoaded = useCallback(() => {
-    setFadeIn(true);
+    // Delay by one frame so the browser paints opacity:0 before transitioning
+    // to opacity:1 — ensures the CSS transition fires even for cached images.
+    requestAnimationFrame(() => {
+      setFadeIn(true);
+    });
   }, []);
 
   const handleTransitionEnd = useCallback(() => {
