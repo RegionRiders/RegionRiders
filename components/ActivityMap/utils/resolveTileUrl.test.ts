@@ -1,4 +1,4 @@
-import { resolveTileUrl, latLngToTile } from './resolveTileUrl';
+import { latLngToTile, resolveTileUrl } from './resolveTileUrl';
 
 describe('latLngToTile', () => {
   it('returns integer tile coordinates', () => {
@@ -59,9 +59,9 @@ describe('resolveTileUrl', () => {
     // At zoom 11, the tile coordinates should be in a reasonable range
     const url = resolveTileUrl('https://t/{z}/{x}/{y}.png', 54.352, 18.656, 11);
     const parts = url.replace('https://t/', '').replace('.png', '').split('/');
-    const z = parseInt(parts[0]);
-    const x = parseInt(parts[1]);
-    const y = parseInt(parts[2]);
+    const z = parseInt(parts[0], 10);
+    const x = parseInt(parts[1], 10);
+    const y = parseInt(parts[2], 10);
 
     expect(z).toBe(11);
     // Gdańsk x should be ~1130, y should be ~640 at zoom 11

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Accordion, Card } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import {
   ActivitiesSection,
   MapStyleSection,
@@ -12,7 +13,6 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import { MapViewState, useMapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
-import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import styles from './LayersPanel.module.css';
 
 const PLACEHOLDER_IMAGE =
@@ -30,7 +30,11 @@ function LayersPanelContent({
 
         <ActivitiesSection settings={settings} onSettingChange={onSettingChange} />
 
-        <MapStyleSection settings={settings} onSettingChange={onSettingChange} viewState={viewState} />
+        <MapStyleSection
+          settings={settings}
+          onSettingChange={onSettingChange}
+          viewState={viewState}
+        />
       </Accordion>
     </Card>
   );
@@ -46,8 +50,13 @@ export default function LayersPanel(props: LayersPanelProps) {
   const layerButtonImageUrl = useMemo(
     () =>
       viewState
-        ? resolveTileUrl(layerButtonPreset.url, viewState.center[0], viewState.center[1], viewState.zoom)
-        : props.placeholderImageUrl ?? PLACEHOLDER_IMAGE,
+        ? resolveTileUrl(
+            layerButtonPreset.url,
+            viewState.center[0],
+            viewState.center[1],
+            viewState.zoom
+          )
+        : (props.placeholderImageUrl ?? PLACEHOLDER_IMAGE),
     [viewState, layerButtonPreset.url, props.placeholderImageUrl, props.settings.tileLayerUrl]
   );
 

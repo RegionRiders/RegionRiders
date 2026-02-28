@@ -3,7 +3,7 @@
  * using the standard Slippy Map tile numbering scheme.
  */
 export function latLngToTile(lat: number, lng: number, zoom: number): { x: number; y: number } {
-  const n = Math.pow(2, zoom);
+  const n = 2 ** zoom;
   const x = Math.floor(((lng + 180) / 360) * n);
   const latRad = (lat * Math.PI) / 180;
   const y = Math.floor(((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n);
@@ -16,7 +16,12 @@ export function latLngToTile(lat: number, lng: number, zoom: number): { x: numbe
  *
  * Supports common placeholders: {s}, {z}, {x}, {y}, {r}
  */
-export function resolveTileUrl(urlTemplate: string, lat: number, lng: number, zoom: number): string {
+export function resolveTileUrl(
+  urlTemplate: string,
+  lat: number,
+  lng: number,
+  zoom: number
+): string {
   const z = Math.round(zoom);
   const { x, y } = latLngToTile(lat, lng, z);
   return urlTemplate

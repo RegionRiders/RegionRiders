@@ -1,6 +1,6 @@
-import { renderHook, act } from '@testing-library/react';
-import { useMapViewState } from './useMapViewState';
+import { act, renderHook } from '@testing-library/react';
 import { latLngToTile } from '@/components/ActivityMap/utils/resolveTileUrl';
+import { useMapViewState } from './useMapViewState';
 
 // Mock logger
 jest.mock('@/lib/logger/client', () => ({
@@ -47,7 +47,9 @@ describe('useMapViewState', () => {
       getCenter: jest.fn(() => ({ lat: 54.352, lng: 18.656 })),
       getZoom: jest.fn(() => 11),
       on: jest.fn((event: string, handler: () => void) => {
-        if (event === 'moveend') moveendHandler = handler;
+        if (event === 'moveend') {
+          moveendHandler = handler;
+        }
       }),
       off: jest.fn(),
     } as any;
@@ -75,7 +77,9 @@ describe('useMapViewState', () => {
       getCenter: jest.fn(() => ({ lat: 54.352, lng: 18.656 })),
       getZoom: jest.fn(() => 11),
       on: jest.fn((event: string, handler: () => void) => {
-        if (event === 'moveend') moveendHandler = handler;
+        if (event === 'moveend') {
+          moveendHandler = handler;
+        }
       }),
       off: jest.fn(),
     } as any;
@@ -85,15 +89,21 @@ describe('useMapViewState', () => {
     // Rapid scrolling: fire several moveend events before debounce resolves
     mockMap.getCenter.mockReturnValue({ lat: 55.0, lng: 19.0 });
     mockMap.getZoom.mockReturnValue(12);
-    act(() => { moveendHandler!(); });
+    act(() => {
+      moveendHandler!();
+    });
 
     mockMap.getCenter.mockReturnValue({ lat: 56.0, lng: 20.0 });
     mockMap.getZoom.mockReturnValue(13);
-    act(() => { moveendHandler!(); });
+    act(() => {
+      moveendHandler!();
+    });
 
     mockMap.getCenter.mockReturnValue({ lat: 57.0, lng: 21.0 });
     mockMap.getZoom.mockReturnValue(14);
-    act(() => { moveendHandler!(); });
+    act(() => {
+      moveendHandler!();
+    });
 
     // Before debounce fires, state should still be initial
     expect(result.current).toEqual({
@@ -102,7 +112,9 @@ describe('useMapViewState', () => {
     });
 
     // After debounce, only the last position is applied
-    act(() => { jest.advanceTimersByTime(1000); });
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
 
     expect(result.current).toEqual({
       center: [57.0, 21.0],
@@ -117,7 +129,9 @@ describe('useMapViewState', () => {
       getCenter: jest.fn(() => initialCenter),
       getZoom: jest.fn(() => 11),
       on: jest.fn((event: string, handler: () => void) => {
-        if (event === 'moveend') moveendHandler = handler;
+        if (event === 'moveend') {
+          moveendHandler = handler;
+        }
       }),
       off: jest.fn(),
     } as any;

@@ -22,7 +22,9 @@ export function MapStyleSection({
   };
 
   const tileUrls = useMemo(() => {
-    if (!viewState) return null;
+    if (!viewState) {
+      return null;
+    }
     const { center, zoom } = viewState;
     return Object.fromEntries(
       presetEntries.map(([key, preset]) => [
