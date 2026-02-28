@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import styles from './MapStyleButton.module.css';
 
 interface MapStyleButtonProps {
@@ -21,6 +21,35 @@ export default function MapStyleButton({
   fullWidth = false,
   'aria-label': ariaLabel = 'Toggle panel',
 }: MapStyleButtonProps) {
+  const [displayedUrl, setDisplayedUrl] = useState(imageUrl);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [fadeIn, setFadeIn] = useState(false);
+  const prevUrlRef = useRef(imageUrl);
+
+  useEffect(() => {
+    if (imageUrl !== prevUrlRef.current) {
+      prevUrlRef.current = imageUrl;
+      setFadeIn(false);
+      setNextUrl(imageUrl);
+    }
+  }, [imageUrl]);
+
+  const handleNextLoaded = useCallback(() => {
+    // Delay by one frame so the browser paints opacity:0 before transitioning
+    // to opacity:1 — ensures the CSS transition fires even for cached images.
+    requestAnimationFrame(() => {
+      setFadeIn(true);
+    });
+  }, []);
+
+  const handleTransitionEnd = useCallback(() => {
+    if (nextUrl) {
+      setDisplayedUrl(nextUrl);
+      setNextUrl(null);
+      setFadeIn(false);
+    }
+  }, [nextUrl]);
+
   return (
     <button
       type="button"
@@ -30,7 +59,16 @@ export default function MapStyleButton({
       aria-label={ariaLabel}
     >
       <div className={styles.mapStyleButtonImageWrapper}>
-        <img src={imageUrl} alt="" className={styles.mapStyleButtonImage} />
+        <img src={displayedUrl} alt="" className={styles.mapStyleButtonImage} />
+        {nextUrl && (
+          <img
+            src={nextUrl}
+            alt=""
+            className={`${styles.mapStyleButtonImage} ${styles.mapStyleButtonImageNext} ${fadeIn ? styles.mapStyleButtonImageFadeIn : ''}`}
+            onLoad={handleNextLoaded}
+            onTransitionEnd={handleTransitionEnd}
+          />
+        )}
         <div className={styles.mapStyleButtonGradient} />
       </div>
       <div className={styles.mapStyleButtonLabel}>

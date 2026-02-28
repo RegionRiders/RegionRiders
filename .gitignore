@@ -157,3 +157,4 @@ postgres_data/
 .pgdata/
 
 test-results.txt
+package-lock.json

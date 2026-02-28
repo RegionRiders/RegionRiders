@@ -40,6 +40,18 @@
     display: block;
 }
 
+.mapStyleButtonImageNext {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+}
+
+.mapStyleButtonImageFadeIn {
+    opacity: 1;
+}
+
 .mapStyleButtonGradient {
     position: absolute;
     bottom: 0;

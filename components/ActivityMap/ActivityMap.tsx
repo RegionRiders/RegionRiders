@@ -100,7 +100,7 @@ export default function ActivityMap() {
     <div className={styles.container}>
       <div className={styles.wrapper}>
         <div className={styles.controls}>
-          <LayersPanel settings={settings} onSettingChange={updateSetting} />
+          <LayersPanel settings={settings} onSettingChange={updateSetting} map={map} />
         </div>
       </div>
 
