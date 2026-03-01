@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Accordion, Card, Drawer } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import {
   ActivitiesSection,
@@ -13,10 +13,9 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import { MapViewState, useMapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
+import { useIsSmallScreen } from '@/hooks/useIsSmallScreen';
 import styles from './LayersPanel.module.css';
 
-const PLACEHOLDER_MAP_IMAGE = 'https://a.tile.opentopomap.org/12/2260/1307.png';
-const MOBILE_BREAKPOINT = '(max-width: 768px)';
 const DRAWER_Z_INDEX = 10000;
 
 function LayersPanelContent({
@@ -53,7 +52,7 @@ function LayersPanelContent({
 export default function LayersPanel(props: LayersPanelProps) {
   const [opened, { toggle, close }] = useDisclosure(false);
   const viewState = useMapViewState(props.map ?? null);
-  const isMobile = useMediaQuery(MOBILE_BREAKPOINT, false);
+  const isMobile = useIsSmallScreen(600);
 
   const isSatellite = props.settings.tileLayerUrl === TILE_PRESETS.satellite.url;
   const layerButtonPreset = isSatellite ? TILE_PRESETS.standard : TILE_PRESETS.satellite;
@@ -67,7 +66,7 @@ export default function LayersPanel(props: LayersPanelProps) {
             viewState.center[1],
             viewState.zoom
           )
-        : (props.placeholderImageUrl ?? PLACEHOLDER_MAP_IMAGE),
+        : props.placeholderImageUrl,
     [viewState, layerButtonPreset.url, props.placeholderImageUrl, props.settings.tileLayerUrl]
   );
 

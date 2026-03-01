@@ -43,13 +43,3 @@
     background: transparent;
 }
 
-@media (max-width: 768px) {
-    .container {
-        width: 100px;
-    }
-
-    /* Hide desktop panel wrapper on mobile since we use drawer */
-    .panelWrapper {
-        display: none;
-    }
-}
