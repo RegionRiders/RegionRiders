@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Accordion, Card } from '@mantine/core';
+import { Accordion, Card, Drawer } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import {
@@ -13,17 +13,27 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import { MapViewState, useMapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
+import { useIsSmallScreen } from '@/hooks/useIsSmallScreen';
 import styles from './LayersPanel.module.css';
 
-const PLACEHOLDER_MAP_IMAGE = 'https://a.tile.opentopomap.org/12/2260/1307.png';
+const DRAWER_Z_INDEX = 10000;
 
 function LayersPanelContent({
   settings,
   onSettingChange,
   viewState,
-}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & { viewState: MapViewState | null }) {
+  isMobile = false,
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & {
+  viewState: MapViewState | null;
+  isMobile?: boolean;
+}) {
   return (
-    <Card shadow="sm" radius="md" className={styles.panel} withBorder>
+    <Card
+      shadow={isMobile ? undefined : 'sm'}
+      radius={isMobile ? 0 : 'md'}
+      className={isMobile ? styles.mobilePanel : styles.panel}
+      withBorder={!isMobile}
+    >
       <Accordion>
         <RegionsSection settings={settings} onSettingChange={onSettingChange} />
 
@@ -40,8 +50,9 @@ function LayersPanelContent({
 }
 
 export default function LayersPanel(props: LayersPanelProps) {
-  const [opened, { toggle }] = useDisclosure(false);
+  const [opened, { toggle, close }] = useDisclosure(false);
   const viewState = useMapViewState(props.map ?? null);
+  const isMobile = useIsSmallScreen(600);
 
   const isSatellite = props.settings.tileLayerUrl === TILE_PRESETS.satellite.url;
   const layerButtonPreset = isSatellite ? TILE_PRESETS.standard : TILE_PRESETS.satellite;
@@ -55,7 +66,7 @@ export default function LayersPanel(props: LayersPanelProps) {
             viewState.center[1],
             viewState.zoom
           )
-        : (props.placeholderImageUrl ?? PLACEHOLDER_MAP_IMAGE),
+        : props.placeholderImageUrl,
     [viewState, layerButtonPreset.url, props.placeholderImageUrl, props.settings.tileLayerUrl]
   );
 
@@ -68,13 +79,40 @@ export default function LayersPanel(props: LayersPanelProps) {
         fullWidth
         active={opened}
       />
-      <div className={`${styles.panelWrapper} ${opened ? styles.panelWrapperOpen : ''}`}>
-        <LayersPanelContent
-          settings={props.settings}
-          onSettingChange={props.onSettingChange}
-          viewState={viewState}
-        />
-      </div>
+
+      {/* Desktop: Show dropdown panel */}
+      {!isMobile && (
+        <div className={`${styles.panelWrapper} ${opened ? styles.panelWrapperOpen : ''}`}>
+          <LayersPanelContent
+            settings={props.settings}
+            onSettingChange={props.onSettingChange}
+            viewState={viewState}
+          />
+        </div>
+      )}
+
+      {/* Mobile: Show full-screen drawer */}
+      {isMobile && (
+        <Drawer
+          opened={opened}
+          onClose={close}
+          title="Layers"
+          position="bottom"
+          size="100%"
+          zIndex={DRAWER_Z_INDEX}
+          classNames={{
+            body: styles.drawerBody,
+            content: styles.drawerContent,
+          }}
+        >
+          <LayersPanelContent
+            settings={props.settings}
+            onSettingChange={props.onSettingChange}
+            viewState={viewState}
+            isMobile
+          />
+        </Drawer>
+      )}
     </div>
   );
 }

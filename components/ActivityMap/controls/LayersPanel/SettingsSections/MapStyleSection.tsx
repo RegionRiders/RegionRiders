@@ -12,7 +12,9 @@ export function MapStyleSection({
   settings,
   onSettingChange,
   viewState,
-}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & { viewState?: MapViewState | null }) {
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & {
+  viewState?: MapViewState | null;
+}) {
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
     onSettingChange('attribution', attribution);
@@ -40,7 +42,10 @@ export function MapStyleSection({
       </Accordion.Control>
       <Accordion.Panel>
         <Stack gap="xs">
-          <SimpleGrid cols={3} spacing="xs">
+          <SimpleGrid
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
+            spacing="xs"
+          >
             {presetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
