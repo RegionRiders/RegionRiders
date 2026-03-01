@@ -6,9 +6,6 @@ import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/
 import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
 
-const PLACEHOLDER_IMAGE =
-  'https://img.freepik.com/free-vector/map-city-perspective-with-pin-maps_23-2147624234.jpg?semt=ais_hybrid&w=740&q=80';
-
 const presetEntries = Object.entries(TILE_PRESETS);
 
 export function MapStyleSection({
@@ -47,7 +44,7 @@ export function MapStyleSection({
             {presetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl={tileUrls?.[key] ?? PLACEHOLDER_IMAGE}
+                imageUrl={tileUrls?.[key]}
                 label={preset.name}
                 onClick={() => handleStyleChange(preset.url, preset.attribution)}
                 active={settings.tileLayerUrl === preset.url}

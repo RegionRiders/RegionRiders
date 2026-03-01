@@ -4,7 +4,7 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import styles from './MapStyleButton.module.css';
 
 interface MapStyleButtonProps {
-  imageUrl: string;
+  imageUrl?: string;
   label: string;
   icon?: ReactNode;
   onClick: () => void;
@@ -14,7 +14,7 @@ interface MapStyleButtonProps {
 }
 
 export default function MapStyleButton({
-  imageUrl,
+  imageUrl = 'https://a.tile.opentopomap.org/12/2260/1307.png',
   label,
   onClick,
   active = false,
