@@ -9,8 +9,10 @@ import styles from './ActivityMap.module.css';
 
 import 'leaflet/dist/leaflet.css';
 
+import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { GradientColorPickerButton } from '@/components/GradientColorPicker/GradientColorPickerButton';
 
 const MapContainerMemo = memo(MapContainer);
 
@@ -55,6 +57,11 @@ export default function ActivityMap() {
       <div className={styles.wrapper}>
         <div className={styles.controls}>
           <LayersPanel settings={settings} onSettingChange={updateSetting} />
+          <GradientColorPickerButton
+            value={ACTIVITY_HEATMAP_COLOR_THRESHOLDS}
+            onChange={() => {}}
+            buttonLabel="gradient"
+          />
         </div>
       </div>
 
