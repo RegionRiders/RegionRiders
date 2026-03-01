@@ -25,12 +25,30 @@
     pointer-events: auto;
 }
 
+/* Mobile drawer styles */
+.drawerBody {
+    height: 100%;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.drawerContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobilePanel {
+    height: 100%;
+    background: transparent;
+}
+
 @media (max-width: 768px) {
     .container {
         width: 100px;
     }
 
+    /* Hide desktop panel wrapper on mobile since we use drawer */
     .panelWrapper {
-        width: 280px;
+        display: none;
     }
 }
