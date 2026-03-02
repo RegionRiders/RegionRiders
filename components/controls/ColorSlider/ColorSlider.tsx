@@ -23,7 +23,7 @@ export function ColorSlider({
   const isVertical = orientation === 'vertical';
 
   // For vertical: track y, invert so bottom = 0, top = 1
-  const { ref } = useMove(({ x, y }) => onChange(clamp(isVertical ? 1 - y : x)));
+  const { ref } = useMove<HTMLDivElement>(({ x, y }) => onChange(clamp(isVertical ? 1 - y : x)));
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -60,7 +60,7 @@ export function ColorSlider({
 
   return (
     <div
-      ref={ref as unknown as React.RefObject<HTMLDivElement>}
+      ref={ref}
       role="slider"
       aria-label={ariaLabel}
       aria-valuenow={Math.round(value * 100)}

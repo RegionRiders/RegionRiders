@@ -84,10 +84,10 @@ export function drawActivitiesAsLines(
         // Use utility functions for event handling
         attachActivityHoverEvents(
           polyline,
-          refs.lineThickness,
           refs.lineColor,
+          refs.lineHoverColor,
           refs.lineThickness * 2,
-          refs.lineHoverColor
+          refs.lineThickness
         );
         attachActivityClickHandler(polyline, map, trackId, track);
 

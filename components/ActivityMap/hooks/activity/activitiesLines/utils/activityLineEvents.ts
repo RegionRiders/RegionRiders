@@ -9,10 +9,10 @@ import { GPXTrack } from '@/lib/types';
  */
 export function attachActivityHoverEvents(
   polyline: L.Polyline,
-  baseWeight: number = 2,
   baseColor: RGBA,
-  hoverWeight: number = baseWeight * 2,
-  hoverColor: RGBA
+  hoverColor: RGBA,
+  baseWeight: number = 2,
+  hoverWeight: number = baseWeight * 2
 ): void {
   polyline.on('mouseover', function (this: L.Polyline) {
     const color = rgbToHex(hoverColor[0], hoverColor[1], hoverColor[2]);
