@@ -2,24 +2,35 @@ import { renderHook } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
 import { Regions } from '@/lib/types';
 import { useRegionRendering } from './useRegionRendering';
+import { RegionLayerManager } from './renderingModes/regionLayerManager';
 
-// Mock the drawing function
-jest.mock('../../drawRegions/drawRegions', () => ({
-  drawRegions: jest.fn(() => [
-    {
-      setStyle: jest.fn(),
-    },
-  ]),
+// Mock dependencies
+jest.mock('./renderingModes/regionLayerManager', () => ({
+  RegionLayerManager: jest.fn().mockImplementation(() => ({
+    syncRegions: jest.fn(),
+    updateStyles: jest.fn(),
+    clear: jest.fn(),
+    destroy: jest.fn(),
+    getLayerCount: jest.fn(() => 0),
+  })),
+}));
+
+jest.mock('./utils/calculateWeightForZoom', () => ({
+  calculateWeightForZoom: jest.fn(() => 2),
+}));
+
+jest.mock('@/lib/logger/client', () => ({
+  createComponentLogger: jest.fn(() => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  })),
 }));
 
 describe('useRegionRendering', () => {
   const mockMap = {
-    on: jest.fn(),
-    off: jest.fn(),
-    invalidateSize: jest.fn(),
     getZoom: jest.fn(() => 10),
-    hasLayer: jest.fn(() => false),
-    removeLayer: jest.fn(),
   } as any;
 
   const mockPolygon: GeoJSON.Polygon = {
@@ -69,7 +80,7 @@ describe('useRegionRendering', () => {
       }).not.toThrow();
     });
 
-    it('should handle null region visits', () => {
+    it('should handle empty region visits', () => {
       const emptyVisits = new Map();
       expect(() => {
         renderHook(() => useRegionRendering(mockMap, [mockRegion], emptyVisits, true));
@@ -81,84 +92,67 @@ describe('useRegionRendering', () => {
         renderHook(() => useRegionRendering(mockMap, [], mockRegionVisits, true));
       }).not.toThrow();
     });
+
+    it('should initialize layer manager when map is provided', () => {
+      renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
+      
+      expect(RegionLayerManager).toHaveBeenCalledWith(mockMap);
+    });
   });
 
   describe('rendering', () => {
-    it('should render regions when map and visits are provided', () => {
+    it('should render regions when map and regions are provided', () => {
       expect(() => {
         renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
       }).not.toThrow();
     });
 
-    it('should clear old layers before rendering new ones', () => {
-      mockMap.hasLayer.mockReturnValue(true);
-
-      // First render
-      const { rerender } = renderHook(
-        ({ map, regions, visits, show }) => useRegionRendering(map, regions, visits, show),
-        {
-          initialProps: {
-            map: mockMap,
-            regions: [mockRegion],
-            visits: mockRegionVisits,
-            show: true,
-          },
-        }
-      );
-
-      // Clear the mock to check second render
-      mockMap.removeLayer.mockClear();
-
-      // Second render should clear old layers
-      rerender({
-        map: mockMap,
-        regions: [mockRegion],
-        visits: mockRegionVisits,
-        show: true,
-      });
-
-      expect(mockMap.removeLayer).toHaveBeenCalled();
+    it('should call syncRegions when regions are provided', () => {
+      renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
+      
+      const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
+      if (mockLayerManager) {
+        expect(mockLayerManager.syncRegions).toHaveBeenCalled();
+      }
     });
 
-    it('should handle zoom events and adjust layer weights', () => {
-      mockMap.getZoom.mockReturnValue(12);
-
-      renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
-
-      expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
-
-      // Simulate zoom event by finding the registered handler safely
-      const calls = mockMap.on.mock.calls as Array<[string, (...args: any[]) => void]>;
-      const zoomCall = calls.find((c) => c[0] === 'zoomend');
-      const zoomHandler = zoomCall ? zoomCall[1] : undefined;
-
-      if (zoomHandler) {
-        zoomHandler();
+    it('should call clear when showRegions is false', () => {
+      renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, false));
+      
+      const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
+      if (mockLayerManager) {
+        expect(mockLayerManager.clear).toHaveBeenCalled();
       }
-
-      // Should adjust weight based on zoom (no throw)
     });
   });
 
   describe('dependencies', () => {
-    it('should re-render when regionVisits change', () => {
+    it('should re-render when regions change', () => {
+      const { rerender } = renderHook(
+        ({ regions }) => useRegionRendering(mockMap, regions, mockRegionVisits, true),
+        { initialProps: { regions: [mockRegion] } }
+      );
+
+      const newRegion: Regions = {
+        id: 'region2',
+        name: 'New Region',
+        country: 'Test Country',
+        adminLevel: 1,
+        geometry: mockPolygon,
+        properties: {},
+      };
+
+      expect(() => rerender({ regions: [mockRegion, newRegion] })).not.toThrow();
+    });
+
+    it('should update styles when visitData changes', () => {
       const { rerender } = renderHook(
         ({ visits }) => useRegionRendering(mockMap, [mockRegion], visits, true),
         { initialProps: { visits: mockRegionVisits } }
       );
 
       const newVisits = new Map([
-        [
-          'region1',
-          {
-            regionId: 'region1',
-            regionName: 'Test Region',
-            visitCount: 5,
-            trackIds: ['track1'],
-            visited: true,
-            geometry: mockPolygon,
-          },
-        ],
+        ...mockRegionVisits,
         [
           'region2',
           {
@@ -176,16 +170,19 @@ describe('useRegionRendering', () => {
     });
   });
 
-  it('should clean up layers and event listeners on unmount', () => {
-    mockMap.hasLayer.mockReturnValue(true);
+  describe('cleanup', () => {
+    it('should destroy layer manager on unmount', () => {
+      const { unmount } = renderHook(() =>
+        useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true)
+      );
 
-    const { unmount } = renderHook(() =>
-      useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true)
-    );
+      const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
 
-    unmount();
+      unmount();
 
-    expect(mockMap.off).toHaveBeenCalledWith('zoomend', expect.any(Function));
-    expect(mockMap.removeLayer).toHaveBeenCalled();
+      if (mockLayerManager) {
+        expect(mockLayerManager.destroy).toHaveBeenCalled();
+      }
+    });
   });
 });

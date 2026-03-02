@@ -1,6 +1,14 @@
 import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisits, analyzeRegionVisitsAsync } from './regionVisitAnalyzer';
 
+// Mock the spatial index module which uses rbush
+jest.mock('./spatial/spatialIndex', () => ({
+  RegionSpatialIndex: jest.fn().mockImplementation(() => ({
+    findCandidateRegions: jest.fn(() => []),
+    getSize: jest.fn(() => 0),
+  })),
+}));
+
 // Mock dependencies
 jest.mock('./processing', () => ({
   processTrack: jest.fn(),

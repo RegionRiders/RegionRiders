@@ -1,8 +1,12 @@
+import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import type { GPXTrack } from '@/lib/types';
 import { attachActivityClickHandler, attachActivityHoverEvents } from './activityLineEvents';
 
 describe('activityLineEvents', () => {
   const mockMap: any = {};
+  const baseColor: RGBA = [255, 107, 107, 0.6]; // #FF6B6B with 0.6 opacity
+  const hoverColor: RGBA = [74, 222, 128, 1]; // #4ADE80 with 1 opacity
+  const baseWeight = 2;
 
   describe('attachActivityHoverEvents', () => {
     it('should attach mouseover and mouseout event handlers', () => {
@@ -12,7 +16,7 @@ describe('activityLineEvents', () => {
         bringToFront: jest.fn(),
       };
 
-      attachActivityHoverEvents(mockPolyline as any);
+      attachActivityHoverEvents(mockPolyline as any, baseColor, hoverColor, baseWeight);
 
       expect(mockPolyline.on).toHaveBeenCalledTimes(2);
       expect(mockPolyline.on).toHaveBeenCalledWith('mouseover', expect.any(Function));
@@ -30,10 +34,10 @@ describe('activityLineEvents', () => {
         bringToFront: jest.fn(),
       };
 
-      attachActivityHoverEvents(mockPolyline as any);
+      attachActivityHoverEvents(mockPolyline as any, baseColor, hoverColor, baseWeight);
 
       expect(mockPolyline.setStyle).toHaveBeenCalledWith({
-        color: '#4ADE80',
+        color: '#4ade80',
         weight: 4,
         opacity: 1,
       });
@@ -53,14 +57,14 @@ describe('activityLineEvents', () => {
         bringToFront: jest.fn(),
       };
 
-      attachActivityHoverEvents(mockPolyline as any);
+      attachActivityHoverEvents(mockPolyline as any, baseColor, hoverColor, baseWeight);
 
       if (mouseoutHandler) {
         (mouseoutHandler as () => void).call(mockPolyline);
       }
 
       expect(mockPolyline.setStyle).toHaveBeenCalledWith({
-        color: '#FF6B6B',
+        color: '#ff6b6b',
         weight: 2,
         opacity: 0.6,
       });
