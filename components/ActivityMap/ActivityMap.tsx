@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * ActivityMap - Main map component for displaying GPX tracks and regions
+ * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
+ */
 import { memo, useMemo, useRef, useState } from 'react';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
@@ -14,6 +18,11 @@ import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types
 
 const MapContainerMemo = memo(MapContainer);
 
+/**
+ * ActivityMap component renders an interactive map with GPX tracks and region overlays
+ * Supports heatmap and line rendering modes for activities
+ * @returns Map component with controls panel
+ */
 export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { tracks } = useGPXData();

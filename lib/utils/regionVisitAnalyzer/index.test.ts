@@ -5,6 +5,14 @@ import {
   RegionVisitData,
 } from './index';
 
+// Mock the spatial index module which uses rbush
+jest.mock('./spatial/spatialIndex', () => ({
+  RegionSpatialIndex: jest.fn().mockImplementation(() => ({
+    findCandidateRegions: jest.fn(() => []),
+    getSize: jest.fn(() => 0),
+  })),
+}));
+
 describe('regionVisitAnalyzer/index', () => {
   it('should export analyzeRegionVisits', () => {
     expect(analyzeRegionVisits).toBeDefined();

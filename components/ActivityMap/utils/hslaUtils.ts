@@ -1,9 +1,21 @@
-// hslaUtils.ts
+/**
+ * HSLA color utilities
+ * Provides conversion between RGBA and HSLA color spaces
+ */
+
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 
 export type HSLA = { h: number; s: number; l: number };
 
-// Full float precision — no rounding, prevents slider instability
+/**
+ * Converts RGBA color to HSLA color space
+ * Full float precision to prevent slider instability
+ * @param r - Red component (0-255)
+ * @param g - Green component (0-255)
+ * @param b - Blue component (0-255)
+ * @param a - Alpha component (0-1)
+ * @returns HSLA object with h (0-360), s (0-100), l (0-100), a (0-1)
+ */
 export function rgbaToHsla(r: number, g: number, b: number, a: number): HSLA & { a: number } {
   const rn = r / 255,
     gn = g / 255,
@@ -31,6 +43,14 @@ export function rgbaToHsla(r: number, g: number, b: number, a: number): HSLA & {
   return { h: h * 360, s: s * 100, l: l * 100, a };
 }
 
+/**
+ * Converts HSLA color to RGBA color space
+ * @param h - Hue (0-360)
+ * @param s - Saturation (0-100)
+ * @param l - Lightness (0-100)
+ * @param a - Alpha (0-1)
+ * @returns RGBA tuple [r, g, b, a]
+ */
 export function hslaToRgba(h: number, s: number, l: number, a: number): RGBA {
   const sl = s / 100,
     ll = l / 100;
@@ -66,6 +86,11 @@ export function hslaToRgba(h: number, s: number, l: number, a: number): RGBA {
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255), a];
 }
 
+/**
+ * Parses an HSLA color string into component values
+ * @param value - CSS hsla() or hsl() string
+ * @returns Object with h, s, l, a values or null if parsing fails
+ */
 export function parseHslaString(
   value: string
 ): { h: number; s: number; l: number; a: number } | null {

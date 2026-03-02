@@ -31,7 +31,9 @@ export function useMapViewState(map: L.Map | null): MapViewState | null {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!map || typeof map.getCenter !== 'function') return;
+    if (!map || typeof map.getCenter !== 'function') {
+      return;
+    }
 
     logger.debug('Attaching moveend listener');
 
@@ -57,7 +59,9 @@ export function useMapViewState(map: L.Map | null): MapViewState | null {
     };
 
     const debouncedUpdate = () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
       debounceRef.current = setTimeout(update, MOVEEND_DEBOUNCE_MS);
     };
 
@@ -67,7 +71,9 @@ export function useMapViewState(map: L.Map | null): MapViewState | null {
 
     return () => {
       logger.debug('Detaching moveend listener');
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
       map.off('moveend', debouncedUpdate);
     };
   }, [map]);

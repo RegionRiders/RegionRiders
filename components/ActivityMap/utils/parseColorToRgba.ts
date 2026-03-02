@@ -1,7 +1,18 @@
+/**
+ * Color string parser
+ * Converts color strings in various formats to RGBA tuples
+ */
+
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { hslaToRgba } from '@/components/ActivityMap/utils/hslaUtils';
 import { detectColorFormat } from './detectColorFormat';
 
+/**
+ * Parses a color string in various formats and converts it to RGBA
+ * Supports RGB, RGBA, HEX (3, 6, or 8 digits), and HSLA formats
+ * @param input - Color string to parse
+ * @returns RGBA tuple [r, g, b, a] or null if parsing fails
+ */
 export function parseColorToRgba(input: string): RGBA | null {
   const trimmed = input.trim();
   const format = detectColorFormat(trimmed);
