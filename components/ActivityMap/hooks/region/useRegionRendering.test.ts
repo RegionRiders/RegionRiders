@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
 import { Regions } from '@/lib/types';
-import { useRegionRendering } from './useRegionRendering';
 import { RegionLayerManager } from './renderingModes/regionLayerManager';
+import { useRegionRendering } from './useRegionRendering';
 
 // Mock dependencies
 jest.mock('./renderingModes/regionLayerManager', () => ({
@@ -95,7 +95,7 @@ describe('useRegionRendering', () => {
 
     it('should initialize layer manager when map is provided', () => {
       renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
-      
+
       expect(RegionLayerManager).toHaveBeenCalledWith(mockMap);
     });
   });
@@ -109,7 +109,7 @@ describe('useRegionRendering', () => {
 
     it('should call syncRegions when regions are provided', () => {
       renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
-      
+
       const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
       if (mockLayerManager) {
         expect(mockLayerManager.syncRegions).toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe('useRegionRendering', () => {
 
     it('should call clear when showRegions is false', () => {
       renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, false));
-      
+
       const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
       if (mockLayerManager) {
         expect(mockLayerManager.clear).toHaveBeenCalled();

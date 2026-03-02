@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * MapOrchestrator - Coordinates rendering of activities and regions on the map
+ * Manages the lifecycle of map layers based on settings and data
+ */
 import type { Map as LeafletMap } from 'leaflet';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
@@ -14,6 +18,13 @@ interface MapOrchestratorProps {
   settings: MapSettings;
 }
 
+/**
+ * MapOrchestrator orchestrates all map rendering hooks
+ * @param map - Leaflet map instance
+ * @param tracks - Collection of GPX tracks to render
+ * @param settings - Map display settings
+ * @returns null (renders through side effects on the map)
+ */
 export default function MapOrchestrator({ map, tracks, settings }: MapOrchestratorProps) {
   const { regions } = useRegionLoading(map);
   const { visitData } = useRegionAnalysis(tracks, regions);

@@ -1,3 +1,10 @@
+import {
+  analyzeRegionVisits,
+  clearBoundingBoxCache,
+  clearGeometryCache,
+  RegionVisitData,
+} from './index';
+
 // Mock the spatial index module which uses rbush
 jest.mock('./spatial/spatialIndex', () => ({
   RegionSpatialIndex: jest.fn().mockImplementation(() => ({
@@ -5,13 +12,6 @@ jest.mock('./spatial/spatialIndex', () => ({
     getSize: jest.fn(() => 0),
   })),
 }));
-
-import {
-  analyzeRegionVisits,
-  clearBoundingBoxCache,
-  clearGeometryCache,
-  RegionVisitData,
-} from './index';
 
 describe('regionVisitAnalyzer/index', () => {
   it('should export analyzeRegionVisits', () => {

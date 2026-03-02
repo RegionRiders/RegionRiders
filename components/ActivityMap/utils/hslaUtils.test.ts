@@ -1,4 +1,3 @@
-import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { hslaToRgba, parseHslaString, rgbaToHsla } from './hslaUtils';
 
 describe('hslaUtils', () => {

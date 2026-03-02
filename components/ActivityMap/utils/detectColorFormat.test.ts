@@ -1,4 +1,4 @@
-import { detectColorFormat, ColorFormat } from './detectColorFormat';
+import { detectColorFormat } from './detectColorFormat';
 
 describe('detectColorFormat', () => {
   describe('rgba format', () => {

@@ -1,5 +1,15 @@
+/**
+ * Color format detection utility
+ * Detects whether a color string is in RGB, RGBA, HEX, or HSLA format
+ */
+
 export type ColorFormat = 'rgb' | 'rgba' | 'hex' | 'hsla';
 
+/**
+ * Detects the color format of an input string
+ * @param input - Color string to analyze
+ * @returns Color format type or null if format is unrecognized
+ */
 export function detectColorFormat(input: string): ColorFormat | null {
   const trimmed = input.trim();
 

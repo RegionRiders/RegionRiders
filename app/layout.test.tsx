@@ -3,7 +3,9 @@ import RootLayout, { metadata } from './layout';
 
 // Mock Mantine Provider components
 jest.mock('@mantine/core', () => ({
-  MantineProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="mantine-provider">{children}</div>,
+  MantineProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mantine-provider">{children}</div>
+  ),
   ColorSchemeScript: () => <script data-testid="color-scheme-script" />,
   mantineHtmlProps: { 'data-mantine-html': true },
   createTheme: jest.fn(() => ({})),

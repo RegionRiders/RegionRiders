@@ -1,6 +1,9 @@
 import { renderHook } from '@testing-library/react';
 import L from 'leaflet';
 import { GPXTrack } from '@/lib/types';
+// Import mocked functions for assertions
+import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
+import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
 import { useActivityRendering } from './useActivityRendering';
 
 // Mock dependencies
@@ -19,10 +22,6 @@ jest.mock('@/lib/logger/client', () => ({
     error: jest.fn(),
   })),
 }));
-
-// Import mocked functions for assertions
-import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
-import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
 
 describe('useActivityRendering', () => {
   let mockMap: L.Map;

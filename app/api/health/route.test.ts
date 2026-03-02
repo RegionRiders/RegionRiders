@@ -1,5 +1,5 @@
-import { GET, HEAD } from './route';
 import { getDb } from '@/lib/db';
+import { GET, HEAD } from './route';
 
 // Mock the database module
 jest.mock('@/lib/db', () => ({

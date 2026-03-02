@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
+import type { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
 import { useRegionLoading } from '@/components/ActivityMap/hooks/region/useRegionLoading';
 import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useRegionRendering';
-import type { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import type { Regions } from '@/lib/types';
 import MapOrchestrator from './MapOrchestrator';
 
@@ -42,9 +42,7 @@ describe('MapOrchestrator', () => {
     showActivities: true,
     activityThickness: 3,
     heatmapDensity: 2,
-    lineColorSwatches: [
-      { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
-    ],
+    lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
     selectedLineSwatchIndex: 0,
     regionMode: 'heatmap',
     showRegions: true,
@@ -147,7 +145,9 @@ describe('MapOrchestrator', () => {
   });
 
   it('should render null', () => {
-    const { container } = render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />);
+    const { container } = render(
+      <MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />
+    );
 
     expect(container.firstChild).toBeNull();
   });
