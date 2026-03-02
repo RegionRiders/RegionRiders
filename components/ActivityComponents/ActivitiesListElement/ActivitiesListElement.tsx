@@ -27,10 +27,8 @@ import { dateWithTime } from "@/components/Utils/DateFormattingFunctions";
 import {mockActivities, mockTrips} from '@/lib/mockData';
 import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
-import {Trip} from "@/types/trip";
 
-
-export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean) {
+export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean, hideNavbar: (value: boolean) => void) {
 
   const getActivityById = (activities: Activity[], activityId: string) => (
     activities.find((activity) => activity.id === activityId)!
@@ -83,9 +81,11 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
     if (activityId !== undefined) {
       handleActivityChange(null);
       setTripCreationMode(true);
+      hideNavbar(true);
       setSelectedActivities((prev) => [...prev, getActivityById(visibleActivities, activityId)])
     } else {
       setTripCreationMode(false);
+      hideNavbar(false);
       setSelectedActivities([]);
       tripCreationMenuHandlers.close();
     }

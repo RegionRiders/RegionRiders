@@ -39,6 +39,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
   const [asideWidth, setAsideWidth] = useState<string>("0vw");
 
+  const [hideNavbar, setHideNavbar] = useState<boolean>(false);
+
   const [mobileAsideOpened, { toggle: toggleAsideMobile }] = useDisclosure();
   const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
@@ -68,7 +70,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
       <AppShell header={{ height: "4rem" }}
                 aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: mobileAsideOpened, desktop: desktopAsideOpened} }}
                 >
-        <AppShell.Header>
+        <AppShell.Header display={hideNavbar ? 'none' : ''}>
           <Tabs.List className={classes.tabsList} h="4rem">
             <Logo />
             <NavbarTab value="map" text="Map" />
@@ -83,7 +85,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
 
         <NavbarTabContent value="map" Content={Welcome()} />
-        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleAsideDesktop, desktopAsideOpened)} />
+        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleAsideDesktop, desktopAsideOpened, setHideNavbar)} />
         <NavbarTabContent value="trips" Content={TripsListElement(toggleAsideDesktop, desktopAsideOpened)} />
       </AppShell>
     </Tabs>
