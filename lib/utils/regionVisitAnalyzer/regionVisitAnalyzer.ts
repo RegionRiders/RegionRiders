@@ -1,11 +1,7 @@
 import { GPXTrack, Regions } from '@/lib/types';
 import { pointInPolygon } from './geometry/pointInPolygon';
 import { RegionSpatialIndex } from './spatial/spatialIndex';
-import { AnalysisConfig, RegionVisitData } from './types';
-
-const DEFAULT_CONFIG: AnalysisConfig = {
-  gridSize: 0.1, // kept for compatibility, not used with RBush
-};
+import { RegionVisitData } from './types';
 
 /**
  * analyzes gpx tracks to find which regions were visited
@@ -15,14 +11,12 @@ const DEFAULT_CONFIG: AnalysisConfig = {
  * @param tracks - gpx tracks with lat/lon points
  * @param regions - geographic regions to check
  * @param onProgress - optional progress callback (0-100)
- * @param config - optional grid size tuning (not used with RBush)
  * @returns map of a region id to visit stats
  */
 export function analyzeRegionVisits(
   tracks: GPXTrack[],
   regions: Regions[],
-  onProgress?: (progress: number, message: string) => void,
-  config: AnalysisConfig = DEFAULT_CONFIG
+  onProgress?: (progress: number, message: string) => void
 ): Map<string, RegionVisitData> {
   const startTime = performance.now();
   const visitMap = new Map<string, RegionVisitData>();
@@ -118,10 +112,9 @@ export function analyzeRegionVisits(
 export function analyzeRegionVisitsAsync(
   tracks: GPXTrack[],
   regions: Regions[],
-  onProgress?: (progress: number, message: string) => void,
-  config?: AnalysisConfig
+  onProgress?: (progress: number, message: string) => void
 ): Promise<Map<string, RegionVisitData>> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(analyzeRegionVisits(tracks, regions, onProgress, config)), 0);
+    setTimeout(() => resolve(analyzeRegionVisits(tracks, regions, onProgress)), 0);
   });
 }

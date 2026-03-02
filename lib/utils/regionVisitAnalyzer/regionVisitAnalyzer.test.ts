@@ -134,9 +134,8 @@ describe('regionVisitAnalyzer', () => {
     it('should use custom config when provided', () => {
       const tracks = [mockTrack];
       const regions = [mockRegion];
-      const config = { gridSize: 0.2 };
 
-      const result = analyzeRegionVisits(tracks, regions, undefined, config);
+      const result = analyzeRegionVisits(tracks, regions, undefined);
 
       expect(result).toBeInstanceOf(Map);
     });
@@ -281,9 +280,8 @@ describe('regionVisitAnalyzer', () => {
     it('should accept custom config', async () => {
       const tracks = [mockTrack];
       const regions = [mockRegion];
-      const config = { gridSize: 0.15 };
 
-      const result = await analyzeRegionVisitsAsync(tracks, regions, undefined, config);
+      const result = await analyzeRegionVisitsAsync(tracks, regions);
 
       expect(result).toBeInstanceOf(Map);
     });
