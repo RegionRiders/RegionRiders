@@ -1,22 +1,8 @@
 'use client';
 
-import {useState} from "react";
+import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import {
-  AppShell,
-  Burger,
-  Button,
-  Checkbox,
-  CloseButton,
-  Divider,
-  Group,
-  Menu,
-  Modal,
-  ScrollArea,
-  Stack,
-  Text,
-  TextInput
-} from "@mantine/core";
+import { AppShell, Burger, Button, Checkbox, CloseButton, Divider, Flex, Group, Menu, Modal, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from '@mantine/form';
 import { useDisclosure } from "@mantine/hooks";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
@@ -24,9 +10,10 @@ import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/Activ
 import { PostsList } from '@/components/PostsList/PostsList';
 import { PostsLoading } from "@/components/PostsList/PostsLoading";
 import { dateWithTime } from "@/components/Utils/DateFormattingFunctions";
-import {mockActivities, mockTrips} from '@/lib/mockData';
+import { mockActivities, mockTrips } from '@/lib/mockData';
 import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
+
 
 export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean, hideNavbar: (value: boolean) => void) {
 
@@ -122,11 +109,13 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
 
 
   
-  const ActivityPostMenu = ({activityId}: {activityId: string}) => (
+  const ActivityPostMenu = ({ activityId }: { activityId: string }) => (
     <div hidden={tripCreationMode}>
       <Menu shadow="md" position="right">
         <Menu.Target>
-          <Burger />
+          <Text size="35px" fw={650}>
+            ⫶
+          </Text>
         </Menu.Target>
 
         <Menu.Dropdown>
@@ -280,7 +269,7 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
         <InfiniteScroll next={fetchActivities} hasMore={hasMoreActivities} loader={<PostsLoading/>} dataLength={visibleActivities.length} style={{ overflow: "hidden" }}>
           <PostsList
             Content={visibleActivities.map((activity) => (
-              <Group key={activity.id}>
+              <Flex key={activity.id} direction="row" gap="md" justify="flex-start" align="center">
                 <ActivitySelectCheckbox activityId={activity.id}/>
 
                 <ActivityPost
@@ -291,7 +280,7 @@ export function ActivitiesListElement(toggleActivity: () => void, isActivityTogg
                 />
 
                 <ActivityPostMenu activityId={activity.id}/>
-              </Group>
+              </Flex>
             ))}
           />
         </InfiniteScroll>

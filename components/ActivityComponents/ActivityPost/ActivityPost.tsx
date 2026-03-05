@@ -5,54 +5,68 @@ import { Activity } from '@/types/activity';
 
 
 const ActivityStat = ({ name, value }: { name: string; value: string }) => (
-  <Stack gap="md">
-    <Text>{name}</Text>
-    <Text>{value}</Text>
-  </Stack>
+  <Text>{value}</Text>
 );
 
 const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
-  <Group>
-    <Card shadow="sm" radius="md" withBorder>
-      <Flex direction="row" gap="xl" justify="flex-start" align="center" wrap="nowrap">
-        {/*Activity route preview image*/}
-        <Box>
-          <Card.Section>
-            <Image src={imageUrl || '/assets/placeholders/activity.jpg'} h={100} w={100} />
-          </Card.Section>
-        </Box>
+  <Card shadow="sm" radius="md" withBorder padding="xs">
+    <Flex
+      direction="row"
+      gap="md"
+      align={{ base: 'stretch', sm: 'center' }}
+      justify="flex-start"
+    >
+      <Image
+        src={imageUrl || '/assets/placeholders/activity.jpg'}
+        w={{ base: "4rem", sm: "6rem" }}
+        h={{ base: "auto", sm: "6rem" }}
+        fit="fill"
+        radius="md"
+      />
 
-        <Stack align="flex-start" justify="center" display="block">
-          <Group>
-            {/*Icon*/}
-            <ActivityTypeIcon type={data.activityType} size={200} />
+      {/* Content */}
+      <Stack flex={1} gap={0}>
+        <Group pb={{base: 0, sm: "xs"}}>
+          <ActivityTypeIcon type={data.activityType} size={28}/>
 
-            {/*Title*/}
-            <Text fw={650} truncate="end" w={225} onClick={() => {onSelect(data)}}>
-              {data.title}
-            </Text>
-
-            {/*Start date*/}
+          <Stack gap={0}>
             <Text c="dimmed" size="xs">
               {dateWithTime(data.startDate)}
             </Text>
-          </Group>
 
-          {/*Description*/}
-          <Text size="sm" c="dimmed" lineClamp={2} maw={350}>
-            {data.desc}
-          </Text>
-        </Stack>
+            <Text fw={650} truncate="end" onClick={() => onSelect(data)}>
+              {data.title}
+            </Text>
+          </Stack>
+        </Group>
 
-        <SimpleGrid cols={3} spacing="xs">
+        <Text size="sm" c="dimmed" lineClamp={1} truncate="end" maw="25vw" display={{base: 'none', sm: 'block'}}>
+          {data.desc}
+        </Text>
+
+        <SimpleGrid
+          cols={{ base: 3, sm: 3 }}
+          spacing={0}
+          display={{base: 'grid', sm: 'none'}}
+        >
           <ActivityStat name="Distance" value={data.distance} />
           <ActivityStat name="Time" value={data.time} />
           <ActivityStat name="Average" value={data.average} />
         </SimpleGrid>
-      </Flex>
-    </Card>
+      </Stack>
 
-  </Group>
+      <SimpleGrid
+        cols={{ base: 3, sm: 3 }}
+        spacing="xs"
+        w={{ base: "15vw", sm: 240 }}
+        display={{base: 'none', sm: 'grid'}}
+      >
+        <ActivityStat name="Distance" value={data.distance} />
+        <ActivityStat name="Time" value={data.time} />
+        <ActivityStat name="Average" value={data.average} />
+      </SimpleGrid>
+    </Flex>
+  </Card>
 );
 
 export { ActivityPost };

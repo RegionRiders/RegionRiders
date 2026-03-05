@@ -41,7 +41,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
-  const [mobileAsideOpened, { toggle: toggleAsideMobile }] = useDisclosure();
+  const [mobileAsideOpened, { toggle: toggleAsideMobile }] = useDisclosure(true);
   const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
   const changeContentWidth = (activeTab: string | null) => {
@@ -62,13 +62,14 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
     if (!desktopAsideOpened) {
       toggleAsideDesktop();
+      toggleAsideMobile();
     }
   }
 
   return (
     <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
       <AppShell header={{ height: "4rem" }}
-                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: mobileAsideOpened, desktop: desktopAsideOpened} }}
+                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: desktopAsideOpened, desktop: desktopAsideOpened} }}
                 >
         <AppShell.Header display={hideNavbar ? 'none' : ''}>
           <Tabs.List className={classes.tabsList} h="4rem">
