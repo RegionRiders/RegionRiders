@@ -1,12 +1,21 @@
 import {dateWithTime} from "@/components/Utils/DateFormattingFunctions";
-import {Text} from "@mantine/core";
+import {SimpleGrid, Text} from "@mantine/core";
 
 
 const TripDateFormatter = ({startDate, endDate} : { startDate: Date, endDate: Date}) => {
   return (
-    <Text c="dimmed" size="sm">
-      🚥{dateWithTime(startDate)} 🏁{dateWithTime(endDate)}
-    </Text>
+    <SimpleGrid
+      cols={{ base: 2, sm: 2 }}
+      spacing="xs"
+    >
+      <Text c="dimmed" size="sm">
+        🚥{dateWithTime(startDate)}
+      </Text>
+      <Text c="dimmed" size="sm">
+        🏁{dateWithTime(endDate)}
+      </Text>
+    </SimpleGrid>
+
   )
 }
 

@@ -1,9 +1,10 @@
 import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
+import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/TripDateFormatter";
+import { dateNoTime, dateOnlyTime, dayDifference } from "@/components/Utils/DateFormattingFunctions";
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
-import {dateNoTime, dateOnlyTime, dayDifference} from "@/components/Utils/DateFormattingFunctions";
-import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/TripDateFormatter";
+
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -14,7 +15,7 @@ const TripPostActivityStat = ({ value }: { value: string }) => (
 
 const TripStat = ({ header, value }: { header: string; value: string }) => (
   <>
-    <Group>
+    <Group gap="xs">
       <Text size="md" fw="bold">
         {header}
       </Text>
@@ -66,7 +67,7 @@ const Activities = ({
                 </Text>
               </Group>
             )}
-            <List size="sm" c="dimmed" icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
+            <List size="sm" c="dimmed" pl={{base: 0, xs: "md"}} icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
               <List.Item c="dimmed">
                 <Group>
                   <ActivityTypeIcon type={activity.activityType} size={25} />
@@ -75,8 +76,11 @@ const Activities = ({
                       {activity.title}
                     </Text>
                   </Anchor>
-                  <TripPostActivityStat value={activity.distance} />
-                  <TripPostActivityStat value={activity.time} />
+
+                  <Group display={{base: "none", xs: "flex"}}>
+                    <TripPostActivityStat value={activity.distance} />
+                    <TripPostActivityStat value={activity.time} />
+                  </Group>
                 </Group>
               </List.Item>
             </List>
@@ -87,15 +91,28 @@ const Activities = ({
   );
 };
 
-const TripPost = ({ data, onSelect }: { data: Trip, onSelect: (trip: Trip) => void }) => (
+const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => void }) => (
   <Card shadow="sm" radius="md" withBorder>
-    <SimpleGrid cols={2} mb="xs">
+    <Group mb="xs" align="flex-start">
       <Card.Section>
-        <Image src="https://http.cat/images/404.jpg" h={250} w="auto"/>
+        <Image
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Kot_z_mysz%C4%85.jpg/960px-Kot_z_mysz%C4%85.jpg"
+          h={{ base: "auto", xs: 250 }}
+          w={{ base: "100%", xs: "auto" }}
+          radius="md"
+          fit="fill"
+        />
       </Card.Section>
 
-      <Stack ml="md" gap={0}>
-        <Text fw="bold" size="xl" mb={0} onClick={() => {onSelect(data)}}>
+      <Stack ml={{base: 0, xs: "md"}} gap={0}>
+        <Text
+          fw="bold"
+          size="xl"
+          mb={0}
+          onClick={() => {
+            onSelect(data);
+          }}
+        >
           {data.title}
         </Text>
         <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
@@ -104,7 +121,7 @@ const TripPost = ({ data, onSelect }: { data: Trip, onSelect: (trip: Trip) => vo
         <TripStat header="Regions discovered:" value="placeholder" />
         <TripStat header="Regions visited:" value="placeholder" />
       </Stack>
-    </SimpleGrid>
+    </Group>
 
     <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
 
