@@ -1,7 +1,7 @@
 'use client';
 
 import {useState} from "react";
-import {AppShell, Loader} from "@mantine/core";
+import {AppShell} from "@mantine/core";
 import { PostsList } from '@/components/PostsList/PostsList';
 import { TripPost } from '@/components/TripComponents/TripPost/TripPost';
 import { mockTrips } from '@/lib/mockData';

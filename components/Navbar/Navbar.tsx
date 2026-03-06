@@ -41,7 +41,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
-  const [mobileAsideOpened, { toggle: toggleAsideMobile }] = useDisclosure(true);
+  const [, { toggle: toggleAsideMobile }] = useDisclosure(true);
   const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
   const changeContentWidth = (activeTab: string | null) => {
