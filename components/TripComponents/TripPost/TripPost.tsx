@@ -1,4 +1,4 @@
-import { Anchor, Card, Divider, Group, Image, List, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Anchor, Card, Divider, Group, Image, List, Stack, Text } from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/TripDateFormatter";
 import { dateNoTime, dateOnlyTime, dayDifference } from "@/components/Utils/DateFormattingFunctions";

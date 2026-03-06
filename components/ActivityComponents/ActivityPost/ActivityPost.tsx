@@ -1,10 +1,10 @@
-import {Box, Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
+import {Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';
 
 
-const ActivityStat = ({ name, value }: { name: string; value: string }) => (
+const ActivityStat = ({ value }: { name: string; value: string }) => (
   <Text>{value}</Text>
 );
 

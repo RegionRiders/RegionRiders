@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { AppShell, Burger, Button, Checkbox, CloseButton, Divider, Flex, Group, Menu, Modal, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
+import { AppShell, Button, Checkbox, CloseButton, Divider, Flex, Group, Menu, Modal, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from '@mantine/form';
 import { useDisclosure } from "@mantine/hooks";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
