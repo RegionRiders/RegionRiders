@@ -9,24 +9,24 @@ const ActivityStat = ({ value }: { name: string; value: string }) => (
 );
 
 const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
-  <Card shadow="sm" radius="md" withBorder padding="xs">
+  <Card shadow="sm" radius="md" withBorder p={{base: "xs", lg: 0}}>
     <Flex
       direction="row"
       gap="md"
-      align={{ base: 'stretch', sm: 'center' }}
+      align={{ base: 'stretch', lg: 'center' }}
       justify="flex-start"
     >
       <Image
         src={imageUrl || '/assets/placeholders/activity.jpg'}
-        w={{ base: "4rem", sm: "6rem" }}
-        h={{ base: "auto", sm: "6rem" }}
+        w={{ base: "4rem", lg: "6rem" }}
+        h={{ base: "auto", lg: "6rem" }}
         fit="fill"
         radius="md"
       />
 
       {/* Content */}
       <Stack flex={1} gap={0}>
-        <Group pb={{base: 0, sm: "xs"}}>
+        <Group pb={{base: 0, lg: "xs"}}>
           <ActivityTypeIcon type={data.activityType} size={28}/>
 
           <Stack gap={0}>
@@ -40,14 +40,14 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
           </Stack>
         </Group>
 
-        <Text size="sm" c="dimmed" lineClamp={1} truncate="end" maw="25vw" display={{base: 'none', sm: 'block'}}>
+        <Text size="sm" c="dimmed" lineClamp={1} truncate="end" maw="20vw" display={{base: 'none', lg: 'block'}}>
           {data.desc}
         </Text>
 
         <SimpleGrid
-          cols={{ base: 3, sm: 3 }}
+          cols={3}
           spacing={0}
-          display={{base: 'grid', sm: 'none'}}
+          display={{base: 'grid', lg: 'none'}}
         >
           <ActivityStat name="Distance" value={data.distance} />
           <ActivityStat name="Time" value={data.time} />
@@ -56,10 +56,10 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
       </Stack>
 
       <SimpleGrid
-        cols={{ base: 3, sm: 3 }}
-        spacing="xs"
-        w={{ base: "15vw", sm: 240 }}
-        display={{base: 'none', sm: 'grid'}}
+        cols={3}
+        spacing={0}
+        w={{ base: "15vw", lg: 220 }}
+        display={{base: 'none', lg: 'grid'}}
       >
         <ActivityStat name="Distance" value={data.distance} />
         <ActivityStat name="Time" value={data.time} />

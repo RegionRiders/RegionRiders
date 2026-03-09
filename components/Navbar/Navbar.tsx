@@ -37,28 +37,12 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
-  const [asideWidth, setAsideWidth] = useState<string>("0vw");
-
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
   const [, { toggle: toggleAsideMobile }] = useDisclosure(true);
   const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
-  const changeContentWidth = (activeTab: string | null) => {
-    switch (activeTab) {
-      case 'map':
-        setAsideWidth("0vw");
-        break;
-      case 'activities':
-        setAsideWidth("50vw");
-        break;
-      case 'trips':
-        setAsideWidth("65vw");
-        break;
-      default:
-        setAsideWidth("0vw");
-        break;
-    }
+  const changeContentWidth = () => {
 
     if (!desktopAsideOpened) {
       toggleAsideDesktop();
@@ -67,9 +51,12 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   }
 
   return (
-    <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
+    <Tabs defaultValue={defaultTab} onChange={() => changeContentWidth()}>
       <AppShell header={{ height: "4rem" }}
-                aside={{ width: asideWidth, breakpoint: 'md', collapsed: {mobile: desktopAsideOpened, desktop: desktopAsideOpened} }}
+                aside={{
+                  width: {base: "100%", xl: 700, md: 500},
+                  breakpoint: 'sm',
+                  collapsed: {mobile: desktopAsideOpened, desktop: desktopAsideOpened} }}
                 >
         <AppShell.Header display={hideNavbar ? 'none' : ''}>
           <Tabs.List className={classes.tabsList} h="4rem">
