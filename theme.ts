@@ -1,6 +1,6 @@
 'use client';
-
 import { createTheme } from '@mantine/core';
+
 
 export const theme = createTheme({
   colors: {
@@ -19,4 +19,9 @@ export const theme = createTheme({
   },
   primaryColor: 'brand',
   defaultRadius: 'md',
+
+    fontFamily: 'W droge, sans-serif',
+    headings: {
+        fontFamily: 'W droge, sans-serif',
+    },
 });
