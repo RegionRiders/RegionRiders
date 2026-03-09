@@ -7,11 +7,13 @@ jest.mock('@/lib/db', () => ({
 }));
 
 const mockGetDb = getDb as jest.MockedFunction<typeof getDb>;
+const originalEnv = { ...process.env };
 
 describe('Health API Route', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset environment variables
+    process.env = { ...originalEnv };
+    // Test environment variables
     process.env.POSTGRES_HOST = 'localhost';
     process.env.POSTGRES_DB = 'test_db';
     process.env.POSTGRES_USER = 'test_user';
@@ -20,6 +22,10 @@ describe('Health API Route', () => {
     process.env.OAUTH_ENCRYPTION_SALT = 'test_salt';
     process.env.STRAVA_CLIENT_ID = 'test_id';
     process.env.STRAVA_CLIENT_SECRET = 'test_secret';
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
   describe('GET /api/health', () => {

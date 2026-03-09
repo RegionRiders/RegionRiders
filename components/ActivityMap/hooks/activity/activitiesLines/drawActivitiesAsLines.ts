@@ -86,8 +86,8 @@ export function drawActivitiesAsLines(
           polyline,
           refs.lineColor,
           refs.lineHoverColor,
-          refs.lineThickness * 2,
-          refs.lineThickness
+          refs.lineThickness,
+          refs.lineThickness * 2
         );
         attachActivityClickHandler(polyline, map, trackId, track);
 

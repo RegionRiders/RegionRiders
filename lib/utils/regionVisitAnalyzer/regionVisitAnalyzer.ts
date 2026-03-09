@@ -114,7 +114,13 @@ export function analyzeRegionVisitsAsync(
   regions: Regions[],
   onProgress?: (progress: number, message: string) => void
 ): Promise<Map<string, RegionVisitData>> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(analyzeRegionVisits(tracks, regions, onProgress)), 0);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        resolve(analyzeRegionVisits(tracks, regions, onProgress));
+      } catch (error) {
+        reject(error);
+      }
+    }, 0);
   });
 }
