@@ -86,8 +86,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
 
         <NavbarTabContent value="map" Content={Welcome()} />
-        <NavbarTabContent value="activities" Content={ActivitiesListElement(toggleAsideDesktop, desktopAsideOpened, setHideNavbar)} />
-        <NavbarTabContent value="trips" Content={TripsListElement(toggleAsideDesktop, desktopAsideOpened)} />
+        <NavbarTabContent value="activities" Content={<ActivitiesListElement toggleActivity={toggleAsideDesktop} isActivityToggled={desktopAsideOpened} hideNavbar={setHideNavbar} />} />
+        <NavbarTabContent value="trips" Content={<TripsListElement toggleTrip={toggleAsideDesktop} isTripToggled={desktopAsideOpened} />} />
       </AppShell>
     </Tabs>
   );

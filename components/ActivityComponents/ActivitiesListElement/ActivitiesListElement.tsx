@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AppShell, Button, Checkbox, CloseButton, Divider, Flex, Group, Menu, Modal, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
@@ -14,8 +12,10 @@ import { mockActivities, mockTrips } from '@/lib/mockData';
 import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
 
-
-export function ActivitiesListElement(toggleActivity: () => void, isActivityToggled: boolean, hideNavbar: (value: boolean) => void) {
+export function ActivitiesListElement(
+  {toggleActivity, isActivityToggled, hideNavbar} :
+  {toggleActivity: () => void, isActivityToggled: boolean, hideNavbar: (value: boolean) => void }
+) {
 
   const getActivityById = (activities: Activity[], activityId: string) => (
     activities.find((activity) => activity.id === activityId)!

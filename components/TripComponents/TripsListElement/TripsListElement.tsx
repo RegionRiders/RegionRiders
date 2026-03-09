@@ -1,5 +1,3 @@
-'use client';
-
 import {useState} from "react";
 import {AppShell} from "@mantine/core";
 import { PostsList } from '@/components/PostsList/PostsList';
@@ -10,8 +8,7 @@ import TripDetails from "@/components/TripComponents/TripDetails/TripDetails";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {PostsLoading} from "@/components/PostsList/PostsLoading";
 
-
-export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean) {
+export function TripsListElement({toggleTrip, isTripToggled} : {toggleTrip: () => void, isTripToggled: boolean}) {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const handleTripChange = (newTrip: Trip | null) => {
