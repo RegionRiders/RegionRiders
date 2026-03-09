@@ -51,6 +51,19 @@ describe('RegionLayerManager', () => {
     { threshold: 1, color: [76, 107, 34, 0.2] },
   ];
 
+  const mockGeometry = {
+    type: 'Polygon' as const,
+    coordinates: [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [0, 0],
+      ],
+    ],
+  };
+
   const createMockRegion = (id: string): Regions => ({
     id,
     name: `Region ${id}`,
@@ -69,6 +82,19 @@ describe('RegionLayerManager', () => {
       ],
     },
     properties: {},
+  });
+
+  const createMockVisitData = (
+    id: string,
+    visited: boolean,
+    visitCount: number
+  ): RegionVisitData => ({
+    regionId: id,
+    regionName: `Region ${id}`,
+    visited,
+    visitCount,
+    trackIds: ['track-1'],
+    geometry: mockGeometry,
   });
 
   beforeEach(() => {
@@ -125,7 +151,9 @@ describe('RegionLayerManager', () => {
 
     it('should use heatmap mode for coloring', () => {
       const regions = [createMockRegion('1')];
-      const visitData = new Map<string, RegionVisitData>([['1', { visited: true, visitCount: 5 }]]);
+      const visitData = new Map<string, RegionVisitData>([
+        ['1', createMockVisitData('1', true, 5)],
+      ]);
 
       manager.syncRegions(regions, 'heatmap', visitData, 2, mockThresholds);
 
@@ -134,7 +162,9 @@ describe('RegionLayerManager', () => {
 
     it('should use static mode for coloring', () => {
       const regions = [createMockRegion('1')];
-      const visitData = new Map<string, RegionVisitData>([['1', { visited: true, visitCount: 5 }]]);
+      const visitData = new Map<string, RegionVisitData>([
+        ['1', createMockVisitData('1', true, 5)],
+      ]);
 
       manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
 
@@ -154,9 +184,9 @@ describe('RegionLayerManager', () => {
     it('should sort regions by visit count', () => {
       const regions = [createMockRegion('1'), createMockRegion('2'), createMockRegion('3')];
       const visitData = new Map<string, RegionVisitData>([
-        ['1', { visited: true, visitCount: 10 }],
-        ['2', { visited: true, visitCount: 5 }],
-        ['3', { visited: true, visitCount: 1 }],
+        ['1', createMockVisitData('1', true, 10)],
+        ['2', createMockVisitData('2', true, 5)],
+        ['3', createMockVisitData('3', true, 1)],
       ]);
 
       manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);

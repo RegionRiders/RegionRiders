@@ -10,6 +10,32 @@ describe('getRegionColorsHeatmap', () => {
     { threshold: 10, color: [255, 255, 0, 0.1] },
   ];
 
+  const mockGeometry = {
+    type: 'Polygon' as const,
+    coordinates: [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [0, 0],
+      ],
+    ],
+  };
+
+  const createMockVisit = (
+    visited: boolean,
+    visitCount: number,
+    id = 'region-1'
+  ): RegionVisitData => ({
+    regionId: id,
+    regionName: `Region ${id}`,
+    visited,
+    visitCount,
+    trackIds: ['track-1'],
+    geometry: mockGeometry,
+  });
+
   it('should return transparent color for undefined visit', () => {
     const result = getRegionColorsHeatmap(undefined, mockThresholds);
 
@@ -18,10 +44,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return transparent color for visit with visited false', () => {
-    const visit: RegionVisitData = {
-      visited: false,
-      visitCount: 0,
-    };
+    const visit = createMockVisit(false, 0);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -30,10 +53,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return transparent color for visit with visitCount 0', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 0,
-    };
+    const visit = createMockVisit(true, 0);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -42,10 +62,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return correct color for visit count of 1', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 1,
-    };
+    const visit = createMockVisit(true, 1);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -55,10 +72,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return correct color for visit count of 5', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 5,
-    };
+    const visit = createMockVisit(true, 5);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -68,10 +82,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return correct color for high visit count', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 10,
-    };
+    const visit = createMockVisit(true, 10);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -80,10 +91,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should use default thresholds when not provided', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 3,
-    };
+    const visit = createMockVisit(true, 3);
 
     const result = getRegionColorsHeatmap(visit);
 
@@ -92,10 +100,7 @@ describe('getRegionColorsHeatmap', () => {
   });
 
   it('should return stroke color with full opacity', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 5,
-    };
+    const visit = createMockVisit(true, 5);
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
@@ -104,7 +109,11 @@ describe('getRegionColorsHeatmap', () => {
 
   it('should handle visit with undefined visitCount', () => {
     const visit = {
+      regionId: 'region-1',
+      regionName: 'Region 1',
       visited: true,
+      trackIds: ['track-1'],
+      geometry: mockGeometry,
     } as RegionVisitData;
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);

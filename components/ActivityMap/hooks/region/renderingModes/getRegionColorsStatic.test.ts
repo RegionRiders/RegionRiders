@@ -8,6 +8,32 @@ describe('getRegionColorsStatic', () => {
     { threshold: 1, color: [76, 107, 34, 0.2] },
   ];
 
+  const mockGeometry = {
+    type: 'Polygon' as const,
+    coordinates: [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [0, 0],
+      ],
+    ],
+  };
+
+  const createMockVisit = (
+    visited: boolean,
+    visitCount: number,
+    id = 'region-1'
+  ): RegionVisitData => ({
+    regionId: id,
+    regionName: `Region ${id}`,
+    visited,
+    visitCount,
+    trackIds: ['track-1'],
+    geometry: mockGeometry,
+  });
+
   it('should return unvisited color for undefined visit', () => {
     const result = getRegionColorsStatic(undefined, mockThresholds);
 
@@ -16,10 +42,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should return unvisited color for visit with visited false', () => {
-    const visit: RegionVisitData = {
-      visited: false,
-      visitCount: 0,
-    };
+    const visit = createMockVisit(false, 0);
 
     const result = getRegionColorsStatic(visit, mockThresholds);
 
@@ -28,10 +51,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should return unvisited color for visit with visitCount 0', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 0,
-    };
+    const visit = createMockVisit(true, 0);
 
     const result = getRegionColorsStatic(visit, mockThresholds);
 
@@ -40,10 +60,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should return visited color for visit with visitCount > 0', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 1,
-    };
+    const visit = createMockVisit(true, 1);
 
     const result = getRegionColorsStatic(visit, mockThresholds);
 
@@ -52,10 +69,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should return visited color for high visit count', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 100,
-    };
+    const visit = createMockVisit(true, 100);
 
     const result = getRegionColorsStatic(visit, mockThresholds);
 
@@ -64,10 +78,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should use default thresholds when not provided', () => {
-    const visit: RegionVisitData = {
-      visited: true,
-      visitCount: 5,
-    };
+    const visit = createMockVisit(true, 5);
 
     const result = getRegionColorsStatic(visit);
 
@@ -77,7 +88,11 @@ describe('getRegionColorsStatic', () => {
 
   it('should handle visit with undefined visitCount', () => {
     const visit = {
+      regionId: 'region-1',
+      regionName: 'Region 1',
       visited: true,
+      trackIds: ['track-1'],
+      geometry: mockGeometry,
     } as RegionVisitData;
 
     const result = getRegionColorsStatic(visit, mockThresholds);
@@ -88,10 +103,7 @@ describe('getRegionColorsStatic', () => {
   });
 
   it('should handle visit with visited false but visitCount > 0', () => {
-    const visit: RegionVisitData = {
-      visited: false,
-      visitCount: 5,
-    };
+    const visit = createMockVisit(false, 5);
 
     const result = getRegionColorsStatic(visit, mockThresholds);
 

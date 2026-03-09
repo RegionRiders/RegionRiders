@@ -3,7 +3,9 @@
  */
 
 import L from 'leaflet';
+import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import type { GPXTrack } from '@/lib/types';
+import type { LinesRefs } from '../activityTypes';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
 
 // Mock leaflet
@@ -64,12 +66,10 @@ jest.mock(
 describe('drawActivitiesAsLines', () => {
   let mockMap: any;
   let mockTracks: Map<string, GPXTrack>;
-  let renderAbortRef: { current: boolean };
-  let renderTimeoutRef: { current: NodeJS.Timeout | null };
-  let refs: {
-    renderAbortRef: { current: boolean };
-    renderTimeoutRef: { current: NodeJS.Timeout | null };
-  };
+  let refs: LinesRefs;
+
+  const defaultLineColor: RGBA = [255, 0, 0, 1];
+  const defaultHoverColor: RGBA = [255, 100, 100, 1];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -100,9 +100,13 @@ describe('drawActivitiesAsLines', () => {
       ],
     ]);
 
-    renderAbortRef = { current: false };
-    renderTimeoutRef = { current: null };
-    refs = { renderAbortRef, renderTimeoutRef };
+    refs = {
+      renderAbortRef: { current: false },
+      renderTimeoutRef: { current: null },
+      lineThickness: 2,
+      lineColor: defaultLineColor,
+      lineHoverColor: defaultHoverColor,
+    };
   });
 
   it('should attach event listeners to map', () => {
@@ -133,7 +137,7 @@ describe('drawActivitiesAsLines', () => {
 
     cleanup();
 
-    expect(renderAbortRef.current).toBe(true);
+    expect(refs.renderAbortRef.current).toBe(true);
   });
 
   it('should create canvas renderer', () => {
