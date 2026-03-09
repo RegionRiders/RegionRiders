@@ -15,20 +15,26 @@ export function TripsListElement(toggleTrip: () => void, isTripToggled: boolean)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const handleTripChange = (newTrip: Trip | null) => {
-    if (selectedTrip === null) {
-      toggleTrip();
-    }
-
-    if (isTripToggled) {
+    if (newTrip !== null && selectedTrip === null) {
       setSelectedTrip(newTrip);
       toggleTrip();
+      return;
     }
 
-    if (newTrip === null) {
+    if (newTrip !== null && selectedTrip !== null && isTripToggled) {
+      setSelectedTrip(newTrip);
+      toggleTrip();
+      return;
+    }
+
+    if (newTrip !== null && selectedTrip !== null && !isTripToggled) {
+      setSelectedTrip(newTrip);
+      return;
+    }
+
+    if (newTrip === null && selectedTrip !== null) {
       setSelectedTrip(null);
       toggleTrip();
-    } else {
-      setSelectedTrip(newTrip);
     }
   };
 
