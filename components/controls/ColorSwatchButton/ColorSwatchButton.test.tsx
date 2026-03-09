@@ -3,8 +3,8 @@
  */
 
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from '@/test-utils';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import { ColorSwatchButton } from './ColorSwatchButton';
 
 describe('ColorSwatchButton', () => {

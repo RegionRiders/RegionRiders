@@ -4,9 +4,9 @@
 
 import { fireEvent, screen } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
-import { render } from '@/test-utils';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import { MapSettings } from '../types';
 import { MapStyleSection } from './MapStyleSection';
 
@@ -96,7 +96,10 @@ describe('MapStyleSection', () => {
       fireEvent.click(darkButton);
 
       expect(mockOnSettingChange).toHaveBeenCalledWith('tileLayerUrl', TILE_PRESETS.dark.url);
-      expect(mockOnSettingChange).toHaveBeenCalledWith('attribution', TILE_PRESETS.dark.attribution);
+      expect(mockOnSettingChange).toHaveBeenCalledWith(
+        'attribution',
+        TILE_PRESETS.dark.attribution
+      );
     });
 
     it('should mark the current style as active', () => {
@@ -105,9 +108,7 @@ describe('MapStyleSection', () => {
         tileLayerUrl: TILE_PRESETS.satellite.url,
       };
 
-      render(
-        <MapStyleSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<MapStyleSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       const satelliteButton = screen.getByRole('button', {
         name: /switch to satellite map style/i,

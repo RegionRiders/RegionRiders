@@ -125,9 +125,7 @@ describe('RegionLayerManager', () => {
 
     it('should use heatmap mode for coloring', () => {
       const regions = [createMockRegion('1')];
-      const visitData = new Map<string, RegionVisitData>([
-        ['1', { visited: true, visitCount: 5 }],
-      ]);
+      const visitData = new Map<string, RegionVisitData>([['1', { visited: true, visitCount: 5 }]]);
 
       manager.syncRegions(regions, 'heatmap', visitData, 2, mockThresholds);
 
@@ -136,9 +134,7 @@ describe('RegionLayerManager', () => {
 
     it('should use static mode for coloring', () => {
       const regions = [createMockRegion('1')];
-      const visitData = new Map<string, RegionVisitData>([
-        ['1', { visited: true, visitCount: 5 }],
-      ]);
+      const visitData = new Map<string, RegionVisitData>([['1', { visited: true, visitCount: 5 }]]);
 
       manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
 

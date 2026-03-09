@@ -4,16 +4,13 @@
 
 import { fireEvent, screen } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
-import { render } from '@/test-utils';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import { MapSettings } from '../types';
 import { RegionsSection } from './RegionsSection';
 
 // Wrapper component to provide Accordion context
-function RegionsSectionWrapper(props: {
-  settings: MapSettings;
-  onSettingChange: jest.Mock;
-}) {
+function RegionsSectionWrapper(props: { settings: MapSettings; onSettingChange: jest.Mock }) {
   return (
     <Accordion defaultValue="regions">
       <RegionsSection {...props} />
@@ -112,9 +109,7 @@ describe('RegionsSection', () => {
 
     it('should call onSettingChange when static mode is selected', () => {
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
-      render(
-        <RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       const staticButton = screen.getByRole('button', { name: 'Static' });
       fireEvent.click(staticButton);
@@ -134,9 +129,7 @@ describe('RegionsSection', () => {
 
     it('should not show color scheme section in heatmap mode', () => {
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
-      render(
-        <RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       expect(screen.queryByText('Region ColorScheme')).not.toBeInTheDocument();
     });
@@ -156,9 +149,7 @@ describe('RegionsSection', () => {
         ],
       };
 
-      render(
-        <RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       // Should have 2 color swatch buttons for selection
       const swatchButtons = screen.getAllByRole('button', { name: /Select color/ });
@@ -180,9 +171,7 @@ describe('RegionsSection', () => {
         ],
       };
 
-      render(
-        <RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       // Find and click the second swatch button
       const swatchButtons = screen.getAllByRole('button', { name: /Select color \d+/ });
@@ -201,9 +190,7 @@ describe('RegionsSection', () => {
       };
 
       expect(() => {
-        render(
-          <RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-        );
+        render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
       }).not.toThrow();
     });
   });

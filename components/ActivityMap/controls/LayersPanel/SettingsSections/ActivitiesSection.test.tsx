@@ -4,16 +4,13 @@
 
 import { fireEvent, screen } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
-import { render } from '@/test-utils';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import { MapSettings } from '../types';
 import { ActivitiesSection } from './ActivitiesSection';
 
 // Wrapper component to provide Accordion context
-function ActivitiesSectionWrapper(props: {
-  settings: MapSettings;
-  onSettingChange: jest.Mock;
-}) {
+function ActivitiesSectionWrapper(props: { settings: MapSettings; onSettingChange: jest.Mock }) {
   return (
     <Accordion defaultValue="activities">
       <ActivitiesSection {...props} />
@@ -54,7 +51,10 @@ describe('ActivitiesSection', () => {
   describe('rendering', () => {
     it('should render the Activities header', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.getByText('Activities')).toBeInTheDocument();
@@ -62,7 +62,10 @@ describe('ActivitiesSection', () => {
 
     it('should render the show activities toggle', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       const toggle = screen.getByRole('switch', { name: 'Toggle activity layer' });
@@ -71,7 +74,10 @@ describe('ActivitiesSection', () => {
 
     it('should render visualization mode buttons', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.getByRole('button', { name: 'Heatmap' })).toBeInTheDocument();
@@ -80,7 +86,10 @@ describe('ActivitiesSection', () => {
 
     it('should render line thickness slider', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.getByText(/Line thickness:/)).toBeInTheDocument();
@@ -90,7 +99,10 @@ describe('ActivitiesSection', () => {
   describe('interactions', () => {
     it('should call onSettingChange when toggle is changed', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       const toggle = screen.getByRole('switch', { name: 'Toggle activity layer' });
@@ -101,7 +113,10 @@ describe('ActivitiesSection', () => {
 
     it('should call onSettingChange when lines mode is selected', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       const linesButton = screen.getByRole('button', { name: 'Lines' });
@@ -126,7 +141,10 @@ describe('ActivitiesSection', () => {
   describe('heatmap mode', () => {
     it('should show heatmap density slider in heatmap mode', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.getByText(/Heatmap pixel density:/)).toBeInTheDocument();
@@ -143,7 +161,10 @@ describe('ActivitiesSection', () => {
 
     it('should show heatmap color scheme placeholder in heatmap mode', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.getByText('Heatmap ColorScheme')).toBeInTheDocument();
@@ -162,7 +183,10 @@ describe('ActivitiesSection', () => {
 
     it('should not show lines color scheme in heatmap mode', () => {
       render(
-        <ActivitiesSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
       );
 
       expect(screen.queryByText('Lines ColorScheme')).not.toBeInTheDocument();

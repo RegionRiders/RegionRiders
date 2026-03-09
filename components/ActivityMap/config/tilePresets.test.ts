@@ -1,4 +1,4 @@
-import { TILE_PRESETS, DEFAULT_TILE_PRESET, TilePreset } from './tilePresets';
+import { DEFAULT_TILE_PRESET, TILE_PRESETS, TilePreset } from './tilePresets';
 
 describe('tilePresets', () => {
   describe('TILE_PRESETS', () => {

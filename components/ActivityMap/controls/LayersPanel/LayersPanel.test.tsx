@@ -3,9 +3,9 @@
  */
 
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from '@/test-utils';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import LayersPanel from './LayersPanel';
 import { MapSettings } from './types';
 
@@ -54,9 +54,7 @@ describe('LayersPanel', () => {
 
   describe('rendering', () => {
     it('should render the Layers button', () => {
-      render(
-        <LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />);
 
       expect(screen.getByText('Layers')).toBeInTheDocument();
     });
@@ -108,9 +106,7 @@ describe('LayersPanel', () => {
 
   describe('satellite toggle', () => {
     it('should show satellite button image when not in satellite mode', () => {
-      render(
-        <LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />);
 
       // The button should be rendered
       expect(screen.getByRole('button', { name: 'Toggle panel' })).toBeInTheDocument();
@@ -122,9 +118,7 @@ describe('LayersPanel', () => {
         tileLayerUrl: TILE_PRESETS.satellite.url,
       };
 
-      render(
-        <LayersPanel settings={settings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<LayersPanel settings={settings} onSettingChange={mockOnSettingChange} />);
 
       expect(screen.getByRole('button', { name: 'Toggle panel' })).toBeInTheDocument();
     });
@@ -132,9 +126,7 @@ describe('LayersPanel', () => {
 
   describe('desktop mode', () => {
     it('should render accordion sections when panel is open', () => {
-      render(
-        <LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />
-      );
+      render(<LayersPanel settings={defaultSettings} onSettingChange={mockOnSettingChange} />);
 
       const layersButton = screen.getByRole('button', { name: 'Toggle panel' });
       fireEvent.click(layersButton);

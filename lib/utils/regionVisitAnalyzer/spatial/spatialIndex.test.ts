@@ -1,4 +1,5 @@
 import type { Regions } from '@/lib/types';
+import { RegionSpatialIndex } from './spatialIndex';
 
 // Mock rbush module
 jest.mock('rbush', () => {
@@ -26,13 +27,8 @@ jest.mock('rbush', () => {
   };
 });
 
-import { RegionSpatialIndex } from './spatialIndex';
-
 describe('RegionSpatialIndex', () => {
-  const createMockRegion = (
-    id: string,
-    coordinates: number[][][]
-  ): Regions => ({
+  const createMockRegion = (id: string, coordinates: number[][][]): Regions => ({
     id,
     name: `Region ${id}`,
     country: 'TEST',
@@ -44,10 +40,7 @@ describe('RegionSpatialIndex', () => {
     properties: {},
   });
 
-  const createMockMultiPolygonRegion = (
-    id: string,
-    coordinates: number[][][][]
-  ): Regions => ({
+  const createMockMultiPolygonRegion = (id: string, coordinates: number[][][][]): Regions => ({
     id,
     name: `Region ${id}`,
     country: 'TEST',

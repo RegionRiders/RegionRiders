@@ -3,8 +3,8 @@
  */
 
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from '@/test-utils';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
+import { render } from '@/test-utils';
 import { ExtendedColorPicker } from './ExtendedColorPicker';
 
 describe('ExtendedColorPicker', () => {
@@ -74,9 +74,7 @@ describe('ExtendedColorPicker', () => {
 
     it('should call onModeChange when mode changes in controlled mode', () => {
       const onModeChange = jest.fn();
-      render(
-        <ExtendedColorPicker {...defaultProps} mode="hsla" onModeChange={onModeChange} />
-      );
+      render(<ExtendedColorPicker {...defaultProps} mode="hsla" onModeChange={onModeChange} />);
 
       fireEvent.click(screen.getByText('RGBA'));
 
@@ -127,9 +125,7 @@ describe('ExtendedColorPicker', () => {
 
     it('should call onChange when Red slider changes', () => {
       const onChange = jest.fn();
-      render(
-        <ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />
-      );
+      render(<ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />);
 
       const redSlider = screen.getByLabelText('Red');
       fireEvent.keyDown(redSlider, { key: 'ArrowLeft' });
@@ -139,9 +135,7 @@ describe('ExtendedColorPicker', () => {
 
     it('should call onChange when Green slider changes', () => {
       const onChange = jest.fn();
-      render(
-        <ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />
-      );
+      render(<ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />);
 
       const greenSlider = screen.getByLabelText('Green');
       fireEvent.keyDown(greenSlider, { key: 'ArrowRight' });
@@ -151,9 +145,7 @@ describe('ExtendedColorPicker', () => {
 
     it('should call onChange when Blue slider changes', () => {
       const onChange = jest.fn();
-      render(
-        <ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />
-      );
+      render(<ExtendedColorPicker color={defaultColor} onChange={onChange} defaultMode="rgba" />);
 
       const blueSlider = screen.getByLabelText('Blue');
       fireEvent.keyDown(blueSlider, { key: 'ArrowRight' });
@@ -183,9 +175,7 @@ describe('ExtendedColorPicker', () => {
       expect(screen.getByLabelText('Saturation')).toBeInTheDocument();
 
       // Simulate parent updating mode
-      rerender(
-        <ExtendedColorPicker {...defaultProps} mode="rgba" onModeChange={onModeChange} />
-      );
+      rerender(<ExtendedColorPicker {...defaultProps} mode="rgba" onModeChange={onModeChange} />);
 
       expect(screen.getByLabelText('Red')).toBeInTheDocument();
     });
