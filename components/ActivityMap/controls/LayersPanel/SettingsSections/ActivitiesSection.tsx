@@ -145,7 +145,7 @@ export function ActivitiesSection({
 
           {settings.activityMode === 'heatmap' && (
             <div>
-              <Text size="sm"> Heatmap ColorScheme</Text>
+              <Text size="sm"> Heatmap Color Scheme</Text>
               <SimpleGrid cols={activityHeatmapColorSwatches.length} spacing="xs">
                 {activityHeatmapColorSwatches.map((colorThresholds, index) => (
                   <ColorSwatchButton

@@ -178,7 +178,7 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      expect(screen.getByText('Heatmap ColorScheme')).toBeInTheDocument();
+      expect(screen.getByText('Heatmap Color Scheme')).toBeInTheDocument();
     });
 
     it('should render heatmap swatches and edit button in heatmap mode', () => {

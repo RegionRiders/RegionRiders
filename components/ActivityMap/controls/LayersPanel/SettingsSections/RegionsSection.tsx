@@ -148,7 +148,7 @@ export function RegionsSection({
           )}
           {settings.regionMode === 'heatmap' && regionHeatmapColorSwatches.length > 0 && (
             <>
-              <Text size="sm"> Heatmap ColorScheme</Text>
+              <Text size="sm"> Heatmap Color Scheme</Text>
               <SimpleGrid cols={regionHeatmapColorSwatches.length} spacing="xs">
                 {regionHeatmapColorSwatches.map((colorThresholds, index) => (
                   <ColorSwatchButton
