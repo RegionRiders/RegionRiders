@@ -5,10 +5,6 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useMemo, useRef, useState } from 'react';
-import {
-  ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
-  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
-} from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';

@@ -9,6 +9,7 @@ interface ColorSwatchButtonProps {
   colorThresholds?: ColorThreshold[];
   index?: number;
   selectedIndex?: number;
+  ariaLabel?: string;
   onClick?: () => void;
   children?: ReactNode;
 }
@@ -21,6 +22,7 @@ export function ColorSwatchButton({
   colorThresholds,
   index,
   selectedIndex,
+  ariaLabel,
   onClick = () => {},
   children,
 }: ColorSwatchButtonProps) {
@@ -33,7 +35,7 @@ export function ColorSwatchButton({
     onClick,
     variant: selectedIndex === index ? ('filled' as const) : ('default' as const),
     className: classes.button,
-    'aria-label': `Select color ${index !== undefined ? index + 1 : 'preview'}`,
+    'aria-label': ariaLabel || `Select color ${index !== undefined ? index + 1 : 'preview'}`,
   };
 
   if (colorThresholds && colorThresholds.length > 0) {

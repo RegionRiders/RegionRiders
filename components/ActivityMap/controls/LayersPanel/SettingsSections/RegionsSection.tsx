@@ -1,35 +1,68 @@
 import {
-  ActionIcon,
   Accordion,
   Box,
   Button,
   Group,
+  Notification,
   SimpleGrid,
   Slider,
   Stack,
   Switch,
   Text,
 } from '@mantine/core';
+import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
+import {
+  parseColorThresholds,
+  serializeColorThresholds,
+} from './utils/colorThresholdClipboard';
 
 export function RegionsSection({
   settings,
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
+  const [clipboardError, setClipboardError] = useState<string | null>(null);
   const selectedIndex = settings.selectedRegionStaticSwatchIndex || 0;
   const regionHeatmapColorSwatches = settings.regionHeatmapColorSwatches || [
     REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   ];
   const selectedRegionHeatmapSwatchIndex = settings.selectedRegionHeatmapSwatchIndex || 0;
+  const selectedHeatmapColorThresholds =
+    regionHeatmapColorSwatches[selectedRegionHeatmapSwatchIndex] || [];
 
   const selectedSwatch = settings.regionStaticColorSwatches[selectedIndex] || [];
   const unvisitedColor = selectedSwatch.find((ct) => ct.threshold === 0)?.color || [0, 0, 0, 0];
   const visitedColor = selectedSwatch.find((ct) => ct.threshold === 1)?.color || [0, 255, 0, 0.2];
+
+  const showClipboardErrorToast = (message: string) => {
+    setClipboardError(message);
+    setTimeout(() => setClipboardError(null), 3000);
+  };
+
+  const handleHeatmapCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(serializeColorThresholds(selectedHeatmapColorThresholds));
+    } catch {
+      showClipboardErrorToast('Could not copy heatmap colors to clipboard');
+    }
+  };
+
+  const handleHeatmapPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const parsedThresholds = parseColorThresholds(text);
+      const newSwatches = [...regionHeatmapColorSwatches];
+      newSwatches[selectedRegionHeatmapSwatchIndex] = parsedThresholds;
+      onSettingChange('regionHeatmapColorSwatches', newSwatches);
+    } catch {
+      showClipboardErrorToast('Could not paste heatmap colors from clipboard');
+    }
+  };
 
   return (
     <Accordion.Item value="regions">
@@ -161,18 +194,42 @@ export function RegionsSection({
                   />
                 ))}
               </SimpleGrid>
-              <Group>
-                <ActionIcon
-                  variant="default"
-                  aria-label="Edit region heatmap colors"
-                  onClick={() => undefined}
+              <Group gap="xs" wrap="nowrap">
+                <ColorSwatchButton
+                  color={selectedHeatmapColorThresholds[0]?.color || [0, 0, 0, 0]}
+                  colorThresholds={selectedHeatmapColorThresholds}
+                  ariaLabel="Edit region heatmap colors"
                 >
-                  <IconEdit size={16} />
-                </ActionIcon>
+                  <IconEdit
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
+                    }}
+                  />
+                </ColorSwatchButton>
+                <Button size="xs" variant="default" onClick={handleHeatmapCopy}>
+                  COPY
+                </Button>
+                <Button size="xs" variant="default" onClick={handleHeatmapPaste}>
+                  PASTE
+                </Button>
               </Group>
             </>
           )}
         </Stack>
+        {clipboardError && (
+          <Notification
+            color="red"
+            onClose={() => setClipboardError(null)}
+            style={{ position: 'fixed', top: 16, right: 16, zIndex: 2000 }}
+          >
+            {clipboardError}
+          </Notification>
+        )}
       </Accordion.Panel>
     </Accordion.Item>
   );

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { render } from '@/test-utils';
@@ -57,6 +57,13 @@ describe('ActivitiesSection', () => {
   beforeEach(() => {
     mockOnSettingChange = jest.fn();
     defaultSettings = createDefaultSettings();
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: jest.fn().mockResolvedValue(undefined),
+        readText: jest.fn().mockResolvedValue(''),
+      },
+      configurable: true,
+    });
   });
 
   describe('rendering', () => {
@@ -190,6 +197,8 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.getByRole('button', { name: 'Edit activity heatmap colors' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
     });
@@ -204,6 +213,62 @@ describe('ActivitiesSection', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Select color 2' }));
       expect(mockOnSettingChange).toHaveBeenCalledWith('selectedActivityHeatmapSwatchIndex', 1);
+    });
+
+    it('copies selected heatmap thresholds to clipboard', async () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'COPY' }));
+      await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
+    });
+
+    it('pastes thresholds and updates selected heatmap swatch', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 2, color: [1, 2, 3, 0.1] },
+          { threshold: 8, color: [4, 5, 6, 0.2] },
+        ])
+      );
+
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith(
+          'activityHeatmapColorSwatches',
+          expect.any(Array)
+        )
+      );
+    });
+
+    it('shows error toast when paste content is invalid', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('not-json');
+
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+
+      await waitFor(() => expect(navigator.clipboard.readText).toHaveBeenCalledTimes(1));
+      expect(mockOnSettingChange).not.toHaveBeenCalledWith(
+        'activityHeatmapColorSwatches',
+        expect.any(Array)
+      );
     });
   });
 
