@@ -1,4 +1,8 @@
 import { render } from '@testing-library/react';
+import {
+  ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
 import type { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
@@ -44,6 +48,8 @@ describe('MapOrchestrator', () => {
     heatmapDensity: 2,
     lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
     selectedLineSwatchIndex: 0,
+    activityHeatmapColorSwatches: [ACTIVITY_HEATMAP_COLOR_THRESHOLDS],
+    selectedActivityHeatmapSwatchIndex: 0,
     regionMode: 'heatmap',
     showRegions: true,
     regionBorderThickness: 2,
@@ -54,6 +60,8 @@ describe('MapOrchestrator', () => {
       ],
     ],
     selectedRegionStaticSwatchIndex: 0,
+    regionHeatmapColorSwatches: [REGION_VISIT_HEATMAP_COLOR_THRESHOLDS],
+    selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
   };
@@ -95,7 +103,10 @@ describe('MapOrchestrator', () => {
       defaultSettings.activityMode,
       defaultSettings.activityThickness,
       defaultSettings.heatmapDensity,
-      defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex]
+      defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex],
+      defaultSettings.activityHeatmapColorSwatches?.[
+        defaultSettings.selectedActivityHeatmapSwatchIndex || 0
+      ]
     );
   });
 
@@ -109,7 +120,10 @@ describe('MapOrchestrator', () => {
       defaultSettings.showRegions,
       defaultSettings.regionMode,
       defaultSettings.regionBorderThickness,
-      defaultSettings.regionStaticColorSwatches[defaultSettings.selectedRegionStaticSwatchIndex]
+      defaultSettings.regionStaticColorSwatches[defaultSettings.selectedRegionStaticSwatchIndex],
+      defaultSettings.regionHeatmapColorSwatches?.[
+        defaultSettings.selectedRegionHeatmapSwatchIndex || 0
+      ]
     );
   });
 
@@ -130,7 +144,10 @@ describe('MapOrchestrator', () => {
       'lines',
       customSettings.activityThickness,
       customSettings.heatmapDensity,
-      customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex]
+      customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex],
+      customSettings.activityHeatmapColorSwatches?.[
+        customSettings.selectedActivityHeatmapSwatchIndex || 0
+      ]
     );
 
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
@@ -140,7 +157,10 @@ describe('MapOrchestrator', () => {
       false,
       customSettings.regionMode,
       customSettings.regionBorderThickness,
-      customSettings.regionStaticColorSwatches[customSettings.selectedRegionStaticSwatchIndex]
+      customSettings.regionStaticColorSwatches[customSettings.selectedRegionStaticSwatchIndex],
+      customSettings.regionHeatmapColorSwatches?.[
+        customSettings.selectedRegionHeatmapSwatchIndex || 0
+      ]
     );
   });
 

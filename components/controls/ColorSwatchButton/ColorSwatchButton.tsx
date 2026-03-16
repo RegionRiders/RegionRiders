@@ -1,11 +1,12 @@
 import { ReactNode } from 'react';
 import { Button } from '@mantine/core';
-import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import classes from './ColorSwatchButton.module.css';
 
 interface ColorSwatchButtonProps {
   color: RGBA;
   secondaryColor?: RGBA;
+  colorThresholds?: ColorThreshold[];
   index?: number;
   selectedIndex?: number;
   onClick?: () => void;
@@ -15,6 +16,7 @@ interface ColorSwatchButtonProps {
 export function ColorSwatchButton({
   color,
   secondaryColor,
+  colorThresholds,
   index,
   selectedIndex,
   onClick = () => {},
@@ -27,7 +29,24 @@ export function ColorSwatchButton({
 
   let background: string;
 
-  if (secondaryColor) {
+  if (colorThresholds && colorThresholds.length > 0) {
+    const minThreshold = colorThresholds[0].threshold;
+    const maxThreshold = colorThresholds[colorThresholds.length - 1].threshold;
+    const thresholdRange = maxThreshold - minThreshold;
+
+    const gradientStops = colorThresholds
+      .map(({ threshold, color: thresholdColor }) => {
+        const position =
+          thresholdRange === 0 ? 0 : ((threshold - minThreshold) / thresholdRange) * 100;
+        return `rgba(${thresholdColor[0]}, ${thresholdColor[1]}, ${thresholdColor[2]}, ${thresholdColor[3]}) ${position}%`;
+      })
+      .join(', ');
+
+    background = `
+      linear-gradient(to right, ${gradientStops}),
+      ${checkerboard}
+    `;
+  } else if (secondaryColor) {
     const rgbaSecondary = `rgba(${secondaryColor[0]}, ${secondaryColor[1]}, ${secondaryColor[2]}, ${secondaryColor[3]})`;
     const rgbaSecondaryFilled = `rgba(${secondaryColor[0]}, ${secondaryColor[1]}, ${secondaryColor[2]}, 1)`;
 

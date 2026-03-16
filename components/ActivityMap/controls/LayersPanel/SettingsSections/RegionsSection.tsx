@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Accordion,
   Box,
   Button,
@@ -9,6 +10,8 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
+import { IconEdit } from '@tabler/icons-react';
+import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
@@ -19,6 +22,10 @@ export function RegionsSection({
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   const selectedIndex = settings.selectedRegionStaticSwatchIndex || 0;
+  const regionHeatmapColorSwatches = settings.regionHeatmapColorSwatches || [
+    REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  ];
+  const selectedRegionHeatmapSwatchIndex = settings.selectedRegionHeatmapSwatchIndex || 0;
 
   const selectedSwatch = settings.regionStaticColorSwatches[selectedIndex] || [];
   const unvisitedColor = selectedSwatch.find((ct) => ct.threshold === 0)?.color || [0, 0, 0, 0];
@@ -137,6 +144,32 @@ export function RegionsSection({
                   />
                 </Box>
               </SimpleGrid>
+            </>
+          )}
+          {settings.regionMode === 'heatmap' && regionHeatmapColorSwatches.length > 0 && (
+            <>
+              <Text size="sm"> Heatmap ColorScheme</Text>
+              <SimpleGrid cols={regionHeatmapColorSwatches.length} spacing="xs">
+                {regionHeatmapColorSwatches.map((colorThresholds, index) => (
+                  <ColorSwatchButton
+                    key={index}
+                    color={colorThresholds[0]?.color || [0, 0, 0, 0]}
+                    colorThresholds={colorThresholds}
+                    index={index}
+                    selectedIndex={selectedRegionHeatmapSwatchIndex}
+                    onClick={() => onSettingChange('selectedRegionHeatmapSwatchIndex', index)}
+                  />
+                ))}
+              </SimpleGrid>
+              <Group>
+                <ActionIcon
+                  variant="default"
+                  aria-label="Edit region heatmap colors"
+                  onClick={() => undefined}
+                >
+                  <IconEdit size={16} />
+                </ActionIcon>
+              </Group>
             </>
           )}
         </Stack>

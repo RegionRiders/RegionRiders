@@ -9,6 +9,7 @@ import {
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
 import type { HeatmapRefs, LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
@@ -24,7 +25,8 @@ export function useActivityRendering(
   activityLineColor: LineColorSwatch = {
     normal: [255, 0, 0, 0.5],
     hover: [255, 100, 100, 0.7],
-  }
+  },
+  heatmapColorThresholds?: ColorThreshold[]
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,6 +48,7 @@ export function useActivityRendering(
         renderTimeoutRef,
         heatmapDensity,
         lineThickness: activityThickness,
+        heatmapColorThresholds,
       };
       return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
     }
@@ -59,5 +62,14 @@ export function useActivityRendering(
       lineHoverColor: activityLineColor.hover,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
-  }, [map, tracks, showActivities, mode, activityThickness, heatmapDensity, activityLineColor]);
+  }, [
+    map,
+    tracks,
+    showActivities,
+    mode,
+    activityThickness,
+    heatmapDensity,
+    activityLineColor,
+    heatmapColorThresholds,
+  ]);
 }

@@ -36,6 +36,17 @@ describe('RegionsSection', () => {
       ],
     ],
     selectedRegionStaticSwatchIndex: 0,
+    regionHeatmapColorSwatches: [
+      [
+        { threshold: 0, color: [60, 60, 60, 0] as RGBA },
+        { threshold: 5, color: [255, 165, 0, 0.1] as RGBA },
+      ],
+      [
+        { threshold: 0, color: [50, 50, 50, 0] as RGBA },
+        { threshold: 5, color: [0, 255, 255, 0.1] as RGBA },
+      ],
+    ],
+    selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
   });
@@ -192,6 +203,26 @@ describe('RegionsSection', () => {
       expect(() => {
         render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
       }).not.toThrow();
+    });
+  });
+
+  describe('heatmap mode', () => {
+    it('should render heatmap swatches and edit button in heatmap mode', () => {
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      expect(screen.getByText('Heatmap ColorScheme')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Edit region heatmap colors' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when a heatmap swatch is selected', () => {
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select color 2' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedRegionHeatmapSwatchIndex', 1);
     });
   });
 });

@@ -17,6 +17,8 @@ export interface MapSettings {
   heatmapDensity: number;
   lineColorSwatches: LineColorSwatch[];
   selectedLineSwatchIndex: number;
+  activityHeatmapColorSwatches?: ColorThreshold[][];
+  selectedActivityHeatmapSwatchIndex?: number;
 
   // Region settings
   regionMode: RegionRenderMode;
@@ -24,6 +26,8 @@ export interface MapSettings {
   regionBorderThickness: number;
   regionStaticColorSwatches: ColorThreshold[][];
   selectedRegionStaticSwatchIndex: number;
+  regionHeatmapColorSwatches?: ColorThreshold[][];
+  selectedRegionHeatmapSwatchIndex?: number;
 
   // Map settings
   tileLayerUrl: string;

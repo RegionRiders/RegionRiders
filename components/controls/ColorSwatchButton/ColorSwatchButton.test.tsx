@@ -3,7 +3,7 @@
  */
 
 import { fireEvent, screen } from '@testing-library/react';
-import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { render } from '@/test-utils';
 import { ColorSwatchButton } from './ColorSwatchButton';
 
@@ -75,6 +75,20 @@ describe('ColorSwatchButton', () => {
     const button = screen.getByRole('button');
     expect(button).toHaveStyle({
       background: expect.stringContaining('linear-gradient'),
+    });
+  });
+
+  it('should apply threshold based gradient when colorThresholds are provided', () => {
+    const colorThresholds: ColorThreshold[] = [
+      { threshold: 0, color: [0, 0, 255, 0.1] },
+      { threshold: 10, color: [255, 0, 0, 0.3] },
+    ];
+
+    render(<ColorSwatchButton color={defaultColor} colorThresholds={colorThresholds} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toHaveStyle({
+      background: expect.stringContaining('linear-gradient(to right'),
     });
   });
 

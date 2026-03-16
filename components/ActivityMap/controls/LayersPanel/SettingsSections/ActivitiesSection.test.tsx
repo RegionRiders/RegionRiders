@@ -26,6 +26,17 @@ describe('ActivitiesSection', () => {
     heatmapDensity: 2,
     lineColorSwatches: [{ normal: [255, 0, 0, 1] as RGBA, hover: [255, 100, 100, 1] as RGBA }],
     selectedLineSwatchIndex: 0,
+    activityHeatmapColorSwatches: [
+      [
+        { threshold: 1, color: [255, 0, 0, 0.1] as RGBA },
+        { threshold: 10, color: [255, 255, 0, 0.2] as RGBA },
+      ],
+      [
+        { threshold: 1, color: [0, 0, 255, 0.1] as RGBA },
+        { threshold: 10, color: [255, 255, 255, 0.2] as RGBA },
+      ],
+    ],
+    selectedActivityHeatmapSwatchIndex: 0,
     regionMode: 'static',
     showRegions: true,
     regionBorderThickness: 2,
@@ -159,7 +170,7 @@ describe('ActivitiesSection', () => {
       expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
     });
 
-    it('should show heatmap color scheme placeholder in heatmap mode', () => {
+    it('should show heatmap color scheme section in heatmap mode', () => {
       render(
         <ActivitiesSectionWrapper
           settings={defaultSettings}
@@ -168,6 +179,31 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.getByText('Heatmap ColorScheme')).toBeInTheDocument();
+    });
+
+    it('should render heatmap swatches and edit button in heatmap mode', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Edit activity heatmap colors' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when a heatmap swatch is selected', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select color 2' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedActivityHeatmapSwatchIndex', 1);
     });
   });
 

@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Accordion,
   Box,
   Button,
@@ -9,6 +10,8 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
+import { IconEdit } from '@tabler/icons-react';
+import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
@@ -18,6 +21,11 @@ export function ActivitiesSection({
   settings,
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
+  const activityHeatmapColorSwatches = settings.activityHeatmapColorSwatches || [
+    ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  ];
+  const selectedActivityHeatmapSwatchIndex = settings.selectedActivityHeatmapSwatchIndex || 0;
+
   return (
     <Accordion.Item value="activities">
       <Accordion.Control>
@@ -138,7 +146,27 @@ export function ActivitiesSection({
           {settings.activityMode === 'heatmap' && (
             <div>
               <Text size="sm"> Heatmap ColorScheme</Text>
-              placeholder {/* TODO */}
+              <SimpleGrid cols={activityHeatmapColorSwatches.length} spacing="xs">
+                {activityHeatmapColorSwatches.map((colorThresholds, index) => (
+                  <ColorSwatchButton
+                    key={index}
+                    color={colorThresholds[0]?.color || [0, 0, 0, 0]}
+                    colorThresholds={colorThresholds}
+                    index={index}
+                    selectedIndex={selectedActivityHeatmapSwatchIndex}
+                    onClick={() => onSettingChange('selectedActivityHeatmapSwatchIndex', index)}
+                  />
+                ))}
+              </SimpleGrid>
+              <Group mt="xs">
+                <ActionIcon
+                  variant="default"
+                  aria-label="Edit activity heatmap colors"
+                  onClick={() => undefined}
+                >
+                  <IconEdit size={16} />
+                </ActionIcon>
+              </Group>
             </div>
           )}
         </Stack>

@@ -5,6 +5,10 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useMemo, useRef, useState } from 'react';
+import {
+  ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';
@@ -54,6 +58,8 @@ export default function ActivityMap() {
       },
     ],
     selectedLineSwatchIndex: 0,
+    activityHeatmapColorSwatches: [ACTIVITY_HEATMAP_COLOR_THRESHOLDS],
+    selectedActivityHeatmapSwatchIndex: 0,
     heatmapDensity: 2,
     regionMode: 'heatmap',
     showRegions: true,
@@ -81,6 +87,8 @@ export default function ActivityMap() {
       ],
     ],
     selectedRegionStaticSwatchIndex: 0,
+    regionHeatmapColorSwatches: [REGION_VISIT_HEATMAP_COLOR_THRESHOLDS],
+    selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
   });

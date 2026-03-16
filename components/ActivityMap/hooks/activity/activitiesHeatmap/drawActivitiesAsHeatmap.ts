@@ -9,6 +9,7 @@ import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activit
 import { logDimensionError } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/dimensionLogging';
 import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
 import { processTracksChunked } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/trackProcessor';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 import { CanvasDimensions, HeatmapRefs, RenderState } from '../activityTypes';
@@ -24,7 +25,8 @@ function finishRender(
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
-  lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS
+  lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS,
+  colorThresholds?: ColorThreshold[]
 ): void {
   if (renderAbortRef.current) {
     return;
@@ -59,7 +61,12 @@ function finishRender(
       continue;
     }
 
-    const [r, g, b, a] = getHeatmapColorForCount(count, currentZoom, lineThickness);
+    const [r, g, b, a] = getHeatmapColorForCount(
+      count,
+      currentZoom,
+      lineThickness,
+      colorThresholds
+    );
     const pixelIndex = i * 4;
 
     data[pixelIndex] = r;
@@ -174,7 +181,8 @@ function renderHeatmapInternal(
           refs.currentImageLayerRef,
           refs.renderAbortRef,
           map,
-          lineThickness
+          lineThickness,
+          refs.heatmapColorThresholds
         )
     );
   } catch (error) {
