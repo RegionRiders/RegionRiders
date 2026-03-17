@@ -62,8 +62,10 @@ export function useLeafletMap(
     if (!mapRef.current) {
       return;
     }
-    const tintPane =
-      mapRef.current.getPane?.(MAP_TINT_PANE) ?? mapRef.current.createPane?.(MAP_TINT_PANE);
+    const getPane = mapRef.current.getPane?.bind(mapRef.current);
+    const createPane = mapRef.current.createPane?.bind(mapRef.current);
+    const tintPane = (getPane ? getPane(MAP_TINT_PANE) : undefined) ||
+      (createPane ? createPane(MAP_TINT_PANE) : undefined);
     tintPane?.style.setProperty('z-index', String(TINT_OVERLAY_Z_INDEX));
     tintPane?.style.setProperty('pointer-events', 'none');
 

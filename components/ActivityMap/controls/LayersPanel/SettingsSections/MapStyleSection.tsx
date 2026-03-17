@@ -34,6 +34,7 @@ export function MapStyleSection({
   const [tintModalOpened, { open: openTintModal, close: closeTintModal }] = useDisclosure(false);
   const [draftTint, setDraftTint] = useState(selectedTintColor);
   const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
+  const mapTintInputColumnSpan = Math.max(mapTintSwatches.length - 1, 1);
 
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
@@ -155,12 +156,12 @@ export function MapStyleSection({
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.8))',
+                    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.8))',
                   }}
                 />
               </ColorSwatchButton>
             </Box>
-            <Box style={{ gridColumn: `span ${Math.max(mapTintSwatches.length - 1, 1)}` }}>
+            <Box style={{ gridColumn: `span ${mapTintInputColumnSpan}` }}>
               <ColorRgbaTextInput
                 color={selectedTintColor}
                 label="Map tint color"
