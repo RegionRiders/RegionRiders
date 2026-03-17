@@ -5,6 +5,7 @@ import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
+import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
@@ -31,7 +32,7 @@ export function RegionsSection({
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
-    setTimeout(() => setClipboardError(null), 3000);
+    setTimeout(() => setClipboardError(null), CLIPBOARD_TOAST_DISPLAY_MS);
   };
 
   const handleHeatmapCopy = async () => {
@@ -73,12 +74,18 @@ export function RegionsSection({
       if (!unvisited || !visited) {
         throw new Error('Clipboard data must include both threshold 0 and 1 colors');
       }
+      const hasExtraThresholds = parsedThresholds.some(
+        (threshold) => threshold.threshold !== 0 && threshold.threshold !== 1
+      );
       const newSwatches = [...settings.regionStaticColorSwatches];
       newSwatches[settings.selectedRegionStaticSwatchIndex] = [
         { threshold: 0, color: unvisited },
         { threshold: 1, color: visited },
       ];
       onSettingChange('regionStaticColorSwatches', newSwatches);
+      if (hasExtraThresholds) {
+        showClipboardErrorToast('Only thresholds 0 and 1 are used in static mode');
+      }
     } catch (error) {
       showClipboardErrorToast(getClipboardErrorMessage(error, 'Could not paste static colors'));
     }
@@ -184,15 +191,6 @@ export function RegionsSection({
                   <IconEdit
                     color="black"
                     stroke={3}
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
-                    }}
-                  />
-                  <IconEdit
                     style={{
                       position: 'absolute',
                       top: '50%',

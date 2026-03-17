@@ -31,12 +31,12 @@ export class RegionLayerManager {
     visitData: Map<string, RegionVisitData>,
     weight: number,
     regionStaticColor: ColorThreshold[],
+    regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
     onRegionClick?: (
       region: Regions,
       visitInfo: RegionVisitData | undefined,
       layer: L.GeoJSON
-    ) => void,
-    regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
+    ) => void
   ): void {
     const currentRegionIds = new Set(regions.map((r) => r.id));
 

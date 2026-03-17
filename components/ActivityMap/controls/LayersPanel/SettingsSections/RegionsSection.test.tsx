@@ -53,6 +53,7 @@ describe('RegionsSection', () => {
 
   let mockOnSettingChange: jest.Mock;
   let defaultSettings: MapSettings;
+  const originalClipboard = navigator.clipboard;
 
   beforeEach(() => {
     mockOnSettingChange = jest.fn();
@@ -62,6 +63,18 @@ describe('RegionsSection', () => {
         writeText: jest.fn().mockResolvedValue(undefined),
         readText: jest.fn().mockResolvedValue(''),
       },
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    if (originalClipboard === undefined) {
+      delete (navigator as { clipboard?: Clipboard }).clipboard;
+      return;
+    }
+
+    Object.defineProperty(navigator, 'clipboard', {
+      value: originalClipboard,
       configurable: true,
     });
   });

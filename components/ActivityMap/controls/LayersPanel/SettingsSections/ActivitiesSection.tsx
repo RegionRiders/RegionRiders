@@ -6,6 +6,7 @@ import { ColorPickerModalButton } from '@/components/ActivityMap/controls/Layers
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
+import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
 import {
   getClipboardErrorMessage,
   parseColorThresholds,
@@ -27,7 +28,7 @@ export function ActivitiesSection({
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
-    setTimeout(() => setClipboardError(null), 10000);
+    setTimeout(() => setClipboardError(null), CLIPBOARD_TOAST_DISPLAY_MS);
   };
 
   const handleHeatmapCopy = async () => {
@@ -201,31 +202,22 @@ export function ActivitiesSection({
                         filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
                       }}
                     />
-                    <IconEdit
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
-                      }}
-                    />
                   </ColorSwatchButton>
                 )}
               />
             </div>
           )}
         </Stack>
-        {clipboardError && (
-          <Notification
-            color="red"
-            onClose={() => setClipboardError(null)}
-            style={{ position: 'fixed', top: 16, right: 16, zIndex: 2000 }}
-          >
-            {clipboardError}
-          </Notification>
-        )}
       </Accordion.Panel>
+      {clipboardError && (
+        <Notification
+          color="red"
+          onClose={() => setClipboardError(null)}
+          style={{ position: 'fixed', top: 16, right: 16, zIndex: 2000 }}
+        >
+          {clipboardError}
+        </Notification>
+      )}
     </Accordion.Item>
   );
 }

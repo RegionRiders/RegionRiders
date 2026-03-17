@@ -105,7 +105,7 @@ describe('MapOrchestrator', () => {
       defaultSettings.heatmapDensity,
       defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex],
       defaultSettings.activityHeatmapColorSwatches?.[
-        defaultSettings.selectedActivityHeatmapSwatchIndex || 0
+        defaultSettings.selectedActivityHeatmapSwatchIndex ?? 0
       ]
     );
   });
@@ -122,7 +122,7 @@ describe('MapOrchestrator', () => {
       defaultSettings.regionBorderThickness,
       defaultSettings.regionStaticColorSwatches[defaultSettings.selectedRegionStaticSwatchIndex],
       defaultSettings.regionHeatmapColorSwatches?.[
-        defaultSettings.selectedRegionHeatmapSwatchIndex || 0
+        defaultSettings.selectedRegionHeatmapSwatchIndex ?? 0
       ]
     );
   });
@@ -146,7 +146,7 @@ describe('MapOrchestrator', () => {
       customSettings.heatmapDensity,
       customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex],
       customSettings.activityHeatmapColorSwatches?.[
-        customSettings.selectedActivityHeatmapSwatchIndex || 0
+        customSettings.selectedActivityHeatmapSwatchIndex ?? 0
       ]
     );
 
@@ -159,7 +159,7 @@ describe('MapOrchestrator', () => {
       customSettings.regionBorderThickness,
       customSettings.regionStaticColorSwatches[customSettings.selectedRegionStaticSwatchIndex],
       customSettings.regionHeatmapColorSwatches?.[
-        customSettings.selectedRegionHeatmapSwatchIndex || 0
+        customSettings.selectedRegionHeatmapSwatchIndex ?? 0
       ]
     );
   });

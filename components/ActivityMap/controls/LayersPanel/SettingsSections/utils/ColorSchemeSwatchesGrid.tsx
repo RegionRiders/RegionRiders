@@ -38,6 +38,12 @@ type ColorSchemeSwatchesGridProps =
 export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
   const { mode, label, swatches, selectedIndex, onSwatchSelect, renderEditButton } = props;
   const editorCols = swatches.length > 2 ? swatches.length : 2;
+  const swatchKeyCounts = new Map<string, number>();
+  const getUniqueSwatchKey = (baseKey: string): string => {
+    const currentCount = swatchKeyCounts.get(baseKey) ?? 0;
+    swatchKeyCounts.set(baseKey, currentCount + 1);
+    return currentCount === 0 ? baseKey : `${baseKey}-${currentCount}`;
+  };
 
   if (swatches.length === 0) {
     return null;
@@ -51,7 +57,7 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
           {mode === 'thresholded'
             ? swatches.map((thresholds, index) => (
                 <ColorSwatchButton
-                  key={index}
+                  key={getUniqueSwatchKey(JSON.stringify(thresholds))}
                   color={thresholds[0]?.color || [0, 0, 0, 0]}
                   colorThresholds={thresholds}
                   index={index}
@@ -61,7 +67,9 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
               ))
             : swatches.map((swatch, index) => (
                 <ColorSwatchButton
-                  key={index}
+                  key={getUniqueSwatchKey(
+                    `${swatch.color.join(',')}|${swatch.secondaryColor?.join(',') ?? ''}`
+                  )}
                   color={swatch.color}
                   secondaryColor={swatch.secondaryColor}
                   index={index}

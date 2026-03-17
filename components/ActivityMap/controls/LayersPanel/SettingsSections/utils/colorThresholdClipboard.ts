@@ -21,9 +21,22 @@ function isValidColorThreshold(value: unknown): value is ColorThreshold {
     return false;
   }
 
-  return candidate.color.every(
-    (part) => typeof part === 'number' && Number.isFinite(part) && part >= 0 && part <= 255
-  );
+  const [r, g, b, a] = candidate.color;
+
+  const hasValidRgb =
+    Number.isInteger(r) &&
+    Number.isInteger(g) &&
+    Number.isInteger(b) &&
+    r >= 0 &&
+    r <= 255 &&
+    g >= 0 &&
+    g <= 255 &&
+    b >= 0 &&
+    b <= 255;
+
+  const hasValidAlpha = typeof a === 'number' && Number.isFinite(a) && a >= 0 && a <= 1;
+
+  return hasValidRgb && hasValidAlpha;
 }
 
 export function serializeColorThresholds(thresholds: ColorThreshold[]): string {

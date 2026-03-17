@@ -68,7 +68,6 @@ export function useRegionRendering(
       visitData,
       calculateWeightForZoom(map.getZoom(), regionBorderThickness),
       regionStaticColor,
-      undefined,
       regionHeatmapColor
     );
 

@@ -1,0 +1,1 @@
+export const CLIPBOARD_TOAST_DISPLAY_MS = 10000;

@@ -41,7 +41,7 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.activityThickness,
     settings.heatmapDensity,
     settings.lineColorSwatches[settings.selectedLineSwatchIndex],
-    settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex || 0] ||
+    settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex ?? 0] ??
       ACTIVITY_HEATMAP_COLOR_THRESHOLDS
   );
   useRegionRendering(
@@ -52,7 +52,7 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.regionMode,
     settings.regionBorderThickness,
     settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex],
-    settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex || 0] ||
+    settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex ?? 0] ??
       REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
   );
 

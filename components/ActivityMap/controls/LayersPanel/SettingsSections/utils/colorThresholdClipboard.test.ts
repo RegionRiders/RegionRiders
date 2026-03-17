@@ -30,6 +30,12 @@ describe('colorThresholdClipboard', () => {
     ).toThrow();
   });
 
+  it('throws when rgb values are not integers', () => {
+    expect(() =>
+      parseColorThresholds(JSON.stringify([{ threshold: 1, color: [10.5, 255, 255, 0.5] }]))
+    ).toThrow();
+  });
+
   it('throws when thresholds are not sorted ascending', () => {
     expect(() =>
       parseColorThresholds(
