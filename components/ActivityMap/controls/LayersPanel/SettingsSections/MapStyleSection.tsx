@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
-import { Accordion, Box, Button, Group, Modal, SimpleGrid, Stack, Switch, Text } from '@mantine/core';
+import {
+  Accordion,
+  Box,
+  Button,
+  Group,
+  Modal,
+  SimpleGrid,
+  Stack,
+  Switch,
+  Text,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { DEFAULT_MAP_TINT_SWATCHES } from '@/components/ActivityMap/config/mapConfig';
 import {
@@ -8,17 +18,22 @@ import {
   MAP_SOURCE_PRESET_KEYS,
   TILE_PRESETS,
 } from '@/components/ActivityMap/config/tilePresets';
+import { ColorSchemeSwatchesGrid } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSchemeSwatchesGrid';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
-import { ColorSchemeSwatchesGrid } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSchemeSwatchesGrid';
 import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
-import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ExtendedColorPicker, SliderMode } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
+import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
+import {
+  ExtendedColorPicker,
+  SliderMode,
+} from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 
 const sourcePresetEntries = MAP_SOURCE_PRESET_KEYS.map((key) => [key, TILE_PRESETS[key]] as const);
-const overlayPresetEntries = MAP_OVERLAY_PRESET_KEYS.map((key) => [key, TILE_PRESETS[key]] as const);
+const overlayPresetEntries = MAP_OVERLAY_PRESET_KEYS.map(
+  (key) => [key, TILE_PRESETS[key]] as const
+);
 const TRANSPARENT_PLACEHOLDER_IMAGE =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
@@ -31,7 +46,8 @@ export function MapStyleSection({
 }) {
   const mapTintSwatches = settings.mapTintSwatches ?? DEFAULT_MAP_TINT_SWATCHES;
   const selectedMapTintSwatchIndex = settings.selectedMapTintSwatchIndex ?? 0;
-  const selectedTintColor = mapTintSwatches[selectedMapTintSwatchIndex] ?? DEFAULT_MAP_TINT_SWATCHES[0];
+  const selectedTintColor =
+    mapTintSwatches[selectedMapTintSwatchIndex] ?? DEFAULT_MAP_TINT_SWATCHES[0];
   const [tintModalOpened, { open: openTintModal, close: closeTintModal }] = useDisclosure(false);
   const [draftTint, setDraftTint] = useState(selectedTintColor);
   const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
@@ -140,8 +156,18 @@ export function MapStyleSection({
             renderEditButton={() => (
               <ColorSwatchButton color={selectedTintColor} onClick={handleOpenTintEditor}>
                 <IconEdit
-                  color="white"
+                  color="black"
                   stroke={3}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.8))',
+                  }}
+                />
+                <IconEdit
+                  color="white"
                   style={{
                     position: 'absolute',
                     top: '50%',
@@ -156,7 +182,6 @@ export function MapStyleSection({
               <Box style={{ gridColumn: `span ${Math.max(editorCols - 1, 1)}` }}>
                 <ColorRgbaTextInput
                   color={selectedTintColor}
-                  label="Map tint color"
                   onChange={(nextColor) => {
                     const newSwatches = [...mapTintSwatches];
                     newSwatches[selectedMapTintSwatchIndex] = nextColor;

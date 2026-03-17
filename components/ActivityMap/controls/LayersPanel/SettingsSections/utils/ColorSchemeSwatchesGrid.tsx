@@ -38,8 +38,15 @@ type ColorSchemeSwatchesGridProps =
   | StaticColorSchemeSwatchesGridProps;
 
 export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
-  const { mode, label, swatches, selectedIndex, onSwatchSelect, renderEditButton, renderEditorPanel } =
-    props;
+  const {
+    mode,
+    label,
+    swatches,
+    selectedIndex,
+    onSwatchSelect,
+    renderEditButton,
+    renderEditorPanel,
+  } = props;
   const editorCols = swatches.length > 2 ? swatches.length : 2;
   const swatchKeyCounts = new Map<string, number>();
   const getUniqueSwatchKey = (baseKey: string): string => {

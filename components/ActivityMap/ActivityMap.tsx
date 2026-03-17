@@ -177,8 +177,9 @@ export default function ActivityMap() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const selectedMapTintColor =
-    settings.mapTintSwatches?.[settings.selectedMapTintSwatchIndex ?? 0] ?? [0, 0, 0, 0];
+  const selectedMapTintColor = settings.mapTintSwatches?.[
+    settings.selectedMapTintSwatchIndex ?? 0
+  ] ?? [0, 0, 0, 0];
 
   const { map, isReady, error } = useLeafletMap(mapContainerRef, {
     tileLayerUrl: settings.tileLayerUrl,

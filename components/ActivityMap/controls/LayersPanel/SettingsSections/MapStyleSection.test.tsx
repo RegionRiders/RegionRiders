@@ -104,7 +104,9 @@ describe('MapStyleSection', () => {
 
       const source = screen.getByText('Map source');
       const overlay = screen.getByText('Map overlay');
-      expect(source.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(
+        source.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     });
   });
 
