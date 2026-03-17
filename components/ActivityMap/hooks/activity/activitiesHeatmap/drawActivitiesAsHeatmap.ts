@@ -65,14 +65,14 @@ function finishRender(
       count,
       currentZoom,
       lineThickness,
-      colorThresholds
+      colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
     );
     const pixelIndex = i * 4;
 
     data[pixelIndex] = r;
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = a;
+    data[pixelIndex + 3] = Math.round(a * 255);
   }
 
   ctx.putImageData(imageData, 0, 0);

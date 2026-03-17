@@ -1,4 +1,3 @@
-import { convert1to255value } from '@/components/ActivityMap/utils/convert1to255value';
 import { ColorThreshold, HeatmapConfig, LeafletConfig } from '../mapTypes';
 
 export const HEATMAP_CONFIG: HeatmapConfig = {
@@ -18,12 +17,12 @@ export const DEFAULT_LEAFLET_CONFIG: LeafletConfig = {
 };
 
 export const ACTIVITY_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
-  { threshold: 1, color: [139, 0, 0, convert1to255value(1)] }, // dark red
-  { threshold: 2, color: [220, 20, 20, convert1to255value(1)] }, // red
-  { threshold: 10, color: [255, 100, 0, convert1to255value(1)] }, // orange-red
-  { threshold: 25, color: [255, 165, 0, convert1to255value(1)] }, // orange
-  { threshold: 50, color: [255, 255, 0, convert1to255value(1)] }, // yellow
-  { threshold: 150, color: [255, 255, 255, convert1to255value(1)] }, // white
+  { threshold: 1, color: [139, 0, 0, 1] }, // dark red
+  { threshold: 2, color: [220, 20, 20, 1] }, // red
+  { threshold: 10, color: [255, 100, 0, 1] }, // orange-red
+  { threshold: 25, color: [255, 165, 0, 1] }, // orange
+  { threshold: 50, color: [255, 255, 0, 1] }, // yellow
+  { threshold: 150, color: [255, 255, 255, 1] }, // white
 ];
 
 export const REGION_VISIT_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [

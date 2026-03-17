@@ -15,7 +15,6 @@ import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { convert1to255value } from '@/components/ActivityMap/utils/convert1to255value';
 
 const MapContainerMemo = memo(MapContainer);
 
@@ -57,44 +56,44 @@ export default function ActivityMap() {
     selectedLineSwatchIndex: 0,
     activityHeatmapColorSwatches: [
       [
-        { threshold: 1, color: [139, 0, 0, convert1to255value(1)] }, // dark red
-        { threshold: 2, color: [220, 20, 20, convert1to255value(1)] }, // red
-        { threshold: 10, color: [255, 100, 0, convert1to255value(1)] }, // orange-red
-        { threshold: 25, color: [255, 165, 0, convert1to255value(1)] }, // orange
-        { threshold: 50, color: [255, 255, 0, convert1to255value(1)] }, // yellow
-        { threshold: 150, color: [255, 255, 255, convert1to255value(1)] }, // white
+        { threshold: 1, color: [139, 0, 0, 1] }, // dark red
+        { threshold: 2, color: [220, 20, 20, 1] }, // red
+        { threshold: 10, color: [255, 100, 0, 1] }, // orange-red
+        { threshold: 25, color: [255, 165, 0, 1] }, // orange
+        { threshold: 50, color: [255, 255, 0, 1] }, // yellow
+        { threshold: 150, color: [255, 255, 255, 1] }, // white
       ],
       [
-        { threshold: 1, color: [0, 0, 80, convert1to255value(1)] }, // dark blue
-        { threshold: 2, color: [0, 0, 160, convert1to255value(1)] }, // blue
-        { threshold: 10, color: [0, 80, 220, convert1to255value(1)] }, // light blue
-        { threshold: 25, color: [0, 180, 255, convert1to255value(1)] }, // sky blue / cyan [web:10]
-        { threshold: 50, color: [150, 235, 255, convert1to255value(1)] }, // pale cyan
-        { threshold: 150, color: [240, 250, 255, convert1to255value(1)] }, // almost white
+        { threshold: 1, color: [0, 0, 80, 1] }, // dark blue
+        { threshold: 2, color: [0, 0, 160, 1] }, // blue
+        { threshold: 10, color: [0, 80, 220, 1] }, // light blue
+        { threshold: 25, color: [0, 180, 255, 1] }, // sky blue / cyan [web:10]
+        { threshold: 50, color: [150, 235, 255, 1] }, // pale cyan
+        { threshold: 150, color: [240, 250, 255, 1] }, // almost white
       ],
       [
-        { threshold: 1, color: [0, 80, 0, convert1to255value(1)] }, // dark green
-        { threshold: 2, color: [0, 140, 0, convert1to255value(1)] }, // green
-        { threshold: 10, color: [80, 200, 0, convert1to255value(1)] }, // yellow‑green
-        { threshold: 25, color: [160, 230, 0, convert1to255value(1)] }, // lime
-        { threshold: 50, color: [220, 255, 0, convert1to255value(1)] }, // light yellow‑green
-        { threshold: 150, color: [255, 255, 220, convert1to255value(1)] }, // warm white
+        { threshold: 1, color: [0, 80, 0, 1] }, // dark green
+        { threshold: 2, color: [0, 140, 0, 1] }, // green
+        { threshold: 10, color: [80, 200, 0, 1] }, // yellow‑green
+        { threshold: 25, color: [160, 230, 0, 1] }, // lime
+        { threshold: 50, color: [220, 255, 0, 1] }, // light yellow‑green
+        { threshold: 150, color: [255, 255, 220, 1] }, // warm white
       ],
       [
-        { threshold: 1, color: [0, 80, 0, convert1to255value(1)] }, // dark green
-        { threshold: 2, color: [0, 140, 0, convert1to255value(1)] }, // green
-        { threshold: 10, color: [80, 200, 0, convert1to255value(1)] }, // yellow‑green
-        { threshold: 25, color: [160, 230, 0, convert1to255value(1)] }, // lime
-        { threshold: 50, color: [220, 255, 0, convert1to255value(1)] }, // light yellow‑green
-        { threshold: 150, color: [255, 255, 220, convert1to255value(1)] }, // warm white
+        { threshold: 1, color: [0, 80, 0, 1] }, // dark green
+        { threshold: 2, color: [0, 140, 0, 1] }, // green
+        { threshold: 10, color: [80, 200, 0, 1] }, // yellow‑green
+        { threshold: 25, color: [160, 230, 0, 1] }, // lime
+        { threshold: 50, color: [220, 255, 0, 1] }, // light yellow‑green
+        { threshold: 150, color: [255, 255, 220, 1] }, // warm white
       ],
       [
-        { threshold: 1, color: [0, 80, 0, convert1to255value(1)] }, // dark green
-        { threshold: 2, color: [0, 140, 0, convert1to255value(1)] }, // green
-        { threshold: 10, color: [80, 200, 0, convert1to255value(1)] }, // yellow‑green
-        { threshold: 25, color: [160, 230, 0, convert1to255value(1)] }, // lime
-        { threshold: 50, color: [220, 255, 0, convert1to255value(1)] }, // light yellow‑green
-        { threshold: 150, color: [255, 255, 220, convert1to255value(1)] }, // warm white
+        { threshold: 1, color: [0, 80, 0, 1] }, // dark green
+        { threshold: 2, color: [0, 140, 0, 1] }, // green
+        { threshold: 10, color: [80, 200, 0, 1] }, // yellow‑green
+        { threshold: 25, color: [160, 230, 0, 1] }, // lime
+        { threshold: 50, color: [220, 255, 0, 1] }, // light yellow‑green
+        { threshold: 150, color: [255, 255, 220, 1] }, // warm white
       ],
     ],
     selectedActivityHeatmapSwatchIndex: 0,
