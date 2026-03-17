@@ -157,3 +157,6 @@ postgres_data/
 .pgdata/
 
 test-results.txt
+
+# Route files
+*.gpx
