@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { IconClipboard, IconCopy } from '@tabler/icons-react';
 import { Box, Button, SimpleGrid, Stack, Text } from '@mantine/core';
 import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
@@ -70,11 +71,11 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
         {renderEditButton()}
         <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
           <SimpleGrid cols={2} spacing="xs">
-            <Button size="md" variant="default" onClick={props.onCopy} fullWidth>
-              COPY
+            <Button leftSection={<IconCopy />} onClick={props.onCopy} fullWidth p={0}>
+              Copy
             </Button>
-            <Button size="md" variant="default" onClick={props.onPaste} fullWidth>
-              PASTE
+            <Button leftSection={<IconClipboard />} onClick={props.onPaste} fullWidth p={0}>
+              Paste
             </Button>
           </SimpleGrid>
         </Box>
