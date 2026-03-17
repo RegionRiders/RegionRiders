@@ -5,8 +5,8 @@ import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/conf
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
+import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
   parseColorThresholds,

@@ -4,8 +4,8 @@ import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } f
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
+import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
@@ -191,6 +191,16 @@ export function RegionsSection({
                   <IconEdit
                     color="black"
                     stroke={3}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
+                    }}
+                  />
+                  <IconEdit
+                    color="white"
                     style={{
                       position: 'absolute',
                       top: '50%',
