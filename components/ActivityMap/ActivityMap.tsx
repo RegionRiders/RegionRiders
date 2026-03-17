@@ -164,15 +164,33 @@ export default function ActivityMap() {
     selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
+    overlayTileLayerUrl: '',
+    overlayAttribution: '',
+    monochromeMap: false,
+    mapTintSwatches: [
+      [0, 0, 0, 0],
+      [70, 70, 70, 0.18],
+      [210, 70, 70, 0.16],
+      [80, 80, 170, 0.16],
+      [255, 200, 90, 0.14],
+    ],
+    selectedMapTintSwatchIndex: 0,
   });
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const selectedMapTintColor =
+    settings.mapTintSwatches?.[settings.selectedMapTintSwatchIndex ?? 0] ?? [0, 0, 0, 0];
+
   const { map, isReady, error } = useLeafletMap(mapContainerRef, {
     tileLayerUrl: settings.tileLayerUrl,
     attribution: settings.attribution,
+    overlayTileLayerUrl: settings.overlayTileLayerUrl,
+    overlayAttribution: settings.overlayAttribution,
+    monochromeMap: settings.monochromeMap,
+    mapTintColor: selectedMapTintColor,
   });
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);

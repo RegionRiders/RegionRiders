@@ -67,10 +67,11 @@ describe('MapStyleSection', () => {
         <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      // Check for some preset names
+      expect(screen.getByText('Map overlay')).toBeInTheDocument();
+      expect(screen.getByText('Map source')).toBeInTheDocument();
       expect(screen.getByText('Standard')).toBeInTheDocument();
-      expect(screen.getByText('Satellite')).toBeInTheDocument();
-      expect(screen.getByText('Dark')).toBeInTheDocument();
+      expect(screen.getByText('Cycling Routes')).toBeInTheDocument();
+      expect(screen.getByText('None')).toBeInTheDocument();
     });
 
     it('should render all tile presets', () => {
@@ -81,6 +82,8 @@ describe('MapStyleSection', () => {
       Object.values(TILE_PRESETS).forEach((preset) => {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
       });
+      expect(screen.getByLabelText('Toggle monochromatic map style')).toBeInTheDocument();
+      expect(screen.getByText('Map Tint')).toBeInTheDocument();
     });
   });
 
@@ -100,6 +103,45 @@ describe('MapStyleSection', () => {
         'attribution',
         TILE_PRESETS.dark.attribution
       );
+    });
+
+    it('should call onSettingChange when a map overlay is selected', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      const overlayButton = screen.getByRole('button', {
+        name: /switch to cycling routes map overlay/i,
+      });
+      fireEvent.click(overlayButton);
+
+      expect(mockOnSettingChange).toHaveBeenCalledWith(
+        'overlayTileLayerUrl',
+        TILE_PRESETS.bikeOverlay.url
+      );
+      expect(mockOnSettingChange).toHaveBeenCalledWith(
+        'overlayAttribution',
+        TILE_PRESETS.bikeOverlay.attribution
+      );
+    });
+
+    it('should call onSettingChange when monochromatic toggle changes', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      fireEvent.click(screen.getByLabelText('Toggle monochromatic map style'));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('monochromeMap', true);
+    });
+
+    it('should call onSettingChange when map tint swatch is selected', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      const tintSwatchTwo = screen.getByRole('button', { name: /select color 2/i });
+      fireEvent.click(tintSwatchTwo);
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedMapTintSwatchIndex', 1);
     });
 
     it('should mark the current style as active', () => {

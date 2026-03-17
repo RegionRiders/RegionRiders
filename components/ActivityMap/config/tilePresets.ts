@@ -48,3 +48,15 @@ export const TILE_PRESETS: Record<string, TilePreset> = {
 } as const;
 
 export const DEFAULT_TILE_PRESET = TILE_PRESETS.standard;
+
+export const MAP_SOURCE_PRESET_KEYS = [
+  'standard',
+  'satellite',
+  'terrain',
+  'dark',
+  'cycling',
+  'neutralBase',
+  'minimalBiking',
+] as const;
+
+export const MAP_OVERLAY_PRESET_KEYS = ['bikeOverlay'] as const;

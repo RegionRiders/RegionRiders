@@ -37,6 +37,8 @@ export function useLeafletMap(
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const overlayTileLayerRef = useRef<L.TileLayer | null>(null);
+  const tintOverlayRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +46,46 @@ export function useLeafletMap(
     () => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }),
     [options]
   );
+
+  const applyMonochromeFilter = (layer: L.TileLayer | null, monochrome: boolean) => {
+    const layerContainer = layer?.getContainer?.();
+    if (!layerContainer) {
+      return;
+    }
+    layerContainer.style.filter = monochrome ? 'grayscale(1)' : '';
+  };
+
+  const updateTintOverlay = (tintColor?: LeafletConfig['mapTintColor']) => {
+    if (!mapRef.current) {
+      return;
+    }
+    if (!tintOverlayRef.current) {
+      const mapContainer = mapRef.current.getContainer?.();
+      if (!mapContainer) {
+        return;
+      }
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.inset = '0';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.zIndex = '350';
+      overlay.style.mixBlendMode = 'multiply';
+      mapContainer.appendChild(overlay);
+      tintOverlayRef.current = overlay;
+    }
+
+    const overlay = tintOverlayRef.current;
+    const [r, g, b, alpha] = tintColor ?? [0, 0, 0, 0];
+    overlay.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    overlay.style.display = alpha > 0 ? 'block' : 'none';
+  };
+
+  const createTileLayer = (url: string, attribution: string) =>
+    L.tileLayer(url, {
+      attribution,
+      maxZoom: config.maxZoom,
+      minZoom: config.minZoom,
+    });
 
   // Initial map creation effect
   useEffect(() => {
@@ -61,11 +103,18 @@ export function useLeafletMap(
         minZoom: config.minZoom,
       });
 
-      tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
-        attribution: config.attribution,
-        maxZoom: config.maxZoom,
-        minZoom: config.minZoom,
-      }).addTo(mapRef.current);
+      tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(
+        mapRef.current
+      );
+      applyMonochromeFilter(tileLayerRef.current, Boolean(config.monochromeMap));
+      if (config.overlayTileLayerUrl) {
+        overlayTileLayerRef.current = createTileLayer(
+          config.overlayTileLayerUrl,
+          config.overlayAttribution ?? ''
+        ).addTo(mapRef.current);
+        applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.monochromeMap));
+      }
+      updateTintOverlay(config.mapTintColor);
 
       mapRef.current.whenReady(() => {
         setIsReady(true);
@@ -85,6 +134,8 @@ export function useLeafletMap(
         mapRef.current.remove();
         mapRef.current = null;
         tileLayerRef.current = null;
+        overlayTileLayerRef.current = null;
+        tintOverlayRef.current = null;
         setIsReady(false);
       }
     };
@@ -101,12 +152,33 @@ export function useLeafletMap(
       mapRef.current.removeLayer(tileLayerRef.current);
     }
 
-    tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
-      attribution: config.attribution,
-      maxZoom: config.maxZoom,
-      minZoom: config.minZoom,
-    }).addTo(mapRef.current);
-  }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
+    tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(mapRef.current);
+    applyMonochromeFilter(tileLayerRef.current, Boolean(config.monochromeMap));
+
+    if (overlayTileLayerRef.current) {
+      mapRef.current.removeLayer(overlayTileLayerRef.current);
+      overlayTileLayerRef.current = null;
+    }
+    if (config.overlayTileLayerUrl) {
+      overlayTileLayerRef.current = createTileLayer(
+        config.overlayTileLayerUrl,
+        config.overlayAttribution ?? ''
+      ).addTo(mapRef.current);
+      applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.monochromeMap));
+    }
+
+    updateTintOverlay(config.mapTintColor);
+  }, [
+    config.tileLayerUrl,
+    config.attribution,
+    config.overlayTileLayerUrl,
+    config.overlayAttribution,
+    config.monochromeMap,
+    config.mapTintColor,
+    config.maxZoom,
+    config.minZoom,
+    isReady,
+  ]);
 
   return {
     map: mapRef.current,
