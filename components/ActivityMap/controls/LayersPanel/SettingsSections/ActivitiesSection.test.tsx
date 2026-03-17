@@ -311,6 +311,32 @@ describe('ActivitiesSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
+    it('should render line copy and paste buttons in lines mode', () => {
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+    });
+
+    it('pastes line colors and updates selected swatch in lines mode', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 0, color: [10, 20, 30, 1] },
+          { threshold: 1, color: [40, 50, 60, 1] },
+        ])
+      );
+
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith('lineColorSwatches', expect.any(Array))
+      );
+    });
+
     it('should call onSettingChange when a line color swatch is selected', () => {
       const settings = {
         ...defaultSettings,
