@@ -197,7 +197,15 @@ export default function ActivityMap() {
             value={
               settings.activityHeatmapColorSwatches[settings.selectedActivityHeatmapSwatchIndex]
             }
-            onChange={() => {}}
+            onChange={(thresholds) => {
+              setSettings((prev) => ({
+                ...prev,
+                activityHeatmapColorSwatches: prev.activityHeatmapColorSwatches.map(
+                  (swatch, index) =>
+                    index === prev.selectedActivityHeatmapSwatchIndex ? thresholds : swatch
+                ),
+              }));
+            }}
             buttonLabel="gradient"
           />
         </div>
