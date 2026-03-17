@@ -18,6 +18,7 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorRgbaTextInput } from '../../../../controls/ColorTextInputs/ColorRgbaTextInput';
 import {
+  getClipboardErrorMessage,
   parseColorThresholds,
   serializeColorThresholds,
 } from './utils/colorThresholdClipboard';
@@ -54,8 +55,10 @@ export function ActivitiesSection({
       const newSwatches = [...activityHeatmapColorSwatches];
       newSwatches[selectedActivityHeatmapSwatchIndex] = parsedThresholds;
       onSettingChange('activityHeatmapColorSwatches', newSwatches);
-    } catch {
-      showClipboardErrorToast('Could not paste heatmap colors from clipboard');
+    } catch (error) {
+      showClipboardErrorToast(
+        getClipboardErrorMessage(error, 'Could not paste heatmap colors from clipboard')
+      );
     }
   };
 

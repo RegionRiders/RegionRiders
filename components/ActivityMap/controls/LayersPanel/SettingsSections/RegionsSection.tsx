@@ -18,6 +18,7 @@ import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/Color
 import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import {
+  getClipboardErrorMessage,
   parseColorThresholds,
   serializeColorThresholds,
 } from './utils/colorThresholdClipboard';
@@ -59,8 +60,10 @@ export function RegionsSection({
       const newSwatches = [...regionHeatmapColorSwatches];
       newSwatches[selectedRegionHeatmapSwatchIndex] = parsedThresholds;
       onSettingChange('regionHeatmapColorSwatches', newSwatches);
-    } catch {
-      showClipboardErrorToast('Could not paste heatmap colors from clipboard');
+    } catch (error) {
+      showClipboardErrorToast(
+        getClipboardErrorMessage(error, 'Could not paste heatmap colors from clipboard')
+      );
     }
   };
 

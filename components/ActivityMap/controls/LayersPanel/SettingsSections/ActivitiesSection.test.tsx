@@ -252,8 +252,8 @@ describe('ActivitiesSection', () => {
       );
     });
 
-    it('shows error toast when paste content is invalid', async () => {
-      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('not-json');
+    it('shows specific parser error toast when paste content is invalid', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('[]');
 
       render(
         <ActivitiesSectionWrapper

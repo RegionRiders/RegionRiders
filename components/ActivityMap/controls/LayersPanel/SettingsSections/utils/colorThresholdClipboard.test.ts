@@ -1,5 +1,6 @@
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import {
+  getClipboardErrorMessage,
   parseColorThresholds,
   serializeColorThresholds,
 } from './colorThresholdClipboard';
@@ -43,5 +44,15 @@ describe('colorThresholdClipboard', () => {
   it('throws when clipboard text is too large', () => {
     const veryLargeJson = `[${' '.repeat(20001)}]`;
     expect(() => parseColorThresholds(veryLargeJson)).toThrow();
+  });
+
+  it('returns specific error message when available', () => {
+    expect(getClipboardErrorMessage(new Error('Specific parse error'), 'Fallback message')).toBe(
+      'Specific parse error'
+    );
+  });
+
+  it('falls back to generic message when error has no message', () => {
+    expect(getClipboardErrorMessage('bad-error-shape', 'Fallback message')).toBe('Fallback message');
   });
 });

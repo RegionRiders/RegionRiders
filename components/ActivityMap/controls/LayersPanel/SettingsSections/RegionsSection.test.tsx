@@ -263,8 +263,8 @@ describe('RegionsSection', () => {
       );
     });
 
-    it('shows error toast when region paste content is invalid', async () => {
-      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('not-json');
+    it('shows specific parser error toast when region paste content is invalid', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('[]');
 
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
       render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
