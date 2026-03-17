@@ -7,9 +7,7 @@ import { LeafletConfig, RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
-const TINT_OVERLAY_Z_INDEX = 1000; // Above all map panes so tint overlays the full rendered map
 const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
-const MAP_TINT_PANE = 'mapTintPane';
 
 /**
  * react hook for initializing and managing a leaflet map instance
@@ -62,26 +60,20 @@ export function useLeafletMap(
     if (!mapRef.current) {
       return;
     }
-    const getPane = mapRef.current.getPane?.bind(mapRef.current);
-    const createPane = mapRef.current.createPane?.bind(mapRef.current);
-    const tintPane = (getPane ? getPane(MAP_TINT_PANE) : undefined) ||
-      (createPane ? createPane(MAP_TINT_PANE) : undefined);
-    tintPane?.style.setProperty('z-index', String(TINT_OVERLAY_Z_INDEX));
-    tintPane?.style.setProperty('pointer-events', 'none');
 
     if (!tintOverlayRef.current) {
       const overlay = document.createElement('div');
       overlay.style.position = 'absolute';
-      overlay.style.inset = '0';
-      overlay.style.width = '100%';
-      overlay.style.height = '100%';
+      overlay.style.top = '-9999px';
+      overlay.style.left = '-9999px';
+      overlay.style.width = '20000px';
+      overlay.style.height = '20000px';
       overlay.style.pointerEvents = 'none';
-      overlay.style.zIndex = String(TINT_OVERLAY_Z_INDEX);
-      if (tintPane) {
-        tintPane.appendChild(overlay);
-      } else {
-        mapRef.current.getContainer?.().appendChild(overlay);
-      }
+      overlay.style.zIndex = '250'; // above tilePane(200), below overlayPane(400)
+
+      // Append to leaflet-map-pane, not getContainer()
+      const mapPaneEl = mapRef.current.getPane('mapPane') as HTMLElement;
+      mapPaneEl.appendChild(overlay);
       tintOverlayRef.current = overlay;
     }
 
@@ -163,7 +155,9 @@ export function useLeafletMap(
       mapRef.current.removeLayer(tileLayerRef.current);
     }
 
-    tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(mapRef.current);
+    tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(
+      mapRef.current
+    );
     applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
 
     if (overlayTileLayerRef.current) {
