@@ -70,10 +70,10 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
         {renderEditButton()}
         <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
           <SimpleGrid cols={2} spacing="xs">
-            <Button size="md" variant="default" onClick={props.onCopy} fullWidth>
+            <Button variant="default" onClick={props.onCopy} fullWidth>
               COPY
             </Button>
-            <Button size="md" variant="default" onClick={props.onPaste} fullWidth>
+            <Button variant="default" onClick={props.onPaste} fullWidth>
               PASTE
             </Button>
           </SimpleGrid>

@@ -1,20 +1,11 @@
-import {
-  Accordion,
-  Button,
-  Group,
-  Notification,
-  Slider,
-  Stack,
-  Switch,
-  Text,
-} from '@mantine/core';
 import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
+import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } from '@mantine/core';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
+import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
   parseColorThresholds,
@@ -144,7 +135,7 @@ export function RegionsSection({
           {settings.regionMode === 'static' && settings.regionStaticColorSwatches.length > 0 && (
             <ColorSchemeSwatchesGrid
               mode="static"
-              label="Region ColorScheme"
+              label="Region Color Scheme"
               swatches={settings.regionStaticColorSwatches.map((colorThresholds) => {
                 const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
                 const visited = colorThresholds.find((ct) => ct.threshold === 1);
@@ -191,7 +182,17 @@ export function RegionsSection({
                   ariaLabel="Edit region heatmap colors"
                 >
                   <IconEdit
-                    size={16}
+                    color="black"
+                    stroke={3}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
+                    }}
+                  />
+                  <IconEdit
                     style={{
                       position: 'absolute',
                       top: '50%',

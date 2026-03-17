@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
-import {
-  Accordion,
-  Button,
-  Group,
-  Notification,
-  Slider,
-  Stack,
-  Switch,
-  Text,
-} from '@mantine/core';
+import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } from '@mantine/core';
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -156,7 +147,7 @@ export function ActivitiesSection({
           {settings.activityMode === 'lines' && (
             <ColorSchemeSwatchesGrid
               mode="static"
-              label="Lines ColorScheme"
+              label="Lines Color Scheme"
               swatches={settings.lineColorSwatches.map((swatch) => ({
                 color: swatch.normal,
                 secondaryColor: swatch.hover,
@@ -188,7 +179,9 @@ export function ActivitiesSection({
                 label="Heatmap Color Scheme"
                 swatches={activityHeatmapColorSwatches}
                 selectedIndex={selectedActivityHeatmapSwatchIndex}
-                onSwatchSelect={(index) => onSettingChange('selectedActivityHeatmapSwatchIndex', index)}
+                onSwatchSelect={(index) =>
+                  onSettingChange('selectedActivityHeatmapSwatchIndex', index)
+                }
                 onCopy={handleHeatmapCopy}
                 onPaste={handleHeatmapPaste}
                 renderEditButton={() => (
@@ -198,7 +191,17 @@ export function ActivitiesSection({
                     ariaLabel="Edit activity heatmap colors"
                   >
                     <IconEdit
-                      size={16}
+                      color="black"
+                      stroke={3}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
+                      }}
+                    />
+                    <IconEdit
                       style={{
                         position: 'absolute',
                         top: '50%',
