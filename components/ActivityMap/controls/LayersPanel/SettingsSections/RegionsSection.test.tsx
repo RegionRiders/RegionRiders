@@ -174,14 +174,39 @@ describe('RegionsSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should render rgba text input in static mode', () => {
+    it('should render unvisited and visited rgba inputs plus clipboard buttons in static mode', () => {
       render(
         <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByPlaceholderText('rgba(255, 0, 0, 0.5)')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'COPY' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'PASTE' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Unvisited')).toBeInTheDocument();
+      expect(screen.getByLabelText('Visited')).toBeInTheDocument();
+      expect(screen.getAllByRole('textbox')).toHaveLength(2);
+      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+    });
+
+    it('pastes static region colors into unvisited and visited', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 0, color: [10, 20, 30, 0.1] },
+          { threshold: 1, color: [40, 50, 60, 0.3] },
+        ])
+      );
+      render(
+        <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith('regionStaticColorSwatches', [
+          [
+            { threshold: 0, color: [10, 20, 30, 0.1] },
+            { threshold: 1, color: [40, 50, 60, 0.3] },
+          ],
+        ])
+      );
     });
 
     it('should call onSettingChange when a color swatch is selected', () => {

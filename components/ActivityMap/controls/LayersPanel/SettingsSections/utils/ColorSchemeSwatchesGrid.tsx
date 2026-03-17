@@ -26,6 +26,8 @@ type StaticColorSchemeSwatchesGridProps = {
   selectedIndex: number;
   onSwatchSelect: (index: number) => void;
   renderEditButton: () => ReactNode;
+  onCopy: () => void;
+  onPaste: () => void;
   renderStaticEditor: () => ReactNode;
 };
 
@@ -38,7 +40,7 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
   const editorCols = swatches.length > 2 ? swatches.length : 2;
 
   return (
-    <Stack gap="xs">
+    <Stack gap={0}>
       <Text size="sm">{label}</Text>
       <SimpleGrid cols={swatches.length} spacing="xs">
         {mode === 'thresholded'
@@ -66,7 +68,7 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
       <SimpleGrid cols={editorCols} spacing="xs">
         {renderEditButton()}
         <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
-          {mode === 'thresholded' ? (
+          <Stack gap="xs">
             <SimpleGrid cols={2} spacing="xs">
               <Button size="xs" variant="default" onClick={props.onCopy} fullWidth>
                 COPY
@@ -75,9 +77,8 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
                 PASTE
               </Button>
             </SimpleGrid>
-          ) : (
-            props.renderStaticEditor()
-          )}
+            {mode === 'static' && props.renderStaticEditor()}
+          </Stack>
         </Box>
       </SimpleGrid>
     </Stack>

@@ -311,13 +311,34 @@ describe('ActivitiesSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should render rgba text input in lines mode', () => {
+    it('should render regular and hover rgba inputs plus clipboard buttons in lines mode', () => {
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
       render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
-      expect(screen.getByPlaceholderText('rgba(255, 0, 0, 0.5)')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'COPY' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'PASTE' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Regular')).toBeInTheDocument();
+      expect(screen.getByLabelText('Hover')).toBeInTheDocument();
+      expect(screen.getAllByRole('textbox')).toHaveLength(2);
+      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+    });
+
+    it('pastes static lines colors into regular and hover', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 0, color: [1, 2, 3, 0.4] },
+          { threshold: 1, color: [4, 5, 6, 0.7] },
+        ])
+      );
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith('lineColorSwatches', [
+          { normal: [1, 2, 3, 0.4], hover: [4, 5, 6, 0.7] },
+        ])
+      );
     });
 
     it('should call onSettingChange when a line color swatch is selected', () => {

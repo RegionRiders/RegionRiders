@@ -66,6 +66,34 @@ export function RegionsSection({
     }
   };
 
+  const handleStaticCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(serializeColorThresholds(selectedSwatch));
+    } catch {
+      showClipboardErrorToast('Could not copy static colors to clipboard');
+    }
+  };
+
+  const handleStaticPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const parsedThresholds = parseColorThresholds(text);
+      const unvisited = parsedThresholds.find((threshold) => threshold.threshold === 0)?.color;
+      const visited = parsedThresholds.find((threshold) => threshold.threshold === 1)?.color;
+      if (!unvisited || !visited) {
+        throw new Error('Clipboard data must include both threshold 0 and 1 colors');
+      }
+      const newSwatches = [...settings.regionStaticColorSwatches];
+      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+        { threshold: 0, color: unvisited },
+        { threshold: 1, color: visited },
+      ];
+      onSettingChange('regionStaticColorSwatches', newSwatches);
+    } catch (error) {
+      showClipboardErrorToast(getClipboardErrorMessage(error, 'Could not paste static colors'));
+    }
+  };
+
   return (
     <Accordion.Item value="regions">
       <Accordion.Control>
@@ -128,6 +156,8 @@ export function RegionsSection({
               })}
               selectedIndex={settings.selectedRegionStaticSwatchIndex}
               onSwatchSelect={(index) => onSettingChange('selectedRegionStaticSwatchIndex', index)}
+              onCopy={handleStaticCopy}
+              onPaste={handleStaticPaste}
               renderEditButton={() => (
                 <ColorPickerModalButton
                   primaryColor={unvisitedColor}
@@ -145,19 +175,36 @@ export function RegionsSection({
                 />
               )}
               renderStaticEditor={() => (
-                <ColorRgbaTextInput
-                  color={unvisitedColor}
-                  onChange={(newColor) => {
-                    const newSwatches = [...settings.regionStaticColorSwatches];
-                    const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
-                    const visited = currentSwatch.find((ct) => ct.threshold === 1);
-                    newSwatches[settings.selectedRegionStaticSwatchIndex] = [
-                      { threshold: 0, color: newColor },
-                      { threshold: 1, color: visited?.color || visitedColor },
-                    ];
-                    onSettingChange('regionStaticColorSwatches', newSwatches);
-                  }}
-                />
+                <Stack gap="xs">
+                  <ColorRgbaTextInput
+                    label="Unvisited"
+                    color={unvisitedColor}
+                    onChange={(newColor) => {
+                      const newSwatches = [...settings.regionStaticColorSwatches];
+                      const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
+                      const visited = currentSwatch.find((ct) => ct.threshold === 1);
+                      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+                        { threshold: 0, color: newColor },
+                        { threshold: 1, color: visited?.color || visitedColor },
+                      ];
+                      onSettingChange('regionStaticColorSwatches', newSwatches);
+                    }}
+                  />
+                  <ColorRgbaTextInput
+                    label="Visited"
+                    color={visitedColor}
+                    onChange={(newColor) => {
+                      const newSwatches = [...settings.regionStaticColorSwatches];
+                      const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
+                      const unvisited = currentSwatch.find((ct) => ct.threshold === 0);
+                      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+                        { threshold: 0, color: unvisited?.color || unvisitedColor },
+                        { threshold: 1, color: newColor },
+                      ];
+                      onSettingChange('regionStaticColorSwatches', newSwatches);
+                    }}
+                  />
+                </Stack>
               )}
             />
           )}

@@ -31,6 +31,7 @@ export function ActivitiesSection({
     ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
   ];
   const selectedActivityHeatmapSwatchIndex = settings.selectedActivityHeatmapSwatchIndex || 0;
+  const selectedLineSwatch = settings.lineColorSwatches[settings.selectedLineSwatchIndex];
   const selectedHeatmapColorThresholds =
     activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] || [];
 
@@ -58,6 +59,36 @@ export function ActivitiesSection({
       showClipboardErrorToast(
         getClipboardErrorMessage(error, 'Could not paste heatmap colors from clipboard')
       );
+    }
+  };
+
+  const handleLinesCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        serializeColorThresholds([
+          { threshold: 0, color: selectedLineSwatch.normal },
+          { threshold: 1, color: selectedLineSwatch.hover },
+        ])
+      );
+    } catch {
+      showClipboardErrorToast('Could not copy lines colors to clipboard');
+    }
+  };
+
+  const handleLinesPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const parsedThresholds = parseColorThresholds(text);
+      const normal = parsedThresholds.find((threshold) => threshold.threshold === 0)?.color;
+      const hover = parsedThresholds.find((threshold) => threshold.threshold === 1)?.color;
+      if (!normal || !hover) {
+        throw new Error('Clipboard data must include both threshold 0 and 1 colors');
+      }
+      const newSwatches = [...settings.lineColorSwatches];
+      newSwatches[settings.selectedLineSwatchIndex] = { normal, hover };
+      onSettingChange('lineColorSwatches', newSwatches);
+    } catch (error) {
+      showClipboardErrorToast(getClipboardErrorMessage(error, 'Could not paste lines colors'));
     }
   };
 
@@ -133,10 +164,12 @@ export function ActivitiesSection({
               }))}
               selectedIndex={settings.selectedLineSwatchIndex}
               onSwatchSelect={(index) => onSettingChange('selectedLineSwatchIndex', index)}
+              onCopy={handleLinesCopy}
+              onPaste={handleLinesPaste}
               renderEditButton={() => (
                 <ColorPickerModalButton
-                  primaryColor={settings.lineColorSwatches[settings.selectedLineSwatchIndex].normal}
-                  secondaryColor={settings.lineColorSwatches[settings.selectedLineSwatchIndex].hover}
+                  primaryColor={selectedLineSwatch.normal}
+                  secondaryColor={selectedLineSwatch.hover}
                   primaryLabel="Normal Color"
                   secondaryLabel="Hover Color"
                   onColorChange={(normal, hover) => {
@@ -147,17 +180,32 @@ export function ActivitiesSection({
                 />
               )}
               renderStaticEditor={() => (
-                <ColorRgbaTextInput
-                  color={settings.lineColorSwatches[settings.selectedLineSwatchIndex].normal}
-                  onChange={(newColor) => {
-                    const newSwatches = [...settings.lineColorSwatches];
-                    newSwatches[settings.selectedLineSwatchIndex] = {
-                      ...newSwatches[settings.selectedLineSwatchIndex],
-                      normal: newColor,
-                    };
-                    onSettingChange('lineColorSwatches', newSwatches);
-                  }}
-                />
+                <Stack gap="xs">
+                  <ColorRgbaTextInput
+                    label="Regular"
+                    color={selectedLineSwatch.normal}
+                    onChange={(newColor) => {
+                      const newSwatches = [...settings.lineColorSwatches];
+                      newSwatches[settings.selectedLineSwatchIndex] = {
+                        ...newSwatches[settings.selectedLineSwatchIndex],
+                        normal: newColor,
+                      };
+                      onSettingChange('lineColorSwatches', newSwatches);
+                    }}
+                  />
+                  <ColorRgbaTextInput
+                    label="Hover"
+                    color={selectedLineSwatch.hover}
+                    onChange={(newColor) => {
+                      const newSwatches = [...settings.lineColorSwatches];
+                      newSwatches[settings.selectedLineSwatchIndex] = {
+                        ...newSwatches[settings.selectedLineSwatchIndex],
+                        hover: newColor,
+                      };
+                      onSettingChange('lineColorSwatches', newSwatches);
+                    }}
+                  />
+                </Stack>
               )}
             />
           )}
