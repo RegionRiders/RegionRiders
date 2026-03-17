@@ -174,32 +174,14 @@ describe('RegionsSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should render static copy and paste buttons', () => {
+    it('should render rgba text input in static mode', () => {
       render(
         <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
-    });
-
-    it('pastes static region colors and updates selected swatch', async () => {
-      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
-        JSON.stringify([
-          { threshold: 0, color: [10, 10, 10, 0] },
-          { threshold: 1, color: [100, 200, 50, 0.4] },
-        ])
-      );
-
-      render(
-        <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
-
-      await waitFor(() =>
-        expect(mockOnSettingChange).toHaveBeenCalledWith('regionStaticColorSwatches', expect.any(Array))
-      );
+      expect(screen.getByPlaceholderText('rgba(255, 0, 0, 0.5)')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'COPY' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'PASTE' })).not.toBeInTheDocument();
     });
 
     it('should call onSettingChange when a color swatch is selected', () => {

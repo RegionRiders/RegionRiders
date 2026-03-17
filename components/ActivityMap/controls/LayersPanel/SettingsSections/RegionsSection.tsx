@@ -1,10 +1,8 @@
 import {
   Accordion,
-  Box,
   Button,
   Group,
   Notification,
-  SimpleGrid,
   Slider,
   Stack,
   Switch,
@@ -15,6 +13,8 @@ import { IconEdit } from '@tabler/icons-react';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
+import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
+import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import {
   getClipboardErrorMessage,
@@ -62,38 +62,6 @@ export function RegionsSection({
     } catch (error) {
       showClipboardErrorToast(
         getClipboardErrorMessage(error, 'Could not paste heatmap colors from clipboard')
-      );
-    }
-  };
-
-  const handleStaticCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(serializeColorThresholds(selectedSwatch));
-    } catch {
-      showClipboardErrorToast('Could not copy static region colors to clipboard');
-    }
-  };
-
-  const handleStaticPaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      const parsedThresholds = parseColorThresholds(text);
-      const unvisited = parsedThresholds.find((ct) => ct.threshold === 0)?.color;
-      const visited = parsedThresholds.find((ct) => ct.threshold === 1)?.color;
-
-      if (!unvisited || !visited) {
-        throw new Error('Clipboard data must contain thresholds 0 and 1 for static region colors');
-      }
-
-      const newSwatches = [...settings.regionStaticColorSwatches];
-      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
-        { threshold: 0, color: unvisited },
-        { threshold: 1, color: visited },
-      ];
-      onSettingChange('regionStaticColorSwatches', newSwatches);
-    } catch (error) {
-      showClipboardErrorToast(
-        getClipboardErrorMessage(error, 'Could not paste static region colors from clipboard')
       );
     }
   };
@@ -147,111 +115,80 @@ export function RegionsSection({
           </div>
 
           {settings.regionMode === 'static' && settings.regionStaticColorSwatches.length > 0 && (
-            <Stack gap="xs">
-              <Text size="sm"> Region ColorScheme</Text>
-              <SimpleGrid cols={settings.regionStaticColorSwatches.length} spacing="xs">
-                {/*Color buttons*/}
-                {settings.regionStaticColorSwatches.map((colorThresholds, index) => {
-                  const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
-                  const visited = colorThresholds.find((ct) => ct.threshold === 1);
-                  return (
-                    <ColorSwatchButton
-                      key={index}
-                      color={unvisited?.color || [0, 0, 0, 0]}
-                      secondaryColor={visited?.color || [0, 0, 0, 0]}
-                      index={index}
-                      selectedIndex={settings.selectedRegionStaticSwatchIndex}
-                      onClick={() => onSettingChange('selectedRegionStaticSwatchIndex', index)}
-                    />
-                  );
-                })}
-              </SimpleGrid>
-              {(() => {
-                const staticEditorCols =
-                  settings.regionStaticColorSwatches.length > 2
-                    ? settings.regionStaticColorSwatches.length
-                    : 2;
-                return (
-                  <SimpleGrid cols={staticEditorCols} spacing="xs">
-                    <ColorPickerModalButton
-                      primaryColor={unvisitedColor}
-                      secondaryColor={visitedColor}
-                      primaryLabel="Unvisited"
-                      secondaryLabel="Visited"
-                      onColorChange={(unvisited, visited) => {
-                        const newSwatches = [...settings.regionStaticColorSwatches];
-                        newSwatches[settings.selectedRegionStaticSwatchIndex] = [
-                          { threshold: 0, color: unvisited },
-                          { threshold: 1, color: visited },
-                        ];
-                        onSettingChange('regionStaticColorSwatches', newSwatches);
-                      }}
-                    />
-                    <Box style={{ gridColumn: `span ${staticEditorCols - 1}` }}>
-                      <SimpleGrid cols={2} spacing="xs">
-                        <Button size="xs" variant="default" onClick={handleStaticCopy} fullWidth>
-                          COPY
-                        </Button>
-                        <Button size="xs" variant="default" onClick={handleStaticPaste} fullWidth>
-                          PASTE
-                        </Button>
-                      </SimpleGrid>
-                    </Box>
-                  </SimpleGrid>
-                );
-              })()}
-            </Stack>
+            <ColorSchemeSwatchesGrid
+              mode="static"
+              label="Region ColorScheme"
+              swatches={settings.regionStaticColorSwatches.map((colorThresholds) => {
+                const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
+                const visited = colorThresholds.find((ct) => ct.threshold === 1);
+                return {
+                  color: unvisited?.color || [0, 0, 0, 0],
+                  secondaryColor: visited?.color || [0, 0, 0, 0],
+                };
+              })}
+              selectedIndex={settings.selectedRegionStaticSwatchIndex}
+              onSwatchSelect={(index) => onSettingChange('selectedRegionStaticSwatchIndex', index)}
+              renderEditButton={() => (
+                <ColorPickerModalButton
+                  primaryColor={unvisitedColor}
+                  secondaryColor={visitedColor}
+                  primaryLabel="Unvisited"
+                  secondaryLabel="Visited"
+                  onColorChange={(unvisited, visited) => {
+                    const newSwatches = [...settings.regionStaticColorSwatches];
+                    newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+                      { threshold: 0, color: unvisited },
+                      { threshold: 1, color: visited },
+                    ];
+                    onSettingChange('regionStaticColorSwatches', newSwatches);
+                  }}
+                />
+              )}
+              renderStaticEditor={() => (
+                <ColorRgbaTextInput
+                  color={unvisitedColor}
+                  onChange={(newColor) => {
+                    const newSwatches = [...settings.regionStaticColorSwatches];
+                    const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
+                    const visited = currentSwatch.find((ct) => ct.threshold === 1);
+                    newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+                      { threshold: 0, color: newColor },
+                      { threshold: 1, color: visited?.color || visitedColor },
+                    ];
+                    onSettingChange('regionStaticColorSwatches', newSwatches);
+                  }}
+                />
+              )}
+            />
           )}
           {settings.regionMode === 'heatmap' && regionHeatmapColorSwatches.length > 0 && (
-            <Stack gap="xs">
-              <Text size="sm"> Heatmap Color Scheme</Text>
-              <SimpleGrid cols={regionHeatmapColorSwatches.length} spacing="xs">
-                {regionHeatmapColorSwatches.map((colorThresholds, index) => (
-                  <ColorSwatchButton
-                    key={index}
-                    color={colorThresholds[0]?.color || [0, 0, 0, 0]}
-                    colorThresholds={colorThresholds}
-                    index={index}
-                    selectedIndex={selectedRegionHeatmapSwatchIndex}
-                    onClick={() => onSettingChange('selectedRegionHeatmapSwatchIndex', index)}
+            <ColorSchemeSwatchesGrid
+              mode="thresholded"
+              label="Heatmap Color Scheme"
+              swatches={regionHeatmapColorSwatches}
+              selectedIndex={selectedRegionHeatmapSwatchIndex}
+              onSwatchSelect={(index) => onSettingChange('selectedRegionHeatmapSwatchIndex', index)}
+              onCopy={handleHeatmapCopy}
+              onPaste={handleHeatmapPaste}
+              renderEditButton={() => (
+                <ColorSwatchButton
+                  color={selectedHeatmapColorThresholds[0]?.color || [0, 0, 0, 0]}
+                  colorThresholds={selectedHeatmapColorThresholds}
+                  ariaLabel="Edit region heatmap colors"
+                >
+                  <IconEdit
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
+                    }}
                   />
-                ))}
-              </SimpleGrid>
-              {(() => {
-                const heatmapEditorCols =
-                  regionHeatmapColorSwatches.length > 2 ? regionHeatmapColorSwatches.length : 2;
-                return (
-                  <SimpleGrid cols={heatmapEditorCols} spacing="xs">
-                    <ColorSwatchButton
-                      color={selectedHeatmapColorThresholds[0]?.color || [0, 0, 0, 0]}
-                      colorThresholds={selectedHeatmapColorThresholds}
-                      ariaLabel="Edit region heatmap colors"
-                    >
-                      <IconEdit
-                        size={16}
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.5))',
-                        }}
-                      />
-                    </ColorSwatchButton>
-                    <Box style={{ gridColumn: `span ${heatmapEditorCols - 1}` }}>
-                      <SimpleGrid cols={2} spacing="xs">
-                        <Button size="xs" variant="default" onClick={handleHeatmapCopy} fullWidth>
-                          COPY
-                        </Button>
-                        <Button size="xs" variant="default" onClick={handleHeatmapPaste} fullWidth>
-                          PASTE
-                        </Button>
-                      </SimpleGrid>
-                    </Box>
-                  </SimpleGrid>
-                );
-              })()}
-            </Stack>
+                </ColorSwatchButton>
+              )}
+            />
           )}
         </Stack>
         {clipboardError && (
