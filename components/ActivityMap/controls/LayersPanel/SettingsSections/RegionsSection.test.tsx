@@ -179,8 +179,8 @@ describe('RegionsSection', () => {
         <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
     });
 
@@ -195,7 +195,7 @@ describe('RegionsSection', () => {
         <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() =>
         expect(mockOnSettingChange).toHaveBeenCalledWith('regionStaticColorSwatches', [
@@ -255,8 +255,8 @@ describe('RegionsSection', () => {
       expect(
         screen.getByRole('button', { name: 'Edit region heatmap colors' })
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
     });
@@ -273,7 +273,7 @@ describe('RegionsSection', () => {
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
       render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
-      fireEvent.click(screen.getByRole('button', { name: 'COPY' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
       await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
     });
 
@@ -288,7 +288,7 @@ describe('RegionsSection', () => {
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
       render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() =>
         expect(mockOnSettingChange).toHaveBeenCalledWith(
@@ -304,7 +304,7 @@ describe('RegionsSection', () => {
       const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
       render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() => expect(navigator.clipboard.readText).toHaveBeenCalledTimes(1));
       expect(mockOnSettingChange).not.toHaveBeenCalledWith(

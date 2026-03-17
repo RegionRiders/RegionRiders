@@ -199,8 +199,8 @@ describe('ActivitiesSection', () => {
       expect(
         screen.getByRole('button', { name: 'Edit activity heatmap colors' })
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
     });
@@ -225,7 +225,7 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'COPY' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
       await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
     });
 
@@ -244,7 +244,7 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() =>
         expect(mockOnSettingChange).toHaveBeenCalledWith(
@@ -264,7 +264,7 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() => expect(navigator.clipboard.readText).toHaveBeenCalledTimes(1));
       expect(mockOnSettingChange).not.toHaveBeenCalledWith(
@@ -319,8 +319,8 @@ describe('ActivitiesSection', () => {
         <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
     });
 
@@ -336,7 +336,7 @@ describe('ActivitiesSection', () => {
         <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
 
       await waitFor(() =>
         expect(mockOnSettingChange).toHaveBeenCalledWith('lineColorSwatches', [
