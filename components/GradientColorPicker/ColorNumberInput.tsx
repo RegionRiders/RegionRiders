@@ -20,7 +20,8 @@ export function ColorNumberInput({
       value={value}
       min={0}
       max={label === 'Opacity' ? 1 : 255}
-      onChange={(v) => onChange(v, index)}
+      onChange={(v) => onChange(v ?? value, index)}
+      step={label === 'Opacity' ? 0.01 : 1}
     />
   );
 }

@@ -2,16 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconGripVertical } from '@tabler/icons-react';
-import {
-  ActionIcon,
-  Box,
-  Button,
-  ColorPicker,
-  Group,
-  NumberInput,
-  Stack,
-  toRgba,
-} from '@mantine/core';
+import { ActionIcon, Box, Button, Group, NumberInput, Stack } from '@mantine/core';
+import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 import { ColorThreshold } from '../ActivityMap/mapTypes';
 import { ColorNumberInput } from './ColorNumberInput';
 
@@ -94,20 +86,16 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   return (
     <Stack gap="md" style={{ overflow: 'hidden' }}>
       <Group align="center" wrap="nowrap" justify="space-around">
-        <ColorPicker
-          size="xl"
-          format="rgba"
-          value={`rgba(${colorThresholds[activeThresholdIndex].color.join(', ')})`}
+        <ExtendedColorPicker
+          layout="horizontal"
+          color={colorThresholds[activeThresholdIndex].color}
           onChange={(color) => {
-            // Convert string value of the ColorPicker to an RGBA type object
-            const rgba = toRgba(color);
-
             // Update the ColorThreshold color value
             setColorThresholds((prev) => {
               const newThresholds = [...prev];
               newThresholds[activeThresholdIndex] = {
                 ...newThresholds[activeThresholdIndex],
-                color: [rgba.r, rgba.g, rgba.b, rgba.a],
+                color,
               };
               return newThresholds;
             });
