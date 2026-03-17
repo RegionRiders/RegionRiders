@@ -5,7 +5,6 @@ import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/conf
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
@@ -28,7 +27,7 @@ export function ActivitiesSection({
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
-    setTimeout(() => setClipboardError(null), CLIPBOARD_TOAST_DISPLAY_MS);
+    setTimeout(() => setClipboardError(null), 10000);
   };
 
   const handleHeatmapCopy = async () => {

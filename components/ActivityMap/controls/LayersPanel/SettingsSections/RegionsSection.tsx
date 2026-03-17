@@ -4,7 +4,6 @@ import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } f
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { CLIPBOARD_TOAST_DISPLAY_MS } from './utils/clipboardToast';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
@@ -32,7 +31,7 @@ export function RegionsSection({
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
-    setTimeout(() => setClipboardError(null), CLIPBOARD_TOAST_DISPLAY_MS);
+    setTimeout(() => setClipboardError(null), 10000);
   };
 
   const handleHeatmapCopy = async () => {
