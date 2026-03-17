@@ -7,7 +7,7 @@ import { LeafletConfig, RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
-const TINT_OVERLAY_Z_INDEX = 350; // Above tile layers (z=200), below vector overlays (z=400+)
+const TINT_OVERLAY_Z_INDEX = 1000; // Above all map panes so tint overlays the full rendered map
 const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
 const MAP_TINT_PANE = 'mapTintPane';
 
@@ -76,7 +76,7 @@ export function useLeafletMap(
       overlay.style.width = '100%';
       overlay.style.height = '100%';
       overlay.style.pointerEvents = 'none';
-      overlay.style.mixBlendMode = 'multiply';
+      overlay.style.zIndex = String(TINT_OVERLAY_Z_INDEX);
       if (tintPane) {
         tintPane.appendChild(overlay);
       } else {

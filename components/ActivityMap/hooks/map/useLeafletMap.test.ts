@@ -11,6 +11,7 @@ jest.mock('leaflet', () => ({
     on: jest.fn(),
     off: jest.fn(),
     invalidateSize: jest.fn(),
+    getContainer: jest.fn(() => document.querySelector('#test-map')),
     options: {
       maxZoom: 18,
       minZoom: 0,
@@ -231,6 +232,22 @@ describe('useLeafletMap', () => {
       // setView should not be called since map is not ready
       expect(mockSetView).not.toHaveBeenCalled();
       expect(result.current.isReady).toBe(false);
+    });
+
+    it('should render tint as a transparent color overlay on top of map container', async () => {
+      const containerRef = { current: mockContainer };
+      renderHook(() =>
+        useLeafletMap(containerRef, {
+          mapTintColor: [255, 0, 0, 0.5],
+        })
+      );
+
+      await waitFor(() => {
+        const overlay = mockContainer.querySelector('div');
+        expect(overlay).toBeTruthy();
+        expect(overlay?.style.backgroundColor).toBe('rgba(255, 0, 0, 0.5)');
+        expect(overlay?.style.zIndex).toBe('1000');
+      });
     });
   });
 
