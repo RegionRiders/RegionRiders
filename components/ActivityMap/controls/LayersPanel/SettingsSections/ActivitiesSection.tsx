@@ -147,7 +147,7 @@ export function ActivitiesSection({
           {settings.activityMode === 'lines' && (
             <ColorSchemeSwatchesGrid
               mode="static"
-              label="Lines color scheme"
+              label="Lines ColorScheme"
               swatches={settings.lineColorSwatches.map((swatch) => ({
                 color: swatch.normal,
                 secondaryColor: swatch.hover,
@@ -176,7 +176,7 @@ export function ActivitiesSection({
             <div>
               <ColorSchemeSwatchesGrid
                 mode="thresholded"
-                label="Heatmap color scheme"
+                label="Heatmap Color Scheme"
                 swatches={activityHeatmapColorSwatches}
                 selectedIndex={selectedActivityHeatmapSwatchIndex}
                 onSwatchSelect={(index) =>
