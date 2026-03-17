@@ -1,4 +1,4 @@
-import { ColorThreshold, HeatmapConfig, LeafletConfig } from '../mapTypes';
+import { ColorThreshold, HeatmapConfig, LeafletConfig, RGBA } from '../mapTypes';
 
 export const HEATMAP_CONFIG: HeatmapConfig = {
   HEATMAP_RENDER_DELAY: 0,
@@ -36,4 +36,12 @@ export const REGION_VISIT_HEATMAP_COLOR_THRESHOLDS: ColorThreshold[] = [
 export const REGION_VISIT_STATIC_COLOR_THRESHOLDS: ColorThreshold[] = [
   { threshold: 0, color: [60, 60, 60, 0] },
   { threshold: 1, color: [76, 107, 34, 0.2] },
+];
+
+export const DEFAULT_MAP_TINT_SWATCHES: RGBA[] = [
+  [0, 0, 0, 0],
+  [70, 70, 70, 0.18],
+  [210, 70, 70, 0.16],
+  [80, 80, 170, 0.16],
+  [255, 200, 90, 0.14],
 ];

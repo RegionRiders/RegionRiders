@@ -5,6 +5,7 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useMemo, useRef, useState } from 'react';
+import { DEFAULT_MAP_TINT_SWATCHES } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';
@@ -167,13 +168,7 @@ export default function ActivityMap() {
     overlayTileLayerUrl: '',
     overlayAttribution: '',
     monochromeMap: false,
-    mapTintSwatches: [
-      [0, 0, 0, 0],
-      [70, 70, 70, 0.18],
-      [210, 70, 70, 0.16],
-      [80, 80, 170, 0.16],
-      [255, 200, 90, 0.14],
-    ],
+    mapTintSwatches: DEFAULT_MAP_TINT_SWATCHES,
     selectedMapTintSwatchIndex: 0,
   });
 

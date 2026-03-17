@@ -1,27 +1,24 @@
-import { useMemo } from 'react';
-import { Accordion, Box, SimpleGrid, Stack, Switch, Text } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { IconEdit } from '@tabler/icons-react';
+import { Accordion, Box, Button, Group, Modal, SimpleGrid, Stack, Switch, Text } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { DEFAULT_MAP_TINT_SWATCHES } from '@/components/ActivityMap/config/mapConfig';
 import {
   MAP_OVERLAY_PRESET_KEYS,
   MAP_SOURCE_PRESET_KEYS,
   TILE_PRESETS,
 } from '@/components/ActivityMap/config/tilePresets';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
-import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
+import { ExtendedColorPicker, SliderMode } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 
 const sourcePresetEntries = MAP_SOURCE_PRESET_KEYS.map((key) => [key, TILE_PRESETS[key]] as const);
 const overlayPresetEntries = MAP_OVERLAY_PRESET_KEYS.map((key) => [key, TILE_PRESETS[key]] as const);
-const defaultMapTintSwatches: RGBA[] = [
-  [0, 0, 0, 0],
-  [70, 70, 70, 0.18],
-  [210, 70, 70, 0.16],
-  [80, 80, 170, 0.16],
-  [255, 200, 90, 0.14],
-];
+const TRANSPARENT_PLACEHOLDER_IMAGE =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
 export function MapStyleSection({
   settings,
@@ -30,9 +27,12 @@ export function MapStyleSection({
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & {
   viewState?: MapViewState | null;
 }) {
-  const mapTintSwatches = settings.mapTintSwatches ?? defaultMapTintSwatches;
+  const mapTintSwatches = settings.mapTintSwatches ?? DEFAULT_MAP_TINT_SWATCHES;
   const selectedMapTintSwatchIndex = settings.selectedMapTintSwatchIndex ?? 0;
-  const selectedTintColor = mapTintSwatches[selectedMapTintSwatchIndex] ?? defaultMapTintSwatches[0];
+  const selectedTintColor = mapTintSwatches[selectedMapTintSwatchIndex] ?? DEFAULT_MAP_TINT_SWATCHES[0];
+  const [tintModalOpened, { open: openTintModal, close: closeTintModal }] = useDisclosure(false);
+  const [draftTint, setDraftTint] = useState(selectedTintColor);
+  const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
 
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
@@ -57,6 +57,18 @@ export function MapStyleSection({
     ) as Record<string, string>;
   }, [viewState]);
 
+  const handleOpenTintEditor = () => {
+    setDraftTint(selectedTintColor);
+    openTintModal();
+  };
+
+  const handleSaveTint = () => {
+    const newSwatches = [...mapTintSwatches];
+    newSwatches[selectedMapTintSwatchIndex] = draftTint;
+    onSettingChange('mapTintSwatches', newSwatches);
+    closeTintModal();
+  };
+
   return (
     <Accordion.Item value="mapstyle">
       <Accordion.Control>
@@ -73,7 +85,7 @@ export function MapStyleSection({
           >
             <MapStyleButton
               label="None"
-              imageUrl="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+              imageUrl={TRANSPARENT_PLACEHOLDER_IMAGE}
               onClick={() => handleOverlayChange('', '')}
               active={!settings.overlayTileLayerUrl}
               aria-label="Disable map overlay"
@@ -127,19 +139,47 @@ export function MapStyleSection({
           </Stack>
           <SimpleGrid cols={mapTintSwatches.length} spacing="xs">
             <Box>
-              <ColorPickerModalButton
-                primaryColor={selectedTintColor}
-                secondaryColor={selectedTintColor}
-                primaryLabel="Tint"
-                secondaryLabel="Tint"
-                onColorChange={(primaryColor) => {
-                  const newSwatches = [...mapTintSwatches];
-                  newSwatches[selectedMapTintSwatchIndex] = primaryColor;
-                  onSettingChange('mapTintSwatches', newSwatches);
-                }}
-              />
+              <ColorSwatchButton color={selectedTintColor} onClick={handleOpenTintEditor}>
+                <IconEdit
+                  color="white"
+                  stroke={3}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    filter: 'drop-shadow(0 0 2px rgb(0, 0, 0, 0.8))',
+                  }}
+                />
+              </ColorSwatchButton>
             </Box>
           </SimpleGrid>
+          <Modal
+            opened={tintModalOpened}
+            onClose={closeTintModal}
+            title="Pick map tint color"
+            centered
+            zIndex={10000}
+            portalProps={{ target: document.body }}
+            size="xs"
+          >
+            <Stack gap="xs">
+              <ExtendedColorPicker
+                color={draftTint}
+                onChange={setDraftTint}
+                mode={sliderMode}
+                onModeChange={setSliderMode}
+              />
+              <Group justify="flex-end" gap="xs">
+                <Button variant="default" size="xs" onClick={closeTintModal}>
+                  Cancel
+                </Button>
+                <Button size="xs" onClick={handleSaveTint}>
+                  OK
+                </Button>
+              </Group>
+            </Stack>
+          </Modal>
         </Stack>
       </Accordion.Panel>
     </Accordion.Item>

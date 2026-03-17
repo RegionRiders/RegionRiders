@@ -3,10 +3,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { LeafletConfig } from '@/components/ActivityMap/mapTypes';
+import { LeafletConfig, RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
+const TINT_OVERLAY_Z_INDEX = 350; // Above tile layers (z=200), below vector overlays (z=400+)
+const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
 
 /**
  * react hook for initializing and managing a leaflet map instance
@@ -68,14 +70,14 @@ export function useLeafletMap(
       overlay.style.position = 'absolute';
       overlay.style.inset = '0';
       overlay.style.pointerEvents = 'none';
-      overlay.style.zIndex = '350';
+      overlay.style.zIndex = String(TINT_OVERLAY_Z_INDEX);
       overlay.style.mixBlendMode = 'multiply';
       mapContainer.appendChild(overlay);
       tintOverlayRef.current = overlay;
     }
 
     const overlay = tintOverlayRef.current;
-    const [r, g, b, alpha] = tintColor ?? [0, 0, 0, 0];
+    const [r, g, b, alpha] = tintColor ?? TRANSPARENT_TINT;
     overlay.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
     overlay.style.display = alpha > 0 ? 'block' : 'none';
   };
