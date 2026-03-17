@@ -135,7 +135,7 @@ export function RegionsSection({
           {settings.regionMode === 'static' && settings.regionStaticColorSwatches.length > 0 && (
             <ColorSchemeSwatchesGrid
               mode="static"
-              label="Region Color Scheme"
+              label="Region color scheme"
               swatches={settings.regionStaticColorSwatches.map((colorThresholds) => {
                 const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
                 const visited = colorThresholds.find((ct) => ct.threshold === 1);
@@ -169,7 +169,7 @@ export function RegionsSection({
           {settings.regionMode === 'heatmap' && regionHeatmapColorSwatches.length > 0 && (
             <ColorSchemeSwatchesGrid
               mode="thresholded"
-              label="Heatmap Color Scheme"
+              label="Region Heatmap color scheme"
               swatches={regionHeatmapColorSwatches}
               selectedIndex={selectedRegionHeatmapSwatchIndex}
               onSwatchSelect={(index) => onSettingChange('selectedRegionHeatmapSwatchIndex', index)}
