@@ -167,7 +167,8 @@ export default function ActivityMap() {
     attribution: '© OpenStreetMap contributors',
     overlayTileLayerUrl: '',
     overlayAttribution: '',
-    monochromeMap: false,
+    mapSourceMonochrome: false,
+    mapOverlayMonochrome: false,
     mapTintSwatches: DEFAULT_MAP_TINT_SWATCHES,
     selectedMapTintSwatchIndex: 0,
   });
@@ -184,7 +185,8 @@ export default function ActivityMap() {
     attribution: settings.attribution,
     overlayTileLayerUrl: settings.overlayTileLayerUrl,
     overlayAttribution: settings.overlayAttribution,
-    monochromeMap: settings.monochromeMap,
+    mapSourceMonochrome: settings.mapSourceMonochrome,
+    mapOverlayMonochrome: settings.mapOverlayMonochrome,
     mapTintColor: selectedMapTintColor,
   });
 

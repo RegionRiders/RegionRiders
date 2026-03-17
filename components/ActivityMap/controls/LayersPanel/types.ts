@@ -34,7 +34,8 @@ export interface MapSettings {
   attribution: string;
   overlayTileLayerUrl?: string;
   overlayAttribution?: string;
-  monochromeMap?: boolean;
+  mapSourceMonochrome?: boolean;
+  mapOverlayMonochrome?: boolean;
   mapTintSwatches?: RGBA[];
   selectedMapTintSwatchIndex?: number;
 }

@@ -9,6 +9,7 @@ import { createComponentLogger } from '@/lib/logger/client';
 const logger = createComponentLogger('useLeafletMap');
 const TINT_OVERLAY_Z_INDEX = 350; // Above tile layers (z=200), below vector overlays (z=400+)
 const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
+const MAP_TINT_PANE = 'mapTintPane';
 
 /**
  * react hook for initializing and managing a leaflet map instance
@@ -61,18 +62,24 @@ export function useLeafletMap(
     if (!mapRef.current) {
       return;
     }
+    const tintPane =
+      mapRef.current.getPane?.(MAP_TINT_PANE) ?? mapRef.current.createPane?.(MAP_TINT_PANE);
+    tintPane?.style.setProperty('z-index', String(TINT_OVERLAY_Z_INDEX));
+    tintPane?.style.setProperty('pointer-events', 'none');
+
     if (!tintOverlayRef.current) {
-      const mapContainer = mapRef.current.getContainer?.();
-      if (!mapContainer) {
-        return;
-      }
       const overlay = document.createElement('div');
       overlay.style.position = 'absolute';
       overlay.style.inset = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
       overlay.style.pointerEvents = 'none';
-      overlay.style.zIndex = String(TINT_OVERLAY_Z_INDEX);
       overlay.style.mixBlendMode = 'multiply';
-      mapContainer.appendChild(overlay);
+      if (tintPane) {
+        tintPane.appendChild(overlay);
+      } else {
+        mapRef.current.getContainer?.().appendChild(overlay);
+      }
       tintOverlayRef.current = overlay;
     }
 
@@ -108,13 +115,13 @@ export function useLeafletMap(
       tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(
         mapRef.current
       );
-      applyMonochromeFilter(tileLayerRef.current, Boolean(config.monochromeMap));
+      applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
       if (config.overlayTileLayerUrl) {
         overlayTileLayerRef.current = createTileLayer(
           config.overlayTileLayerUrl,
           config.overlayAttribution ?? ''
         ).addTo(mapRef.current);
-        applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.monochromeMap));
+        applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.mapOverlayMonochrome));
       }
       updateTintOverlay(config.mapTintColor);
 
@@ -155,7 +162,7 @@ export function useLeafletMap(
     }
 
     tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(mapRef.current);
-    applyMonochromeFilter(tileLayerRef.current, Boolean(config.monochromeMap));
+    applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
 
     if (overlayTileLayerRef.current) {
       mapRef.current.removeLayer(overlayTileLayerRef.current);
@@ -166,7 +173,7 @@ export function useLeafletMap(
         config.overlayTileLayerUrl,
         config.overlayAttribution ?? ''
       ).addTo(mapRef.current);
-      applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.monochromeMap));
+      applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.mapOverlayMonochrome));
     }
 
     updateTintOverlay(config.mapTintColor);
@@ -175,7 +182,8 @@ export function useLeafletMap(
     config.attribution,
     config.overlayTileLayerUrl,
     config.overlayAttribution,
-    config.monochromeMap,
+    config.mapSourceMonochrome,
+    config.mapOverlayMonochrome,
     config.mapTintColor,
     config.maxZoom,
     config.minZoom,

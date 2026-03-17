@@ -12,6 +12,7 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
 import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
+import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ExtendedColorPicker, SliderMode } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 
@@ -78,6 +79,28 @@ export function MapStyleSection({
       </Accordion.Control>
       <Accordion.Panel>
         <Stack gap="xs">
+          <Text size="sm">Map source</Text>
+          <SimpleGrid
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
+            spacing="xs"
+          >
+            {sourcePresetEntries.map(([key, preset]) => (
+              <MapStyleButton
+                key={key}
+                imageUrl={tileUrls?.[key]}
+                label={preset.name}
+                onClick={() => handleStyleChange(preset.url, preset.attribution)}
+                active={settings.tileLayerUrl === preset.url}
+                aria-label={`Switch to ${preset.name.toLowerCase()} map style`}
+              />
+            ))}
+          </SimpleGrid>
+          <Switch
+            checked={settings.mapSourceMonochrome ?? false}
+            onChange={(e) => onSettingChange('mapSourceMonochrome', e.currentTarget.checked)}
+            label="Monochromatic source"
+            aria-label="Toggle monochromatic map source"
+          />
           <Text size="sm">Map overlay</Text>
           <SimpleGrid
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
@@ -101,27 +124,11 @@ export function MapStyleSection({
               />
             ))}
           </SimpleGrid>
-          <Text size="sm">Map source</Text>
-          <SimpleGrid
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
-            spacing="xs"
-          >
-            {sourcePresetEntries.map(([key, preset]) => (
-              <MapStyleButton
-                key={key}
-                imageUrl={tileUrls?.[key]}
-                label={preset.name}
-                onClick={() => handleStyleChange(preset.url, preset.attribution)}
-                active={settings.tileLayerUrl === preset.url}
-                aria-label={`Switch to ${preset.name.toLowerCase()} map style`}
-              />
-            ))}
-          </SimpleGrid>
           <Switch
-            checked={settings.monochromeMap ?? false}
-            onChange={(e) => onSettingChange('monochromeMap', e.currentTarget.checked)}
-            label="Monochromatic"
-            aria-label="Toggle monochromatic map style"
+            checked={settings.mapOverlayMonochrome ?? false}
+            onChange={(e) => onSettingChange('mapOverlayMonochrome', e.currentTarget.checked)}
+            label="Monochromatic overlay"
+            aria-label="Toggle monochromatic map overlay"
           />
           <Stack gap={0}>
             <Text size="sm">Map Tint</Text>
@@ -152,6 +159,17 @@ export function MapStyleSection({
                   }}
                 />
               </ColorSwatchButton>
+            </Box>
+            <Box style={{ gridColumn: `span ${Math.max(mapTintSwatches.length - 1, 1)}` }}>
+              <ColorRgbaTextInput
+                color={selectedTintColor}
+                label="Map tint color"
+                onChange={(nextColor) => {
+                  const newSwatches = [...mapTintSwatches];
+                  newSwatches[selectedMapTintSwatchIndex] = nextColor;
+                  onSettingChange('mapTintSwatches', newSwatches);
+                }}
+              />
             </Box>
           </SimpleGrid>
           <Modal

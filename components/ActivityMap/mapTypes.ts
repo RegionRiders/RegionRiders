@@ -35,8 +35,10 @@ export interface LeafletConfig {
   overlayTileLayerUrl?: string;
   /** Optional overlay attribution text */
   overlayAttribution?: string;
-  /** Apply grayscale filter to tile layers */
-  monochromeMap?: boolean;
+  /** Apply grayscale filter to map source tile layer */
+  mapSourceMonochrome?: boolean;
+  /** Apply grayscale filter to map overlay tile layer */
+  mapOverlayMonochrome?: boolean;
   /** Optional tint color applied above tile layers */
   mapTintColor?: RGBA;
 }

@@ -67,8 +67,8 @@ describe('MapStyleSection', () => {
         <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByText('Map overlay')).toBeInTheDocument();
       expect(screen.getByText('Map source')).toBeInTheDocument();
+      expect(screen.getByText('Map overlay')).toBeInTheDocument();
       expect(screen.getByText('Standard')).toBeInTheDocument();
       expect(screen.getByText('Cycling Routes')).toBeInTheDocument();
       expect(screen.getByText('None')).toBeInTheDocument();
@@ -82,8 +82,20 @@ describe('MapStyleSection', () => {
       Object.values(TILE_PRESETS).forEach((preset) => {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
       });
-      expect(screen.getByLabelText('Toggle monochromatic map style')).toBeInTheDocument();
+      expect(screen.getByLabelText('Toggle monochromatic map source')).toBeInTheDocument();
+      expect(screen.getByLabelText('Toggle monochromatic map overlay')).toBeInTheDocument();
       expect(screen.getByText('Map Tint')).toBeInTheDocument();
+      expect(screen.getByLabelText('Map tint color')).toBeInTheDocument();
+    });
+
+    it('should render map source section before map overlay section', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      const source = screen.getByText('Map source');
+      const overlay = screen.getByText('Map overlay');
+      expect(source.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
@@ -125,13 +137,22 @@ describe('MapStyleSection', () => {
       );
     });
 
-    it('should call onSettingChange when monochromatic toggle changes', () => {
+    it('should call onSettingChange when map source monochromatic toggle changes', () => {
       render(
         <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      fireEvent.click(screen.getByLabelText('Toggle monochromatic map style'));
-      expect(mockOnSettingChange).toHaveBeenCalledWith('monochromeMap', true);
+      fireEvent.click(screen.getByLabelText('Toggle monochromatic map source'));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('mapSourceMonochrome', true);
+    });
+
+    it('should call onSettingChange when map overlay monochromatic toggle changes', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      fireEvent.click(screen.getByLabelText('Toggle monochromatic map overlay'));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('mapOverlayMonochrome', true);
     });
 
     it('should call onSettingChange when map tint swatch is selected', () => {
