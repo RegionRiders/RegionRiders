@@ -252,7 +252,9 @@ describe('RegionsSection', () => {
       render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
       expect(screen.getByText('Heatmap Color Scheme')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Edit region heatmap colors' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Edit region heatmap colors' })
+      ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();

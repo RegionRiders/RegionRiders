@@ -53,6 +53,8 @@ describe('colorThresholdClipboard', () => {
   });
 
   it('falls back to generic message when error has no message', () => {
-    expect(getClipboardErrorMessage('bad-error-shape', 'Fallback message')).toBe('Fallback message');
+    expect(getClipboardErrorMessage('bad-error-shape', 'Fallback message')).toBe(
+      'Fallback message'
+    );
   });
 });

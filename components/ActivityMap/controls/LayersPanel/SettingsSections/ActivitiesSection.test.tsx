@@ -196,7 +196,9 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Edit activity heatmap colors' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Edit activity heatmap colors' })
+      ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
@@ -313,7 +315,9 @@ describe('ActivitiesSection', () => {
 
     it('should render clipboard buttons (without rgba text inputs) in lines mode', () => {
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
-      render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
 
       expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
@@ -328,7 +332,9 @@ describe('ActivitiesSection', () => {
         ])
       );
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
-      render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
 
       fireEvent.click(screen.getByRole('button', { name: 'PASTE' }));
 
