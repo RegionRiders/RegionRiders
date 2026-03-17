@@ -14,7 +14,6 @@ import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/conf
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
   getClipboardErrorMessage,
@@ -178,34 +177,6 @@ export function ActivitiesSection({
                     onSettingChange('lineColorSwatches', newSwatches);
                   }}
                 />
-              )}
-              renderStaticEditor={() => (
-                <Stack gap="xs">
-                  <ColorRgbaTextInput
-                    label="Regular"
-                    color={selectedLineSwatch.normal}
-                    onChange={(newColor) => {
-                      const newSwatches = [...settings.lineColorSwatches];
-                      newSwatches[settings.selectedLineSwatchIndex] = {
-                        ...newSwatches[settings.selectedLineSwatchIndex],
-                        normal: newColor,
-                      };
-                      onSettingChange('lineColorSwatches', newSwatches);
-                    }}
-                  />
-                  <ColorRgbaTextInput
-                    label="Hover"
-                    color={selectedLineSwatch.hover}
-                    onChange={(newColor) => {
-                      const newSwatches = [...settings.lineColorSwatches];
-                      newSwatches[settings.selectedLineSwatchIndex] = {
-                        ...newSwatches[settings.selectedLineSwatchIndex],
-                        hover: newColor,
-                      };
-                      onSettingChange('lineColorSwatches', newSwatches);
-                    }}
-                  />
-                </Stack>
               )}
             />
           )}

@@ -174,16 +174,14 @@ describe('RegionsSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should render unvisited and visited rgba inputs plus clipboard buttons in static mode', () => {
+    it('should render clipboard buttons (without rgba text inputs) in static mode', () => {
       render(
         <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
       );
 
-      expect(screen.getByLabelText('Unvisited')).toBeInTheDocument();
-      expect(screen.getByLabelText('Visited')).toBeInTheDocument();
-      expect(screen.getAllByRole('textbox')).toHaveLength(2);
       expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
     });
 
     it('pastes static region colors into unvisited and visited', async () => {

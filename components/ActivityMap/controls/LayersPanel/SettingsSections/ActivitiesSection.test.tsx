@@ -311,15 +311,13 @@ describe('ActivitiesSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should render regular and hover rgba inputs plus clipboard buttons in lines mode', () => {
+    it('should render clipboard buttons (without rgba text inputs) in lines mode', () => {
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
       render(<ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
 
-      expect(screen.getByLabelText('Regular')).toBeInTheDocument();
-      expect(screen.getByLabelText('Hover')).toBeInTheDocument();
-      expect(screen.getAllByRole('textbox')).toHaveLength(2);
       expect(screen.getByRole('button', { name: 'COPY' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'PASTE' })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
     });
 
     it('pastes static lines colors into regular and hover', async () => {

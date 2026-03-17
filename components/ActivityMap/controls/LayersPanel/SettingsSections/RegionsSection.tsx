@@ -13,7 +13,6 @@ import { IconEdit } from '@tabler/icons-react';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
-import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
 import {
@@ -173,38 +172,6 @@ export function RegionsSection({
                     onSettingChange('regionStaticColorSwatches', newSwatches);
                   }}
                 />
-              )}
-              renderStaticEditor={() => (
-                <Stack gap="xs">
-                  <ColorRgbaTextInput
-                    label="Unvisited"
-                    color={unvisitedColor}
-                    onChange={(newColor) => {
-                      const newSwatches = [...settings.regionStaticColorSwatches];
-                      const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
-                      const visited = currentSwatch.find((ct) => ct.threshold === 1);
-                      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
-                        { threshold: 0, color: newColor },
-                        { threshold: 1, color: visited?.color || visitedColor },
-                      ];
-                      onSettingChange('regionStaticColorSwatches', newSwatches);
-                    }}
-                  />
-                  <ColorRgbaTextInput
-                    label="Visited"
-                    color={visitedColor}
-                    onChange={(newColor) => {
-                      const newSwatches = [...settings.regionStaticColorSwatches];
-                      const currentSwatch = newSwatches[settings.selectedRegionStaticSwatchIndex] || [];
-                      const unvisited = currentSwatch.find((ct) => ct.threshold === 0);
-                      newSwatches[settings.selectedRegionStaticSwatchIndex] = [
-                        { threshold: 0, color: unvisited?.color || unvisitedColor },
-                        { threshold: 1, color: newColor },
-                      ];
-                      onSettingChange('regionStaticColorSwatches', newSwatches);
-                    }}
-                  />
-                </Stack>
               )}
             />
           )}

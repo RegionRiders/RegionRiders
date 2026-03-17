@@ -28,7 +28,6 @@ type StaticColorSchemeSwatchesGridProps = {
   renderEditButton: () => ReactNode;
   onCopy: () => void;
   onPaste: () => void;
-  renderStaticEditor: () => ReactNode;
 };
 
 type ColorSchemeSwatchesGridProps =
@@ -40,45 +39,44 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
   const editorCols = swatches.length > 2 ? swatches.length : 2;
 
   return (
-    <Stack gap={0}>
-      <Text size="sm">{label}</Text>
-      <SimpleGrid cols={swatches.length} spacing="xs">
-        {mode === 'thresholded'
-          ? swatches.map((thresholds, index) => (
-              <ColorSwatchButton
-                key={index}
-                color={thresholds[0]?.color || [0, 0, 0, 0]}
-                colorThresholds={thresholds}
-                index={index}
-                selectedIndex={selectedIndex}
-                onClick={() => onSwatchSelect(index)}
-              />
-            ))
-          : swatches.map((swatch, index) => (
-              <ColorSwatchButton
-                key={index}
-                color={swatch.color}
-                secondaryColor={swatch.secondaryColor}
-                index={index}
-                selectedIndex={selectedIndex}
-                onClick={() => onSwatchSelect(index)}
-              />
-            ))}
-      </SimpleGrid>
+    <Stack gap="xs">
+      <Stack gap={0}>
+        <Text size="sm">{label}</Text>
+        <SimpleGrid cols={swatches.length} spacing="xs">
+          {mode === 'thresholded'
+            ? swatches.map((thresholds, index) => (
+                <ColorSwatchButton
+                  key={index}
+                  color={thresholds[0]?.color || [0, 0, 0, 0]}
+                  colorThresholds={thresholds}
+                  index={index}
+                  selectedIndex={selectedIndex}
+                  onClick={() => onSwatchSelect(index)}
+                />
+              ))
+            : swatches.map((swatch, index) => (
+                <ColorSwatchButton
+                  key={index}
+                  color={swatch.color}
+                  secondaryColor={swatch.secondaryColor}
+                  index={index}
+                  selectedIndex={selectedIndex}
+                  onClick={() => onSwatchSelect(index)}
+                />
+              ))}
+        </SimpleGrid>
+      </Stack>
       <SimpleGrid cols={editorCols} spacing="xs">
         {renderEditButton()}
         <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
-          <Stack gap="xs">
-            <SimpleGrid cols={2} spacing="xs">
-              <Button size="xs" variant="default" onClick={props.onCopy} fullWidth>
-                COPY
-              </Button>
-              <Button size="xs" variant="default" onClick={props.onPaste} fullWidth>
-                PASTE
-              </Button>
-            </SimpleGrid>
-            {mode === 'static' && props.renderStaticEditor()}
-          </Stack>
+          <SimpleGrid cols={2} spacing="xs">
+            <Button size="md" variant="default" onClick={props.onCopy} fullWidth>
+              COPY
+            </Button>
+            <Button size="md" variant="default" onClick={props.onPaste} fullWidth>
+              PASTE
+            </Button>
+          </SimpleGrid>
         </Box>
       </SimpleGrid>
     </Stack>
