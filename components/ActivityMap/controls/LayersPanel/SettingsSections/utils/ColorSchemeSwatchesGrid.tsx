@@ -39,6 +39,10 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
   const { mode, label, swatches, selectedIndex, onSwatchSelect, renderEditButton } = props;
   const editorCols = swatches.length > 2 ? swatches.length : 2;
 
+  if (swatches.length === 0) {
+    return null;
+  }
+
   return (
     <Stack gap="xs">
       <Stack gap={0}>
