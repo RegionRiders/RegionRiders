@@ -176,7 +176,15 @@ describe('RegionLayerManager', () => {
       const visitData = new Map<string, RegionVisitData>();
       const onRegionClick = jest.fn();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds, onRegionClick);
+      manager.syncRegions(
+        regions,
+        'static',
+        visitData,
+        2,
+        mockThresholds,
+        mockThresholds,
+        onRegionClick
+      );
 
       expect(mockOn).toHaveBeenCalledWith('click', expect.any(Function));
     });

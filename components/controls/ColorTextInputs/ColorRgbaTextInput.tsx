@@ -6,10 +6,11 @@ import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgb
 
 interface ColorRgbaInputProps {
   color: RGBA;
+  label?: string;
   onChange: (color: RGBA) => void;
 }
 
-export function ColorRgbaTextInput({ color, onChange }: ColorRgbaInputProps) {
+export function ColorRgbaTextInput({ color, label, onChange }: ColorRgbaInputProps) {
   const [inputValue, setInputValue] = useState(() => colorToString(color));
   const isFocused = useRef(false);
 
@@ -32,6 +33,7 @@ export function ColorRgbaTextInput({ color, onChange }: ColorRgbaInputProps) {
 
   return (
     <TextInput
+      label={label}
       placeholder="rgba(255, 0, 0, 0.5)"
       value={inputValue}
       onChange={(e) => setInputValue(e.currentTarget.value)}

@@ -4,7 +4,7 @@
 export type RGB = [r: number, g: number, b: number];
 
 /**
- * RGBA color tuple with RGB values 0-255 and alpha 0-255
+ * RGBA color tuple with RGB values 0-255 and alpha 0-1
  */
 export type RGBA = [r: number, g: number, b: number, a: number];
 

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { render } from '@/test-utils';
@@ -36,16 +36,47 @@ describe('RegionsSection', () => {
       ],
     ],
     selectedRegionStaticSwatchIndex: 0,
+    regionHeatmapColorSwatches: [
+      [
+        { threshold: 0, color: [60, 60, 60, 0] as RGBA },
+        { threshold: 5, color: [255, 165, 0, 0.1] as RGBA },
+      ],
+      [
+        { threshold: 0, color: [50, 50, 50, 0] as RGBA },
+        { threshold: 5, color: [0, 255, 255, 0.1] as RGBA },
+      ],
+    ],
+    selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
   });
 
   let mockOnSettingChange: jest.Mock;
   let defaultSettings: MapSettings;
+  const originalClipboard = navigator.clipboard;
 
   beforeEach(() => {
     mockOnSettingChange = jest.fn();
     defaultSettings = createDefaultSettings();
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: jest.fn().mockResolvedValue(undefined),
+        readText: jest.fn().mockResolvedValue(''),
+      },
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    if (originalClipboard === undefined) {
+      delete (navigator as { clipboard?: Clipboard }).clipboard;
+      return;
+    }
+
+    Object.defineProperty(navigator, 'clipboard', {
+      value: originalClipboard,
+      configurable: true,
+    });
   });
 
   describe('rendering', () => {
@@ -156,6 +187,39 @@ describe('RegionsSection', () => {
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
     });
 
+    it('should render clipboard buttons (without rgba text inputs) in static mode', () => {
+      render(
+        <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
+    });
+
+    it('pastes static region colors into unvisited and visited', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 0, color: [10, 20, 30, 0.1] },
+          { threshold: 1, color: [40, 50, 60, 0.3] },
+        ])
+      );
+      render(
+        <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith('regionStaticColorSwatches', [
+          [
+            { threshold: 0, color: [10, 20, 30, 0.1] },
+            { threshold: 1, color: [40, 50, 60, 0.3] },
+          ],
+        ])
+      );
+    });
+
     it('should call onSettingChange when a color swatch is selected', () => {
       const settings = {
         ...defaultSettings,
@@ -192,6 +256,74 @@ describe('RegionsSection', () => {
       expect(() => {
         render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
       }).not.toThrow();
+    });
+  });
+
+  describe('heatmap mode', () => {
+    it('should render heatmap swatches and edit button in heatmap mode', () => {
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      expect(screen.getByText('Heatmap Color Scheme')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Edit region heatmap colors' })
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when a heatmap swatch is selected', () => {
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select color 2' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedRegionHeatmapSwatchIndex', 1);
+    });
+
+    it('copies selected region heatmap thresholds to clipboard', async () => {
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
+    });
+
+    it('pastes thresholds and updates selected region heatmap swatch', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 2, color: [1, 2, 3, 0.1] },
+          { threshold: 8, color: [4, 5, 6, 0.2] },
+        ])
+      );
+
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith(
+          'regionHeatmapColorSwatches',
+          expect.any(Array)
+        )
+      );
+    });
+
+    it('shows specific parser error toast when region paste content is invalid', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('[]');
+
+      const settings = { ...defaultSettings, regionMode: 'heatmap' as const };
+      render(<RegionsSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() => expect(navigator.clipboard.readText).toHaveBeenCalledTimes(1));
+      expect(mockOnSettingChange).not.toHaveBeenCalledWith(
+        'regionHeatmapColorSwatches',
+        expect.any(Array)
+      );
     });
   });
 });

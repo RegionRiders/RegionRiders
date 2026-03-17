@@ -60,6 +60,7 @@ export function ColorPickerModalButton({
   return (
     <>
       <ColorSwatchButton color={primaryColor} secondaryColor={secondaryColor} onClick={handleOpen}>
+        <IconEdit className={classes.editIcon} color="black" stroke={3} />
         <IconEdit className={classes.editIcon} />
       </ColorSwatchButton>
 

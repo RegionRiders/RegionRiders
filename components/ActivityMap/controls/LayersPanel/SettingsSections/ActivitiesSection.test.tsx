@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { Accordion } from '@mantine/core';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { render } from '@/test-utils';
@@ -26,6 +26,17 @@ describe('ActivitiesSection', () => {
     heatmapDensity: 2,
     lineColorSwatches: [{ normal: [255, 0, 0, 1] as RGBA, hover: [255, 100, 100, 1] as RGBA }],
     selectedLineSwatchIndex: 0,
+    activityHeatmapColorSwatches: [
+      [
+        { threshold: 1, color: [255, 0, 0, 0.1] as RGBA },
+        { threshold: 10, color: [255, 255, 0, 0.2] as RGBA },
+      ],
+      [
+        { threshold: 1, color: [0, 0, 255, 0.1] as RGBA },
+        { threshold: 10, color: [255, 255, 255, 0.2] as RGBA },
+      ],
+    ],
+    selectedActivityHeatmapSwatchIndex: 0,
     regionMode: 'static',
     showRegions: true,
     regionBorderThickness: 2,
@@ -46,6 +57,13 @@ describe('ActivitiesSection', () => {
   beforeEach(() => {
     mockOnSettingChange = jest.fn();
     defaultSettings = createDefaultSettings();
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: jest.fn().mockResolvedValue(undefined),
+        readText: jest.fn().mockResolvedValue(''),
+      },
+      configurable: true,
+    });
   });
 
   describe('rendering', () => {
@@ -159,7 +177,7 @@ describe('ActivitiesSection', () => {
       expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
     });
 
-    it('should show heatmap color scheme placeholder in heatmap mode', () => {
+    it('should show heatmap color scheme section in heatmap mode', () => {
       render(
         <ActivitiesSectionWrapper
           settings={defaultSettings}
@@ -167,7 +185,92 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      expect(screen.getByText('Heatmap ColorScheme')).toBeInTheDocument();
+      expect(screen.getByText('Heatmap Color Scheme')).toBeInTheDocument();
+    });
+
+    it('should render heatmap swatches and edit button in heatmap mode', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(
+        screen.getByRole('button', { name: 'Edit activity heatmap colors' })
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select color 2' })).toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when a heatmap swatch is selected', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select color 2' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedActivityHeatmapSwatchIndex', 1);
+    });
+
+    it('copies selected heatmap thresholds to clipboard', async () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
+    });
+
+    it('pastes thresholds and updates selected heatmap swatch', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 2, color: [1, 2, 3, 0.1] },
+          { threshold: 8, color: [4, 5, 6, 0.2] },
+        ])
+      );
+
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith(
+          'activityHeatmapColorSwatches',
+          expect.any(Array)
+        )
+      );
+    });
+
+    it('shows specific parser error toast when paste content is invalid', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue('[]');
+
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() => expect(navigator.clipboard.readText).toHaveBeenCalledTimes(1));
+      expect(mockOnSettingChange).not.toHaveBeenCalledWith(
+        'activityHeatmapColorSwatches',
+        expect.any(Array)
+      );
     });
   });
 
@@ -208,6 +311,38 @@ describe('ActivitiesSection', () => {
 
       const swatchButtons = screen.getAllByRole('button', { name: /Select color/ });
       expect(swatchButtons.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should render clipboard buttons (without rgba text inputs) in lines mode', () => {
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('rgba(255, 0, 0, 0.5)')).not.toBeInTheDocument();
+    });
+
+    it('pastes static lines colors into regular and hover', async () => {
+      (navigator.clipboard.readText as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          { threshold: 0, color: [1, 2, 3, 0.4] },
+          { threshold: 1, color: [4, 5, 6, 0.7] },
+        ])
+      );
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }));
+
+      await waitFor(() =>
+        expect(mockOnSettingChange).toHaveBeenCalledWith('lineColorSwatches', [
+          { normal: [1, 2, 3, 0.4], hover: [4, 5, 6, 0.7] },
+        ])
+      );
     });
 
     it('should call onSettingChange when a line color swatch is selected', () => {

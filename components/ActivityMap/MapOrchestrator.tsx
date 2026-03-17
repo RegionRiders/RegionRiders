@@ -5,6 +5,10 @@
  * Manages the lifecycle of map layers based on settings and data
  */
 import type { Map as LeafletMap } from 'leaflet';
+import {
+  ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
@@ -36,7 +40,9 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.activityMode,
     settings.activityThickness,
     settings.heatmapDensity,
-    settings.lineColorSwatches[settings.selectedLineSwatchIndex]
+    settings.lineColorSwatches[settings.selectedLineSwatchIndex],
+    settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex ?? 0] ??
+      ACTIVITY_HEATMAP_COLOR_THRESHOLDS
   );
   useRegionRendering(
     map,
@@ -45,7 +51,9 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.showRegions,
     settings.regionMode,
     settings.regionBorderThickness,
-    settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex]
+    settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex],
+    settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex ?? 0] ??
+      REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
   );
 
   return null;
