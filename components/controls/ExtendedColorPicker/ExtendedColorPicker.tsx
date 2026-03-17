@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ColorPicker, SegmentedControl, Stack, Text } from '@mantine/core';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { parseColorToRgba } from '@/components/ActivityMap/utils/parseColorToRgba';
@@ -33,6 +33,11 @@ export function ExtendedColorPicker({
   const [internalMode, setInternalMode] = useState<SliderMode>(defaultMode);
   const [hsla, setHsla] = useState(() => rgbaToHsla(...color));
   const [rgba, setRgba] = useState<RGBA>(color);
+
+  useEffect(() => {
+    setRgba(color);
+    setHsla(rgbaToHsla(...color));
+  }, [color]);
 
   // Use controlled mode if provided, otherwise use internal mode
   const mode = controlledMode !== undefined ? controlledMode : internalMode;
