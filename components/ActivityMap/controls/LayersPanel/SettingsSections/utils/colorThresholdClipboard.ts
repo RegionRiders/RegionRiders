@@ -1,6 +1,6 @@
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 
-const MAX_CLIPBOARD_TEXT_LENGTH = 20_000;
+const MAX_CLIPBOARD_TEXT_LENGTH = 20000;
 const MAX_THRESHOLDS = 64;
 
 function isValidColorThreshold(value: unknown): value is ColorThreshold {
@@ -47,12 +47,6 @@ export function parseColorThresholds(input: string): ColorThreshold[] {
 
   if (!parsed.every((item) => isValidColorThreshold(item))) {
     throw new Error('Clipboard data does not match ColorThreshold shape');
-  }
-
-  for (let i = 1; i < parsed.length; i += 1) {
-    if (parsed[i].threshold < parsed[i - 1].threshold) {
-      throw new Error('Clipboard thresholds must be sorted in ascending order');
-    }
   }
 
   return parsed;

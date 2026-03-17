@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { IconEdit } from '@tabler/icons-react';
 import {
   Accordion,
   Box,
@@ -10,8 +12,6 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
-import { useState } from 'react';
-import { IconEdit } from '@tabler/icons-react';
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -37,7 +37,7 @@ export function ActivitiesSection({
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
-    setTimeout(() => setClipboardError(null), 3000);
+    setTimeout(() => setClipboardError(null), 10000);
   };
 
   const handleHeatmapCopy = async () => {
