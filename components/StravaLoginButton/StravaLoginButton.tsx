@@ -95,6 +95,11 @@ export const StravaLoginButton: React.FC<StravaLoginButtonProps> = ({
   const handleStravaLogin = () => {
     const authUrl = getAuthorizationUrl();
 
+    if (!authUrl) {
+      console.error('Strava OAuth is not configured. Please set the required environment variables.');
+      return;
+    }
+
     openOAuthPopup({
       authUrl,
       windowName: 'StravaLogin',
