@@ -10,6 +10,7 @@ import {
 } from '@/components/ActivityMap/config/tilePresets';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
+import { ColorSchemeSwatchesGrid } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorSchemeSwatchesGrid';
 import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
 import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
 import { ColorRgbaTextInput } from '@/components/controls/ColorTextInputs/ColorRgbaTextInput';
@@ -34,7 +35,6 @@ export function MapStyleSection({
   const [tintModalOpened, { open: openTintModal, close: closeTintModal }] = useDisclosure(false);
   const [draftTint, setDraftTint] = useState(selectedTintColor);
   const [sliderMode, setSliderMode] = useState<SliderMode>('hsla');
-  const mapTintInputColumnSpan = Math.max(mapTintSwatches.length - 1, 1);
 
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
@@ -131,22 +131,13 @@ export function MapStyleSection({
             label="Monochromatic overlay"
             aria-label="Toggle monochromatic map overlay"
           />
-          <Stack gap={0}>
-            <Text size="sm">Map Tint</Text>
-            <SimpleGrid cols={mapTintSwatches.length} spacing="xs">
-              {mapTintSwatches.map((swatch, index) => (
-                <ColorSwatchButton
-                  key={`${swatch.join(',')}-${index}`}
-                  color={swatch}
-                  index={index}
-                  selectedIndex={selectedMapTintSwatchIndex}
-                  onClick={() => onSettingChange('selectedMapTintSwatchIndex', index)}
-                />
-              ))}
-            </SimpleGrid>
-          </Stack>
-          <SimpleGrid cols={mapTintSwatches.length} spacing="xs">
-            <Box>
+          <ColorSchemeSwatchesGrid
+            mode="static"
+            label="Map Tint"
+            swatches={mapTintSwatches.map((swatch) => ({ color: swatch }))}
+            selectedIndex={selectedMapTintSwatchIndex}
+            onSwatchSelect={(index) => onSettingChange('selectedMapTintSwatchIndex', index)}
+            renderEditButton={() => (
               <ColorSwatchButton color={selectedTintColor} onClick={handleOpenTintEditor}>
                 <IconEdit
                   color="white"
@@ -160,19 +151,21 @@ export function MapStyleSection({
                   }}
                 />
               </ColorSwatchButton>
-            </Box>
-            <Box style={{ gridColumn: `span ${mapTintInputColumnSpan}` }}>
-              <ColorRgbaTextInput
-                color={selectedTintColor}
-                label="Map tint color"
-                onChange={(nextColor) => {
-                  const newSwatches = [...mapTintSwatches];
-                  newSwatches[selectedMapTintSwatchIndex] = nextColor;
-                  onSettingChange('mapTintSwatches', newSwatches);
-                }}
-              />
-            </Box>
-          </SimpleGrid>
+            )}
+            renderEditorPanel={(editorCols) => (
+              <Box style={{ gridColumn: `span ${Math.max(editorCols - 1, 1)}` }}>
+                <ColorRgbaTextInput
+                  color={selectedTintColor}
+                  label="Map tint color"
+                  onChange={(nextColor) => {
+                    const newSwatches = [...mapTintSwatches];
+                    newSwatches[selectedMapTintSwatchIndex] = nextColor;
+                    onSettingChange('mapTintSwatches', newSwatches);
+                  }}
+                />
+              </Box>
+            )}
+          />
           <Modal
             opened={tintModalOpened}
             onClose={closeTintModal}

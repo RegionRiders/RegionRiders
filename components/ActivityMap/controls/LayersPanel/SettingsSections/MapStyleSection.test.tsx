@@ -88,6 +88,15 @@ describe('MapStyleSection', () => {
       expect(screen.getByLabelText('Map tint color')).toBeInTheDocument();
     });
 
+    it('should not render copy/paste controls for map tint swatches', () => {
+      render(
+        <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Paste' })).not.toBeInTheDocument();
+    });
+
     it('should render map source section before map overlay section', () => {
       render(
         <MapStyleSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />

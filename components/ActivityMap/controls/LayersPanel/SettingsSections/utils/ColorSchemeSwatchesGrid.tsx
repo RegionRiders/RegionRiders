@@ -16,8 +16,9 @@ type ThresholdedColorSchemeSwatchesGridProps = {
   selectedIndex: number;
   onSwatchSelect: (index: number) => void;
   renderEditButton: () => ReactNode;
-  onCopy: () => void;
-  onPaste: () => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  renderEditorPanel?: (editorCols: number) => ReactNode;
 };
 
 type StaticColorSchemeSwatchesGridProps = {
@@ -27,8 +28,9 @@ type StaticColorSchemeSwatchesGridProps = {
   selectedIndex: number;
   onSwatchSelect: (index: number) => void;
   renderEditButton: () => ReactNode;
-  onCopy: () => void;
-  onPaste: () => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  renderEditorPanel?: (editorCols: number) => ReactNode;
 };
 
 type ColorSchemeSwatchesGridProps =
@@ -36,7 +38,8 @@ type ColorSchemeSwatchesGridProps =
   | StaticColorSchemeSwatchesGridProps;
 
 export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
-  const { mode, label, swatches, selectedIndex, onSwatchSelect, renderEditButton } = props;
+  const { mode, label, swatches, selectedIndex, onSwatchSelect, renderEditButton, renderEditorPanel } =
+    props;
   const editorCols = swatches.length > 2 ? swatches.length : 2;
   const swatchKeyCounts = new Map<string, number>();
   const getUniqueSwatchKey = (baseKey: string): string => {
@@ -81,16 +84,20 @@ export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
       </Stack>
       <SimpleGrid cols={editorCols} spacing="xs">
         {renderEditButton()}
-        <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
-          <SimpleGrid cols={2} spacing="xs">
-            <Button leftSection={<IconCopy />} onClick={props.onCopy} fullWidth p={0}>
-              Copy
-            </Button>
-            <Button leftSection={<IconClipboard />} onClick={props.onPaste} fullWidth p={0}>
-              Paste
-            </Button>
-          </SimpleGrid>
-        </Box>
+        {renderEditorPanel ? (
+          renderEditorPanel(editorCols)
+        ) : (
+          <Box style={{ gridColumn: `span ${editorCols - 1}` }}>
+            <SimpleGrid cols={2} spacing="xs">
+              <Button leftSection={<IconCopy />} onClick={props.onCopy} fullWidth p={0}>
+                Copy
+              </Button>
+              <Button leftSection={<IconClipboard />} onClick={props.onPaste} fullWidth p={0}>
+                Paste
+              </Button>
+            </SimpleGrid>
+          </Box>
+        )}
       </SimpleGrid>
     </Stack>
   );
