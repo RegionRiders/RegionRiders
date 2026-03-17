@@ -192,7 +192,6 @@ export default function ActivityMap() {
       <div className={styles.wrapper}>
         <div className={styles.controls}>
           <LayersPanel settings={settings} onSettingChange={updateSetting} map={map} />
-          <LayersPanel settings={settings} onSettingChange={updateSetting} />
           <GradientColorPickerButton
             value={
               settings.activityHeatmapColorSwatches[settings.selectedActivityHeatmapSwatchIndex]
