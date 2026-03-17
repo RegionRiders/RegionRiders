@@ -194,7 +194,9 @@ export default function ActivityMap() {
           <LayersPanel settings={settings} onSettingChange={updateSetting} map={map} />
           <LayersPanel settings={settings} onSettingChange={updateSetting} />
           <GradientColorPickerButton
-            value={ACTIVITY_HEATMAP_COLOR_THRESHOLDS}
+            value={
+              settings.activityHeatmapColorSwatches[settings.selectedActivityHeatmapSwatchIndex]
+            }
             onChange={() => {}}
             buttonLabel="gradient"
           />
