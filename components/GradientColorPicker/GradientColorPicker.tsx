@@ -36,7 +36,9 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   );
 
   useEffect(() => {
-    onChange(colorThresholds);
+    if (!isDragging) {
+      onChange(colorThresholds);
+    }
   }, [colorThresholds]);
 
   useEffect(() => {
@@ -73,11 +75,12 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   const handleColorNumberInputChange = (v: number | string, index: number) => {
     setColorThresholds((prev) => {
       const newThresholds = [...prev];
-      const currentColor = newThresholds[activeThresholdIndex].color;
-      currentColor[index] = +v; // Quick conversion to number
+      const currentColor = prev[activeThresholdIndex].color;
+      const nextColor = [...currentColor] as [number, number, number, number?];
+      nextColor[index] = Number(v);
       newThresholds[activeThresholdIndex] = {
         ...newThresholds[activeThresholdIndex],
-        color: [currentColor[0], currentColor[1], currentColor[2], currentColor[3] ?? 1],
+        color: [nextColor[0], nextColor[1], nextColor[2], nextColor[3] ?? 1],
       };
       return newThresholds;
     });
@@ -147,10 +150,12 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
             />
             <Button
               onClick={() => {
-                setColorThresholds((prev) => prev.filter((_, i) => i !== activeThresholdIndex));
-                if (activeThresholdIndex >= colorThresholds.length) {
-                  setActiveThresholdIndex(colorThresholds.length - 1);
+                if (colorThresholds.length <= 1) {
+                  return;
                 }
+                const next = colorThresholds.filter((_, i) => i !== activeThresholdIndex);
+                setColorThresholds(next);
+                setActiveThresholdIndex((prev) => Math.min(prev, next.length - 1));
               }}
             >
               Remove color
@@ -177,22 +182,56 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
             }}
           >
             {colorThresholds.map((threshold, index) => (
-              <Box
+              <ActionIcon
                 key={index}
                 style={{
                   position: 'absolute',
                   left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
                   transform: 'translate(-50%, -50%)',
                   top: '50%',
-                  cursor: 'grab',
                 }}
+                aria-label={`Edit threshold ${index + 1}`}
+                tabIndex={0}
                 onClick={() => {
                   setActiveThresholdIndex(index);
+                }}
+                onKeyDown={(e) => {
+                  const isActivation = e.key === 'Enter' || e.key === ' ';
+                  const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(
+                    e.key
+                  );
+
+                  if (isActivation) {
+                    e.preventDefault();
+                    setActiveThresholdIndex(index);
+                  }
+
+                  if (isArrowKey) {
+                    e.preventDefault();
+                    const step = e.shiftKey ? 10 : 1;
+                    const direction = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1;
+                    const newThreshold = Math.round(
+                      Math.min(
+                        stableMaxRef.current,
+                        Math.max(min, threshold.threshold + direction * step)
+                      )
+                    );
+
+                    setColorThresholds((prev) => {
+                      const newThresholds = [...prev];
+                      newThresholds[index] = {
+                        ...newThresholds[index],
+                        threshold: newThreshold,
+                      };
+                      return newThresholds;
+                    });
+                  }
                 }}
                 onMouseDown={(e) => {
                   const startX = e.clientX;
                   const startThreshold = threshold.threshold;
                   setIsDragging(true);
+                  setActiveThresholdIndex(index);
 
                   const onMouseMove = (moveEvent: MouseEvent) => {
                     const deltaX = moveEvent.clientX - startX;
@@ -230,10 +269,8 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
                   window.addEventListener('mouseup', onMouseUp);
                 }}
               >
-                <ActionIcon>
-                  <IconGripVertical />
-                </ActionIcon>
-              </Box>
+                <IconGripVertical />
+              </ActionIcon>
             ))}
           </Box>
         </Box>
@@ -247,7 +284,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
                 threshold: prev[prev.length - 1].threshold + 10,
               },
             ]);
-            setActiveThresholdIndex(colorThresholds.length - 1);
+            setActiveThresholdIndex(colorThresholds.length);
           }}
         >
           Add Color
