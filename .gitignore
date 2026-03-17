@@ -157,6 +157,7 @@ postgres_data/
 .pgdata/
 
 test-results.txt
+package-lock.json
 
 # Route files
 /public/data/gpx/

@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import L from 'leaflet';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 
 export interface CanvasDimensions {
   canvasWidth: number;
@@ -31,11 +32,14 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
   heatmapDensity: number;
   lineThickness: number;
+  heatmapColorThresholds?: ColorThreshold[];
 }
 
 // Line-specific refs (for lines module)
 export interface LinesRefs extends RenderRefs {
   lineThickness: number;
+  lineColor: RGBA;
+  lineHoverColor: RGBA;
 }
 
 export interface PixelPoint {

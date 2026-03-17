@@ -1,4 +1,9 @@
 import { render } from '@testing-library/react';
+import {
+  ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
+import type { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
 import { useRegionLoading } from '@/components/ActivityMap/hooks/region/useRegionLoading';
@@ -36,6 +41,31 @@ describe('MapOrchestrator', () => {
   const mockRegions: Regions[] = [];
   const mockVisitData = new Map();
 
+  const defaultSettings: MapSettings = {
+    activityMode: 'heatmap',
+    showActivities: true,
+    activityThickness: 3,
+    heatmapDensity: 2,
+    lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+    selectedLineSwatchIndex: 0,
+    activityHeatmapColorSwatches: [ACTIVITY_HEATMAP_COLOR_THRESHOLDS],
+    selectedActivityHeatmapSwatchIndex: 0,
+    regionMode: 'heatmap',
+    showRegions: true,
+    regionBorderThickness: 2,
+    regionStaticColorSwatches: [
+      [
+        { threshold: 0, color: [60, 60, 60, 0] },
+        { threshold: 1, color: [76, 107, 34, 0.2] },
+      ],
+    ],
+    selectedRegionStaticSwatchIndex: 0,
+    regionHeatmapColorSwatches: [REGION_VISIT_HEATMAP_COLOR_THRESHOLDS],
+    selectedRegionHeatmapSwatchIndex: 0,
+    tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -52,57 +82,92 @@ describe('MapOrchestrator', () => {
   });
 
   it('should call useRegionLoading with map', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />);
 
     expect(mockUseRegionLoading).toHaveBeenCalledWith(mockMap);
   });
 
   it('should call useRegionAnalysis with tracks and regions', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />);
 
     expect(mockUseRegionAnalysis).toHaveBeenCalledWith(mockTracks, mockRegions);
   });
 
-  it('should call useActivityRendering with correct parameters', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+  it('should call useActivityRendering with correct parameters from settings', () => {
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />);
 
     expect(mockUseActivityRendering).toHaveBeenCalledWith(
       mockMap,
       mockTracks,
-      true, // showHeatmap default
-      'heatmap' // activityMode default
+      defaultSettings.showActivities,
+      defaultSettings.activityMode,
+      defaultSettings.activityThickness,
+      defaultSettings.heatmapDensity,
+      defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex],
+      defaultSettings.activityHeatmapColorSwatches?.[
+        defaultSettings.selectedActivityHeatmapSwatchIndex ?? 0
+      ]
     );
   });
 
-  it('should call useRegionRendering with correct parameters', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+  it('should call useRegionRendering with correct parameters from settings', () => {
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />);
 
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
       mockMap,
       mockRegions,
       mockVisitData,
-      true // showBorders default
+      defaultSettings.showRegions,
+      defaultSettings.regionMode,
+      defaultSettings.regionBorderThickness,
+      defaultSettings.regionStaticColorSwatches[defaultSettings.selectedRegionStaticSwatchIndex],
+      defaultSettings.regionHeatmapColorSwatches?.[
+        defaultSettings.selectedRegionHeatmapSwatchIndex ?? 0
+      ]
     );
   });
 
-  it('should pass custom props correctly', () => {
-    render(
-      <MapOrchestrator
-        map={mockMap}
-        tracks={mockTracks}
-        showHeatmap={false}
-        showBorders={false}
-        activityMode="lines"
-      />
+  it('should pass custom settings correctly', () => {
+    const customSettings: MapSettings = {
+      ...defaultSettings,
+      showActivities: false,
+      showRegions: false,
+      activityMode: 'lines',
+    };
+
+    render(<MapOrchestrator map={mockMap} tracks={mockTracks} settings={customSettings} />);
+
+    expect(mockUseActivityRendering).toHaveBeenCalledWith(
+      mockMap,
+      mockTracks,
+      false,
+      'lines',
+      customSettings.activityThickness,
+      customSettings.heatmapDensity,
+      customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex],
+      customSettings.activityHeatmapColorSwatches?.[
+        customSettings.selectedActivityHeatmapSwatchIndex ?? 0
+      ]
     );
 
-    expect(mockUseActivityRendering).toHaveBeenCalledWith(mockMap, mockTracks, false, 'lines');
-
-    expect(mockUseRegionRendering).toHaveBeenCalledWith(mockMap, mockRegions, mockVisitData, false);
+    expect(mockUseRegionRendering).toHaveBeenCalledWith(
+      mockMap,
+      mockRegions,
+      mockVisitData,
+      false,
+      customSettings.regionMode,
+      customSettings.regionBorderThickness,
+      customSettings.regionStaticColorSwatches[customSettings.selectedRegionStaticSwatchIndex],
+      customSettings.regionHeatmapColorSwatches?.[
+        customSettings.selectedRegionHeatmapSwatchIndex ?? 0
+      ]
+    );
   });
 
   it('should render null', () => {
-    const { container } = render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+    const { container } = render(
+      <MapOrchestrator map={mockMap} tracks={mockTracks} settings={defaultSettings} />
+    );
 
     expect(container.firstChild).toBeNull();
   });

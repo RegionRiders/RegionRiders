@@ -1,6 +1,14 @@
 import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisits, analyzeRegionVisitsAsync } from './regionVisitAnalyzer';
 
+// Mock the spatial index module which uses rbush
+jest.mock('./spatial/spatialIndex', () => ({
+  RegionSpatialIndex: jest.fn().mockImplementation(() => ({
+    findCandidateRegions: jest.fn(() => []),
+    getSize: jest.fn(() => 0),
+  })),
+}));
+
 // Mock dependencies
 jest.mock('./processing', () => ({
   processTrack: jest.fn(),
@@ -126,9 +134,8 @@ describe('regionVisitAnalyzer', () => {
     it('should use custom config when provided', () => {
       const tracks = [mockTrack];
       const regions = [mockRegion];
-      const config = { gridSize: 0.2 };
 
-      const result = analyzeRegionVisits(tracks, regions, undefined, config);
+      const result = analyzeRegionVisits(tracks, regions, undefined);
 
       expect(result).toBeInstanceOf(Map);
     });
@@ -273,9 +280,8 @@ describe('regionVisitAnalyzer', () => {
     it('should accept custom config', async () => {
       const tracks = [mockTrack];
       const regions = [mockRegion];
-      const config = { gridSize: 0.15 };
 
-      const result = await analyzeRegionVisitsAsync(tracks, regions, undefined, config);
+      const result = await analyzeRegionVisitsAsync(tracks, regions);
 
       expect(result).toBeInstanceOf(Map);
     });

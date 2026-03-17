@@ -1,6 +1,6 @@
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
-import { fireEvent, render, screen } from '@/test-utils';
+import { render, screen } from '@/test-utils';
 import ActivityMap from './ActivityMap';
 
 // Mock the hooks
@@ -24,6 +24,13 @@ jest.mock('./MapOrchestrator', () => ({
   __esModule: true,
   default: function MockMapOrchestrator() {
     return <div data-testid="map-orchestrator">Map Orchestrator</div>;
+  },
+}));
+
+jest.mock('./controls/LayersPanel/LayersPanel', () => ({
+  __esModule: true,
+  default: function MockLayersPanel() {
+    return <div data-testid="layers-panel">Layers Panel</div>;
   },
 }));
 
@@ -69,27 +76,10 @@ describe('ActivityMap', () => {
     expect(screen.getByText('Failed to initialize map')).toBeInTheDocument();
   });
 
-  it('renders mode selector with heatmap and lines options', () => {
+  it('renders LayersPanel for layer controls', () => {
     render(<ActivityMap />);
 
-    expect(screen.getByLabelText('Heatmap')).toBeInTheDocument();
-    expect(screen.getByLabelText('Lines')).toBeInTheDocument();
-  });
-
-  it('defaults to heatmap mode', () => {
-    render(<ActivityMap />);
-
-    const heatmapRadio = screen.getByLabelText('Heatmap') as HTMLInputElement;
-    expect(heatmapRadio.checked).toBe(true);
-  });
-
-  it('changes mode when user selects lines', () => {
-    render(<ActivityMap />);
-
-    const linesRadio = screen.getByLabelText('Lines') as HTMLInputElement;
-    fireEvent.click(linesRadio);
-
-    expect(linesRadio.checked).toBe(true);
+    expect(screen.getByTestId('layers-panel')).toBeInTheDocument();
   });
 
   it('renders MapOrchestrator when map is ready', () => {

@@ -1,16 +1,37 @@
-import { Accordion, Group, Stack, Text } from '@mantine/core';
+import { useMemo } from 'react';
+import { Accordion, SimpleGrid, Stack, Text } from '@mantine/core';
 import { TILE_PRESETS } from '@/components/ActivityMap/config/tilePresets';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import MapStyleButton from '@/components/ActivityMap/controls/LayersPanel/utils/MapStyleButton/MapStyleButton';
+import { MapViewState } from '@/components/ActivityMap/hooks/map/useMapViewState';
+import { resolveTileUrl } from '@/components/ActivityMap/utils/resolveTileUrl';
+
+const presetEntries = Object.entries(TILE_PRESETS);
 
 export function MapStyleSection({
   settings,
   onSettingChange,
-}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
+  viewState,
+}: Pick<LayersPanelProps, 'settings' | 'onSettingChange'> & {
+  viewState?: MapViewState | null;
+}) {
   const handleStyleChange = (url: string, attribution: string) => {
     onSettingChange('tileLayerUrl', url);
     onSettingChange('attribution', attribution);
   };
+
+  const tileUrls = useMemo(() => {
+    if (!viewState) {
+      return null;
+    }
+    const { center, zoom } = viewState;
+    return Object.fromEntries(
+      presetEntries.map(([key, preset]) => [
+        key,
+        resolveTileUrl(preset.url, center[0], center[1], zoom),
+      ])
+    ) as Record<string, string>;
+  }, [viewState]);
 
   return (
     <Accordion.Item value="mapstyle">
@@ -21,35 +42,21 @@ export function MapStyleSection({
       </Accordion.Control>
       <Accordion.Panel>
         <Stack gap="xs">
-          <Group gap="xs">
-            <MapStyleButton
-              imageUrl="/map-previews/standard.png"
-              label="Standard"
-              onClick={() =>
-                handleStyleChange(TILE_PRESETS.standard.url, TILE_PRESETS.standard.attribution)
-              }
-              active={settings.tileLayerUrl === TILE_PRESETS.standard.url}
-              aria-label="Switch to standard map style"
-            />
-            <MapStyleButton
-              imageUrl="/map-previews/satellite.png"
-              label="Satellite"
-              onClick={() =>
-                handleStyleChange(TILE_PRESETS.satellite.url, TILE_PRESETS.satellite.attribution)
-              }
-              active={settings.tileLayerUrl === TILE_PRESETS.satellite.url}
-              aria-label="Switch to satellite map style"
-            />
-            <MapStyleButton
-              imageUrl="/map-previews/terrain.png"
-              label="Terrain"
-              onClick={() =>
-                handleStyleChange(TILE_PRESETS.terrain.url, TILE_PRESETS.terrain.attribution)
-              }
-              active={settings.tileLayerUrl === TILE_PRESETS.terrain.url}
-              aria-label="Switch to terrain map style"
-            />
-          </Group>
+          <SimpleGrid
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
+            spacing="xs"
+          >
+            {presetEntries.map(([key, preset]) => (
+              <MapStyleButton
+                key={key}
+                imageUrl={tileUrls?.[key]}
+                label={preset.name}
+                onClick={() => handleStyleChange(preset.url, preset.attribution)}
+                active={settings.tileLayerUrl === preset.url}
+                aria-label={`Switch to ${preset.name.toLowerCase()} map style`}
+              />
+            ))}
+          </SimpleGrid>
         </Stack>
       </Accordion.Panel>
     </Accordion.Item>

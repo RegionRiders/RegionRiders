@@ -1,0 +1,48 @@
+.slider {
+    position: relative;
+    height: calc(var(--cp-thumb-size, 16px) + 2px);
+    margin-inline: calc(var(--cp-thumb-size, 16px) / 2);
+    outline: none;
+    cursor: crosshair;
+    user-select: none;
+}
+
+.track {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline: calc(var(--cp-thumb-size, 16px) * -1 / 2 - 1px);
+    border-radius: 10000rem;
+}
+
+.thumb {
+    overflow: hidden;
+    position: absolute;
+    box-shadow: 0 0 1px rgb(0, 0, 0, 0.6);
+    border: 2px solid var(--mantine-color-white);
+    width: var(--cp-thumb-size, 16px);
+    height: var(--cp-thumb-size, 16px);
+    border-radius: var(--cp-thumb-size, 16px);
+    top: calc(50% - var(--cp-thumb-size, 16px) / 2);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.sliderVertical {
+    height: 100%;
+    width: calc(var(--cp-thumb-size, 16px) + 2px);
+    margin-inline: 0;
+    margin-block: calc(var(--cp-thumb-size, 16px) / 2);
+}
+
+.trackVertical {
+    inset-inline: 0;
+    top: calc(var(--cp-thumb-size, 16px) * -1 / 2 - 1px);
+    bottom: calc(var(--cp-thumb-size, 16px) * -1 / 2 - 1px);
+    width: 100%;
+}
+
+.thumbVertical {
+    top: unset;
+    left: calc(50% - var(--cp-thumb-size, 16px) / 2);
+}

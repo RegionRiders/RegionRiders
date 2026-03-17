@@ -106,7 +106,7 @@ export function useLeafletMap(
       maxZoom: config.maxZoom,
       minZoom: config.minZoom,
     }).addTo(mapRef.current);
-  }, [options, config, isReady]);
+  }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
 
   return {
     map: mapRef.current,

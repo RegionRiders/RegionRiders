@@ -1,10 +1,10 @@
 .mapStyleButton {
     position: relative;
-    width: 100%;
+    flex: 1;
     aspect-ratio: 1;
     background: none;
     border: 3px solid white;
-    border-radius: 8px;
+    border-radius: 3px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -14,6 +14,10 @@
     padding: 0;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgb(0, 0, 0, 0.15);
+}
+
+.mapStyleButtonFullWidth {
+    width: 100%;
 }
 
 .mapStyleButtonActive {
@@ -34,6 +38,18 @@
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.mapStyleButtonImageNext {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+}
+
+.mapStyleButtonImageFadeIn {
+    opacity: 1;
 }
 
 .mapStyleButtonGradient {

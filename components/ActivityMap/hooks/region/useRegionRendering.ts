@@ -2,8 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/region/utils/calculateWeightForZoom';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
@@ -17,7 +19,12 @@ export function useRegionRendering(
   visitData: Map<string, RegionVisitData>,
   showRegions: boolean = true,
   mode: RegionRenderMode = 'static',
-  regionBorderThickness: number = 2
+  regionBorderThickness: number = 2,
+  regionStaticColor: ColorThreshold[] = [
+    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 1, color: [76, 107, 34, 0.2] },
+  ],
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSizeRef = useRef<number>(0);
@@ -59,13 +66,15 @@ export function useRegionRendering(
       regions,
       mode,
       visitData,
-      calculateWeightForZoom(map.getZoom(), regionBorderThickness)
+      calculateWeightForZoom(map.getZoom(), regionBorderThickness),
+      regionStaticColor,
+      regionHeatmapColor
     );
 
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [regions, showRegions, mode, regionBorderThickness]);
+  }, [regions, showRegions, mode, regionBorderThickness, regionStaticColor, regionHeatmapColor]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {
@@ -85,7 +94,9 @@ export function useRegionRendering(
     layerManagerRef.current.updateStyles(
       mode,
       visitData,
-      calculateWeightForZoom(map.getZoom(), regionBorderThickness)
+      calculateWeightForZoom(map.getZoom(), regionBorderThickness),
+      regionStaticColor,
+      regionHeatmapColor
     );
 
     const duration = (performance.now() - startTime).toFixed(2);
@@ -93,5 +104,5 @@ export function useRegionRendering(
     logger.debug(`Updated styles for ${visitedCount} visited regions (${duration}ms)`);
 
     lastVisitDataSizeRef.current = visitData.size;
-  }, [map, visitData]);
+  }, [map, visitData, mode, regionBorderThickness, regionStaticColor, regionHeatmapColor]);
 }
