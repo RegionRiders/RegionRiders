@@ -26,8 +26,11 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   const [isDragging, setIsDragging] = useState(false);
   const gradientBoxRef = useRef<HTMLDivElement>(null);
   const min = 1;
+  const MAX_TO_LAST_THRESHOLD_RATIO = 1.1;
 
-  const stableMaxRef = useRef<number>(Math.max(...value.map((t) => t.threshold)) * 1.1);
+  const stableMaxRef = useRef<number>(
+    Math.max(...value.map((t) => t.threshold)) * MAX_TO_LAST_THRESHOLD_RATIO
+  );
 
   const gradientBackground = useMemo(
     () =>
@@ -46,7 +49,8 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
 
   useEffect(() => {
     if (!isDragging) {
-      stableMaxRef.current = Math.max(...colorThresholds.map((t) => t.threshold)) * 1.1;
+      stableMaxRef.current =
+        Math.max(...colorThresholds.map((t) => t.threshold)) * MAX_TO_LAST_THRESHOLD_RATIO;
     }
   }, [isDragging, colorThresholds]);
 
