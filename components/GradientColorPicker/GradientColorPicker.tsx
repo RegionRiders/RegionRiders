@@ -14,7 +14,7 @@ interface GradientColorPickerProps {
 
 export function GradientColorPicker({ value, onChange }: GradientColorPickerProps) {
   const [colorThresholds, setColorThresholds] = useState(value);
-  const [activeThresholdIndex, setActiveThresholdIndex] = useState(4);
+  const [activeThresholdIndex, setActiveThresholdIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const gradientBoxRef = useRef<HTMLDivElement>(null);
   const min = 1;
