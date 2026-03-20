@@ -34,8 +34,6 @@ const sourcePresetEntries = MAP_SOURCE_PRESET_KEYS.map((key) => [key, TILE_PRESE
 const overlayPresetEntries = MAP_OVERLAY_PRESET_KEYS.map(
   (key) => [key, TILE_PRESETS[key]] as const
 );
-const TRANSPARENT_PLACEHOLDER_IMAGE =
-  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
 export function MapStyleSection({
   settings,
@@ -96,7 +94,18 @@ export function MapStyleSection({
       </Accordion.Control>
       <Accordion.Panel>
         <Stack gap="xs">
-          <Text size="sm">Map source</Text>
+          {/* ── Map source header row ── */}
+          <Group justify="space-between" align="center" wrap="nowrap">
+            <Text size="sm">Map source</Text>
+            <Switch
+              checked={settings.mapSourceMonochrome ?? false}
+              onChange={(e) => onSettingChange('mapSourceMonochrome', e.currentTarget.checked)}
+              label="Monochromatic"
+              labelPosition="left"
+              size="xs"
+              aria-label="Toggle monochromatic map source"
+            />
+          </Group>
           <SimpleGrid
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
             spacing="xs"
@@ -112,24 +121,22 @@ export function MapStyleSection({
               />
             ))}
           </SimpleGrid>
-          <Switch
-            checked={settings.mapSourceMonochrome ?? false}
-            onChange={(e) => onSettingChange('mapSourceMonochrome', e.currentTarget.checked)}
-            label="Monochromatic source"
-            aria-label="Toggle monochromatic map source"
-          />
-          <Text size="sm">Map overlay</Text>
+
+          <Group justify="space-between" align="center" wrap="nowrap">
+            <Text size="sm">Map overlay</Text>
+            <Switch
+              checked={settings.mapOverlayMonochrome ?? false}
+              onChange={(e) => onSettingChange('mapOverlayMonochrome', e.currentTarget.checked)}
+              label="Monochromatic"
+              labelPosition="left"
+              size="xs"
+              aria-label="Toggle monochromatic map overlay"
+            />
+          </Group>
           <SimpleGrid
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(25px, 78px))' }}
             spacing="xs"
           >
-            <MapStyleButton
-              label="None"
-              imageUrl={TRANSPARENT_PLACEHOLDER_IMAGE}
-              onClick={() => handleOverlayChange('', '')}
-              active={!settings.overlayTileLayerUrl}
-              aria-label="Disable map overlay"
-            />
             {overlayPresetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
@@ -141,12 +148,7 @@ export function MapStyleSection({
               />
             ))}
           </SimpleGrid>
-          <Switch
-            checked={settings.mapOverlayMonochrome ?? false}
-            onChange={(e) => onSettingChange('mapOverlayMonochrome', e.currentTarget.checked)}
-            label="Monochromatic overlay"
-            aria-label="Toggle monochromatic map overlay"
-          />
+
           <ColorSchemeSwatchesGrid
             mode="static"
             label="Map Tint"
@@ -191,6 +193,7 @@ export function MapStyleSection({
               </Box>
             )}
           />
+
           <Modal
             opened={tintModalOpened}
             onClose={closeTintModal}
