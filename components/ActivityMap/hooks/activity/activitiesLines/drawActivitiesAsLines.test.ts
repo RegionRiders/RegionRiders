@@ -106,6 +106,7 @@ describe('drawActivitiesAsLines', () => {
       lineThickness: 2,
       lineColor: defaultLineColor,
       lineHoverColor: defaultHoverColor,
+      layerTransparency: 1,
     };
   });
 

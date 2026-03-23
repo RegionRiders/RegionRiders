@@ -70,7 +70,8 @@ export function drawActivitiesAsLines(
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
 
         const color = rgbToHex(refs.lineColor[0], refs.lineColor[1], refs.lineColor[2]);
-        const opacity = refs.lineColor[3];
+        const opacity = refs.lineColor[3] * refs.layerTransparency;
+        const hoverOpacity = refs.lineHoverColor[3] * refs.layerTransparency;
 
         const polyline = L.polyline(latlngs, {
           color,
@@ -84,8 +85,8 @@ export function drawActivitiesAsLines(
         // Use utility functions for event handling
         attachActivityHoverEvents(
           polyline,
-          refs.lineColor,
-          refs.lineHoverColor,
+          [refs.lineColor[0], refs.lineColor[1], refs.lineColor[2], opacity],
+          [refs.lineHoverColor[0], refs.lineHoverColor[1], refs.lineHoverColor[2], hoverOpacity],
           refs.lineThickness,
           refs.lineThickness * 2
         );

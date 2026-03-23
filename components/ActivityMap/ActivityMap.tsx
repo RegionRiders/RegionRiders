@@ -32,6 +32,7 @@ export default function ActivityMap() {
     activityMode: 'heatmap',
     showActivities: true,
     activityThickness: 3,
+    activityLayerTransparency: 1,
     lineColorSwatches: [
       {
         normal: [255, 0, 0, 0.5],

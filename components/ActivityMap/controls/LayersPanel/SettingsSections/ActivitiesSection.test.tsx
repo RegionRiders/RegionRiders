@@ -23,6 +23,7 @@ describe('ActivitiesSection', () => {
     activityMode: 'heatmap',
     showActivities: true,
     activityThickness: 3,
+    activityLayerTransparency: 1,
     heatmapDensity: 2,
     lineColorSwatches: [{ normal: [255, 0, 0, 1] as RGBA, hover: [255, 100, 100, 1] as RGBA }],
     selectedLineSwatchIndex: 0,
@@ -111,6 +112,17 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.getByText(/Line thickness:/)).toBeInTheDocument();
+    });
+
+    it('should render layer transparency slider', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(screen.getByText(/Layer transparency:/)).toBeInTheDocument();
     });
   });
 
