@@ -184,7 +184,6 @@ export function MapStyleSection({
               <Box style={{ gridColumn: `span ${Math.max(editorCols - 1, 1)}` }}>
                 <ColorRgbaTextInput
                   color={selectedTintColor}
-                  label="Map tint color"
                   onChange={(nextColor) => {
                     const newSwatches = [...mapTintSwatches];
                     newSwatches[selectedMapTintSwatchIndex] = nextColor;
