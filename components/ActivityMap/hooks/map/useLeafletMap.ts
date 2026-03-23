@@ -71,7 +71,7 @@ export function useLeafletMap(
       overlay.style.pointerEvents = 'none';
       overlay.style.zIndex = '250'; // above tilePane(200), below overlayPane(400)
 
-      // Append to leaflet-map-pane, not getContainer()
+      // Append to leaflet-map-pane
       const mapPaneEl = mapRef.current.getPane('mapPane') as HTMLElement;
       mapPaneEl.appendChild(overlay);
       tintOverlayRef.current = overlay;
@@ -144,6 +144,7 @@ export function useLeafletMap(
     };
   }, []);
 
+  // Update map by recreating it
   useEffect(() => {
     if (!mapRef.current || !isReady) {
       return;
@@ -178,13 +179,20 @@ export function useLeafletMap(
     config.attribution,
     config.overlayTileLayerUrl,
     config.overlayAttribution,
-    config.mapSourceMonochrome,
-    config.mapOverlayMonochrome,
-    config.mapTintColor,
     config.maxZoom,
     config.minZoom,
     isReady,
   ]);
+
+  // Update map without recreating it
+  useEffect(() => {
+    applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
+    if (config.overlayTileLayerUrl) {
+      applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.mapOverlayMonochrome));
+    }
+
+    updateTintOverlay(config.mapTintColor);
+  }, [config.mapSourceMonochrome, config.mapOverlayMonochrome, config.mapTintColor]);
 
   return {
     map: mapRef.current,
