@@ -3,11 +3,13 @@
  */
 import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
+import { generateState, storeState } from '@/lib/oauth/state';
 import { getAuthorizationUrl } from '@/lib/strava';
 import { GET } from './route';
 
 jest.mock('@/lib/strava');
 jest.mock('@/lib/api');
+jest.mock('@/lib/oauth/state');
 
 describe('GET /api/strava/auth', () => {
   const mockUrl =
@@ -18,11 +20,16 @@ describe('GET /api/strava/auth', () => {
   });
 
   it('should redirect with hardcoded scope read,activity:read_all', async () => {
-    (getAuthorizationUrl as jest.Mock).mockReturnValue(mockUrl);
+
+    (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
+    (generateState as jest.Mock).mockReturnValue('mock-state');
+    (storeState as jest.Mock).mockResolvedValue(undefined);
 
     const res = await GET();
 
-    expect(getAuthorizationUrl).toHaveBeenCalledWith('read,activity:read_all');
+    expect(generateState).toHaveBeenCalled();
+    expect(storeState).toHaveBeenCalledWith('mock-state');
+    expect(getAuthorizationUrl).toHaveBeenCalledWith('read,activity:read_all', 'mock-state');
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toBe(mockUrl);
   });
@@ -31,9 +38,9 @@ describe('GET /api/strava/auth', () => {
     const error = new Error('API error');
     const errorResponse = NextResponse.json({ error: 'API error' }, { status: 500 });
 
-    (getAuthorizationUrl as jest.Mock).mockImplementation(() => {
-      throw error;
-    });
+    (generateState as jest.Mock).mockReturnValue('mock-state');
+    (storeState as jest.Mock).mockResolvedValue(undefined);
+    (getAuthorizationUrl as jest.Mock).mockRejectedValue(error);
     (handle500Error as jest.Mock).mockReturnValue(errorResponse);
 
     const res = await GET();

@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
+import { generateState, storeState } from '@/lib/oauth/state';
 import { getAuthorizationUrl } from '@/lib/strava';
 
 /**
  * GET /api/strava/auth
  * Initiates Strava OAuth flow by redirecting to Strava authorization page
+ * Generates and stores CSRF protection state parameter
  */
 export async function GET() {
   try {
+    // Generate CSRF protection state
+    const state = generateState();
+    await storeState(state);
+    
     const scope = 'read,activity:read_all';
-    const authUrl = getAuthorizationUrl(scope);
+    const authUrl = getAuthorizationUrl(scope, state);
 
     if (!authUrl) {
       return NextResponse.json(

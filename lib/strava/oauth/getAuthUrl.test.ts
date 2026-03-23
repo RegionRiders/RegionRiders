@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+
+import { getStravaClient } from '../config';
 import { getAuthorizationUrl } from './getAuthUrl';
 
 describe('getAuthorizationUrl', () => {

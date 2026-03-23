@@ -1,8 +1,9 @@
 import { logger } from '@/lib/logger/client';
 
 /**
- * Generates the Strava OAuth authorization URL
+ * Generates the Strava OAuth authorization URL with CSRF protection
  * @param scope - OAuth scope (default: 'read,activity:read_all')
+ * @param state - CSRF protection state parameter
  * @returns Authorization URL string
  */
 export function getAuthorizationUrl(scope = 'read,activity:read_all'): string {
@@ -21,6 +22,7 @@ export function getAuthorizationUrl(scope = 'read,activity:read_all'): string {
     response_type: 'code',
     approval_prompt: 'auto',
     scope,
+    ...(state && { state }),
   });
 
   return `https://www.strava.com/oauth/authorize?${params.toString()}`;

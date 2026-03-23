@@ -2,6 +2,20 @@ import pino from 'pino';
 import { createChildLogger, getLoggerConfig, isServer, isTest, LOG_DIR } from './config';
 
 describe('Logger Config', () => {
+  // Store original env
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    // Reset environment before each test
+    jest.resetModules();
+    process.env = { ...originalEnv };
+  });
+
+  afterAll(() => {
+    // Restore original environment
+    process.env = originalEnv;
+  });
+
   describe('Environment Detection', () => {
     it('should detect test environment', () => {
       expect(isTest).toBe(true);
@@ -29,7 +43,6 @@ describe('Logger Config', () => {
   describe('getLoggerConfig', () => {
     it('should return test config in test environment', () => {
       const config = getLoggerConfig();
-
       expect(config).toBeDefined();
       expect(config.level).toBe('silent');
     });
@@ -67,7 +80,6 @@ describe('Logger Config', () => {
 
     it('should create child logger with name', () => {
       const childLogger = createChildLogger(mockParentLogger, 'test-service');
-
       expect(mockParentLogger.child).toHaveBeenCalledWith({ name: 'test-service' });
       expect(childLogger).toBeDefined();
     });
@@ -86,21 +98,18 @@ describe('Logger Config', () => {
 
     it('should create child logger with empty additional context', () => {
       const childLogger = createChildLogger(mockParentLogger, 'db-service', {});
-
       expect(mockParentLogger.child).toHaveBeenCalledWith({ name: 'db-service' });
       expect(childLogger).toBeDefined();
     });
 
     it('should create child logger without additional context', () => {
       const childLogger = createChildLogger(mockParentLogger, 'auth-service');
-
       expect(mockParentLogger.child).toHaveBeenCalledWith({ name: 'auth-service' });
       expect(childLogger).toBeDefined();
     });
 
     it('should preserve parent logger functionality', () => {
       const childLogger = createChildLogger(mockParentLogger, 'child');
-
       expect(typeof childLogger.info).toBe('function');
       expect(typeof childLogger.error).toBe('function');
       expect(typeof childLogger.warn).toBe('function');
@@ -113,7 +122,6 @@ describe('Logger Config', () => {
         userId: 456,
         metadata: { ip: '127.0.0.1', userAgent: 'test' },
       };
-
       const childLogger = createChildLogger(mockParentLogger, 'request-handler', complexContext);
 
       expect(mockParentLogger.child).toHaveBeenCalledWith({
@@ -233,7 +241,6 @@ describe('Logger Config', () => {
     it('should return consistent config on multiple calls', () => {
       const config1 = getLoggerConfig();
       const config2 = getLoggerConfig();
-
       expect(config1.level).toBe(config2.level);
     });
   });

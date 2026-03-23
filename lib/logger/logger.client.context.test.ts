@@ -152,10 +152,7 @@ describe('Logger Client - Context Coverage', () => {
 
       child.error('error');
 
-      expect(consoleSpies.error).toHaveBeenCalledWith(
-        JSON.stringify({ component: 'auth' }),
-        'error'
-      );
+      expect(consoleSpies.error).toHaveBeenCalledWith('[auth]', 'error');
     });
 
     it('should call console.error for fatal with context string', () => {
