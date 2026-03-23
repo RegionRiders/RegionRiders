@@ -32,6 +32,12 @@ export interface MapSettings {
   // Map settings
   tileLayerUrl: string;
   attribution: string;
+  overlayTileLayerUrl?: string;
+  overlayAttribution?: string;
+  mapSourceMonochrome?: boolean;
+  mapOverlayMonochrome?: boolean;
+  mapTintSwatches?: RGBA[];
+  selectedMapTintSwatchIndex?: number;
 }
 
 export interface LayersPanelProps {

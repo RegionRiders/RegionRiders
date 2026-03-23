@@ -3,10 +3,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
-import { LeafletConfig } from '@/components/ActivityMap/mapTypes';
+import { LeafletConfig, RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 
 const logger = createComponentLogger('useLeafletMap');
+const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
 
 /**
  * react hook for initializing and managing a leaflet map instance
@@ -37,6 +38,8 @@ export function useLeafletMap(
 ) {
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const overlayTileLayerRef = useRef<L.TileLayer | null>(null);
+  const tintOverlayRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +47,48 @@ export function useLeafletMap(
     () => ({ ...DEFAULT_LEAFLET_CONFIG, ...options }),
     [options]
   );
+
+  const applyMonochromeFilter = (layer: L.TileLayer | null, monochrome: boolean) => {
+    const layerContainer = layer?.getContainer?.();
+    if (!layerContainer) {
+      return;
+    }
+    layerContainer.style.filter = monochrome ? 'grayscale(1)' : '';
+  };
+
+  const updateTintOverlay = (tintColor?: LeafletConfig['mapTintColor']) => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    if (!tintOverlayRef.current) {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.top = '-9999px';
+      overlay.style.left = '-9999px';
+      overlay.style.width = '20000px';
+      overlay.style.height = '20000px';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.zIndex = '250'; // above tilePane(200), below overlayPane(400)
+
+      // Append to leaflet-map-pane, not getContainer()
+      const mapPaneEl = mapRef.current.getPane('mapPane') as HTMLElement;
+      mapPaneEl.appendChild(overlay);
+      tintOverlayRef.current = overlay;
+    }
+
+    const overlay = tintOverlayRef.current;
+    const [r, g, b, alpha] = tintColor ?? TRANSPARENT_TINT;
+    overlay.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    overlay.style.display = alpha > 0 ? 'block' : 'none';
+  };
+
+  const createTileLayer = (url: string, attribution: string) =>
+    L.tileLayer(url, {
+      attribution,
+      maxZoom: config.maxZoom,
+      minZoom: config.minZoom,
+    });
 
   // Initial map creation effect
   useEffect(() => {
@@ -61,11 +106,18 @@ export function useLeafletMap(
         minZoom: config.minZoom,
       });
 
-      tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
-        attribution: config.attribution,
-        maxZoom: config.maxZoom,
-        minZoom: config.minZoom,
-      }).addTo(mapRef.current);
+      tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(
+        mapRef.current
+      );
+      applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
+      if (config.overlayTileLayerUrl) {
+        overlayTileLayerRef.current = createTileLayer(
+          config.overlayTileLayerUrl,
+          config.overlayAttribution ?? ''
+        ).addTo(mapRef.current);
+        applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.mapOverlayMonochrome));
+      }
+      updateTintOverlay(config.mapTintColor);
 
       mapRef.current.whenReady(() => {
         setIsReady(true);
@@ -85,6 +137,8 @@ export function useLeafletMap(
         mapRef.current.remove();
         mapRef.current = null;
         tileLayerRef.current = null;
+        overlayTileLayerRef.current = null;
+        tintOverlayRef.current = null;
         setIsReady(false);
       }
     };
@@ -101,12 +155,36 @@ export function useLeafletMap(
       mapRef.current.removeLayer(tileLayerRef.current);
     }
 
-    tileLayerRef.current = L.tileLayer(config.tileLayerUrl, {
-      attribution: config.attribution,
-      maxZoom: config.maxZoom,
-      minZoom: config.minZoom,
-    }).addTo(mapRef.current);
-  }, [config.tileLayerUrl, config.attribution, config.maxZoom, config.minZoom, isReady]);
+    tileLayerRef.current = createTileLayer(config.tileLayerUrl, config.attribution).addTo(
+      mapRef.current
+    );
+    applyMonochromeFilter(tileLayerRef.current, Boolean(config.mapSourceMonochrome));
+
+    if (overlayTileLayerRef.current) {
+      mapRef.current.removeLayer(overlayTileLayerRef.current);
+      overlayTileLayerRef.current = null;
+    }
+    if (config.overlayTileLayerUrl) {
+      overlayTileLayerRef.current = createTileLayer(
+        config.overlayTileLayerUrl,
+        config.overlayAttribution ?? ''
+      ).addTo(mapRef.current);
+      applyMonochromeFilter(overlayTileLayerRef.current, Boolean(config.mapOverlayMonochrome));
+    }
+
+    updateTintOverlay(config.mapTintColor);
+  }, [
+    config.tileLayerUrl,
+    config.attribution,
+    config.overlayTileLayerUrl,
+    config.overlayAttribution,
+    config.mapSourceMonochrome,
+    config.mapOverlayMonochrome,
+    config.mapTintColor,
+    config.maxZoom,
+    config.minZoom,
+    isReady,
+  ]);
 
   return {
     map: mapRef.current,

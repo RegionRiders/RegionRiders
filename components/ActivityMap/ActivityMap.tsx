@@ -5,6 +5,7 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useMemo, useRef, useState } from 'react';
+import { DEFAULT_MAP_TINT_SWATCHES } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import MapContainer from './MapContainer';
@@ -164,15 +165,30 @@ export default function ActivityMap() {
     selectedRegionHeatmapSwatchIndex: 0,
     tileLayerUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
+    overlayTileLayerUrl: '',
+    overlayAttribution: '',
+    mapSourceMonochrome: false,
+    mapOverlayMonochrome: false,
+    mapTintSwatches: DEFAULT_MAP_TINT_SWATCHES,
+    selectedMapTintSwatchIndex: 0,
   });
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const selectedMapTintColor = settings.mapTintSwatches?.[
+    settings.selectedMapTintSwatchIndex ?? 0
+  ] ?? [0, 0, 0, 0];
+
   const { map, isReady, error } = useLeafletMap(mapContainerRef, {
     tileLayerUrl: settings.tileLayerUrl,
     attribution: settings.attribution,
+    overlayTileLayerUrl: settings.overlayTileLayerUrl,
+    overlayAttribution: settings.overlayAttribution,
+    mapSourceMonochrome: settings.mapSourceMonochrome,
+    mapOverlayMonochrome: settings.mapOverlayMonochrome,
+    mapTintColor: selectedMapTintColor,
   });
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);
