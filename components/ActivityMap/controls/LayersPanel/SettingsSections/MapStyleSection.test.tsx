@@ -71,7 +71,7 @@ describe('MapStyleSection', () => {
       expect(screen.getByText('Map overlay')).toBeInTheDocument();
       expect(screen.getByText('Standard')).toBeInTheDocument();
       expect(screen.getByText('Cycling Routes')).toBeInTheDocument();
-      expect(screen.getByText('None')).toBeInTheDocument();
+      expect(screen.getAllByText('None')).toHaveLength(2);
     });
 
     it('should render all tile presets', () => {
@@ -80,7 +80,7 @@ describe('MapStyleSection', () => {
       );
 
       Object.values(TILE_PRESETS).forEach((preset) => {
-        expect(screen.getByText(preset.name)).toBeInTheDocument();
+        expect(screen.getAllByText(preset.name).length).toBeGreaterThan(0);
       });
       expect(screen.getByLabelText('Toggle monochromatic map source')).toBeInTheDocument();
       expect(screen.getByLabelText('Toggle monochromatic map overlay')).toBeInTheDocument();
@@ -117,14 +117,14 @@ describe('MapStyleSection', () => {
       );
 
       const darkButton = screen.getByRole('button', {
-        name: /switch to dark map style/i,
+        name: /switch to carto dark map style/i,
       });
       fireEvent.click(darkButton);
 
-      expect(mockOnSettingChange).toHaveBeenCalledWith('tileLayerUrl', TILE_PRESETS.dark.url);
+      expect(mockOnSettingChange).toHaveBeenCalledWith('tileLayerUrl', TILE_PRESETS.carto_dark.url);
       expect(mockOnSettingChange).toHaveBeenCalledWith(
         'attribution',
-        TILE_PRESETS.dark.attribution
+        TILE_PRESETS.carto_dark.attribution
       );
     });
 
@@ -140,11 +140,11 @@ describe('MapStyleSection', () => {
 
       expect(mockOnSettingChange).toHaveBeenCalledWith(
         'overlayTileLayerUrl',
-        TILE_PRESETS.bikeOverlay.url
+        TILE_PRESETS.bike_overlay.url
       );
       expect(mockOnSettingChange).toHaveBeenCalledWith(
         'overlayAttribution',
-        TILE_PRESETS.bikeOverlay.attribution
+        TILE_PRESETS.bike_overlay.attribution
       );
     });
 

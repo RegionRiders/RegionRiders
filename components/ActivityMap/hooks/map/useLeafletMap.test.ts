@@ -17,14 +17,22 @@ jest.mock('leaflet', () => ({
       minZoom: 0,
     },
     removeLayer: jest.fn(),
+    getPane: jest.fn(() => document.querySelector('#test-map')),
     whenReady: jest.fn((callback) => {
       callback();
       return { on: jest.fn(), off: jest.fn() };
     }),
   })),
-  tileLayer: jest.fn(() => ({
-    addTo: jest.fn(),
-  })),
+  tileLayer: jest.fn(() => {
+    type MockLayer = {
+      addTo: jest.Mock<MockLayer, []>;
+      getContainer: jest.Mock<HTMLDivElement, []>;
+    };
+    const layer = {} as MockLayer;
+    layer.addTo = jest.fn(() => layer);
+    layer.getContainer = jest.fn(() => document.createElement('div'));
+    return layer;
+  }),
 }));
 
 // Mock logger
@@ -124,6 +132,7 @@ describe('useLeafletMap', () => {
         off: jest.fn(),
         options: { maxZoom: 18, minZoom: 0 },
         removeLayer: jest.fn(),
+        getPane: jest.fn(() => document.querySelector('#test-map')),
         whenReady: jest.fn((callback) => {
           callback();
           return { on: jest.fn(), off: jest.fn() };
@@ -205,6 +214,7 @@ describe('useLeafletMap', () => {
         off: jest.fn(),
         options: { maxZoom: 18, minZoom: 0 },
         removeLayer: jest.fn(),
+        getPane: jest.fn(() => document.querySelector('#test-map')),
         whenReady: jest.fn(() => {
           // Don't call callback - map never becomes ready
           return { on: jest.fn(), off: jest.fn() };
@@ -243,10 +253,12 @@ describe('useLeafletMap', () => {
       );
 
       await waitFor(() => {
-        const overlay = mockContainer.querySelector('div');
+        const overlay = mockContainer.querySelector(
+          '[style*="pointer-events: none"]'
+        ) as HTMLDivElement | null;
         expect(overlay).toBeTruthy();
         expect(overlay?.style.backgroundColor).toBe('rgba(255, 0, 0, 0.5)');
-        expect(overlay?.style.zIndex).toBe('1000');
+        expect(overlay?.style.zIndex).toBe('250');
       });
     });
   });

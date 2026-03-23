@@ -113,7 +113,7 @@ export function MapStyleSection({
             {sourcePresetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl={tileUrls?.[key]}
+                imageUrl={tileUrls?.[key] || undefined}
                 label={preset.name}
                 onClick={() => handleStyleChange(preset.url, preset.attribution)}
                 active={settings.tileLayerUrl === preset.url}
@@ -140,7 +140,7 @@ export function MapStyleSection({
             {overlayPresetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl={tileUrls?.[key]}
+                imageUrl={tileUrls?.[key] || undefined}
                 label={preset.name}
                 onClick={() => handleOverlayChange(preset.url, preset.attribution)}
                 active={settings.overlayTileLayerUrl === preset.url}
@@ -184,6 +184,7 @@ export function MapStyleSection({
               <Box style={{ gridColumn: `span ${Math.max(editorCols - 1, 1)}` }}>
                 <ColorRgbaTextInput
                   color={selectedTintColor}
+                  label="Map tint color"
                   onChange={(nextColor) => {
                     const newSwatches = [...mapTintSwatches];
                     newSwatches[selectedMapTintSwatchIndex] = nextColor;
