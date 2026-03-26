@@ -1,7 +1,9 @@
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
-import { render, screen } from '@/test-utils';
+import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap from './ActivityMap';
+
+const mockLayersPanel = jest.fn();
 
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
@@ -29,8 +31,20 @@ jest.mock('./MapOrchestrator', () => ({
 
 jest.mock('./controls/LayersPanel/LayersPanel', () => ({
   __esModule: true,
-  default: function MockLayersPanel() {
-    return <div data-testid="layers-panel">Layers Panel</div>;
+  default: function MockLayersPanel(props: any) {
+    mockLayersPanel(props);
+    return (
+      <div data-testid="layers-panel">
+        Layers Panel
+        <button
+          data-testid="update-settings"
+          onClick={() => props.onSettingChange('showActivities', false)}
+          type="button"
+        >
+          Update settings
+        </button>
+      </div>
+    );
   },
 }));
 
@@ -40,6 +54,7 @@ const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeaflet
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.localStorage.clear();
 
     // Default mock implementations
     mockUseGPXData.mockReturnValue({
@@ -116,5 +131,51 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
     expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+  });
+
+  it('loads saved settings from anonymous localStorage key', () => {
+    window.localStorage.setItem(
+      'rr:map-settings:anon',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: { showActivities: false },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+    expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+  });
+
+  it('saves settings to user-specific localStorage key when user id is present', async () => {
+    window.localStorage.setItem('rr:user-id', 'user-123');
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+      expect(persisted).toBeTruthy();
+
+      const parsed = JSON.parse(persisted as string);
+      expect(parsed.version).toBe(1);
+      expect(parsed.settings.showActivities).toBe(true);
+    });
+  });
+
+  it('persists updated settings after user interaction', async () => {
+    render(<ActivityMap />);
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      const persisted = window.localStorage.getItem('rr:map-settings:anon');
+      expect(persisted).toBeTruthy();
+
+      const parsed = JSON.parse(persisted as string);
+      expect(parsed.settings.showActivities).toBe(false);
+    });
   });
 });
