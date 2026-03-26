@@ -53,8 +53,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-infinite-scroll-component": "^6.1.1",
-    "strava-v3": "^2.2.1",
     "sonic-boom": "^4.2.0",
+    "strava-v3": "^2.2.1",
     "tsx": "^4.7.0"
   },
   "devDependencies": {
