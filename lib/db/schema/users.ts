@@ -27,23 +27,23 @@ export interface UserSettingsLineColorSwatch {
 }
 
 export interface UserMapSettings {
-  activityMode: 'heatmap' | 'lines';
-  showActivities: boolean;
-  activityThickness: number;
-  heatmapDensity: number;
-  lineColorSwatches: UserSettingsLineColorSwatch[];
-  selectedLineSwatchIndex: number;
+  activityMode?: 'heatmap' | 'lines';
+  showActivities?: boolean;
+  activityThickness?: number;
+  heatmapDensity?: number;
+  lineColorSwatches?: UserSettingsLineColorSwatch[];
+  selectedLineSwatchIndex?: number;
   activityHeatmapColorSwatches?: UserSettingsColorThreshold[][];
   selectedActivityHeatmapSwatchIndex?: number;
-  regionMode: 'heatmap' | 'static';
-  showRegions: boolean;
-  regionBorderThickness: number;
-  regionStaticColorSwatches: UserSettingsColorThreshold[][];
-  selectedRegionStaticSwatchIndex: number;
+  regionMode?: 'heatmap' | 'static';
+  showRegions?: boolean;
+  regionBorderThickness?: number;
+  regionStaticColorSwatches?: UserSettingsColorThreshold[][];
+  selectedRegionStaticSwatchIndex?: number;
   regionHeatmapColorSwatches?: UserSettingsColorThreshold[][];
   selectedRegionHeatmapSwatchIndex?: number;
-  tileLayerUrl: string;
-  attribution: string;
+  tileLayerUrl?: string;
+  attribution?: string;
   overlayTileLayerUrl?: string;
   overlayAttribution?: string;
   mapSourceMonochrome?: boolean;

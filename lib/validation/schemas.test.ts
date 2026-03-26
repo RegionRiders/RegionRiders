@@ -151,6 +151,33 @@ describe('validation schemas', () => {
         const result = userSchemas.update.safeParse(validUpdate);
         expect(result.success).toBe(true);
       });
+
+      it('should allow selectedLineSwatchIndex at the last swatch position', () => {
+        const validUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 1,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+            ],
+          },
+        };
+
+        const result = userSchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject out-of-bounds selectedLineSwatchIndex', () => {
+        const invalidUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 2,
+            lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+          },
+        };
+
+        const result = userSchemas.update.safeParse(invalidUpdate);
+        expect(result.success).toBe(false);
+      });
     });
 
     describe('tokenUpdate', () => {

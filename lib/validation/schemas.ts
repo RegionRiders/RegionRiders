@@ -20,16 +20,16 @@ const mapSettingsSchema = z.object({
   activityThickness: z.number().optional(),
   heatmapDensity: z.number().optional(),
   lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
-  selectedLineSwatchIndex: z.number().int().optional(),
+  selectedLineSwatchIndex: z.number().int().min(0).optional(),
   activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedActivityHeatmapSwatchIndex: z.number().int().optional(),
+  selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
   regionMode: z.enum(['heatmap', 'static']).optional(),
   showRegions: z.boolean().optional(),
   regionBorderThickness: z.number().optional(),
   regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedRegionStaticSwatchIndex: z.number().int().optional(),
+  selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),
   regionHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedRegionHeatmapSwatchIndex: z.number().int().optional(),
+  selectedRegionHeatmapSwatchIndex: z.number().int().min(0).optional(),
   tileLayerUrl: z.string().optional(),
   attribution: z.string().optional(),
   overlayTileLayerUrl: z.string().optional(),
@@ -37,8 +37,59 @@ const mapSettingsSchema = z.object({
   mapSourceMonochrome: z.boolean().optional(),
   mapOverlayMonochrome: z.boolean().optional(),
   mapTintSwatches: z.array(rgbaSchema).optional(),
-  selectedMapTintSwatchIndex: z.number().int().optional(),
-});
+  selectedMapTintSwatchIndex: z.number().int().min(0).optional(),
+})
+  .refine(
+    (data) =>
+      data.selectedLineSwatchIndex == null ||
+      data.lineColorSwatches == null ||
+      data.selectedLineSwatchIndex < data.lineColorSwatches.length,
+    {
+      message: 'selectedLineSwatchIndex must be within lineColorSwatches bounds',
+      path: ['selectedLineSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedActivityHeatmapSwatchIndex == null ||
+      data.activityHeatmapColorSwatches == null ||
+      data.selectedActivityHeatmapSwatchIndex < data.activityHeatmapColorSwatches.length,
+    {
+      message:
+        'selectedActivityHeatmapSwatchIndex must be within activityHeatmapColorSwatches bounds',
+      path: ['selectedActivityHeatmapSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedRegionStaticSwatchIndex == null ||
+      data.regionStaticColorSwatches == null ||
+      data.selectedRegionStaticSwatchIndex < data.regionStaticColorSwatches.length,
+    {
+      message: 'selectedRegionStaticSwatchIndex must be within regionStaticColorSwatches bounds',
+      path: ['selectedRegionStaticSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedRegionHeatmapSwatchIndex == null ||
+      data.regionHeatmapColorSwatches == null ||
+      data.selectedRegionHeatmapSwatchIndex < data.regionHeatmapColorSwatches.length,
+    {
+      message: 'selectedRegionHeatmapSwatchIndex must be within regionHeatmapColorSwatches bounds',
+      path: ['selectedRegionHeatmapSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedMapTintSwatchIndex == null ||
+      data.mapTintSwatches == null ||
+      data.selectedMapTintSwatchIndex < data.mapTintSwatches.length,
+    {
+      message: 'selectedMapTintSwatchIndex must be within mapTintSwatches bounds',
+      path: ['selectedMapTintSwatchIndex'],
+    }
+  );
 
 /**
  * User validation schemas
