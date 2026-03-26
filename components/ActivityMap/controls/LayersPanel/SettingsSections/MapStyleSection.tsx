@@ -156,7 +156,11 @@ export function MapStyleSection({
             selectedIndex={selectedMapTintSwatchIndex}
             onSwatchSelect={(index) => onSettingChange('selectedMapTintSwatchIndex', index)}
             renderEditButton={() => (
-              <ColorSwatchButton color={selectedTintColor} onClick={handleOpenTintEditor}>
+              <ColorSwatchButton
+                color={selectedTintColor}
+                ariaLabel="Map tint color"
+                onClick={handleOpenTintEditor}
+              >
                 <IconEdit
                   color="black"
                   stroke={3}
