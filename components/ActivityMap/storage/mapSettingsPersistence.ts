@@ -40,7 +40,11 @@ export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapS
       return null;
     }
 
-    if ('version' in parsed && 'settings' in parsed && parsed.version === MAP_SETTINGS_STORAGE_VERSION) {
+    if (
+      'version' in parsed &&
+      'settings' in parsed &&
+      parsed.version === MAP_SETTINGS_STORAGE_VERSION
+    ) {
       return isObject(parsed.settings) ? (parsed.settings as Partial<MapSettings>) : null;
     }
 

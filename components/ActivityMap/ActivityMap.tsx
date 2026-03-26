@@ -5,17 +5,17 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { getPersistedMapSettingsUserId } from '@/components/ActivityMap/auth/getPersistedMapSettingsUserId';
 import { DEFAULT_MAP_TINT_SWATCHES } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
-import { useGPXData } from '@/hooks/useGPXData';
-import MapContainer from './MapContainer';
-import MapOrchestrator from './MapOrchestrator';
-import styles from './ActivityMap.module.css';
-import { getPersistedMapSettingsUserId } from '@/components/ActivityMap/auth/getPersistedMapSettingsUserId';
 import {
   loadMapSettingsFromStorage,
   saveMapSettingsToStorage,
 } from '@/components/ActivityMap/storage/mapSettingsPersistence';
+import { useGPXData } from '@/hooks/useGPXData';
+import MapContainer from './MapContainer';
+import MapOrchestrator from './MapOrchestrator';
+import styles from './ActivityMap.module.css';
 
 import 'leaflet/dist/leaflet.css';
 
