@@ -52,6 +52,7 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.showRegions,
     settings.regionMode,
     settings.regionBorderThickness,
+    settings.regionLayerTransparency ?? 1,
     settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex],
     settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex ?? 0] ??
       REGION_VISIT_HEATMAP_COLOR_THRESHOLDS

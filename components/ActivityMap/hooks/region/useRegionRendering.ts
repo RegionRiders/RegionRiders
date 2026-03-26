@@ -20,6 +20,7 @@ export function useRegionRendering(
   showRegions: boolean = true,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = 2,
+  regionLayerTransparency: number = 1,
   regionStaticColor: ColorThreshold[] = [
     { threshold: 0, color: [60, 60, 60, 0] },
     { threshold: 1, color: [76, 107, 34, 0.2] },
@@ -67,6 +68,7 @@ export function useRegionRendering(
       mode,
       visitData,
       calculateWeightForZoom(map.getZoom(), regionBorderThickness),
+      regionLayerTransparency,
       regionStaticColor,
       regionHeatmapColor
     );
@@ -74,7 +76,15 @@ export function useRegionRendering(
     const duration = (performance.now() - startTime).toFixed(2);
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
-  }, [regions, showRegions, mode, regionBorderThickness, regionStaticColor, regionHeatmapColor]);
+  }, [
+    regions,
+    showRegions,
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    regionStaticColor,
+    regionHeatmapColor,
+  ]);
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {
@@ -95,6 +105,7 @@ export function useRegionRendering(
       mode,
       visitData,
       calculateWeightForZoom(map.getZoom(), regionBorderThickness),
+      regionLayerTransparency,
       regionStaticColor,
       regionHeatmapColor
     );
@@ -104,5 +115,13 @@ export function useRegionRendering(
     logger.debug(`Updated styles for ${visitedCount} visited regions (${duration}ms)`);
 
     lastVisitDataSizeRef.current = visitData.size;
-  }, [map, visitData, mode, regionBorderThickness, regionStaticColor, regionHeatmapColor]);
+  }, [
+    map,
+    visitData,
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    regionStaticColor,
+    regionHeatmapColor,
+  ]);
 }

@@ -138,6 +138,20 @@ export function RegionsSection({
             />
           </div>
 
+          <div>
+            <Text size="sm">
+              Layer transparency: {Math.round((settings.regionLayerTransparency ?? 1) * 100)}%
+            </Text>
+            <Slider
+              w="100%"
+              min={0}
+              max={1}
+              step={0.05}
+              value={settings.regionLayerTransparency ?? 1}
+              onChange={(value) => onSettingChange('regionLayerTransparency', value)}
+            />
+          </div>
+
           {settings.regionMode === 'static' && settings.regionStaticColorSwatches.length > 0 && (
             <ColorSchemeSwatchesGrid
               mode="static"

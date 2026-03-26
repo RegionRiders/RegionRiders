@@ -25,6 +25,7 @@ export interface MapSettings {
   regionMode: RegionRenderMode;
   showRegions: boolean;
   regionBorderThickness: number;
+  regionLayerTransparency?: number;
   regionStaticColorSwatches: ColorThreshold[][];
   selectedRegionStaticSwatchIndex: number;
   regionHeatmapColorSwatches?: ColorThreshold[][];

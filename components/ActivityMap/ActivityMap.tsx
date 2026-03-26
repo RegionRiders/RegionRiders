@@ -103,6 +103,7 @@ export default function ActivityMap() {
     regionMode: 'heatmap',
     showRegions: true,
     regionBorderThickness: 2,
+    regionLayerTransparency: 1,
     regionStaticColorSwatches: [
       [
         { threshold: 0, color: [60, 60, 60, 0] },

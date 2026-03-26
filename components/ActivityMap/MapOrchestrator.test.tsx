@@ -53,6 +53,7 @@ describe('MapOrchestrator', () => {
     regionMode: 'heatmap',
     showRegions: true,
     regionBorderThickness: 2,
+    regionLayerTransparency: 1,
     regionStaticColorSwatches: [
       [
         { threshold: 0, color: [60, 60, 60, 0] },
@@ -121,6 +122,7 @@ describe('MapOrchestrator', () => {
       defaultSettings.showRegions,
       defaultSettings.regionMode,
       defaultSettings.regionBorderThickness,
+      defaultSettings.regionLayerTransparency ?? 1,
       defaultSettings.regionStaticColorSwatches[defaultSettings.selectedRegionStaticSwatchIndex],
       defaultSettings.regionHeatmapColorSwatches?.[
         defaultSettings.selectedRegionHeatmapSwatchIndex ?? 0
@@ -159,6 +161,7 @@ describe('MapOrchestrator', () => {
       false,
       customSettings.regionMode,
       customSettings.regionBorderThickness,
+      customSettings.regionLayerTransparency ?? 1,
       customSettings.regionStaticColorSwatches[customSettings.selectedRegionStaticSwatchIndex],
       customSettings.regionHeatmapColorSwatches?.[
         customSettings.selectedRegionHeatmapSwatchIndex ?? 0
