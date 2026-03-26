@@ -1,191 +1,85 @@
 import { renderHook } from '@testing-library/react';
-import { GeoJSON } from 'geojson';
-import { Regions } from '@/lib/types';
+import L from 'leaflet';
 import { useRegionRendering } from './useRegionRendering';
 
-// Mock the drawing function
-jest.mock('../drawRegions/drawRegions', () => ({
-  drawRegions: jest.fn(() => [
-    {
-      setStyle: jest.fn(),
+jest.mock('leaflet.vectorgrid', () => ({}));
+
+jest.mock('@/lib/services/maps/selectRenderProfile', () => ({
+  selectRegionRenderProfile: jest.fn(() => 'mobile'),
+}));
+
+jest.mock('@/components/ActivityMap/config/regionTileProfiles', () => ({
+  getRegionTileProfileConfig: jest.fn(() => ({
+    sourceUrl: 'http://localhost:3000/data/regions/tiles/v1/{z}/{x}/{y}.pbf',
+    layerName: 'regions',
+    paneName: 'regionsPane',
+    minZoom: 4,
+    maxZoom: 12,
+    style: {
+      color: '#c51b1f',
+      weight: 1,
+      fillColor: '#c51b1f',
+      fillOpacity: 0.08,
+      opacity: 0.9,
     },
-  ]),
+  })),
 }));
 
 describe('useRegionRendering', () => {
+  const addTo = jest.fn();
+  const on = jest.fn();
+  const off = jest.fn();
+
+  const mockLayer: any = {
+    addTo,
+    on,
+    off,
+  };
+
   const mockMap = {
-    on: jest.fn(),
-    off: jest.fn(),
-    invalidateSize: jest.fn(),
-    getZoom: jest.fn(() => 10),
     hasLayer: jest.fn(() => false),
     removeLayer: jest.fn(),
+    getPane: jest.fn(() => null),
+    createPane: jest.fn(() => ({ style: { zIndex: '' } })),
   } as any;
-
-  const mockPolygon: GeoJSON.Polygon = {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [0, 0],
-        [1, 0],
-        [1, 1],
-        [0, 1],
-        [0, 0],
-      ],
-    ],
-  };
-
-  const mockRegion: Regions = {
-    id: 'region1',
-    name: 'Test Region',
-    country: 'Test Country',
-    adminLevel: 1,
-    geometry: mockPolygon,
-    properties: {},
-  };
-
-  const mockRegionVisits = new Map([
-    [
-      'region1',
-      {
-        regionId: 'region1',
-        regionName: 'Test Region',
-        visitCount: 5,
-        trackIds: ['track1'],
-        visited: true,
-        geometry: mockPolygon,
-      },
-    ],
-  ]);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (L as any).vectorGrid = {
+      protobuf: jest.fn(() => mockLayer),
+    };
   });
 
-  describe('initialization', () => {
-    it('should handle null map', () => {
-      expect(() => {
-        renderHook(() => useRegionRendering(null, [mockRegion], mockRegionVisits, true));
-      }).not.toThrow();
-    });
+  it('does nothing when map is null', () => {
+    renderHook(() => useRegionRendering(null, true));
 
-    it('should handle null region visits', () => {
-      const emptyVisits = new Map();
-      expect(() => {
-        renderHook(() => useRegionRendering(mockMap, [mockRegion], emptyVisits, true));
-      }).not.toThrow();
-    });
-
-    it('should handle empty regions', () => {
-      expect(() => {
-        renderHook(() => useRegionRendering(mockMap, [], mockRegionVisits, true));
-      }).not.toThrow();
-    });
+    expect((L as any).vectorGrid.protobuf).not.toHaveBeenCalled();
   });
 
-  describe('rendering', () => {
-    it('should render regions when map and visits are provided', () => {
-      expect(() => {
-        renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
-      }).not.toThrow();
-    });
+  it('does not render layer when borders are hidden', () => {
+    renderHook(() => useRegionRendering(mockMap, false));
 
-    it('should clear old layers before rendering new ones', () => {
-      mockMap.hasLayer.mockReturnValue(true);
-
-      // First render
-      const { rerender } = renderHook(
-        ({ map, regions, visits, show }) => useRegionRendering(map, regions, visits, show),
-        {
-          initialProps: {
-            map: mockMap,
-            regions: [mockRegion],
-            visits: mockRegionVisits,
-            show: true,
-          },
-        }
-      );
-
-      // Clear the mock to check second render
-      mockMap.removeLayer.mockClear();
-
-      // Second render should clear old layers
-      rerender({
-        map: mockMap,
-        regions: [mockRegion],
-        visits: mockRegionVisits,
-        show: true,
-      });
-
-      expect(mockMap.removeLayer).toHaveBeenCalled();
-    });
-
-    it('should handle zoom events and adjust layer weights', () => {
-      mockMap.getZoom.mockReturnValue(12);
-
-      renderHook(() => useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true));
-
-      expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
-
-      // Simulate zoom event by finding the registered handler safely
-      const calls = mockMap.on.mock.calls as Array<[string, (...args: any[]) => void]>;
-      const zoomCall = calls.find((c) => c[0] === 'zoomend');
-      const zoomHandler = zoomCall ? zoomCall[1] : undefined;
-
-      if (zoomHandler) {
-        zoomHandler();
-      }
-
-      // Should adjust weight based on zoom (no throw)
-    });
+    expect((L as any).vectorGrid.protobuf).not.toHaveBeenCalled();
   });
 
-  describe('dependencies', () => {
-    it('should re-render when regionVisits change', () => {
-      const { rerender } = renderHook(
-        ({ visits }) => useRegionRendering(mockMap, [mockRegion], visits, true),
-        { initialProps: { visits: mockRegionVisits } }
-      );
+  it('creates vector tile layer and adds it to map', () => {
+    renderHook(() => useRegionRendering(mockMap, true));
 
-      const newVisits = new Map([
-        [
-          'region1',
-          {
-            regionId: 'region1',
-            regionName: 'Test Region',
-            visitCount: 5,
-            trackIds: ['track1'],
-            visited: true,
-            geometry: mockPolygon,
-          },
-        ],
-        [
-          'region2',
-          {
-            regionId: 'region2',
-            regionName: 'Region 2',
-            visitCount: 3,
-            trackIds: ['track2'],
-            visited: true,
-            geometry: mockPolygon,
-          },
-        ],
-      ]);
-
-      expect(() => rerender({ visits: newVisits })).not.toThrow();
-    });
+    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
+    expect(addTo).toHaveBeenCalledWith(mockMap);
+    expect(on).toHaveBeenCalledWith('load', expect.any(Function));
+    expect(on).toHaveBeenCalledWith('tileerror', expect.any(Function));
   });
 
-  it('should clean up layers and event listeners on unmount', () => {
+  it('cleans up tile listeners and map layer on unmount', () => {
     mockMap.hasLayer.mockReturnValue(true);
 
-    const { unmount } = renderHook(() =>
-      useRegionRendering(mockMap, [mockRegion], mockRegionVisits, true)
-    );
+    const { unmount } = renderHook(() => useRegionRendering(mockMap, true));
 
     unmount();
 
-    expect(mockMap.off).toHaveBeenCalledWith('zoomend', expect.any(Function));
-    expect(mockMap.removeLayer).toHaveBeenCalled();
+    expect(off).toHaveBeenCalledWith('load', expect.any(Function));
+    expect(off).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
   });
 });

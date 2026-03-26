@@ -1,79 +1,91 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
+
+import 'leaflet.vectorgrid';
+
+import { getRegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
+import { ensureMapPane } from '@/components/ActivityMap/drawActivities/utils/ensureMapPane';
 import { createComponentLogger } from '@/lib/logger/client';
-import { Regions } from '@/lib/types';
-import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
-import { drawRegions } from '../drawRegions/drawRegions';
+import {
+  logRegionTileError,
+  markFirstRegionLayerAdded,
+} from '@/lib/services/maps/regionPerfMetrics';
+import { selectRegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
 
 const logger = createComponentLogger('useRegionRendering');
+
 /**
- * Hook to handle region border rendering
- * Manages layer lifecycle and Zoom-based weight adjustment
+ * Renders region polygons from vector tiles using Leaflet VectorGrid.
+ * Uses profile-based styling tuned for mobile and desktop.
  */
-export function useRegionRendering(
-  map: L.Map | null,
-  regions: Regions[],
-  visitData: Map<string, RegionVisitData>,
-  showBorders: boolean = true
-) {
-  const regionLayersRef = useRef<any[]>([]);
+export function useRegionRendering(map: L.Map | null, showBorders: boolean = true) {
+  const regionLayerRef = useRef<L.Layer | null>(null);
+  const profile = useMemo(() => selectRegionRenderProfile(), []);
+  const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
 
   useEffect(() => {
-    if (!map || regions.length === 0) {
+    if (!map || !showBorders) {
       return;
     }
 
-    const startTime = performance.now();
+    ensureMapPane(map, config.paneName, '430');
 
-    // Clear old layers
-    if (regionLayersRef.current && Array.isArray(regionLayersRef.current)) {
-      regionLayersRef.current.forEach((layer: any) => {
-        if (map.hasLayer(layer)) {
-          map.removeLayer(layer);
-        }
-      });
-      regionLayersRef.current = [];
+    if (regionLayerRef.current && map.hasLayer(regionLayerRef.current)) {
+      map.removeLayer(regionLayerRef.current);
+      regionLayerRef.current = null;
     }
 
-    if (showBorders) {
-      const calculateWeightForZoom = (zoom: number): number => {
-        return 2 ** ((zoom - 10) / 2.5);
-      };
+    const vectorGridFactory = (L as any).vectorGrid;
 
-      const initialWeight = calculateWeightForZoom(map.getZoom());
-      // TODO: implement region onClick handling
-      regionLayersRef.current = drawRegions(map, regions, visitData, undefined, initialWeight);
-
-      const duration = (performance.now() - startTime).toFixed(2);
-      const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
-
-      logger.debug(`Drew ${visitedCount}/${regions.length} regions (${duration}ms)`);
-
-      // Handle Zoom-based weight adjustment
-      const handleZoom = () => {
-        const zoom = map.getZoom();
-        const weight = calculateWeightForZoom(zoom);
-        if (Array.isArray(regionLayersRef.current)) {
-          regionLayersRef.current.forEach((layer: any) => {
-            layer.setStyle({ weight });
-          });
-        }
-      };
-
-      map.on('zoomend', handleZoom);
-
-      return () => {
-        map.off('zoomend', handleZoom);
-        if (Array.isArray(regionLayersRef.current)) {
-          regionLayersRef.current.forEach((layer: any) => {
-            if (map.hasLayer(layer)) {
-              map.removeLayer(layer);
-            }
-          });
-        }
-      };
+    if (!vectorGridFactory?.protobuf) {
+      logger.error('Leaflet.VectorGrid plugin not available');
+      return;
     }
-  }, [map, regions, showBorders, visitData]);
+
+    const layer = vectorGridFactory.protobuf(config.sourceUrl, {
+      interactive: false,
+      pane: config.paneName,
+      minZoom: config.minZoom,
+      maxZoom: config.maxZoom,
+      vectorTileLayerStyles: {
+        [config.layerName]: {
+          color: config.style.color,
+          weight: config.style.weight,
+          fillColor: config.style.fillColor,
+          fillOpacity: config.style.fillOpacity,
+          opacity: config.style.opacity,
+        },
+      },
+    }) as L.Layer;
+
+    const handleTileLoad = () => {
+      markFirstRegionLayerAdded();
+    };
+
+    const handleTileError = (event: unknown) => {
+      logRegionTileError(event);
+    };
+
+    layer.on('load', handleTileLoad);
+    layer.on('tileerror', handleTileError);
+    layer.addTo(map);
+    regionLayerRef.current = layer;
+
+    logger.info(`Vector tile regions enabled with ${profile} profile`);
+
+    return () => {
+      layer.off('load', handleTileLoad);
+      layer.off('tileerror', handleTileError);
+
+      if (map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+
+      if (regionLayerRef.current === layer) {
+        regionLayerRef.current = null;
+      }
+    };
+  }, [map, showBorders, config, profile]);
 }

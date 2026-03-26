@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { LeafletConfig } from '@/components/ActivityMap/types';
 import { createComponentLogger } from '@/lib/logger/client';
+import { markRegionMapReady, resetRegionPerfMetrics } from '@/lib/services/maps/regionPerfMetrics';
 
 const logger = createComponentLogger('useLeafletMap');
 
@@ -70,8 +71,11 @@ export function useLeafletMap(
         minZoom: config.minZoom,
       }).addTo(mapRef.current);
 
+      resetRegionPerfMetrics();
+
       // wait for map to be fully initialized
       mapRef.current.whenReady(() => {
+        markRegionMapReady();
         setIsReady(true);
         setError(null);
         logger.info('Map initialized and ready');
