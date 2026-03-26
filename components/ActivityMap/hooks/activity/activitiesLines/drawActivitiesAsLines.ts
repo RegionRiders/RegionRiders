@@ -36,6 +36,10 @@ export function drawActivitiesAsLines(
 
   // Ensure pane exists
   ensureMapPane(map, 'linesPane', '440');
+  const linesPane = map.getPane?.('linesPane');
+  if (linesPane) {
+    linesPane.style.opacity = String(refs.layerTransparency);
+  }
   const canvasRenderer = L.canvas({ pane: 'linesPane' });
 
   const renderLines = () => {
@@ -70,8 +74,8 @@ export function drawActivitiesAsLines(
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
 
         const color = rgbToHex(refs.lineColor[0], refs.lineColor[1], refs.lineColor[2]);
-        const opacity = refs.lineColor[3] * refs.layerTransparency;
-        const hoverOpacity = refs.lineHoverColor[3] * refs.layerTransparency;
+        const opacity = refs.lineColor[3];
+        const hoverOpacity = refs.lineHoverColor[3];
 
         const polyline = L.polyline(latlngs, {
           color,
@@ -130,6 +134,11 @@ export function drawActivitiesAsLines(
     if (map) {
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
+
+      const pane = map.getPane?.('linesPane');
+      if (pane) {
+        pane.style.opacity = '1';
+      }
 
       if (activityGroup && map.hasLayer(activityGroup)) {
         map.removeLayer(activityGroup);
