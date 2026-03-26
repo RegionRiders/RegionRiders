@@ -5,7 +5,7 @@
 
 import { cache } from 'react';
 import { desc, eq } from 'drizzle-orm';
-import { fingerprint, getDb, userSettings, users } from '@/lib/db';
+import { fingerprint, getDb, users, userSettings } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
 import type { GetUsersOptions, User, UserSettings } from '../types';
 

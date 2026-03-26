@@ -5,17 +5,17 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { closePool, type NewUser } from '@/lib/db';
 import {
-  createUserSettings,
   createUser,
+  createUserSettings,
   deactivateUser,
-  deleteUserSettings,
   deleteUser,
+  deleteUserSettings,
   findOrCreateUser,
   getAllUsers,
   getUserByEmail,
   getUserById,
-  getUserSettingsByUserId,
   getUserByStravaId,
+  getUserSettingsByUserId,
   haveUserSettingsChanged,
   updateUser,
   updateUserSettings,
@@ -328,7 +328,10 @@ describe('User Operations', () => {
       });
       expect(changed).toBe(true);
 
-      const unchanged = await haveUserSettingsChanged(createdUserId, updated?.settings ?? undefined);
+      const unchanged = await haveUserSettingsChanged(
+        createdUserId,
+        updated?.settings ?? undefined
+      );
       expect(unchanged).toBe(false);
 
       const upserted = await upsertUserSettings(createdUserId, {

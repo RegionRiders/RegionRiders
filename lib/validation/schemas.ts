@@ -14,33 +14,34 @@ const lineColorSwatchSchema = z.object({
   normal: rgbaSchema,
   hover: rgbaSchema,
 });
-const mapSettingsSchema = z.object({
-  activityMode: z.enum(['heatmap', 'lines']).optional(),
-  showActivities: z.boolean().optional(),
-  activityTransparency: z.number().min(0).max(1).optional(),
-  activityThickness: z.number().optional(),
-  heatmapDensity: z.number().optional(),
-  lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
-  selectedLineSwatchIndex: z.number().int().min(0).optional(),
-  activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
-  regionMode: z.enum(['heatmap', 'static']).optional(),
-  showRegions: z.boolean().optional(),
-  regionTransparency: z.number().min(0).max(1).optional(),
-  regionBorderThickness: z.number().optional(),
-  regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),
-  regionHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
-  selectedRegionHeatmapSwatchIndex: z.number().int().min(0).optional(),
-  tileLayerUrl: z.string().optional(),
-  attribution: z.string().optional(),
-  overlayTileLayerUrl: z.string().optional(),
-  overlayAttribution: z.string().optional(),
-  mapSourceMonochrome: z.boolean().optional(),
-  mapOverlayMonochrome: z.boolean().optional(),
-  mapTintSwatches: z.array(rgbaSchema).optional(),
-  selectedMapTintSwatchIndex: z.number().int().min(0).optional(),
-})
+const mapSettingsSchema = z
+  .object({
+    activityMode: z.enum(['heatmap', 'lines']).optional(),
+    showActivities: z.boolean().optional(),
+    activityTransparency: z.number().min(0).max(1).optional(),
+    activityThickness: z.number().optional(),
+    heatmapDensity: z.number().optional(),
+    lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
+    selectedLineSwatchIndex: z.number().int().min(0).optional(),
+    activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
+    regionMode: z.enum(['heatmap', 'static']).optional(),
+    showRegions: z.boolean().optional(),
+    regionTransparency: z.number().min(0).max(1).optional(),
+    regionBorderThickness: z.number().optional(),
+    regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),
+    regionHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedRegionHeatmapSwatchIndex: z.number().int().min(0).optional(),
+    tileLayerUrl: z.string().optional(),
+    attribution: z.string().optional(),
+    overlayTileLayerUrl: z.string().optional(),
+    overlayAttribution: z.string().optional(),
+    mapSourceMonochrome: z.boolean().optional(),
+    mapOverlayMonochrome: z.boolean().optional(),
+    mapTintSwatches: z.array(rgbaSchema).optional(),
+    selectedMapTintSwatchIndex: z.number().int().min(0).optional(),
+  })
   .refine(
     (data) =>
       data.selectedLineSwatchIndex == null ||
@@ -113,7 +114,7 @@ export const userSchemas = {
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().optional(),
   }),
- 
+
   tokenUpdate: z.object({
     accessToken: z.string().optional(),
     refreshToken: z.string().optional(),

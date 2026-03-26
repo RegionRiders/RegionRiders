@@ -104,7 +104,6 @@ describe('validation schemas', () => {
         const result = userSchemas.update.safeParse(invalidUpdate);
         expect(result.success).toBe(false);
       });
-
     });
 
     describe('tokenUpdate', () => {
