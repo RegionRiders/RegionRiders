@@ -9,7 +9,6 @@ describe('Users Table Schema', () => {
     expect(users.firstName).toBeDefined();
     expect(users.lastName).toBeDefined();
     expect(users.isActive).toBeDefined();
-    expect(users.settings).toBeDefined();
     expect(users.createdAt).toBeDefined();
     expect(users.updatedAt).toBeDefined();
   });
@@ -26,8 +25,6 @@ describe('Users Table Schema', () => {
       refreshToken: null,
       tokenExpiresAt: null,
       isActive: true,
-      settings: null,
-      metadata: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

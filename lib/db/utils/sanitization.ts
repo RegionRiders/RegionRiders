@@ -1,4 +1,5 @@
 import type { Activity, User } from '@/lib/db';
+import type { UserSettings } from '@/lib/db/schema/userSettings';
 
 /**
  * Data sanitization utilities for database logging
@@ -12,9 +13,10 @@ export const ALLOWED_USER_UPDATE_FIELDS = [
   'lastName',
   'isActive',
   'profilePicture',
-  'metadata',
   'updatedAt',
 ] as const;
+
+export const ALLOWED_USER_SETTINGS_UPDATE_FIELDS = ['settings', 'metadata', 'updatedAt'] as const;
 
 export const ALLOWED_ACTIVITY_UPDATE_FIELDS = [
   'stravaActivityId',
@@ -47,6 +49,11 @@ type SanitizedUserUpdateData = {
   lastName?: string;
   isActive?: boolean;
   profilePicture?: string;
+  updatedAt?: Date;
+};
+
+type SanitizedUserSettingsUpdateData = {
+  settings?: Record<string, any>;
   metadata?: Record<string, any>;
   updatedAt?: Date;
 };
@@ -88,6 +95,23 @@ export function sanitizeUserUpdateData(
 
   for (const [key, value] of Object.entries(data)) {
     if (ALLOWED_USER_UPDATE_FIELDS.includes(key as any) && value != null) {
+      (sanitized as Record<string, any>)[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Sanitize user settings update data for logging by allowing only non-sensitive fields.
+ */
+export function sanitizeUserSettingsUpdateData(
+  data: Partial<Omit<UserSettings, 'id' | 'userId' | 'createdAt'>>
+): SanitizedUserSettingsUpdateData {
+  const sanitized: SanitizedUserSettingsUpdateData = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    if (ALLOWED_USER_SETTINGS_UPDATE_FIELDS.includes(key as any) && value != null) {
       (sanitized as Record<string, any>)[key] = value;
     }
   }

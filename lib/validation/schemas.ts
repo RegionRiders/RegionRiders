@@ -102,8 +102,6 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().default(true),
-    settings: mapSettingsSchema.optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 
   update: z.object({
@@ -112,14 +110,28 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().optional(),
-    settings: mapSettingsSchema.optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
-
+ 
   tokenUpdate: z.object({
     accessToken: z.string().optional(),
     refreshToken: z.string().optional(),
     tokenExpiresAt: z.date().optional(),
+  }),
+};
+
+/**
+ * User settings validation schemas
+ */
+export const userSettingsSchemas = {
+  create: z.object({
+    userId: z.uuid(),
+    settings: mapSettingsSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  }),
+
+  update: z.object({
+    settings: mapSettingsSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 };
 
@@ -188,6 +200,8 @@ export const paginationSchema = z.object({
 export type UserCreateInput = z.infer<typeof userSchemas.create>;
 export type UserUpdateInput = z.infer<typeof userSchemas.update>;
 export type UserTokenUpdateInput = z.infer<typeof userSchemas.tokenUpdate>;
+export type UserSettingsCreateInput = z.infer<typeof userSettingsSchemas.create>;
+export type UserSettingsUpdateInput = z.infer<typeof userSettingsSchemas.update>;
 export type ActivityCreateInput = z.infer<typeof activitySchemas.create>;
 export type ActivityUpdateInput = z.infer<typeof activitySchemas.update>;
 export type ActivityFilters = z.infer<typeof activitySchemas.filters>;

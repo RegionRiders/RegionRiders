@@ -6,51 +6,12 @@
 import {
   boolean,
   index,
-  jsonb,
   pgTable,
   text,
   timestamp,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-
-export type UserSettingsRgba = [number, number, number, number];
-
-export interface UserSettingsColorThreshold {
-  threshold: number;
-  color: UserSettingsRgba;
-}
-
-export interface UserSettingsLineColorSwatch {
-  normal: UserSettingsRgba;
-  hover: UserSettingsRgba;
-}
-
-export interface UserMapSettings {
-  activityMode?: 'heatmap' | 'lines';
-  showActivities?: boolean;
-  activityThickness?: number;
-  heatmapDensity?: number;
-  lineColorSwatches?: UserSettingsLineColorSwatch[];
-  selectedLineSwatchIndex?: number;
-  activityHeatmapColorSwatches?: UserSettingsColorThreshold[][];
-  selectedActivityHeatmapSwatchIndex?: number;
-  regionMode?: 'heatmap' | 'static';
-  showRegions?: boolean;
-  regionBorderThickness?: number;
-  regionStaticColorSwatches?: UserSettingsColorThreshold[][];
-  selectedRegionStaticSwatchIndex?: number;
-  regionHeatmapColorSwatches?: UserSettingsColorThreshold[][];
-  selectedRegionHeatmapSwatchIndex?: number;
-  tileLayerUrl?: string;
-  attribution?: string;
-  overlayTileLayerUrl?: string;
-  overlayAttribution?: string;
-  mapSourceMonochrome?: boolean;
-  mapOverlayMonochrome?: boolean;
-  mapTintSwatches?: UserSettingsRgba[];
-  selectedMapTintSwatchIndex?: number;
-}
 
 export const users = pgTable(
   'users',
@@ -65,8 +26,6 @@ export const users = pgTable(
     refreshToken: text('refresh_token'),
     tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
     isActive: boolean('is_active').default(true).notNull(),
-    settings: jsonb('settings').$type<Partial<UserMapSettings>>(),
-    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

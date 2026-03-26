@@ -5,9 +5,9 @@
 
 import { cache } from 'react';
 import { desc, eq } from 'drizzle-orm';
-import { fingerprint, getDb, users } from '@/lib/db';
+import { fingerprint, getDb, userSettings, users } from '@/lib/db';
 import { dbLogger } from '@/lib/logger';
-import type { GetUsersOptions, User } from '../types';
+import type { GetUsersOptions, User, UserSettings } from '../types';
 
 /**
  * Get a user by ID
@@ -83,3 +83,27 @@ export const getAllUsers = cache(async (options?: GetUsersOptions): Promise<User
     return [];
   }
 });
+
+/**
+ * Get user settings by user ID
+ * Cached for the duration of the request (React cache)
+ */
+export const getUserSettingsByUserId = cache(
+  async (userId: string): Promise<UserSettings | undefined> => {
+    try {
+      const db = getDb();
+      const [settings] = await db
+        .select()
+        .from(userSettings)
+        .where(eq(userSettings.userId, userId))
+        .limit(1);
+      return settings;
+    } catch (error) {
+      dbLogger.error(
+        { error, userIdFingerprint: fingerprint(userId), operation: 'getUserSettingsByUserId' },
+        'Error fetching user settings by user ID'
+      );
+      return undefined;
+    }
+  }
+);

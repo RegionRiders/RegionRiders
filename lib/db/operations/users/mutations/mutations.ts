@@ -4,10 +4,18 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { encryptTokenField, fingerprint, getDb, users } from '@/lib/db';
-import { sanitizeUserUpdateData } from '@/lib/db/utils/sanitization';
+import { encryptTokenField, fingerprint, getDb, userSettings, users } from '@/lib/db';
+import { sanitizeUserSettingsUpdateData, sanitizeUserUpdateData } from '@/lib/db/utils/sanitization';
 import { dbLogger } from '@/lib/logger';
-import type { NewUser, User, UserTokenUpdate } from '../types';
+import type {
+  NewUser,
+  NewUserSettings,
+  User,
+  UserMapSettings,
+  UserSettings,
+  UserSettingsPatch,
+  UserTokenUpdate,
+} from '../types';
 
 /**
  * Create a new user
@@ -31,6 +39,28 @@ export async function createUser(data: NewUser): Promise<User> {
     dbLogger.error(
       { error, stravaIdFingerprint: fingerprint(data.stravaId), operation: 'createUser' },
       'Error creating user'
+    );
+    throw error;
+  }
+}
+
+/**
+ * Create settings row for a user
+ * @throws {Error} If user settings creation fails
+ */
+export async function createUserSettings(data: NewUserSettings): Promise<UserSettings> {
+  try {
+    const db = getDb();
+    const [settings] = await db.insert(userSettings).values(data).returning();
+    return settings;
+  } catch (error) {
+    dbLogger.error(
+      {
+        error,
+        userIdFingerprint: fingerprint(data.userId),
+        operation: 'createUserSettings',
+      },
+      'Error creating user settings'
     );
     throw error;
   }
@@ -68,6 +98,113 @@ export async function updateUser(
         hasRefreshToken: !!data.refreshToken,
       },
       'Error updating user'
+    );
+    throw error;
+  }
+}
+
+/**
+ * Upsert user settings by user ID for high-frequency settings writes.
+ */
+export async function upsertUserSettings(
+  userId: string,
+  patch: UserSettingsPatch
+): Promise<UserSettings> {
+  try {
+    const db = getDb();
+    const [settings] = await db
+      .insert(userSettings)
+      .values({
+        userId,
+        settings: patch.settings,
+        metadata: patch.metadata,
+      })
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: {
+          settings: patch.settings,
+          metadata: patch.metadata,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return settings;
+  } catch (error) {
+    dbLogger.error(
+      {
+        error,
+        userIdFingerprint: fingerprint(userId),
+        operation: 'upsertUserSettings',
+        hasSettings: patch.settings != null,
+        hasMetadata: patch.metadata != null,
+      },
+      'Error upserting user settings'
+    );
+    throw error;
+  }
+}
+
+/**
+ * Update user settings by user ID.
+ */
+export async function updateUserSettings(
+  userId: string,
+  data: Partial<Omit<UserSettings, 'id' | 'userId' | 'createdAt'>>
+): Promise<UserSettings | undefined> {
+  try {
+    const db = getDb();
+    const sanitized = sanitizeUserSettingsUpdateData(data);
+    const [settings] = await db
+      .update(userSettings)
+      .set({
+        ...sanitized,
+        updatedAt: new Date(),
+      })
+      .where(eq(userSettings.userId, userId))
+      .returning();
+
+    return settings;
+  } catch (error) {
+    dbLogger.error(
+      {
+        error,
+        userIdFingerprint: fingerprint(userId),
+        operation: 'updateUserSettings',
+        sanitizedData: sanitizeUserSettingsUpdateData(data),
+      },
+      'Error updating user settings'
+    );
+    throw error;
+  }
+}
+
+/**
+ * Returns true when persisted settings differ from given in-memory settings.
+ */
+export async function haveUserSettingsChanged(
+  userId: string,
+  inMemorySettings: Partial<UserMapSettings> | null | undefined
+): Promise<boolean> {
+  try {
+    const db = getDb();
+    const [stored] = await db
+      .select({ settings: userSettings.settings })
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+
+    const storedJson = JSON.stringify(stored?.settings ?? null);
+    const inMemoryJson = JSON.stringify(inMemorySettings ?? null);
+    return storedJson !== inMemoryJson;
+  } catch (error) {
+    dbLogger.error(
+      {
+        error,
+        userIdFingerprint: fingerprint(userId),
+        operation: 'haveUserSettingsChanged',
+      },
+      'Error checking whether user settings changed'
     );
     throw error;
   }
@@ -150,6 +287,23 @@ export async function deleteUser(id: string): Promise<boolean> {
     dbLogger.error(
       { error, userIdFingerprint: fingerprint(id), operation: 'deleteUser' },
       'Error deleting user'
+    );
+    throw error;
+  }
+}
+
+/**
+ * Delete settings row for a user.
+ */
+export async function deleteUserSettings(userId: string): Promise<boolean> {
+  try {
+    const db = getDb();
+    const result = await db.delete(userSettings).where(eq(userSettings.userId, userId));
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    dbLogger.error(
+      { error, userIdFingerprint: fingerprint(userId), operation: 'deleteUserSettings' },
+      'Error deleting user settings'
     );
     throw error;
   }

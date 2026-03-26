@@ -5,16 +5,22 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { closePool, type NewUser } from '@/lib/db';
 import {
+  createUserSettings,
   createUser,
   deactivateUser,
+  deleteUserSettings,
   deleteUser,
   findOrCreateUser,
   getAllUsers,
   getUserByEmail,
   getUserById,
+  getUserSettingsByUserId,
   getUserByStravaId,
+  haveUserSettingsChanged,
   updateUser,
+  updateUserSettings,
   updateUserTokens,
+  upsertUserSettings,
 } from './users';
 
 // Mock data
@@ -170,7 +176,6 @@ describe('User Operations', () => {
       const updatedData = {
         firstName: 'Updated',
         lastName: 'Name',
-        metadata: { testKey: 'testValue' },
       };
 
       const user = await updateUser(createdUserId, updatedData);
@@ -178,7 +183,6 @@ describe('User Operations', () => {
       expect(user).toBeDefined();
       expect(user?.firstName).toBe(updatedData.firstName);
       expect(user?.lastName).toBe(updatedData.lastName);
-      expect(user?.metadata).toEqual(updatedData.metadata);
     });
 
     it('should return undefined for non-existent id', async () => {
@@ -288,6 +292,52 @@ describe('User Operations', () => {
     it('should return false for non-existent id', async () => {
       const result = await deleteUser('00000000-0000-0000-0000-000000000000');
       expect(result).toBe(false);
+    });
+  });
+
+  describe('user settings operations', () => {
+    it('creates, reads, updates, checks, and deletes user settings', async () => {
+      const created = await createUserSettings({
+        userId: createdUserId,
+        settings: {
+          selectedLineSwatchIndex: 0,
+          lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+        },
+        metadata: { source: 'test' },
+      });
+      expect(created.userId).toBe(createdUserId);
+
+      const fetched = await getUserSettingsByUserId(createdUserId);
+      expect(fetched).toBeDefined();
+      expect(fetched?.metadata).toEqual({ source: 'test' });
+
+      const updated = await updateUserSettings(createdUserId, {
+        settings: {
+          selectedLineSwatchIndex: 1,
+          lineColorSwatches: [
+            { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+            { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+          ],
+        },
+      });
+      expect(updated?.settings).toBeDefined();
+
+      const changed = await haveUserSettingsChanged(createdUserId, {
+        selectedLineSwatchIndex: 0,
+        lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+      });
+      expect(changed).toBe(true);
+
+      const unchanged = await haveUserSettingsChanged(createdUserId, updated?.settings ?? undefined);
+      expect(unchanged).toBe(false);
+
+      const upserted = await upsertUserSettings(createdUserId, {
+        metadata: { source: 'upsert' },
+      });
+      expect(upserted.metadata).toEqual({ source: 'upsert' });
+
+      const deleted = await deleteUserSettings(createdUserId);
+      expect(deleted).toBe(true);
     });
   });
 
