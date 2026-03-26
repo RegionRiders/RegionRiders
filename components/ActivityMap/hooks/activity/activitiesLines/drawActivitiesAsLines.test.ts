@@ -155,8 +155,7 @@ describe('drawActivitiesAsLines', () => {
 
     expect(mockMap.getPane).toHaveBeenCalledWith('linesPane');
     const pane = mockMap.getPane.mock.results.find(
-      (result: { value?: { style?: { opacity?: string } } }) =>
-        result.value && result.value.style
+      (result: { value?: { style?: { opacity?: string } } }) => result.value && result.value.style
     )?.value;
     expect(pane?.style.opacity).toBe('0.4');
   });
@@ -197,8 +196,7 @@ describe('drawActivitiesAsLines', () => {
     cleanup();
 
     const pane = mockMap.getPane.mock.results.find(
-      (result: { value?: { style?: { opacity?: string } } }) =>
-        result.value && result.value.style
+      (result: { value?: { style?: { opacity?: string } } }) => result.value && result.value.style
     )?.value;
     expect(pane?.style.opacity).toBe('1');
   });
