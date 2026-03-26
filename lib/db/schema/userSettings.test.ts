@@ -25,6 +25,8 @@ describe('User Settings Table Schema', () => {
     const newSettings: NewUserSettings = {
       userId: 'user-uuid',
       settings: {
+        activityTransparency: 0.6,
+        regionTransparency: 0.4,
         lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
       },
     };

@@ -16,6 +16,7 @@ export interface UserSettingsLineColorSwatch {
 export interface UserMapSettings {
   activityMode?: 'heatmap' | 'lines';
   showActivities?: boolean;
+  activityTransparency?: number;
   activityThickness?: number;
   heatmapDensity?: number;
   lineColorSwatches?: UserSettingsLineColorSwatch[];
@@ -24,6 +25,7 @@ export interface UserMapSettings {
   selectedActivityHeatmapSwatchIndex?: number;
   regionMode?: 'heatmap' | 'static';
   showRegions?: boolean;
+  regionTransparency?: number;
   regionBorderThickness?: number;
   regionStaticColorSwatches?: UserSettingsColorThreshold[][];
   selectedRegionStaticSwatchIndex?: number;

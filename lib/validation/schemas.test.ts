@@ -141,6 +141,8 @@ describe('validation schemas', () => {
         const validInput = {
           userId: '550e8400-e29b-41d4-a716-446655440000',
           settings: {
+            activityTransparency: 0.7,
+            regionTransparency: 0.35,
             selectedLineSwatchIndex: 3,
             lineColorSwatches: [
               { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
@@ -158,6 +160,19 @@ describe('validation schemas', () => {
 
         const result = userSettingsSchemas.create.safeParse(validInput);
         expect(result.success).toBe(true);
+      });
+
+      it('should reject transparency values outside 0..1', () => {
+        const invalidInput = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          settings: {
+            activityTransparency: 1.2,
+            regionTransparency: -0.1,
+          },
+        };
+
+        const result = userSettingsSchemas.create.safeParse(invalidInput);
+        expect(result.success).toBe(false);
       });
 
       it('should reject invalid userId', () => {

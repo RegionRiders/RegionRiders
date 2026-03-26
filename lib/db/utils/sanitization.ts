@@ -13,10 +13,9 @@ export const ALLOWED_USER_UPDATE_FIELDS = [
   'lastName',
   'isActive',
   'profilePicture',
-  'updatedAt',
 ] as const;
 
-export const ALLOWED_USER_SETTINGS_UPDATE_FIELDS = ['settings', 'metadata', 'updatedAt'] as const;
+export const ALLOWED_USER_SETTINGS_UPDATE_FIELDS = ['settings', 'metadata'] as const;
 
 export const ALLOWED_ACTIVITY_UPDATE_FIELDS = [
   'stravaActivityId',
@@ -49,13 +48,11 @@ type SanitizedUserUpdateData = {
   lastName?: string;
   isActive?: boolean;
   profilePicture?: string;
-  updatedAt?: Date;
 };
 
 type SanitizedUserSettingsUpdateData = {
   settings?: Record<string, any>;
   metadata?: Record<string, any>;
-  updatedAt?: Date;
 };
 
 type SanitizedActivityUpdateData = {

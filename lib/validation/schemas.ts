@@ -17,6 +17,7 @@ const lineColorSwatchSchema = z.object({
 const mapSettingsSchema = z.object({
   activityMode: z.enum(['heatmap', 'lines']).optional(),
   showActivities: z.boolean().optional(),
+  activityTransparency: z.number().min(0).max(1).optional(),
   activityThickness: z.number().optional(),
   heatmapDensity: z.number().optional(),
   lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
@@ -25,6 +26,7 @@ const mapSettingsSchema = z.object({
   selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
   regionMode: z.enum(['heatmap', 'static']).optional(),
   showRegions: z.boolean().optional(),
+  regionTransparency: z.number().min(0).max(1).optional(),
   regionBorderThickness: z.number().optional(),
   regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
   selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),
