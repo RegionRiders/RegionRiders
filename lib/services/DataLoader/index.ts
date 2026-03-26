@@ -1,14 +1,8 @@
-import { GPXTrack, Regions } from '@/lib/types';
+import { GPXTrack } from '@/lib/types';
 import { GPXLoader } from './gpxLoader';
-import { RegionLoader } from './RegionLoader';
 
 /**
- * main data loading service - facade for gpx and region loaders
- * @example
- * ```
- * const tracks = await DataLoader.loadGPXTracks('api');
- * const regions = await DataLoader.loadRegions(bounds);
- * ```
+ * main data loading service - facade for GPX track loading
  */
 export class DataLoader {
   /**
@@ -22,21 +16,10 @@ export class DataLoader {
   }
 
   /**
-   * loads regions optionally filtered by bounds and countries
-   */
-  static async loadRegions(
-    bounds?: { north: number; south: number; east: number; west: number },
-    countries?: string[]
-  ): Promise<Regions[]> {
-    return RegionLoader.loadRegions(bounds, countries);
-  }
-
-  /**
-   * clears all cached data (gpx tracks and regions)
+   * clears cached gpx data
    */
   static clearCache(): void {
     GPXLoader.clearCache();
-    RegionLoader.clearCache();
   }
 
   /**
