@@ -36,8 +36,6 @@ describe('sanitizeUserUpdateData', () => {
       lastName: 'Doe',
       isActive: true,
       profilePicture: 'pic.jpg',
-      metadata: { key: 'value' },
-      updatedAt: input.updatedAt,
     });
 
     // Ensure sensitive fields are not included
@@ -46,6 +44,8 @@ describe('sanitizeUserUpdateData', () => {
     expect(result).not.toHaveProperty('refreshToken');
     expect(result).not.toHaveProperty('tokenExpiresAt');
     expect(result).not.toHaveProperty('stravaId');
+    expect(result).not.toHaveProperty('metadata');
+    expect(result).not.toHaveProperty('updatedAt');
   });
 
   it('should handle partial data', () => {

@@ -1,4 +1,4 @@
-import { activitySchemas, paginationSchema, userSchemas } from './schemas';
+import { activitySchemas, paginationSchema, userSchemas, userSettingsSchemas } from './schemas';
 
 describe('validation schemas', () => {
   describe('userSchemas', () => {
@@ -22,7 +22,6 @@ describe('validation schemas', () => {
           lastName: 'Doe',
           profilePicture: 'https://example.com/pic.jpg',
           isActive: true,
-          metadata: { key: 'value' },
         };
 
         const result = userSchemas.create.safeParse(validUser);
@@ -131,6 +130,87 @@ describe('validation schemas', () => {
       it('should allow empty token update', () => {
         const result = userSchemas.tokenUpdate.safeParse({});
         expect(result.success).toBe(true);
+      });
+    });
+  });
+
+  describe('userSettingsSchemas', () => {
+    describe('create', () => {
+      it('should validate settings create input', () => {
+        const validInput = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          settings: {
+            activityTransparency: 0.7,
+            regionTransparency: 0.35,
+            selectedLineSwatchIndex: 3,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+              { normal: [0, 0, 255, 0.5], hover: [100, 100, 255, 0.7] },
+              { normal: [255, 255, 0, 0.5], hover: [255, 255, 100, 0.7] },
+            ],
+            mapTintSwatches: [],
+            activityHeatmapColorSwatches: [],
+            regionStaticColorSwatches: [],
+            regionHeatmapColorSwatches: [],
+          },
+          metadata: { source: 'test' },
+        };
+
+        const result = userSettingsSchemas.create.safeParse(validInput);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject transparency values outside 0..1', () => {
+        const invalidInput = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          settings: {
+            activityTransparency: 1.2,
+            regionTransparency: -0.1,
+          },
+        };
+
+        const result = userSettingsSchemas.create.safeParse(invalidInput);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject invalid userId', () => {
+        const invalidInput = {
+          userId: 'not-a-uuid',
+          settings: {},
+        };
+
+        const result = userSettingsSchemas.create.safeParse(invalidInput);
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe('update', () => {
+      it('should allow selectedLineSwatchIndex at the last swatch position', () => {
+        const validUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 1,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+            ],
+          },
+        };
+
+        const result = userSettingsSchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject out-of-bounds selectedLineSwatchIndex', () => {
+        const invalidUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 2,
+            lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+          },
+        };
+
+        const result = userSettingsSchemas.update.safeParse(invalidUpdate);
+        expect(result.success).toBe(false);
       });
     });
   });

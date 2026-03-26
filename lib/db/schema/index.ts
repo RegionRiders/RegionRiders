@@ -4,6 +4,7 @@
  */
 
 export * from './users';
+export * from './userSettings';
 export * from './activities';
 
 // Query helpers for selective field loading
