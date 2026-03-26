@@ -2,6 +2,8 @@
  * User Types
  * Type definitions for user operations
  */
+import type { UserMapSettings } from '../../../schema/userSettings';
+
 export type { User, NewUser, UserUpdate } from '../../../schema/users';
 export type {
   NewUserSettings,
