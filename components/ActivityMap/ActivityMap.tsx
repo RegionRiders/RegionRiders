@@ -178,6 +178,7 @@ const DEFAULT_MAP_SETTINGS: MapSettings = {
  */
 export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { tracks } = useGPXData();
   const [persistedUserId] = useState<string | null>(() => getPersistedMapSettingsUserId());
 
@@ -192,7 +193,19 @@ export default function ActivityMap() {
   }, [persistedUserId]);
 
   useEffect(() => {
-    saveMapSettingsToStorage(settings, persistedUserId);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      saveMapSettingsToStorage(settings, persistedUserId);
+    }, 250);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [persistedUserId, settings]);
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {

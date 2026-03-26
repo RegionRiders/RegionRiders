@@ -1,6 +1,6 @@
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
-import { render, screen } from '@/test-utils';
+import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
@@ -149,29 +149,33 @@ describe('ActivityMap', () => {
     expect(latestLayersPanelProps.settings.showActivities).toBe(false);
   });
 
-  it('saves settings to user-specific localStorage key when user id is present', () => {
+  it('saves settings to user-specific localStorage key when user id is present', async () => {
     window.localStorage.setItem('rr:user-id', 'user-123');
 
     render(<ActivityMap />);
 
-    const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
-    expect(persisted).toBeTruthy();
+    await waitFor(() => {
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+      expect(persisted).toBeTruthy();
 
-    const parsed = JSON.parse(persisted as string);
-    expect(parsed.version).toBe(1);
-    expect(parsed.settings.showActivities).toBe(true);
+      const parsed = JSON.parse(persisted as string);
+      expect(parsed.version).toBe(1);
+      expect(parsed.settings.showActivities).toBe(true);
+    });
   });
 
-  it('persists updated settings after user interaction', () => {
+  it('persists updated settings after user interaction', async () => {
     render(<ActivityMap />);
 
     const button = screen.getByTestId('update-settings');
-    button.click();
+    await userEvent.click(button);
 
-    const persisted = window.localStorage.getItem('rr:map-settings:anon');
-    expect(persisted).toBeTruthy();
+    await waitFor(() => {
+      const persisted = window.localStorage.getItem('rr:map-settings:anon');
+      expect(persisted).toBeTruthy();
 
-    const parsed = JSON.parse(persisted as string);
-    expect(parsed.settings.showActivities).toBe(false);
+      const parsed = JSON.parse(persisted as string);
+      expect(parsed.settings.showActivities).toBe(false);
+    });
   });
 });
