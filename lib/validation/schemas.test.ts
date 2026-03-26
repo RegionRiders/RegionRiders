@@ -22,7 +22,36 @@ describe('validation schemas', () => {
           lastName: 'Doe',
           profilePicture: 'https://example.com/pic.jpg',
           isActive: true,
+          settings: {
+            lineColorSwatches: [
+              {
+                normal: [255, 0, 0, 0.5],
+                hover: [255, 100, 100, 0.7],
+              },
+            ],
+            mapTintSwatches: [
+              [0, 0, 0, 0],
+              [255, 255, 255, 0.2],
+              [255, 0, 0, 0.1],
+            ],
+          },
           metadata: { key: 'value' },
+        };
+
+        const result = userSchemas.create.safeParse(validUser);
+        expect(result.success).toBe(true);
+      });
+
+      it('should allow empty settings arrays for dynamic swatch counts', () => {
+        const validUser = {
+          email: 'test@example.com',
+          settings: {
+            lineColorSwatches: [],
+            mapTintSwatches: [],
+            activityHeatmapColorSwatches: [],
+            regionStaticColorSwatches: [],
+            regionHeatmapColorSwatches: [],
+          },
         };
 
         const result = userSchemas.create.safeParse(validUser);
@@ -104,6 +133,23 @@ describe('validation schemas', () => {
 
         const result = userSchemas.update.safeParse(invalidUpdate);
         expect(result.success).toBe(false);
+      });
+
+      it('should validate settings updates with variable swatch array lengths', () => {
+        const validUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 3,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+              { normal: [0, 0, 255, 0.5], hover: [100, 100, 255, 0.7] },
+              { normal: [255, 255, 0, 0.5], hover: [255, 255, 100, 0.7] },
+            ],
+          },
+        };
+
+        const result = userSchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
       });
     });
 

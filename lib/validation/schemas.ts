@@ -5,6 +5,41 @@
 
 import { z } from 'zod';
 
+const rgbaSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+const colorThresholdSchema = z.object({
+  threshold: z.number(),
+  color: rgbaSchema,
+});
+const lineColorSwatchSchema = z.object({
+  normal: rgbaSchema,
+  hover: rgbaSchema,
+});
+const mapSettingsSchema = z.object({
+  activityMode: z.enum(['heatmap', 'lines']).optional(),
+  showActivities: z.boolean().optional(),
+  activityThickness: z.number().optional(),
+  heatmapDensity: z.number().optional(),
+  lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
+  selectedLineSwatchIndex: z.number().int().optional(),
+  activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+  selectedActivityHeatmapSwatchIndex: z.number().int().optional(),
+  regionMode: z.enum(['heatmap', 'static']).optional(),
+  showRegions: z.boolean().optional(),
+  regionBorderThickness: z.number().optional(),
+  regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+  selectedRegionStaticSwatchIndex: z.number().int().optional(),
+  regionHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+  selectedRegionHeatmapSwatchIndex: z.number().int().optional(),
+  tileLayerUrl: z.string().optional(),
+  attribution: z.string().optional(),
+  overlayTileLayerUrl: z.string().optional(),
+  overlayAttribution: z.string().optional(),
+  mapSourceMonochrome: z.boolean().optional(),
+  mapOverlayMonochrome: z.boolean().optional(),
+  mapTintSwatches: z.array(rgbaSchema).optional(),
+  selectedMapTintSwatchIndex: z.number().int().optional(),
+});
+
 /**
  * User validation schemas
  */
@@ -16,6 +51,7 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().default(true),
+    settings: mapSettingsSchema.optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 
@@ -25,6 +61,7 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().optional(),
+    settings: mapSettingsSchema.optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 
