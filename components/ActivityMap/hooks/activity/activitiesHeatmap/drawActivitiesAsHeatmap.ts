@@ -26,6 +26,7 @@ function finishRender(
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
   lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS,
+  layerTransparency: number = 1,
   colorThresholds?: ColorThreshold[]
 ): void {
   if (renderAbortRef.current) {
@@ -72,7 +73,7 @@ function finishRender(
     data[pixelIndex] = r;
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = Math.round(a * 255);
+    data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -182,6 +183,7 @@ function renderHeatmapInternal(
           refs.renderAbortRef,
           map,
           lineThickness,
+          refs.layerTransparency,
           refs.heatmapColorThresholds
         )
     );

@@ -29,6 +29,7 @@ describe('RegionsSection', () => {
     regionMode: 'static',
     showRegions: true,
     regionBorderThickness: 2,
+    regionLayerTransparency: 1,
     regionStaticColorSwatches: [
       [
         { threshold: 0, color: [60, 60, 60, 0] as RGBA },
@@ -112,6 +113,14 @@ describe('RegionsSection', () => {
       );
 
       expect(screen.getByText(/Border thickness:/)).toBeInTheDocument();
+    });
+
+    it('should render layer transparency slider', () => {
+      render(
+        <RegionsSectionWrapper settings={defaultSettings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.getByText(/Layer transparency:/)).toBeInTheDocument();
     });
   });
 

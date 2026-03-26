@@ -21,6 +21,7 @@ export function useActivityRendering(
   showActivities: boolean = true,
   mode: ActivityRenderMode = 'heatmap',
   activityThickness: number = 3,
+  activityLayerTransparency: number = 1,
   heatmapDensity: number = 2,
   activityLineColor: LineColorSwatch = {
     normal: [255, 0, 0, 0.5],
@@ -48,6 +49,7 @@ export function useActivityRendering(
         renderTimeoutRef,
         heatmapDensity,
         lineThickness: activityThickness,
+        layerTransparency: activityLayerTransparency,
         heatmapColorThresholds,
       };
       return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
@@ -60,6 +62,7 @@ export function useActivityRendering(
       lineThickness: activityThickness,
       lineColor: activityLineColor.normal,
       lineHoverColor: activityLineColor.hover,
+      layerTransparency: activityLayerTransparency,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [
@@ -68,6 +71,7 @@ export function useActivityRendering(
     showActivities,
     mode,
     activityThickness,
+    activityLayerTransparency,
     heatmapDensity,
     activityLineColor,
     heatmapColorThresholds,

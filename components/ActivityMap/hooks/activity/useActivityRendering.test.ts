@@ -56,6 +56,7 @@ describe('useActivityRendering', () => {
         currentImageLayerRef: expect.any(Object),
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
+        layerTransparency: 1,
       })
     );
   });
@@ -72,6 +73,7 @@ describe('useActivityRendering', () => {
       expect.objectContaining({
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
+        layerTransparency: 1,
       })
     );
   });

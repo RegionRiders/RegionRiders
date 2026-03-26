@@ -93,6 +93,9 @@ describe('drawActivitiesAsHeatmap', () => {
       currentImageLayerRef,
       renderAbortRef,
       renderTimeoutRef,
+      heatmapDensity: 2,
+      lineThickness: 3,
+      layerTransparency: 1,
     } as HeatmapRefs;
   });
 

@@ -130,6 +130,20 @@ export function ActivitiesSection({
             />
           </div>
 
+          <div>
+            <Text size="sm">
+              Layer transparency: {Math.round((settings.activityLayerTransparency ?? 1) * 100)}%
+            </Text>
+            <Slider
+              w="100%"
+              min={0}
+              max={1}
+              step={0.05}
+              value={settings.activityLayerTransparency ?? 1}
+              onChange={(value) => onSettingChange('activityLayerTransparency', value)}
+            />
+          </div>
+
           {settings.activityMode === 'heatmap' && (
             <div>
               <Text size="sm"> Heatmap pixel density: {settings.heatmapDensity ?? 2}</Text>

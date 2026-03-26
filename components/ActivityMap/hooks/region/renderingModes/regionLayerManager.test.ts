@@ -113,7 +113,7 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1'), createMockRegion('2')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       expect(mockAddLayer).toHaveBeenCalledTimes(2);
     });
@@ -123,10 +123,10 @@ describe('RegionLayerManager', () => {
       const visitData = new Map<string, RegionVisitData>();
 
       // First sync with two regions
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       // Second sync with only one region
-      manager.syncRegions([createMockRegion('1')], 'static', visitData, 2, mockThresholds);
+      manager.syncRegions([createMockRegion('1')], 'static', visitData, 2, 1, mockThresholds);
 
       expect(mockRemoveLayer).toHaveBeenCalled();
     });
@@ -136,12 +136,12 @@ describe('RegionLayerManager', () => {
       const visitData = new Map<string, RegionVisitData>();
 
       // First sync
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       const initialAddLayerCount = mockAddLayer.mock.calls.length;
 
       // Second sync with same region
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       // Should update style and bring to front, not add new layer
       expect(mockSetStyle).toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe('RegionLayerManager', () => {
         ['1', createMockVisitData('1', true, 5)],
       ]);
 
-      manager.syncRegions(regions, 'heatmap', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'heatmap', visitData, 2, 1, mockThresholds);
 
       expect(mockAddLayer).toHaveBeenCalled();
     });
@@ -166,7 +166,7 @@ describe('RegionLayerManager', () => {
         ['1', createMockVisitData('1', true, 5)],
       ]);
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       expect(mockAddLayer).toHaveBeenCalled();
     });
@@ -181,6 +181,7 @@ describe('RegionLayerManager', () => {
         'static',
         visitData,
         2,
+        1,
         mockThresholds,
         mockThresholds,
         onRegionClick
@@ -197,7 +198,7 @@ describe('RegionLayerManager', () => {
         ['3', createMockVisitData('3', true, 1)],
       ]);
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       // All regions should be added
       expect(mockAddLayer).toHaveBeenCalledTimes(3);
@@ -209,10 +210,10 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1'), createMockRegion('2')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
       mockSetStyle.mockClear();
 
-      manager.updateStyles('heatmap', visitData, 3, mockThresholds);
+      manager.updateStyles('heatmap', visitData, 3, 1, mockThresholds);
 
       expect(mockSetStyle).toHaveBeenCalledTimes(2);
     });
@@ -223,7 +224,7 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1'), createMockRegion('2')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
       mockSetStyle.mockClear();
 
       manager.updateWeight(5);
@@ -238,7 +239,7 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
       manager.clear();
 
       expect(mockClearLayers).toHaveBeenCalled();
@@ -263,7 +264,7 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1'), createMockRegion('2'), createMockRegion('3')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
 
       expect(manager.getLayerCount()).toBe(3);
     });
@@ -272,8 +273,8 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1'), createMockRegion('2')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
-      manager.syncRegions([createMockRegion('1')], 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
+      manager.syncRegions([createMockRegion('1')], 'static', visitData, 2, 1, mockThresholds);
 
       expect(manager.getLayerCount()).toBe(1);
     });
@@ -282,7 +283,7 @@ describe('RegionLayerManager', () => {
       const regions = [createMockRegion('1')];
       const visitData = new Map<string, RegionVisitData>();
 
-      manager.syncRegions(regions, 'static', visitData, 2, mockThresholds);
+      manager.syncRegions(regions, 'static', visitData, 2, 1, mockThresholds);
       manager.clear();
 
       expect(manager.getLayerCount()).toBe(0);

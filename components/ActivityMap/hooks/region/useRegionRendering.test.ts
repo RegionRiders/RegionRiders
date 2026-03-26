@@ -113,6 +113,15 @@ describe('useRegionRendering', () => {
       const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
       if (mockLayerManager) {
         expect(mockLayerManager.syncRegions).toHaveBeenCalled();
+        expect(mockLayerManager.syncRegions).toHaveBeenCalledWith(
+          [mockRegion],
+          'static',
+          mockRegionVisits,
+          2,
+          1,
+          expect.any(Array),
+          expect.any(Array)
+        );
       }
     });
 

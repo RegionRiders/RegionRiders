@@ -14,6 +14,7 @@ export interface MapSettings {
   activityMode: ActivityRenderMode;
   showActivities: boolean;
   activityThickness: number;
+  activityLayerTransparency?: number;
   heatmapDensity: number;
   lineColorSwatches: LineColorSwatch[];
   selectedLineSwatchIndex: number;
@@ -24,6 +25,7 @@ export interface MapSettings {
   regionMode: RegionRenderMode;
   showRegions: boolean;
   regionBorderThickness: number;
+  regionLayerTransparency?: number;
   regionStaticColorSwatches: ColorThreshold[][];
   selectedRegionStaticSwatchIndex: number;
   regionHeatmapColorSwatches?: ColorThreshold[][];

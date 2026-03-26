@@ -30,6 +30,7 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visitData: Map<string, RegionVisitData>,
     weight: number,
+    regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
     regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
     onRegionClick?: (
@@ -63,6 +64,7 @@ export class RegionLayerManager {
           mode,
           visit,
           weight,
+          regionLayerTransparency,
           regionStaticColor,
           regionHeatmapColor
         );
@@ -74,6 +76,7 @@ export class RegionLayerManager {
           mode,
           visit,
           weight,
+          regionLayerTransparency,
           regionStaticColor,
           regionHeatmapColor,
           onRegionClick
@@ -105,12 +108,21 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visitData: Map<string, RegionVisitData>,
     weight: number,
+    regionLayerTransparency: number,
     regionStaticColors: ColorThreshold[],
     regionHeatmapColors: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
   ): void {
     for (const [regionId, layer] of this.layerMap.entries()) {
       const visit = visitData.get(regionId);
-      this.updateLayerStyle(layer, mode, visit, weight, regionStaticColors, regionHeatmapColors);
+      this.updateLayerStyle(
+        layer,
+        mode,
+        visit,
+        weight,
+        regionLayerTransparency,
+        regionStaticColors,
+        regionHeatmapColors
+      );
     }
   }
 
@@ -144,6 +156,7 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
+    regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
     regionHeatmapColor: ColorThreshold[],
     onRegionClick?: (
@@ -152,7 +165,14 @@ export class RegionLayerManager {
       layer: L.GeoJSON
     ) => void
   ): L.GeoJSON {
-    const style = this.calculateStyle(mode, visit, weight, regionStaticColor, regionHeatmapColor);
+    const style = this.calculateStyle(
+      mode,
+      visit,
+      weight,
+      regionLayerTransparency,
+      regionStaticColor,
+      regionHeatmapColor
+    );
 
     const layer = L.geoJSON(region.geometry, {
       style,
@@ -173,10 +193,18 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
+    regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
     regionHeatmapColor: ColorThreshold[]
   ): void {
-    const style = this.calculateStyle(mode, visit, weight, regionStaticColor, regionHeatmapColor);
+    const style = this.calculateStyle(
+      mode,
+      visit,
+      weight,
+      regionLayerTransparency,
+      regionStaticColor,
+      regionHeatmapColor
+    );
     layer.setStyle(style);
   }
 
@@ -184,6 +212,7 @@ export class RegionLayerManager {
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
+    regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
     regionHeatmapColor: ColorThreshold[]
   ): L.PathOptions {
@@ -203,8 +232,8 @@ export class RegionLayerManager {
       fillColor,
       color: strokeColor,
       weight,
-      opacity: 1,
-      fillOpacity: 1,
+      opacity: regionLayerTransparency,
+      fillOpacity: regionLayerTransparency,
       lineCap: 'round',
       lineJoin: 'round',
     };

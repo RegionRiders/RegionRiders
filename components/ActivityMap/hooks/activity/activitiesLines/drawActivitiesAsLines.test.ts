@@ -74,10 +74,12 @@ describe('drawActivitiesAsLines', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    const pane = { style: { opacity: '1' } };
     mockMap = {
       getBounds: jest.fn(() => ({
         contains: jest.fn(() => true),
       })),
+      getPane: jest.fn(() => pane),
       on: jest.fn(),
       off: jest.fn(),
       hasLayer: jest.fn(() => false),
@@ -106,6 +108,7 @@ describe('drawActivitiesAsLines', () => {
       lineThickness: 2,
       lineColor: defaultLineColor,
       lineHoverColor: defaultHoverColor,
+      layerTransparency: 1,
     };
   });
 
@@ -146,6 +149,17 @@ describe('drawActivitiesAsLines', () => {
     expect(L.canvas).toHaveBeenCalledWith({ pane: 'linesPane' });
   });
 
+  it('should set pane opacity from layer transparency slider', () => {
+    refs.layerTransparency = 0.4;
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
+
+    expect(mockMap.getPane).toHaveBeenCalledWith('linesPane');
+    const pane = mockMap.getPane.mock.results.find(
+      (result: { value?: { style?: { opacity?: string } } }) => result.value && result.value.style
+    )?.value;
+    expect(pane?.style.opacity).toBe('0.4');
+  });
+
   it('should create feature group for tracks', () => {
     drawActivitiesAsLines(mockMap, mockTracks, refs);
 
@@ -174,6 +188,17 @@ describe('drawActivitiesAsLines', () => {
     cleanup();
 
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockActivityGroup);
+  });
+
+  it('should reset pane opacity to 1 on cleanup', () => {
+    refs.layerTransparency = 0.4;
+    const cleanup = drawActivitiesAsLines(mockMap, mockTracks, refs);
+    cleanup();
+
+    const pane = mockMap.getPane.mock.results.find(
+      (result: { value?: { style?: { opacity?: string } } }) => result.value && result.value.style
+    )?.value;
+    expect(pane?.style.opacity).toBe('1');
   });
 
   it('should not abort initial rendering when renderAbortRef was true before call', () => {
