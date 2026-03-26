@@ -32,6 +32,7 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
   heatmapDensity: number;
   lineThickness: number;
+  layerTransparency: number;
   heatmapColorThresholds?: ColorThreshold[];
 }
 
@@ -40,6 +41,7 @@ export interface LinesRefs extends RenderRefs {
   lineThickness: number;
   lineColor: RGBA;
   lineHoverColor: RGBA;
+  layerTransparency: number;
 }
 
 export interface PixelPoint {
