@@ -3810,6 +3810,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/geojson-vt@npm:*":
+  version: 3.2.5
+  resolution: "@types/geojson-vt@npm:3.2.5"
+  dependencies:
+    "@types/geojson": "npm:*"
+  checksum: 10c0/bfd9157c7d0441dc4b420e0c6df65b4e4b29f3d33cc77667b3dc5acd68ba6326bfbfd867642645357382e3374ceebfb9c5d15f2b2c0ee3e3c492e0b5a2bb71be
+  languageName: node
+  linkType: hard
+
 "@types/geojson@npm:*, @types/geojson@npm:^7946.0.7":
   version: 7946.0.16
   resolution: "@types/geojson@npm:7946.0.16"
@@ -3884,7 +3893,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/leaflet@npm:^1.9.21":
+"@types/leaflet.vectorgrid@npm:^1":
+  version: 1.3.10
+  resolution: "@types/leaflet.vectorgrid@npm:1.3.10"
+  dependencies:
+    "@types/geojson": "npm:*"
+    "@types/geojson-vt": "npm:*"
+    "@types/leaflet": "npm:^1.9"
+  checksum: 10c0/bc61edea4e49f147e6ab5251a4a694168ff0644a213efb94e3dae24c1d50891e408e0406b6ffd1476a6f3352cc7a8e3231cc13131f5cd7bced8d7015bf3b2460
+  languageName: node
+  linkType: hard
+
+"@types/leaflet@npm:^1.9, @types/leaflet@npm:^1.9.21":
   version: 1.9.21
   resolution: "@types/leaflet@npm:1.9.21"
   dependencies:
@@ -5839,7 +5859,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^2.20.0":
+"commander@npm:2, commander@npm:^2.20.0":
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
   checksum: 10c0/74c781a5248c2402a0a3e966a0a2bba3c054aad144f5c023364be83265e796b20565aa9feff624132ff629aa64e16999fa40a743c10c12f7c61e96a794b99288
@@ -8645,7 +8665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ieee754@npm:^1.2.1":
+"ieee754@npm:^1.1.12, ieee754@npm:^1.2.1":
   version: 1.2.1
   resolution: "ieee754@npm:1.2.1"
   checksum: 10c0/b0782ef5e0935b9f12883a2e2aa37baa75da6e66ce6515c168697b42160807d9330de9a32ec1ed73149aea02e0d822e572bca6f1e22bdcbd2149e13b050b17bb
@@ -10004,6 +10024,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"leaflet.vectorgrid@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "leaflet.vectorgrid@npm:1.3.0"
+  dependencies:
+    pbf: "npm:^3.0.2"
+    topojson-client: "npm:^2.1.0"
+    vector-tile: "npm:^1.3.0"
+    whatwg-fetch: "npm:^2.0.3"
+  peerDependencies:
+    leaflet: ^1.0.2
+  checksum: 10c0/59cca4001866a79e942e48fac9fcb9a6671db910fc9cb9289e8c93713c2ea40f37c16191c65c2379712e23db32cf0a2e2c4967178519fd18f79b7e0d3595f064
+  languageName: node
+  linkType: hard
+
 "leaflet@npm:^1.9.4":
   version: 1.9.4
   resolution: "leaflet@npm:1.9.4"
@@ -10267,6 +10301,7 @@ __metadata:
     "@types/eslint-plugin-jsx-a11y": "npm:^6"
     "@types/jest": "npm:^30.0.0"
     "@types/leaflet": "npm:^1.9.21"
+    "@types/leaflet.vectorgrid": "npm:^1"
     "@types/node": "npm:^24.7.1"
     "@types/pg": "npm:^8.20.0"
     "@types/react": "npm:19.2.14"
@@ -10284,6 +10319,7 @@ __metadata:
     jest-environment-jsdom: "npm:^30.3.0"
     jest-environment-node: "npm:^30.3.0"
     leaflet: "npm:^1.9.4"
+    leaflet.vectorgrid: "npm:^1.3.0"
     next: "npm:16.2.2"
     pg: "npm:^8.20.0"
     pino: "npm:^10.1.0"
@@ -11209,6 +11245,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pbf@npm:^3.0.2":
+  version: 3.3.0
+  resolution: "pbf@npm:3.3.0"
+  dependencies:
+    ieee754: "npm:^1.1.12"
+    resolve-protobuf-schema: "npm:^2.1.0"
+  bin:
+    pbf: bin/pbf
+  checksum: 10c0/79e5dc59a9391789de84b0a6d713fad0dd1e5ce6eb721536af8c9ec49feae04fdebab9f077b760bba858e615a95ac714a7d248ecb43736e904bb8396885e16d6
+  languageName: node
+  linkType: hard
+
 "pbkdf2@npm:^3.1.2, pbkdf2@npm:^3.1.5":
   version: 3.1.5
   resolution: "pbkdf2@npm:3.1.5"
@@ -11433,6 +11481,13 @@ __metadata:
   dependencies:
     find-up: "npm:^6.3.0"
   checksum: 10c0/1afb23d2efb1ec9d8b2c4a0c37bf146822ad2774f074cb05b853be5dca1b40815c5960dd126df30ab8908349262a266f31b771e877235870a3b8fd313beebec5
+  languageName: node
+  linkType: hard
+
+"point-geometry@npm:0.0.0":
+  version: 0.0.0
+  resolution: "point-geometry@npm:0.0.0"
+  checksum: 10c0/b6e0e4228c3107c7c000ae8998a1be48f06f93c5e780aadddd9d5925cd74d1d21de4d5010b7ef19a92fc0116d9fbd0b781fc86490b52dd1cb8ad5c262e22c4d9
   languageName: node
   linkType: hard
 
@@ -11781,6 +11836,13 @@ __metadata:
     object-assign: "npm:^4.1.1"
     react-is: "npm:^16.13.1"
   checksum: 10c0/59ece7ca2fb9838031d73a48d4becb9a7cc1ed10e610517c7d8f19a1e02fa47f7c27d557d8a5702bec3cfeccddc853579832b43f449e54635803f277b1c78077
+  languageName: node
+  linkType: hard
+
+"protocol-buffers-schema@npm:^3.3.1":
+  version: 3.6.0
+  resolution: "protocol-buffers-schema@npm:3.6.0"
+  checksum: 10c0/23a08612e5cc903f917ae3b680216ccaf2d889c61daa68d224237f455182fa96fff16872ac94b1954b5dd26fc7e8ce7e9360c54d54ea26218d107b2f059fca37
   languageName: node
   linkType: hard
 
@@ -12350,6 +12412,15 @@ __metadata:
   version: 1.0.0
   resolution: "resolve-pkg-maps@npm:1.0.0"
   checksum: 10c0/fb8f7bbe2ca281a73b7ef423a1cbc786fb244bd7a95cbe5c3fba25b27d327150beca8ba02f622baea65919a57e061eb5005204daa5f93ed590d9b77463a567ab
+  languageName: node
+  linkType: hard
+
+"resolve-protobuf-schema@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "resolve-protobuf-schema@npm:2.1.0"
+  dependencies:
+    protocol-buffers-schema: "npm:^3.3.1"
+  checksum: 10c0/8e656b9072b1c001952f851251413bc79d8c771c3015f607b75e1ca3b8bd7c4396068dd19cdbb3019affa03f6457d2c0fd38d981ffd714215cd2e7c2b67221a7
   languageName: node
   linkType: hard
 
@@ -13726,6 +13797,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"topojson-client@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "topojson-client@npm:2.1.0"
+  dependencies:
+    commander: "npm:2"
+  bin:
+    topo2geo: bin/topo2geo
+    topomerge: bin/topomerge
+    topoquantize: bin/topoquantize
+  checksum: 10c0/1ebd6431bc871df25c6b480e6841945adbfc904bed21fb0f1433fc0cfba862b8d2fb596380ea0ef93a2f1c1737d91938d89bd515a6302d4dc678740010b118a3
+  languageName: node
+  linkType: hard
+
 "totalist@npm:^3.0.0":
   version: 3.0.1
   resolution: "totalist@npm:3.0.1"
@@ -14363,6 +14447,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vector-tile@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "vector-tile@npm:1.3.0"
+  dependencies:
+    point-geometry: "npm:0.0.0"
+  checksum: 10c0/2c32e22f7fafc7fc23eb6db65b47275641c72f6b880a101507958b962dbf4a141a8955b5ec86bb424a8e2c1676e5a4a11e6cb58c07bbed9489743ae83e5f3f4a
+  languageName: node
+  linkType: hard
+
 "verror@npm:1.10.0":
   version: 1.10.0
   resolution: "verror@npm:1.10.0"
@@ -14533,6 +14626,13 @@ __metadata:
   dependencies:
     iconv-lite: "npm:0.6.3"
   checksum: 10c0/273b5f441c2f7fda3368a496c3009edbaa5e43b71b09728f90425e7f487e5cef9eb2b846a31bd760dd8077739c26faf6b5ca43a5f24033172b003b72cf61a93e
+  languageName: node
+  linkType: hard
+
+"whatwg-fetch@npm:^2.0.3":
+  version: 2.0.4
+  resolution: "whatwg-fetch@npm:2.0.4"
+  checksum: 10c0/bf2bc1617218c63f2be86edefb95ac5e7f967ae402e468ed550729436369725c3b03a5d1110f62ea789b6f7f399969b1ef720b0bb04e8947fdf94eab7ffac829
   languageName: node
   linkType: hard
 
