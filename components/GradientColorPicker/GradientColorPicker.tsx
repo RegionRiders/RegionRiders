@@ -14,8 +14,10 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
+import { ColorThresholdsList } from '@/components/GradientColorPicker/ColorThresholdsList';
 import { ColorThreshold } from '../ActivityMap/mapTypes';
-import { ColorNumberInput } from './ColorNumberInput';
+
+// import { ColorNumberInput } from './ColorNumberInput';
 
 interface GradientColorPickerProps {
   value: ColorThreshold[];
@@ -83,22 +85,22 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
     }
   }, [colorThresholds, isDragging, activeThresholdIndex]);
 
-  const handleColorNumberInputChange = (v: number | string, index: number) => {
-    setColorThresholds((prev) => {
-      const newThresholds = [...prev];
-      const currentColor = prev[activeThresholdIndex].color;
-      const nextColor = [...currentColor] as [number, number, number, number?];
-      nextColor[index] = Number(v);
-      newThresholds[activeThresholdIndex] = {
-        ...newThresholds[activeThresholdIndex],
-        color: [nextColor[0], nextColor[1], nextColor[2], nextColor[3] ?? 1],
-      };
-      return newThresholds;
-    });
-  };
+  // const handleColorNumberInputChange = (v: number | string, index: number) => {
+  //   setColorThresholds((prev) => {
+  //     const newThresholds = [...prev];
+  //     const currentColor = prev[activeThresholdIndex].color;
+  //     const nextColor = [...currentColor] as [number, number, number, number?];
+  //     nextColor[index] = Number(v);
+  //     newThresholds[activeThresholdIndex] = {
+  //       ...newThresholds[activeThresholdIndex],
+  //       color: [nextColor[0], nextColor[1], nextColor[2], nextColor[3] ?? 1],
+  //     };
+  //     return newThresholds;
+  //   });
+  // };
 
   return (
-    <Stack gap="md" style={{ overflowX: 'hidden' }}>
+    <Stack gap="md" style={{ overflow: 'hidden' }}>
       <Group align="center" wrap="nowrap" justify="space-around">
         <ExtendedColorPicker
           layout="horizontal"
@@ -115,63 +117,55 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
             });
           }}
         />
+        <ColorThresholdsList
+          colorThresholds={colorThresholds}
+          onChange={(index) => setActiveThresholdIndex(index)}
+        />
         <Stack>
-          <Group wrap="nowrap" align="center">
-            <ColorNumberInput
-              label="R"
-              index={0}
-              value={colorThresholds[activeThresholdIndex].color[0]}
-              onChange={handleColorNumberInputChange}
-            />
-            <ColorNumberInput
-              label="G"
-              index={1}
-              value={colorThresholds[activeThresholdIndex].color[1]}
-              onChange={handleColorNumberInputChange}
-            />
-            <ColorNumberInput
-              label="B"
-              index={2}
-              value={colorThresholds[activeThresholdIndex].color[2]}
-              onChange={handleColorNumberInputChange}
-            />
-          </Group>
-          <Group wrap="nowrap" align="center">
-            <ColorNumberInput
-              label="Opacity"
-              index={3}
-              value={colorThresholds[activeThresholdIndex].color[3] ?? 1}
-              onChange={handleColorNumberInputChange}
-            />
-            <NumberInput
-              size="xs"
-              label="Threshold"
-              min={min}
-              value={colorThresholds[activeThresholdIndex].threshold}
-              onChange={(v) => {
-                setColorThresholds((prev) => {
-                  const newThresholds = [...prev];
-                  newThresholds[activeThresholdIndex] = {
-                    ...newThresholds[activeThresholdIndex],
-                    threshold: +v,
-                  };
-                  return newThresholds;
-                });
-              }}
-            />
-            <Button
-              onClick={() => {
-                if (colorThresholds.length <= 1) {
-                  return;
-                }
-                const next = colorThresholds.filter((_, i) => i !== activeThresholdIndex);
-                setColorThresholds(next);
-                setActiveThresholdIndex((prev) => Math.min(prev, next.length - 1));
-              }}
-            >
-              Remove color
-            </Button>
-          </Group>
+          <NumberInput
+            size="xs"
+            label="Threshold"
+            min={min}
+            value={colorThresholds[activeThresholdIndex].threshold}
+            onChange={(v) => {
+              setColorThresholds((prev) => {
+                const newThresholds = [...prev];
+                newThresholds[activeThresholdIndex] = {
+                  ...newThresholds[activeThresholdIndex],
+                  threshold: +v,
+                };
+                return newThresholds;
+              });
+            }}
+          />
+
+          <Button
+            onClick={() => {
+              // Add a new color threshold to the array (by coping the last color) and set the color on the ColorPicker to the last added color
+              setColorThresholds((prev) => [
+                ...prev,
+                {
+                  ...prev[prev.length - 1],
+                  threshold: prev[prev.length - 1].threshold + 10,
+                },
+              ]);
+              setActiveThresholdIndex(colorThresholds.length);
+            }}
+          >
+            Add Color
+          </Button>
+          <Button
+            onClick={() => {
+              if (colorThresholds.length <= 1) {
+                return;
+              }
+              const next = colorThresholds.filter((_, i) => i !== activeThresholdIndex);
+              setColorThresholds(next);
+              setActiveThresholdIndex((prev) => Math.min(prev, next.length - 1));
+            }}
+          >
+            Remove color
+          </Button>
         </Stack>
       </Group>
       <Group align="center" wrap="nowrap" mb="xs">
@@ -305,6 +299,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
 
                 <Badge
                   size="xs"
+                  miw="max-content"
                   key={`badge-${index}`}
                   style={{
                     position: 'absolute',
@@ -319,21 +314,6 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
             ))}
           </Box>
         </Box>
-        <Button
-          onClick={() => {
-            // Add a new color threshold to the array (by coping the last color) and set the color on the ColorPicker to the last added color
-            setColorThresholds((prev) => [
-              ...prev,
-              {
-                ...prev[prev.length - 1],
-                threshold: prev[prev.length - 1].threshold + 10,
-              },
-            ]);
-            setActiveThresholdIndex(colorThresholds.length);
-          }}
-        >
-          Add Color
-        </Button>
       </Group>
     </Stack>
   );
