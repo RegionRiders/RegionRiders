@@ -98,7 +98,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   };
 
   return (
-    <Stack gap="md" style={{ overflow: 'hidden' }}>
+    <Stack gap="md" style={{ overflowX: 'hidden' }}>
       <Group align="center" wrap="nowrap" justify="space-around">
         <ExtendedColorPicker
           layout="horizontal"
@@ -174,7 +174,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
           </Group>
         </Stack>
       </Group>
-      <Group align="center" wrap="nowrap">
+      <Group align="center" wrap="nowrap" mb="xs">
         <Box
           style={{
             flex: 1,
@@ -202,6 +202,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
                     left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
                     bottom: '0',
                     transform: 'translate(-50%, 50%) scale(0.5625)',
+                    zIndex: 9999,
                   }}
                   aria-label={`Edit threshold ${index + 1}`}
                   tabIndex={0}
@@ -282,7 +283,11 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
                     window.addEventListener('mouseup', onMouseUp);
                   }}
                 >
-                  <IconGripVertical />
+                  <IconGripVertical
+                    style={{
+                      transform: 'rotate(90deg)',
+                    }}
+                  />
                 </ActionIcon>
                 <Divider
                   key={`divider-${index}`}
