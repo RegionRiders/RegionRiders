@@ -11,6 +11,7 @@ import { RegionLayerManager } from './regionLayerManager';
 const mockSetStyle = jest.fn();
 const mockBringToFront = jest.fn();
 const mockOn = jest.fn();
+const mockOff = jest.fn();
 const mockClearLayers = jest.fn();
 const mockAddLayer = jest.fn();
 const mockRemoveLayer = jest.fn();
@@ -19,6 +20,7 @@ const mockGeoJSONLayer = {
   setStyle: mockSetStyle,
   bringToFront: mockBringToFront,
   on: mockOn,
+  off: mockOff,
 };
 
 const mockLayerGroup = {
@@ -145,6 +147,7 @@ describe('RegionLayerManager', () => {
 
       // Should update style and bring to front, not add new layer
       expect(mockSetStyle).toHaveBeenCalled();
+      expect(mockOff).toHaveBeenCalledWith('click');
       expect(mockBringToFront).toHaveBeenCalled();
       expect(mockAddLayer).toHaveBeenCalledTimes(initialAddLayerCount);
     });
