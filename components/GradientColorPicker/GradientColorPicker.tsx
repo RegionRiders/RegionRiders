@@ -98,7 +98,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   };
 
   return (
-    <Stack gap="md" style={{ overflow: 'hidden' }}>
+    <Stack gap="md" style={{ overflowX: 'hidden' }}>
       <Group align="center" wrap="nowrap" justify="space-around">
         <ExtendedColorPicker
           layout="horizontal"
