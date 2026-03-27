@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -29,6 +29,14 @@ export function useRegionRendering(
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
   const lastVisitDataSignatureRef = useRef<string>('');
+  const visitDataSignature = useMemo(
+    () =>
+      Array.from(visitData.entries())
+        .sort(([regionA], [regionB]) => regionA.localeCompare(regionB))
+        .map(([regionId, visit]) => `${regionId}:${visit.visitCount}:${visit.visited}`)
+        .join('|'),
+    [visitData]
+  );
 
   // Initialize layer manager
   useEffect(() => {
@@ -91,11 +99,6 @@ export function useRegionRendering(
     if (!map || !layerManagerRef.current) {
       return;
     }
-
-    const visitDataSignature = Array.from(visitData.entries())
-      .sort(([regionA], [regionB]) => regionA.localeCompare(regionB))
-      .map(([regionId, visit]) => `${regionId}:${visit.visitCount}:${visit.visited}`)
-      .join('|');
 
     // Only update if visit data actually changed
     if (visitDataSignature === lastVisitDataSignatureRef.current) {

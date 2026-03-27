@@ -23,6 +23,11 @@ export class RegionLayerManager {
     layer: L.GeoJSON
   ) => void;
 
+  private readonly REGION_CLICK_HANDLER_BOUND = '_rmgr_clickHandlerBound';
+  private readonly REGION_CLICK_VISIT_KEY = '_rmgr_clickVisit';
+  private readonly REGION_CLICK_REGION_KEY = '_rmgr_clickRegion';
+  private readonly REGION_CLICK_CALLBACK_KEY = '_rmgr_clickCallback';
+
   constructor(private map: L.Map) {
     this.layerGroup = L.layerGroup().addTo(map);
   }
@@ -196,16 +201,8 @@ export class RegionLayerManager {
       regionHeatmapColor
     );
 
-    const layer = L.geoJSON(region.geometry, {
-      style,
-      onEachFeature: (_feature, leafletLayer) => {
-        if (onRegionClick) {
-          leafletLayer.on('click', () => {
-            onRegionClick(region, visit, layer);
-          });
-        }
-      },
-    });
+    const layer = L.geoJSON(region.geometry, { style });
+    this.updateLayerClickHandler(layer, region, visit, onRegionClick);
 
     return layer;
   }
@@ -234,12 +231,63 @@ export class RegionLayerManager {
       regionHeatmapColor
     );
     layer.setStyle(style);
+    this.updateLayerClickHandler(layer, region, visit, onRegionClick);
+  }
 
-    layer.off('click');
-    if (onRegionClick && region) {
-      layer.on('click', () => {
-        onRegionClick(region, visit, layer);
-      });
+  private updateLayerClickHandler(
+    layer: L.GeoJSON,
+    region: Regions | undefined,
+    visit: RegionVisitData | undefined,
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
+  ): void {
+    const layerWithMetadata = layer as L.GeoJSON & {
+      [key: string]: unknown;
+    };
+
+    layerWithMetadata[this.REGION_CLICK_REGION_KEY] = region;
+    layerWithMetadata[this.REGION_CLICK_VISIT_KEY] = visit;
+    layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] = onRegionClick;
+
+    const hasBoundHandler = Boolean(layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND]);
+
+    if (!onRegionClick || !region) {
+      if (hasBoundHandler) {
+        layer.off('click');
+        layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND] = false;
+      }
+      return;
+    }
+
+    if (hasBoundHandler) {
+      return;
+    }
+
+    layer.on('click', () => {
+      this.handleLayerClick(layer, layerWithMetadata);
+    });
+    layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND] = true;
+  }
+
+  private handleLayerClick(
+    layer: L.GeoJSON,
+    layerWithMetadata: L.GeoJSON & {
+      [key: string]: unknown;
+    }
+  ): void {
+    const callback = layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] as
+      | ((currentRegion: Regions, currentVisit: RegionVisitData | undefined, currentLayer: L.GeoJSON) => void)
+      | undefined;
+    const currentRegion = layerWithMetadata[this.REGION_CLICK_REGION_KEY] as Regions | undefined;
+    const currentVisit = layerWithMetadata[this.REGION_CLICK_VISIT_KEY] as
+      | RegionVisitData
+      | undefined;
+
+    if (callback && currentRegion) {
+      callback(currentRegion, currentVisit, layer);
     }
   }
 
