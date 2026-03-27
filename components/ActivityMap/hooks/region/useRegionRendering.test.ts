@@ -227,6 +227,26 @@ describe('useRegionRendering', () => {
         expect(mockLayerManager.updateStyles).toHaveBeenCalledTimes(1);
       }
     });
+
+    it('should not throw when visitData keys are non-strings', () => {
+      const numericKeyVisits = new Map<any, any>([
+        [
+          1,
+          {
+            regionId: 'region1',
+            regionName: 'Test Region',
+            visitCount: 3,
+            trackIds: ['track1'],
+            visited: true,
+            geometry: mockPolygon,
+          },
+        ],
+      ]);
+
+      expect(() => {
+        renderHook(() => useRegionRendering(mockMap, [mockRegion], numericKeyVisits, true));
+      }).not.toThrow();
+    });
   });
 
   describe('cleanup', () => {

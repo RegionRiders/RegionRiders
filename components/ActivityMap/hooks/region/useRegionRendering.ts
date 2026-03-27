@@ -32,7 +32,7 @@ export function useRegionRendering(
   const visitDataSignature = useMemo(
     () =>
       Array.from(visitData.entries())
-        .sort(([regionA], [regionB]) => regionA.localeCompare(regionB))
+        .sort(([regionA], [regionB]) => String(regionA).localeCompare(String(regionB)))
         .map(([regionId, visit]) => `${regionId}:${visit.visitCount}:${visit.visited}`)
         .join('|'),
     [visitData]
