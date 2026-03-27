@@ -15,7 +15,13 @@ import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
  */
 export class RegionLayerManager {
   private layerMap = new Map<string, L.GeoJSON>();
+  private regionMap = new Map<string, Regions>();
   private layerGroup: L.LayerGroup;
+  private onRegionClick?: (
+    region: Regions,
+    visitInfo: RegionVisitData | undefined,
+    layer: L.GeoJSON
+  ) => void;
 
   constructor(private map: L.Map) {
     this.layerGroup = L.layerGroup().addTo(map);
@@ -39,6 +45,7 @@ export class RegionLayerManager {
       layer: L.GeoJSON
     ) => void
   ): void {
+    this.onRegionClick = onRegionClick;
     const currentRegionIds = new Set(regions.map((r) => r.id));
 
     // Remove layers for regions no longer in viewport
@@ -46,6 +53,7 @@ export class RegionLayerManager {
       if (!currentRegionIds.has(regionId)) {
         this.layerGroup.removeLayer(layer);
         this.layerMap.delete(regionId);
+        this.regionMap.delete(regionId);
       }
     }
 
@@ -56,17 +64,20 @@ export class RegionLayerManager {
     sortedRegions.forEach((region) => {
       const existingLayer = this.layerMap.get(region.id);
       const visit = visitData.get(region.id);
+      this.regionMap.set(region.id, region);
 
       if (existingLayer) {
         // Update existing layer style
         this.updateLayerStyle(
           existingLayer,
+          region,
           mode,
           visit,
           weight,
           regionLayerTransparency,
           regionStaticColor,
-          regionHeatmapColor
+          regionHeatmapColor,
+          this.onRegionClick
         );
         existingLayer.bringToFront();
       } else {
@@ -120,14 +131,17 @@ export class RegionLayerManager {
 
     for (const [regionId, layer] of orderedLayers) {
       const visit = visitData.get(regionId);
+      const region = this.regionMap.get(regionId);
       this.updateLayerStyle(
         layer,
+        region,
         mode,
         visit,
         weight,
         regionLayerTransparency,
         regionStaticColors,
-        regionHeatmapColors
+        regionHeatmapColors,
+        this.onRegionClick
       );
       layer.bringToFront();
     }
@@ -148,6 +162,7 @@ export class RegionLayerManager {
   clear(): void {
     this.layerGroup.clearLayers();
     this.layerMap.clear();
+    this.regionMap.clear();
   }
 
   /**
@@ -197,12 +212,18 @@ export class RegionLayerManager {
 
   private updateLayerStyle(
     layer: L.GeoJSON,
+    region: Regions | undefined,
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
     regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
-    regionHeatmapColor: ColorThreshold[]
+    regionHeatmapColor: ColorThreshold[],
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
   ): void {
     const style = this.calculateStyle(
       mode,
@@ -213,6 +234,13 @@ export class RegionLayerManager {
       regionHeatmapColor
     );
     layer.setStyle(style);
+
+    layer.off('click');
+    if (onRegionClick && region) {
+      layer.on('click', () => {
+        onRegionClick(region, visit, layer);
+      });
+    }
   }
 
   private calculateStyle(
