@@ -47,8 +47,12 @@ export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapS
     ) {
       return isObject(parsed.settings) ? (parsed.settings as Partial<MapSettings>) : null;
     }
-
-    // Backward-compatible fallback for raw settings payloads.
+    // Handle versioned payload with mismatched version - extract settings if present
+    if ('version' in parsed && 'settings' in parsed && isObject(parsed.settings)) {
+      // Version mismatch: return settings but consider logging/migrating in future
+      return parsed.settings as Partial<MapSettings>;
+    }
+    // Backward-compatible fallback for legacy raw settings payloads (no version wrapper).
     return parsed as Partial<MapSettings>;
   } catch {
     return null;
