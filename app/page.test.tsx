@@ -28,15 +28,17 @@ describe('app/page', () => {
 
   it('should have correct loading message', () => {
     render(<Home />);
-    const loadingMessage = screen.getByText('Map is loading');
+    const loadingMessage = screen.getByRole('heading', { level: 1, name: 'Map is loading' });
     expect(loadingMessage).toBeInTheDocument();
-    expect(loadingMessage.className).toContain('text-2xl');
+    expect(loadingMessage.className).toContain('text-4xl');
   });
 
   it('should render professional loading details', () => {
     render(<Home />);
     expect(screen.getByAltText('RegionRiders logo')).toBeInTheDocument();
-    expect(screen.getByText('Please wait while we prepare your ride data.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Please wait while we prepare your ride data.' })
+    ).toBeInTheDocument();
   });
 
   it('should render without errors', () => {
