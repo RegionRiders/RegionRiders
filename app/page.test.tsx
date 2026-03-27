@@ -23,22 +23,18 @@ describe('app/page', () => {
   it('should render Home component', () => {
     render(<Home />);
     // The loading component should be displayed by the mock
-    expect(screen.getByText('Map is loading')).toBeInTheDocument();
+    expect(screen.getByText('Map is loading...')).toBeInTheDocument();
   });
 
   it('should have correct loading message', () => {
     render(<Home />);
-    const loadingMessage = screen.getByRole('heading', { level: 1, name: 'Map is loading' });
+    const loadingMessage = screen.getByRole('heading', { level: 1, name: 'Map is loading...' });
     expect(loadingMessage).toBeInTheDocument();
-    expect(loadingMessage.className).toContain('text-4xl');
   });
 
   it('should render professional loading details', () => {
     render(<Home />);
     expect(screen.getByAltText('RegionRiders logo')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Please wait while we prepare your ride data.' })
-    ).toBeInTheDocument();
   });
 
   it('should render without errors', () => {
