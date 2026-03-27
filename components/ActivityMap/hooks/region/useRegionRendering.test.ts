@@ -229,7 +229,10 @@ describe('useRegionRendering', () => {
     });
 
     it('should not throw when visitData keys are non-strings', () => {
-      const numericKeyVisits = new Map<number, (typeof mockRegionVisits extends Map<any, infer V> ? V : never)>([
+      const numericKeyVisits = new Map<
+        number,
+        typeof mockRegionVisits extends Map<any, infer V> ? V : never
+      >([
         [
           1,
           {
@@ -244,7 +247,7 @@ describe('useRegionRendering', () => {
       ]);
       const runtimeMismatchedVisits = numericKeyVisits as unknown as Map<
         string,
-        (typeof mockRegionVisits extends Map<any, infer V> ? V : never)
+        typeof mockRegionVisits extends Map<any, infer V> ? V : never
       >;
 
       expect(() => {

@@ -274,12 +274,13 @@ export class RegionLayerManager {
     layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND] = true;
   }
 
-  private handleLayerClick(
-    layer: L.GeoJSON,
-    layerWithMetadata: LayerWithMetadata
-  ): void {
+  private handleLayerClick(layer: L.GeoJSON, layerWithMetadata: LayerWithMetadata): void {
     const callback = layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] as
-      | ((currentRegion: Regions, currentVisit: RegionVisitData | undefined, currentLayer: L.GeoJSON) => void)
+      | ((
+          currentRegion: Regions,
+          currentVisit: RegionVisitData | undefined,
+          currentLayer: L.GeoJSON
+        ) => void)
       | undefined;
     const currentRegion = layerWithMetadata[this.REGION_CLICK_REGION_KEY] as Regions | undefined;
     const currentVisit = layerWithMetadata[this.REGION_CLICK_VISIT_KEY] as
