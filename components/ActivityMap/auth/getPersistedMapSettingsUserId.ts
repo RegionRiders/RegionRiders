@@ -4,7 +4,11 @@ const MAP_SETTINGS_USER_ID_KEY = 'rr:user-id';
  * Provides a single place to resolve authenticated user context for map settings persistence.
  * For now this uses LocalStorage and can be swapped later for cookie/session/JWT sources.
  */
-export function getPersistedMapSettingsUserId(): string | null {
+export function getPersistedMapSettingsUserId(explicitUserId?: string | null): string | null {
+  if (explicitUserId?.trim()) {
+    return explicitUserId.trim();
+  }
+
   if (typeof window === 'undefined') {
     return null;
   }

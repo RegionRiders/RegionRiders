@@ -125,8 +125,8 @@ export async function upsertUserSettings(
       .onConflictDoUpdate({
         target: userSettings.userId,
         set: {
-          settings: patch.settings,
-          metadata: patch.metadata,
+          ...(patch.settings !== undefined && { settings: patch.settings }),
+          ...(patch.metadata !== undefined && { metadata: patch.metadata }),
           updatedAt: new Date(),
         },
       })

@@ -5,7 +5,12 @@
 
 import { z } from 'zod';
 
-const rgbaSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+const rgbaSchema = z.tuple([
+  z.number().min(0).max(255),
+  z.number().min(0).max(255),
+  z.number().min(0).max(255),
+  z.number().min(0).max(1),
+]);
 const colorThresholdSchema = z.object({
   threshold: z.number(),
   color: rgbaSchema,

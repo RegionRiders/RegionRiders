@@ -62,12 +62,6 @@ export function parseColorThresholds(input: string): ColorThreshold[] {
     throw new Error('Clipboard data does not match ColorThreshold shape');
   }
 
-  for (let i = 1; i < parsed.length; i += 1) {
-    if (parsed[i].threshold < parsed[i - 1].threshold) {
-      throw new Error('Clipboard thresholds must be sorted ascending');
-    }
-  }
-
   return parsed;
 }
 
