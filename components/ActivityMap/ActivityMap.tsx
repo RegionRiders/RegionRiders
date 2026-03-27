@@ -182,15 +182,15 @@ export default function ActivityMap() {
   const { tracks } = useGPXData();
   const [persistedUserId] = useState<string | null>(() => getPersistedMapSettingsUserId());
 
-  const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
-
-  useEffect(() => {
+  const [settings, setSettings] = useState<MapSettings>(() => {
     const persistedSettings = loadMapSettingsFromStorage(persistedUserId);
 
     if (persistedSettings) {
-      setSettings((prev) => ({ ...prev, ...persistedSettings }));
+      return { ...DEFAULT_MAP_SETTINGS, ...persistedSettings };
     }
-  }, [persistedUserId]);
+
+    return DEFAULT_MAP_SETTINGS;
+  });
 
   useEffect(() => {
     if (saveTimeoutRef.current) {

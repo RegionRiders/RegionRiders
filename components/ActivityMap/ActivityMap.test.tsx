@@ -134,12 +134,19 @@ describe('ActivityMap', () => {
   });
 
   it('loads saved settings from anonymous localStorage key', () => {
+    const persistedTileLayerUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const persistedAttribution = 'Tiles © Esri';
     window.localStorage.setItem(
       'rr:map-settings:anon',
       JSON.stringify({
         version: 1,
         savedAt: '2026-01-01T00:00:00.000Z',
-        settings: { showActivities: false },
+        settings: {
+          showActivities: false,
+          tileLayerUrl: persistedTileLayerUrl,
+          attribution: persistedAttribution,
+        },
       })
     );
 
@@ -147,6 +154,16 @@ describe('ActivityMap', () => {
 
     const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
     expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+    expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
+    expect(latestLayersPanelProps.settings.attribution).toBe(persistedAttribution);
+
+    const latestUseLeafletMapCall = mockUseLeafletMap.mock.calls.at(-1);
+    expect(latestUseLeafletMapCall?.[1]).toEqual(
+      expect.objectContaining({
+        tileLayerUrl: persistedTileLayerUrl,
+        attribution: persistedAttribution,
+      })
+    );
   });
 
   it('saves settings to user-specific localStorage key when user id is present', async () => {
