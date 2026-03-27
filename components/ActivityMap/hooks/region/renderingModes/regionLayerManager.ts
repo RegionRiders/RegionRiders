@@ -9,6 +9,10 @@ import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
+type LayerWithMetadata = L.GeoJSON & {
+  [key: string]: unknown;
+};
+
 /**
  * Manages lifecycle of region layers with intelligent caching and updates
  * Avoids unnecessary layer recreation by tracking and reusing existing layers
@@ -244,9 +248,7 @@ export class RegionLayerManager {
       layer: L.GeoJSON
     ) => void
   ): void {
-    const layerWithMetadata = layer as L.GeoJSON & {
-      [key: string]: unknown;
-    };
+    const layerWithMetadata = layer as LayerWithMetadata;
 
     layerWithMetadata[this.REGION_CLICK_REGION_KEY] = region;
     layerWithMetadata[this.REGION_CLICK_VISIT_KEY] = visit;
@@ -274,9 +276,7 @@ export class RegionLayerManager {
 
   private handleLayerClick(
     layer: L.GeoJSON,
-    layerWithMetadata: L.GeoJSON & {
-      [key: string]: unknown;
-    }
+    layerWithMetadata: LayerWithMetadata
   ): void {
     const callback = layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] as
       | ((currentRegion: Regions, currentVisit: RegionVisitData | undefined, currentLayer: L.GeoJSON) => void)

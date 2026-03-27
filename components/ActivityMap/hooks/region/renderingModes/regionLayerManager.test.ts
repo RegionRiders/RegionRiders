@@ -34,6 +34,13 @@ const mockMap = {
   removeLayer: jest.fn(),
 };
 
+const resetRegionLayerMetadata = () => {
+  delete (mockGeoJSONLayer as any)._rmgr_clickHandlerBound;
+  delete (mockGeoJSONLayer as any)._rmgr_clickVisit;
+  delete (mockGeoJSONLayer as any)._rmgr_clickRegion;
+  delete (mockGeoJSONLayer as any)._rmgr_clickCallback;
+};
+
 jest.mock('leaflet', () => ({
   geoJSON: jest.fn((_geometry, options) => {
     // Call onEachFeature if provided to simulate Leaflet's behavior
@@ -101,10 +108,7 @@ describe('RegionLayerManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    delete (mockGeoJSONLayer as any)._rmgr_clickHandlerBound;
-    delete (mockGeoJSONLayer as any)._rmgr_clickVisit;
-    delete (mockGeoJSONLayer as any)._rmgr_clickRegion;
-    delete (mockGeoJSONLayer as any)._rmgr_clickCallback;
+    resetRegionLayerMetadata();
     manager = new RegionLayerManager(mockMap as any);
   });
 
