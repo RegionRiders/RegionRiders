@@ -9,13 +9,28 @@ import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { Regions } from '@/lib/types';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
+type LayerWithMetadata = L.GeoJSON & {
+  [key: string]: unknown;
+};
+
 /**
  * Manages lifecycle of region layers with intelligent caching and updates
  * Avoids unnecessary layer recreation by tracking and reusing existing layers
  */
 export class RegionLayerManager {
   private layerMap = new Map<string, L.GeoJSON>();
+  private regionMap = new Map<string, Regions>();
   private layerGroup: L.LayerGroup;
+  private onRegionClick?: (
+    region: Regions,
+    visitInfo: RegionVisitData | undefined,
+    layer: L.GeoJSON
+  ) => void;
+
+  private readonly REGION_CLICK_HANDLER_BOUND = '_rmgr_clickHandlerBound';
+  private readonly REGION_CLICK_VISIT_KEY = '_rmgr_clickVisit';
+  private readonly REGION_CLICK_REGION_KEY = '_rmgr_clickRegion';
+  private readonly REGION_CLICK_CALLBACK_KEY = '_rmgr_clickCallback';
 
   constructor(private map: L.Map) {
     this.layerGroup = L.layerGroup().addTo(map);
@@ -39,6 +54,7 @@ export class RegionLayerManager {
       layer: L.GeoJSON
     ) => void
   ): void {
+    this.onRegionClick = onRegionClick;
     const currentRegionIds = new Set(regions.map((r) => r.id));
 
     // Remove layers for regions no longer in viewport
@@ -46,6 +62,7 @@ export class RegionLayerManager {
       if (!currentRegionIds.has(regionId)) {
         this.layerGroup.removeLayer(layer);
         this.layerMap.delete(regionId);
+        this.regionMap.delete(regionId);
       }
     }
 
@@ -56,17 +73,20 @@ export class RegionLayerManager {
     sortedRegions.forEach((region) => {
       const existingLayer = this.layerMap.get(region.id);
       const visit = visitData.get(region.id);
+      this.regionMap.set(region.id, region);
 
       if (existingLayer) {
         // Update existing layer style
         this.updateLayerStyle(
           existingLayer,
+          region,
           mode,
           visit,
           weight,
           regionLayerTransparency,
           regionStaticColor,
-          regionHeatmapColor
+          regionHeatmapColor,
+          this.onRegionClick
         );
         existingLayer.bringToFront();
       } else {
@@ -120,14 +140,17 @@ export class RegionLayerManager {
 
     for (const [regionId, layer] of orderedLayers) {
       const visit = visitData.get(regionId);
+      const region = this.regionMap.get(regionId);
       this.updateLayerStyle(
         layer,
+        region,
         mode,
         visit,
         weight,
         regionLayerTransparency,
         regionStaticColors,
-        regionHeatmapColors
+        regionHeatmapColors,
+        this.onRegionClick
       );
       layer.bringToFront();
     }
@@ -148,6 +171,7 @@ export class RegionLayerManager {
   clear(): void {
     this.layerGroup.clearLayers();
     this.layerMap.clear();
+    this.regionMap.clear();
   }
 
   /**
@@ -181,28 +205,26 @@ export class RegionLayerManager {
       regionHeatmapColor
     );
 
-    const layer = L.geoJSON(region.geometry, {
-      style,
-      onEachFeature: (_feature, leafletLayer) => {
-        if (onRegionClick) {
-          leafletLayer.on('click', () => {
-            onRegionClick(region, visit, layer);
-          });
-        }
-      },
-    });
+    const layer = L.geoJSON(region.geometry, { style });
+    this.updateLayerClickHandler(layer, region, visit, onRegionClick);
 
     return layer;
   }
 
   private updateLayerStyle(
     layer: L.GeoJSON,
+    region: Regions | undefined,
     mode: RegionRenderMode,
     visit: RegionVisitData | undefined,
     weight: number,
     regionLayerTransparency: number,
     regionStaticColor: ColorThreshold[],
-    regionHeatmapColor: ColorThreshold[]
+    regionHeatmapColor: ColorThreshold[],
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
   ): void {
     const style = this.calculateStyle(
       mode,
@@ -213,6 +235,61 @@ export class RegionLayerManager {
       regionHeatmapColor
     );
     layer.setStyle(style);
+    this.updateLayerClickHandler(layer, region, visit, onRegionClick);
+  }
+
+  private updateLayerClickHandler(
+    layer: L.GeoJSON,
+    region: Regions | undefined,
+    visit: RegionVisitData | undefined,
+    onRegionClick?: (
+      region: Regions,
+      visitInfo: RegionVisitData | undefined,
+      layer: L.GeoJSON
+    ) => void
+  ): void {
+    const layerWithMetadata = layer as LayerWithMetadata;
+
+    layerWithMetadata[this.REGION_CLICK_REGION_KEY] = region;
+    layerWithMetadata[this.REGION_CLICK_VISIT_KEY] = visit;
+    layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] = onRegionClick;
+
+    const hasBoundHandler = Boolean(layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND]);
+
+    if (!onRegionClick || !region) {
+      if (hasBoundHandler) {
+        layer.off('click');
+        layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND] = false;
+      }
+      return;
+    }
+
+    if (hasBoundHandler) {
+      return;
+    }
+
+    layer.on('click', () => {
+      this.handleLayerClick(layer, layerWithMetadata);
+    });
+    layerWithMetadata[this.REGION_CLICK_HANDLER_BOUND] = true;
+  }
+
+  private handleLayerClick(layer: L.GeoJSON, layerWithMetadata: LayerWithMetadata): void {
+    const callback = layerWithMetadata[this.REGION_CLICK_CALLBACK_KEY] as
+      | ((
+          currentRegion: Regions,
+          currentVisit: RegionVisitData | undefined,
+          currentLayer: L.GeoJSON
+        ) => void)
+      | undefined;
+    const currentRegion = layerWithMetadata[this.REGION_CLICK_REGION_KEY] as Regions | undefined;
+    const currentVisit = layerWithMetadata[this.REGION_CLICK_VISIT_KEY] as
+      | RegionVisitData
+      | undefined;
+
+    if (callback && currentRegion) {
+      callback(currentRegion, currentVisit, layer);
+    }
   }
 
   private calculateStyle(

@@ -11,6 +11,7 @@ import { RegionLayerManager } from './regionLayerManager';
 const mockSetStyle = jest.fn();
 const mockBringToFront = jest.fn();
 const mockOn = jest.fn();
+const mockOff = jest.fn();
 const mockClearLayers = jest.fn();
 const mockAddLayer = jest.fn();
 const mockRemoveLayer = jest.fn();
@@ -19,6 +20,7 @@ const mockGeoJSONLayer = {
   setStyle: mockSetStyle,
   bringToFront: mockBringToFront,
   on: mockOn,
+  off: mockOff,
 };
 
 const mockLayerGroup = {
@@ -30,6 +32,13 @@ const mockLayerGroup = {
 
 const mockMap = {
   removeLayer: jest.fn(),
+};
+
+const resetRegionLayerMetadata = () => {
+  delete (mockGeoJSONLayer as any)._rmgr_clickHandlerBound;
+  delete (mockGeoJSONLayer as any)._rmgr_clickVisit;
+  delete (mockGeoJSONLayer as any)._rmgr_clickRegion;
+  delete (mockGeoJSONLayer as any)._rmgr_clickCallback;
 };
 
 jest.mock('leaflet', () => ({
@@ -99,6 +108,7 @@ describe('RegionLayerManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetRegionLayerMetadata();
     manager = new RegionLayerManager(mockMap as any);
   });
 
@@ -188,6 +198,58 @@ describe('RegionLayerManager', () => {
       );
 
       expect(mockOn).toHaveBeenCalledWith('click', expect.any(Function));
+    });
+
+    it('should use updated visit data in click callback for reused layers', () => {
+      const regions = [createMockRegion('1')];
+      const onRegionClick = jest.fn();
+      const initialVisitData = new Map<string, RegionVisitData>([
+        ['1', createMockVisitData('1', true, 1)],
+      ]);
+
+      manager.syncRegions(
+        regions,
+        'static',
+        initialVisitData,
+        2,
+        1,
+        mockThresholds,
+        mockThresholds,
+        onRegionClick
+      );
+
+      const clickHandler = mockOn.mock.calls.find((call) => call[0] === 'click')?.[1];
+      expect(clickHandler).toEqual(expect.any(Function));
+
+      clickHandler();
+      expect(onRegionClick).toHaveBeenCalledWith(
+        regions[0],
+        initialVisitData.get('1'),
+        mockGeoJSONLayer
+      );
+
+      onRegionClick.mockClear();
+
+      const updatedVisitData = new Map<string, RegionVisitData>([
+        ['1', createMockVisitData('1', true, 7)],
+      ]);
+      manager.syncRegions(
+        [createMockRegion('1')],
+        'static',
+        updatedVisitData,
+        2,
+        1,
+        mockThresholds,
+        mockThresholds,
+        onRegionClick
+      );
+
+      clickHandler();
+      expect(onRegionClick).toHaveBeenCalledWith(
+        expect.objectContaining({ id: '1' }),
+        updatedVisitData.get('1'),
+        mockGeoJSONLayer
+      );
     });
 
     it('should sort regions by visit count', () => {

@@ -133,6 +133,24 @@ describe('useRegionRendering', () => {
         expect(mockLayerManager.clear).toHaveBeenCalled();
       }
     });
+
+    it('should clear layers when regions becomes empty', () => {
+      const { rerender } = renderHook(
+        ({ regions }) => useRegionRendering(mockMap, regions, mockRegionVisits, true),
+        { initialProps: { regions: [mockRegion] } }
+      );
+
+      const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
+      if (mockLayerManager) {
+        mockLayerManager.clear.mockClear();
+      }
+
+      rerender({ regions: [] });
+
+      if (mockLayerManager) {
+        expect(mockLayerManager.clear).toHaveBeenCalledTimes(1);
+      }
+    });
   });
 
   describe('dependencies', () => {
@@ -176,6 +194,65 @@ describe('useRegionRendering', () => {
       ]);
 
       expect(() => rerender({ visits: newVisits })).not.toThrow();
+    });
+
+    it('should update styles when visitData content changes with same size', () => {
+      const { rerender } = renderHook(
+        ({ visits }) => useRegionRendering(mockMap, [mockRegion], visits, true),
+        { initialProps: { visits: mockRegionVisits } }
+      );
+
+      const mockLayerManager = (RegionLayerManager as jest.Mock).mock.results[0]?.value;
+      if (mockLayerManager) {
+        mockLayerManager.updateStyles.mockClear();
+      }
+
+      const sameSizeUpdatedVisits = new Map([
+        [
+          'region1',
+          {
+            regionId: 'region1',
+            regionName: 'Test Region',
+            visitCount: 2,
+            trackIds: ['track1'],
+            visited: true,
+            geometry: mockPolygon,
+          },
+        ],
+      ]);
+
+      rerender({ visits: sameSizeUpdatedVisits });
+
+      if (mockLayerManager) {
+        expect(mockLayerManager.updateStyles).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should not throw when visitData keys are non-strings', () => {
+      const numericKeyVisits = new Map<
+        number,
+        typeof mockRegionVisits extends Map<any, infer V> ? V : never
+      >([
+        [
+          1,
+          {
+            regionId: 'region1',
+            regionName: 'Test Region',
+            visitCount: 3,
+            trackIds: ['track1'],
+            visited: true,
+            geometry: mockPolygon,
+          },
+        ],
+      ]);
+      const runtimeMismatchedVisits = numericKeyVisits as unknown as Map<
+        string,
+        typeof mockRegionVisits extends Map<any, infer V> ? V : never
+      >;
+
+      expect(() => {
+        renderHook(() => useRegionRendering(mockMap, [mockRegion], runtimeMismatchedVisits, true));
+      }).not.toThrow();
     });
   });
 

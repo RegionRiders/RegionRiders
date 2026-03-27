@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -28,7 +28,15 @@ export function useRegionRendering(
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
-  const lastVisitDataSizeRef = useRef<number>(0);
+  const lastVisitDataSignatureRef = useRef<string>('');
+  const visitDataSignature = useMemo(
+    () =>
+      Array.from(visitData.entries())
+        .sort(([regionA], [regionB]) => String(regionA).localeCompare(String(regionB)))
+        .map(([regionId, visit]) => `${regionId}:${visit.visitCount}:${visit.visited}`)
+        .join('|'),
+    [visitData]
+  );
 
   // Initialize layer manager
   useEffect(() => {
@@ -52,11 +60,11 @@ export function useRegionRendering(
 
   // Handle region changes (viewport changes)
   useEffect(() => {
-    if (!map || !layerManagerRef.current || regions.length === 0) {
+    if (!map || !layerManagerRef.current) {
       return;
     }
 
-    if (!showRegions) {
+    if (!showRegions || regions.length === 0) {
       layerManagerRef.current.clear();
       return;
     }
@@ -88,12 +96,12 @@ export function useRegionRendering(
 
   // Handle visit data changes separately - only update styles
   useEffect(() => {
-    if (!map || !layerManagerRef.current || visitData.size === 0) {
+    if (!map || !layerManagerRef.current) {
       return;
     }
 
     // Only update if visit data actually changed
-    if (visitData.size === lastVisitDataSizeRef.current) {
+    if (visitDataSignature === lastVisitDataSignatureRef.current) {
       return;
     }
 
@@ -114,7 +122,7 @@ export function useRegionRendering(
     const visitedCount = Array.from(visitData.values()).filter((v) => v.visited).length;
     logger.debug(`Updated styles for ${visitedCount} visited regions (${duration}ms)`);
 
-    lastVisitDataSizeRef.current = visitData.size;
+    lastVisitDataSignatureRef.current = visitDataSignature;
   }, [
     map,
     visitData,
