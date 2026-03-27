@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconGripVertical } from '@tabler/icons-react';
-import { ActionIcon, Box, Button, Group, NumberInput, Stack } from '@mantine/core';
+import {
+  ActionIcon,
+  Badge,
+  Box,
+  Button,
+  Divider,
+  Group,
+  NumberInput,
+  Stack,
+  useMantineTheme,
+} from '@mantine/core';
 import { ExtendedColorPicker } from '@/components/controls/ExtendedColorPicker/ExtendedColorPicker';
 import { ColorThreshold } from '../ActivityMap/mapTypes';
 import { ColorNumberInput } from './ColorNumberInput';
@@ -13,6 +23,7 @@ interface GradientColorPickerProps {
 }
 
 export function GradientColorPicker({ value, onChange }: GradientColorPickerProps) {
+  const theme = useMantineTheme();
   const [colorThresholds, setColorThresholds] = useState(value);
   const [activeThresholdIndex, setActiveThresholdIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -179,98 +190,127 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
               position: 'relative',
               border: '1px solid var(--mantine-color-gray-4)',
               userSelect: 'none',
+              overflow: 'visible',
             }}
           >
             {colorThresholds.map((threshold, index) => (
-              <ActionIcon
-                key={index}
-                style={{
-                  position: 'absolute',
-                  left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
-                  transform: 'translate(-50%, -50%)',
-                  top: '50%',
-                }}
-                aria-label={`Edit threshold ${index + 1}`}
-                tabIndex={0}
-                onClick={() => {
-                  setActiveThresholdIndex(index);
-                }}
-                onKeyDown={(e) => {
-                  const isActivation = e.key === 'Enter' || e.key === ' ';
-                  const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(
-                    e.key
-                  );
-
-                  if (isActivation) {
-                    e.preventDefault();
+              <>
+                <ActionIcon
+                  key={index}
+                  style={{
+                    position: 'absolute',
+                    left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
+                    bottom: '0',
+                    transform: 'translate(-50%, 50%) scale(0.5625)',
+                  }}
+                  aria-label={`Edit threshold ${index + 1}`}
+                  tabIndex={0}
+                  onClick={() => {
                     setActiveThresholdIndex(index);
-                  }
-
-                  if (isArrowKey) {
-                    e.preventDefault();
-                    const step = e.shiftKey ? 10 : 1;
-                    const direction = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1;
-                    const newThreshold = Math.round(
-                      Math.min(
-                        stableMaxRef.current,
-                        Math.max(min, threshold.threshold + direction * step)
-                      )
+                  }}
+                  onKeyDown={(e) => {
+                    const isActivation = e.key === 'Enter' || e.key === ' ';
+                    const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(
+                      e.key
                     );
 
-                    setColorThresholds((prev) => {
-                      const newThresholds = [...prev];
-                      newThresholds[index] = {
-                        ...newThresholds[index],
-                        threshold: newThreshold,
-                      };
-                      return newThresholds;
-                    });
-                  }
-                }}
-                onMouseDown={(e) => {
-                  const startX = e.clientX;
-                  const startThreshold = threshold.threshold;
-                  setIsDragging(true);
-                  setActiveThresholdIndex(index);
+                    if (isActivation) {
+                      e.preventDefault();
+                      setActiveThresholdIndex(index);
+                    }
 
-                  const onMouseMove = (moveEvent: MouseEvent) => {
-                    const deltaX = moveEvent.clientX - startX;
-                    const newThreshold = Math.round(
-                      Math.min(
-                        stableMaxRef.current,
-                        Math.max(
-                          min,
-                          startThreshold +
-                            (deltaX / (gradientBoxRef.current?.clientWidth ?? 300)) *
-                              (stableMaxRef.current - min)
+                    if (isArrowKey) {
+                      e.preventDefault();
+                      const step = e.shiftKey ? 10 : 1;
+                      const direction = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1;
+                      const newThreshold = Math.round(
+                        Math.min(
+                          stableMaxRef.current,
+                          Math.max(min, threshold.threshold + direction * step)
                         )
-                      )
-                    );
+                      );
 
-                    setColorThresholds((prev) => {
-                      const newThresholds = [...prev];
-                      newThresholds[index] = {
-                        ...newThresholds[index],
-                        threshold: newThreshold,
-                      };
-                      return newThresholds;
-                    });
-                  };
+                      setColorThresholds((prev) => {
+                        const newThresholds = [...prev];
+                        newThresholds[index] = {
+                          ...newThresholds[index],
+                          threshold: newThreshold,
+                        };
+                        return newThresholds;
+                      });
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    const startX = e.clientX;
+                    const startThreshold = threshold.threshold;
+                    setIsDragging(true);
+                    setActiveThresholdIndex(index);
 
-                  const onMouseUp = () => {
-                    window.removeEventListener('mousemove', onMouseMove);
-                    window.removeEventListener('mouseup', onMouseUp);
-                    setIsDragging(false);
-                    stableMaxRef.current =
-                      Math.max(...colorThresholds.map((t) => t.threshold)) * 1.1;
-                  };
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      const deltaX = moveEvent.clientX - startX;
+                      const newThreshold = Math.round(
+                        Math.min(
+                          stableMaxRef.current,
+                          Math.max(
+                            min,
+                            startThreshold +
+                              (deltaX / (gradientBoxRef.current?.clientWidth ?? 300)) *
+                                (stableMaxRef.current - min)
+                          )
+                        )
+                      );
 
-                  window.addEventListener('mousemove', onMouseMove);
-                  window.addEventListener('mouseup', onMouseUp);
-                }}
-              >
-                <IconGripVertical />
-              </ActionIcon>
+                      setColorThresholds((prev) => {
+                        const newThresholds = [...prev];
+                        newThresholds[index] = {
+                          ...newThresholds[index],
+                          threshold: newThreshold,
+                        };
+                        return newThresholds;
+                      });
+                    };
+
+                    const onMouseUp = () => {
+                      window.removeEventListener('mousemove', onMouseMove);
+                      window.removeEventListener('mouseup', onMouseUp);
+                      setIsDragging(false);
+                      stableMaxRef.current =
+                        Math.max(...colorThresholds.map((t) => t.threshold)) * 1.1;
+                    };
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                  }}
+                >
+                  <IconGripVertical />
+                </ActionIcon>
+                <Divider
+                  key={`divider-${index}`}
+                  orientation="vertical"
+                  style={{
+                    position: 'absolute',
+                    left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
+                    transform: 'translateX(-50%)',
+                    top: 0,
+                    bottom: 0,
+                    borderWidth: 2,
+                    borderColor: theme.colors.green[9],
+                  }}
+                />
+
+                <Badge
+                  size="xs"
+                  key={`badge-${index}`}
+                  style={{
+                    position: 'absolute',
+                    left: `${(threshold.threshold / (stableMaxRef.current - min)) * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                    top: '0',
+                  }}
+                >
+                  {threshold.threshold}
+                </Badge>
+              </>
             ))}
           </Box>
         </Box>
