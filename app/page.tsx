@@ -1,16 +1,20 @@
-'use client';
+import { Navbar } from '@/components/Navbar/Navbar';
+import {createTheme} from "@mantine/core";
 
-import dynamic from 'next/dynamic';
+const theme = createTheme({
+  breakpoints: {
+    xs: '30em',
+    sm: '80em',
+    md: '64em',
+    lg: '74em',
+    xl: '90em',
+  },
+}); // i think this might be needed but im too drunk rn to remember what is it for
 
-const ActivityMapComponent = dynamic(() => import('@/components/ActivityMap/ActivityMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-screen flex items-center justify-center bg-gray-900">
-      <p className="text-gray-400">Loading map...</p>
-    </div>
-  ),
-});
-
-export default function Home() {
-  return <ActivityMapComponent />;
+export default function HomePage() {
+  return (
+    <>
+      <Navbar/>
+    </>
+  );
 }
