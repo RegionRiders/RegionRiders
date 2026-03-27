@@ -112,7 +112,13 @@ export class RegionLayerManager {
     regionStaticColors: ColorThreshold[],
     regionHeatmapColors: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
   ): void {
-    for (const [regionId, layer] of this.layerMap.entries()) {
+    const orderedLayers = [...this.layerMap.entries()].sort((a, b) => {
+      const countA = visitData.get(a[0])?.visitCount ?? 0;
+      const countB = visitData.get(b[0])?.visitCount ?? 0;
+      return countA - countB;
+    });
+
+    for (const [regionId, layer] of orderedLayers) {
       const visit = visitData.get(regionId);
       this.updateLayerStyle(
         layer,
@@ -123,6 +129,7 @@ export class RegionLayerManager {
         regionStaticColors,
         regionHeatmapColors
       );
+      layer.bringToFront();
     }
   }
 

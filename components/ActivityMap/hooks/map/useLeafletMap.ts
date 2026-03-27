@@ -144,9 +144,14 @@ export function useLeafletMap(
     };
   }, []);
 
+  const initializedRef = useRef(false);
+
   // Update map by recreating it
   useEffect(() => {
-    if (!mapRef.current || !isReady) {
+    if (!mapRef.current || !isReady || !initializedRef.current) {
+      if (isReady) {
+        initializedRef.current = true;
+      }
       return;
     }
 

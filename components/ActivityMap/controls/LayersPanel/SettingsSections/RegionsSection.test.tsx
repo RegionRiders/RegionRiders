@@ -248,10 +248,9 @@ describe('RegionsSection', () => {
 
       // Find and click the second swatch button
       const swatchButtons = screen.getAllByRole('button', { name: /Select color \d+/ });
-      if (swatchButtons.length > 1) {
-        fireEvent.click(swatchButtons[1]);
-        expect(mockOnSettingChange).toHaveBeenCalledWith('selectedRegionStaticSwatchIndex', 1);
-      }
+      expect(swatchButtons).toHaveLength(2);
+      fireEvent.click(swatchButtons[1]);
+      expect(mockOnSettingChange).toHaveBeenCalledWith('selectedRegionStaticSwatchIndex', 1);
     });
   });
 
