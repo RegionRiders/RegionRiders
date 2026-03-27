@@ -159,6 +159,7 @@ export function ActivitiesListElement(
         <Modal.Root
           opened={tripCreationMenuOpened}
           onClose={tripCreationMenuHandlers.close}
+          centered
         >
           <Modal.Overlay/>
 
@@ -199,7 +200,7 @@ export function ActivitiesListElement(
                     </Text>
                   </Group>
 
-                  <ScrollArea h="4rem">
+                  <ScrollArea h="12rem" type="always" scrollbars="y">
                     {selectedActivities.map((activity) => (
                       <Text key={activity.id}>{activity.title}</Text>
                     ))}
@@ -219,6 +220,7 @@ export function ActivitiesListElement(
     <Modal.Root
       opened={tripCreationModeClosed}
       onClose={tripCreationModeHandlers.close}
+      centered
     >
       <Modal.Overlay/>
       <Modal.Content>
