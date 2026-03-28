@@ -1,6 +1,7 @@
 .stack {
     --ecp-gap: calc(0.375rem * var(--mantine-scale));
     row-gap: var(--ecp-gap);
+    flex-grow: 1;
 }
 
 .sliderRow {

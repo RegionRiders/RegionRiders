@@ -25,10 +25,10 @@ export function ColorThresholdsList({
       }}
       gap="sm"
     >
-      <Text size="lg">Select color</Text>
+      {/*<Text size="lg">Select color</Text>*/}
       <Stack
         style={{
-          maxHeight: '172px',
+          // maxHeight: '172px',
           overflow: 'auto',
           flex: '0 0 100%',
         }}

@@ -9,6 +9,7 @@ import {
   Button,
   Divider,
   Group,
+  Modal,
   NumberInput,
   Stack,
   useMantineTheme,
@@ -29,6 +30,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
   const [colorThresholds, setColorThresholds] = useState(value);
   const [activeThresholdIndex, setActiveThresholdIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [openedSelectedColor, setOpenedSelectedColor] = useState(false);
   const gradientBoxRef = useRef<HTMLDivElement>(null);
   const min = 1;
   const MAX_TO_LAST_THRESHOLD_RATIO = 1.1;
@@ -117,12 +119,25 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
             });
           }}
         />
-        <ColorThresholdsList
-          colorThresholds={colorThresholds}
-          onChange={(index) => setActiveThresholdIndex(index)}
-          activeIndex={activeThresholdIndex}
-        />
+
+        <Modal
+          zIndex={999999}
+          opened={openedSelectedColor}
+          onClose={() => setOpenedSelectedColor(false)}
+          title="Select color"
+          centered
+        >
+          <ColorThresholdsList
+            colorThresholds={colorThresholds}
+            onChange={(index) => {
+              setActiveThresholdIndex(index);
+              setOpenedSelectedColor(false);
+            }}
+            activeIndex={activeThresholdIndex}
+          />
+        </Modal>
         <Stack>
+          <Button onClick={() => setOpenedSelectedColor(true)}>Select color</Button>
           <NumberInput
             size="xs"
             label="Threshold"

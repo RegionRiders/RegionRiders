@@ -30,7 +30,7 @@ export function GradientColorPickerButton({
         opened={opened}
         onClose={() => setOpened(false)}
         title="Gradient Color Picker"
-        size="xl"
+        size="lg"
         centered
         styles={{
           root: { zIndex: 999999 },
