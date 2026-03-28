@@ -20,8 +20,8 @@ export const theme = createTheme({
   primaryColor: 'brand',
   defaultRadius: 'md',
 
-    fontFamily: 'W droge, sans-serif',
-    headings: {
-        fontFamily: 'W droge, sans-serif',
+  fontFamily: 'var(--font-w-droge), sans-serif',
+  headings: {
+    fontFamily: 'var(--font-w-droge), sans-serif',
     },
 });

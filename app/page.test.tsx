@@ -1,6 +1,7 @@
 import { render, screen } from '@/test-utils';
 import Home from './page';
 
+
 // Mock the dynamic import of ActivityMap
 jest.mock('next/dynamic', () => ({
   __esModule: true,
