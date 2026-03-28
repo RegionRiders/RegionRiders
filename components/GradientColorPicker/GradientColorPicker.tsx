@@ -101,7 +101,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
 
   return (
     <Stack gap="md" style={{ overflow: 'hidden' }}>
-      <Group align="center" wrap="nowrap" justify="space-around">
+      <Group align="center" wrap="nowrap" justify="space-around" gap="48px">
         <ExtendedColorPicker
           layout="horizontal"
           color={colorThresholds[activeThresholdIndex].color}
@@ -120,6 +120,7 @@ export function GradientColorPicker({ value, onChange }: GradientColorPickerProp
         <ColorThresholdsList
           colorThresholds={colorThresholds}
           onChange={(index) => setActiveThresholdIndex(index)}
+          activeIndex={activeThresholdIndex}
         />
         <Stack>
           <NumberInput
