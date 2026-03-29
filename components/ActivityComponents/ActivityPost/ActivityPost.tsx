@@ -17,7 +17,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
       justify="flex-start"
     >
       <Image
-        src={imageUrl || '/assets/placeholders/activity.jpg'}
+        src={imageUrl || '/assets/placeholders/map_image_placeholder.jpg'}
         w={{ base: "4rem", lg: "6rem" }}
         h={{ base: "auto", lg: "6rem" }}
         fit="fill"

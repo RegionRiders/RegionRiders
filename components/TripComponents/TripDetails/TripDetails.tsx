@@ -12,7 +12,7 @@ const TripDetails = ({selectedTrip, handleTripChange} : {selectedTrip: (Trip | n
           </Text>
         </Group>
 
-        <Image src="https://http.cat/images/404.jpg" h={350} />
+        <Image src="/assets/placeholders/map_image_placeholder.jpg" h={350} />
 
         <Stack ml="md" gap={0}>
           <Text ml="md" fw="bold" size="xl">

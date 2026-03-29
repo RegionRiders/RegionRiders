@@ -96,7 +96,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
     <Group mb="xs" align="flex-start">
       <Card.Section>
         <Image
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Kot_z_mysz%C4%85.jpg/960px-Kot_z_mysz%C4%85.jpg"
+          src="/assets/placeholders/map_image_placeholder.jpg"
           h={{ base: "auto", xs: 250 }}
           w={{ base: "100%", xs: "auto" }}
           radius="md"
