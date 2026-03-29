@@ -8,7 +8,7 @@ import { Trip } from '@/types/trip';
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
-    <Divider orientation="vertical" />
+    <Divider orientation="vertical"/>
     <Text>{value}</Text>
   </>
 );
@@ -77,7 +77,7 @@ const Activities = ({
                     </Text>
                   </Anchor>
 
-                  <Group display={{base: "none", xs: "flex"}}>
+                  <Group display={{base: "none", lg: "flex"}}>
                     <TripPostActivityStat value={activity.distance} />
                     <TripPostActivityStat value={activity.time} />
                   </Group>
@@ -92,29 +92,40 @@ const Activities = ({
 };
 
 const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => void }) => (
-  <Card shadow="sm" radius="md" withBorder>
+  <Card shadow="sm" radius="md" withBorder mx="md">
     <Group mb="xs" align="flex-start">
       <Card.Section>
-        <Image
-          src="/assets/placeholders/map_image_placeholder.jpg"
-          h={{ base: "auto", xs: 250 }}
-          w={{ base: "100%", xs: "auto" }}
-          radius="md"
-          fit="fill"
-        />
-      </Card.Section>
-
-      <Stack ml={{base: 0, xs: "md"}} gap={0}>
-        <Text
-          fw="bold"
-          size="xl"
-          mb={0}
+        <Anchor
           onClick={() => {
             onSelect(data);
           }}
         >
-          {data.title}
-        </Text>
+          <Image
+            src="/assets/placeholders/map_image_placeholder.jpg"
+            h={{ base: "auto", xs: 250 }}
+            w={{ base: "100%", xs: "auto" }}
+            radius="md"
+            fit="fill"
+          />
+        </Anchor>
+
+      </Card.Section>
+
+      <Stack ml={{base: 0, xs: "md"}} gap={0}>
+        <Anchor
+          onClick={() => {
+            onSelect(data);
+          }}
+        >
+          <Text
+            fw="bold"
+            size="xl"
+            mb={0}
+          >
+            {data.title}
+          </Text>
+        </Anchor>
+
         <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
         <TripStat header="Distance:" value={data.distance} />

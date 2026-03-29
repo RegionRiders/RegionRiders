@@ -60,7 +60,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         setAsideWidth({base: "100%", md: 500, xl: 700});
         break;
       case 'trips':
-        setAsideWidth({base: "100%", md: 400, lg: 500, xl: 600});
+        setAsideWidth({base: "100%", sm: 400, lg: 600, xl: "50vw"});
         break;
       default:
         setAsideWidth({base: 0});

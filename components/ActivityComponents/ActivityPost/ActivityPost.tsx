@@ -58,6 +58,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
       <SimpleGrid
         cols={3}
         spacing={0}
+        mr="md"
         w={{ base: "15vw", lg: 220 }}
         display={{base: 'none', lg: 'grid'}}
       >
