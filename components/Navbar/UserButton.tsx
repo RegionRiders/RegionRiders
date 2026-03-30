@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { IconChevronDown } from '@tabler/icons-react';
-import { Avatar, Group, Text, UnstyledButton } from '@mantine/core';
+import {Avatar, Box, Group, Text, UnstyledButton} from '@mantine/core';
 import { User } from '@/types/user';
 
 export interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -15,10 +15,14 @@ export const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
     <UnstyledButton ref={ref} {...others}>
       <Group gap="sm">
         <Avatar src={user.profileImage} radius="xl" />
-        <Text size="sm" fw={500}>
+
+        <Text size="sm" fw={500} display={{ base: "none", xs: "flex" }}>
           {user.firstname} {user.lastname}
         </Text>
-        {showChevron && <IconChevronDown size={16} />}
+
+        <Box display={{ base: "none", xs: "flex" }}>
+          {showChevron && <IconChevronDown size={16}/>}
+        </Box>
       </Group>
     </UnstyledButton>
   )
