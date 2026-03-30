@@ -1,16 +1,16 @@
-import {CloseButton, Group, Image, Stack, Text} from "@mantine/core";
+import {CloseButton, Flex, Group, Image, Stack, Text} from "@mantine/core";
 import {Trip} from "@/types/trip";
 
 const TripDetails = ({selectedTrip, handleTripChange} : {selectedTrip: (Trip | null), handleTripChange: (trip: Trip | null) => void}) => {
   return (
     <>
       <Group py="md">
-        <Group p="sm">
-          <CloseButton size="lg" ml="auto" onClick={() => handleTripChange(null)}/>
-          <Text fw="bold" size="xl">
+        <Flex px="md" gap="md">
+          <CloseButton size="lg" onClick={() => handleTripChange(null)}/>
+          <Text fw="bold" size="xl" lineClamp={1}>
             {selectedTrip?.title}
           </Text>
-        </Group>
+        </Flex>
 
         <Image src="/assets/placeholders/map_image_placeholder.jpg" h={350} />
 

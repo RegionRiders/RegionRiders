@@ -111,7 +111,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
 
       </Card.Section>
 
-      <Stack ml={{base: 0, xs: "md"}} gap={0}>
+      <Stack ml={{base: 0, xs: "md"}} gap={0} w={{ base: "auto", lg: 270 }}>
         <Anchor
           onClick={() => {
             onSelect(data);
@@ -121,6 +121,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
             fw="bold"
             size="xl"
             mb={0}
+            lineClamp={3}
           >
             {data.title}
           </Text>
