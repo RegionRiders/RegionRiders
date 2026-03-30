@@ -1,16 +1,16 @@
-import {CloseButton, Group, Image, Stack, Text} from "@mantine/core";
+import {CloseButton, Flex, Group, Image, Stack, Text} from "@mantine/core";
 import {Activity} from "@/types/activity";
 
 const ActivityDetails = ({selectedActivity, handleActivityChange} : {selectedActivity: (Activity | null), handleActivityChange: (trip: Activity | null) => void}) => {
   return (
     <>
       <Group py="md">
-        <Group p="sm">
-          <CloseButton size="lg" ml="auto" onClick={() => handleActivityChange(null)}/>
-          <Text fw="bold" size="xl">
+        <Flex px="md" gap="md">
+          <CloseButton size="lg" onClick={() => handleActivityChange(null)}/>
+          <Text fw="bold" size="xl" lineClamp={1}>
             {selectedActivity?.title}
           </Text>
-        </Group>
+        </Flex>
 
         <Image src="/assets/placeholders/map_image_placeholder.jpg" h={350} />
 

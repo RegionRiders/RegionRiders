@@ -1,4 +1,4 @@
-import {Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
+import {Anchor, Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';
@@ -16,13 +16,15 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
       align={{ base: 'stretch', lg: 'center' }}
       justify="flex-start"
     >
-      <Image
-        src={imageUrl || '/assets/placeholders/map_image_placeholder.jpg'}
-        w={{ base: "4rem", lg: "6rem" }}
-        h={{ base: "auto", lg: "6rem" }}
-        fit="fill"
-        radius="md"
-      />
+      <Anchor onClick={() => onSelect(data)}>
+        <Image
+          src={imageUrl || '/assets/placeholders/map_image_placeholder.jpg'}
+          w={{ base: "4rem", lg: "6rem" }}
+          h={{ base: "auto", lg: "6rem" }}
+          fit="fill"
+          radius="md"
+        />
+      </Anchor>
 
       {/* Content */}
       <Stack flex={1} gap={0}>
@@ -34,13 +36,15 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
               {dateWithTime(data.startDate)}
             </Text>
 
-            <Text fw={650} truncate="end" onClick={() => onSelect(data)}>
-              {data.title}
-            </Text>
+            <Anchor onClick={() => onSelect(data)}>
+              <Text fw={650} truncate="end" w={{ base: 174, lg: 245}}>
+                {data.title}
+              </Text>
+            </Anchor>
           </Stack>
         </Group>
 
-        <Text size="sm" c="dimmed" lineClamp={1} truncate="end" maw="20vw" display={{base: 'none', lg: 'block'}}>
+        <Text size="sm" c="dimmed" lineClamp={1} truncate="end" maw={245} display={{base: 'none', lg: 'block'}}>
           {data.desc}
         </Text>
 
