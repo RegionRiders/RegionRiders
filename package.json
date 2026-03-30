@@ -31,7 +31,10 @@
     "db:reset": "docker-compose down -v && docker-compose up -d postgres",
     "db:setup": "./scripts/setup-db.sh",
     "db:test-ssl": "node scripts/test-ssl-connection.js",
-    "fetch:regions": "tsx tools/fetchRegions.ts"
+    "fetch:regions": "tsx tools/fetchRegions.ts",
+    "regions:validate-source": "tsx tools/validateRegionSource.ts",
+    "regions:build-tiles": "tsx tools/buildRegionTiles.ts",
+    "regions:prepare-v1": "npm run regions:validate-source && npm run regions:build-tiles -- --force"
   },
   "dependencies": {
     "@deck.gl/layers": "^9.2.11",
