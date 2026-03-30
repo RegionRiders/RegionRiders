@@ -25,7 +25,7 @@ interface ValidationReport {
 
 const REQUIRED_PROPERTIES = ['region_id', 'country_code', 'admin_level', 'name'] as const;
 
-const DEFAULT_SOURCE_DIR = '../data/rr_import_20260325/mobile_geojson_balanced';
+const DEFAULT_SOURCE_DIR = '../public/data/rr_import/mobile_geojson_balanced';
 const DEFAULT_REPORT_PATH = '../public/data/regions/reports/source-validation-v1.json';
 const MAX_ISSUES = 500;
 
