@@ -19,11 +19,9 @@ export interface NavbarProps {
   onLoginClick?: () => void;
 }
 
-const NavbarText = ({ text }: { text: string }) => <Text>{text}</Text>;
-
-const NavbarTab = ({ value, text }: { value: string; text: string }) => (
-  <Tabs.Tab value={value}>
-    <NavbarText text={text} />
+const NavbarTab = ({ value, text, display }: { value: string; text: string; display?: "none" | "flex" }) => (
+  <Tabs.Tab value={value} display={display}>
+    <Text>{text}</Text>
   </Tabs.Tab>
 );
 
@@ -85,8 +83,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
           <Tabs.List className={classes.tabsList} h="4rem">
             <Logo />
             <NavbarTab value="map" text="Map" />
-            <NavbarTab value="activities" text="Activities" />
-            <NavbarTab value="trips" text="Trips" />
+            <NavbarTab value="activities" text="Activities" display={user === undefined ? "none" : "flex"} />
+            <NavbarTab value="trips" text="Trips" display={user === undefined ? "none" : "flex"} />
 
             <div className={classes.userSection}>
               {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
