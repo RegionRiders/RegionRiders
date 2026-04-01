@@ -1,10 +1,27 @@
-import { Anchor, Card, Divider, Group, Image, List, Stack, Text } from '@mantine/core';
+import {
+  Anchor,
+  Card,
+  createTheme,
+  Divider,
+  Group,
+  Image,
+  List,
+  MantineProvider,
+  Stack,
+  Text,
+} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/TripDateFormatter";
 import { dateNoTime, dateOnlyTime, dayDifference } from "@/components/Utils/DateFormattingFunctions";
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
 
+
+const tripsBreakpoints = createTheme({
+  breakpoints: {
+    asideOpenHide: '76em', // point at which some things have to disappear when aside is open
+  },
+});
 
 const TripPostActivityStat = ({ value }: { value: string }) => (
   <>
@@ -67,17 +84,21 @@ const Activities = ({
                 </Text>
               </Group>
             )}
-            <List size="sm" c="dimmed" pl={{base: 0, xs: "md"}} icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
+            <List size="sm" c="dimmed" pl="md" icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
               <List.Item c="dimmed">
-                <Group>
-                  <ActivityTypeIcon type={activity.activityType} size={25} />
-                  <Anchor href="https://http.cat/images/404.jpg">
-                    <Text truncate="end">
-                      {activity.title}
-                    </Text>
-                  </Anchor>
+                <Group w="100%">
 
-                  <Group display={{base: "none", lg: "flex"}}>
+                  <Group>
+                    <ActivityTypeIcon type={activity.activityType} size={25} />
+                    <Anchor href="https://http.cat/images/404.jpg">
+                      <Text truncate="end" w={170}>
+                        {activity.title}
+                      </Text>
+                    </Anchor>
+                  </Group>
+
+
+                  <Group display={{base: "none", asideOpenHide: "flex"}} ml="auto">
                     <TripPostActivityStat value={activity.distance} />
                     <TripPostActivityStat value={activity.time} />
                   </Group>
@@ -92,57 +113,59 @@ const Activities = ({
 };
 
 const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => void }) => (
-  <Card shadow="sm" radius="md" withBorder mx="md">
-    <Group mb="xs" align="flex-start">
-      <Card.Section>
-        <Anchor
-          onClick={() => {
-            onSelect(data);
-          }}
-        >
-          <Image
-            src="/assets/placeholders/map_image_placeholder.jpg"
-            h={{ base: "auto", xs: 250 }}
-            w={{ base: "100%", xs: "auto" }}
-            radius="md"
-            fit="fill"
-          />
-        </Anchor>
-
-      </Card.Section>
-
-      <Stack ml={{base: 0, xs: "md"}} gap={0} w={{ base: "auto", lg: 270 }}>
-        <Anchor
-          onClick={() => {
-            onSelect(data);
-          }}
-        >
-          <Text
-            fw="bold"
-            size="xl"
-            mb={0}
-            lineClamp={3}
+  <MantineProvider theme={tripsBreakpoints}>
+    <Card shadow="sm" radius="md" withBorder mx="md" w={{ base: 320, sm: 370, asideOpenHide: "auto" }}>
+      <Group mb="xs" align="flex-start">
+        <Card.Section>
+          <Anchor
+            onClick={() => {
+              onSelect(data);
+            }}
           >
-            {data.title}
-          </Text>
-        </Anchor>
+            <Image
+              src="/assets/placeholders/map_image_placeholder.jpg"
+              h={{ base: "auto", asideOpenHide: 250 }}
+              w={{ base: "100%", asideOpenHide: "auto" }}
+              radius="md"
+              fit="fill"
+            />
+          </Anchor>
 
-        <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
+        </Card.Section>
 
-        <TripStat header="Distance:" value={data.distance} />
-        <TripStat header="Regions discovered:" value="placeholder" />
-        <TripStat header="Regions visited:" value="placeholder" />
-      </Stack>
-    </Group>
+        <Stack ml={{base: 0, asideOpenHide: "md"}} gap={0} w={{ base: "auto", xs: 270 }}>
+          <Anchor
+            onClick={() => {
+              onSelect(data);
+            }}
+          >
+            <Text
+              fw="bold"
+              size="xl"
+              mb={0}
+              lineClamp={2}
+            >
+              {data.title}
+            </Text>
+          </Anchor>
 
-    <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
+          <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
-    <Activities
-      activities={data.activities}
-      tripStartDate={data.startDate}
-      tripEndDate={data.endDate}
-    />
-  </Card>
+          <TripStat header="Distance:" value={data.distance} />
+          <TripStat header="Regions discovered:" value="2" />
+          <TripStat header="Regions visited:" value="5" />
+        </Stack>
+      </Group>
+
+      <Divider orientation="horizontal" size="md" mt="xs" mb="xs" />
+
+      <Activities
+        activities={data.activities}
+        tripStartDate={data.startDate}
+        tripEndDate={data.endDate}
+      />
+    </Card>
+  </MantineProvider>
 );
 
 export { TripPost };

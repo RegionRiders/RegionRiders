@@ -58,7 +58,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         setAsideWidth({base: "100%", md: 500, xl: 700});
         break;
       case 'trips':
-        setAsideWidth({base: "100%", sm: "50vw"});
+        setAsideWidth({base: "100%", sm: "45vw", md: "50vw"});
         break;
       default:
         setAsideWidth({base: 0});
@@ -82,9 +82,9 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         <AppShell.Header display={hideNavbar ? 'none' : ''}>
           <Tabs.List className={classes.tabsList} h="4rem">
             <Logo />
-            <NavbarTab value="map" text="Map" />
-            <NavbarTab value="activities" text="Activities" display={user === undefined ? "none" : "flex"} />
-            <NavbarTab value="trips" text="Trips" display={user === undefined ? "none" : "flex"} />
+            <NavbarTab value="map" text="Map"/>
+            <NavbarTab value="activities" text="Activities"/>
+            <NavbarTab value="trips" text="Trips"/>
 
             <div className={classes.userSection}>
               {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
