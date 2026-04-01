@@ -15,7 +15,7 @@ import {useDisclosure} from "@mantine/hooks";
 
 export interface NavbarProps {
   user?: User;
-  defaultTab?: 'map' | 'activities' | 'trips';
+  defaultTab?: 'welcome' | 'map' | 'activities' | 'trips';
   onLoginClick?: () => void;
 }
 
@@ -31,7 +31,7 @@ const NavbarTabContent = ({ value, Content }: { value: string; Content: ReactEle
   </Tabs.Panel>
 );
 
-export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
+export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "map" }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
@@ -82,9 +82,10 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         <AppShell.Header display={hideNavbar ? 'none' : ''}>
           <Tabs.List className={classes.tabsList} h="4rem">
             <Logo />
-            <NavbarTab value="map" text="Map"/>
-            <NavbarTab value="activities" text="Activities"/>
-            <NavbarTab value="trips" text="Trips"/>
+            <NavbarTab value="welcome" text="" display="none"/>
+            <NavbarTab value="map" text="Map" display={user === undefined ? 'none' : 'flex'}/>
+            <NavbarTab value="activities" text="Activities" display={user === undefined ? 'none' : 'flex'}/>
+            <NavbarTab value="trips" text="Trips" display={user === undefined ? 'none' : 'flex'}/>
 
             <div className={classes.userSection}>
               {user ? <UserMenu user={user} /> : <StravaLoginButton onAuthCode={setAuthCode} />}
@@ -92,8 +93,8 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
           </Tabs.List>
         </AppShell.Header>
 
-
-        <NavbarTabContent value="map" Content={Welcome()} />
+        <NavbarTabContent value="welcome" Content={Welcome()} />
+        <NavbarTabContent value="map" Content={<Text m="100">here will be map</Text>} />
         <NavbarTabContent value="activities" Content={<ActivitiesListElement toggleActivity={toggleAsideDesktop} isActivityToggled={desktopAsideOpened} hideNavbar={setHideNavbar} />} />
         <NavbarTabContent value="trips" Content={<TripsListElement toggleTrip={toggleAsideDesktop} isTripToggled={desktopAsideOpened} />} />
       </AppShell>
