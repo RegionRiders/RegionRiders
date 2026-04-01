@@ -9,10 +9,10 @@ const ActivityStat = ({ value }: { name: string; value: string }) => (
 );
 
 const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
-  <Card shadow="sm" radius="md" withBorder p={{base: "xs", lg: 0}}>
+  <Card shadow="sm" radius="md" withBorder p={{base: "xs", lg: 0}} pr={5}>
     <Flex
       direction="row"
-      gap="md"
+      gap={{base: 5, lg: "md"}}
       align={{ base: 'stretch', lg: 'center' }}
       justify="flex-start"
     >

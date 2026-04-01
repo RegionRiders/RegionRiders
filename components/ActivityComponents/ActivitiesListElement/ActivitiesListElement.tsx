@@ -271,7 +271,7 @@ export function ActivitiesListElement(
         <InfiniteScroll next={fetchActivities} hasMore={hasMoreActivities} loader={<PostsLoading/>} dataLength={visibleActivities.length} style={{ overflow: "hidden" }}>
           <PostsList
             Content={visibleActivities.map((activity) => (
-              <Flex key={activity.id} direction="row" gap="md" justify="flex-start" align="center">
+              <Flex key={activity.id} direction="row" gap={{ base: 5, lg: "md"}} justify="flex-start" align="center">
                 <ActivitySelectCheckbox activityId={activity.id}/>
 
                 <ActivityPost
