@@ -1,4 +1,3 @@
-import { getApiUrl } from '@/lib/client';
 import { RegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
 
 export interface RegionTileProfileConfig {
@@ -16,11 +15,11 @@ export interface RegionTileProfileConfig {
   };
 }
 
-const BASE_TILESET_PATH = '/api/regions/tiles/v1/{z}/{x}/{y}.pbf';
+const BASE_TILESET_PATH = 'https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf';
 
 const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig> = {
   mobile: {
-    sourceUrl: getApiUrl(BASE_TILESET_PATH),
+    sourceUrl: BASE_TILESET_PATH,
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 4,
@@ -34,11 +33,11 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     },
   },
   desktop: {
-    sourceUrl: getApiUrl(BASE_TILESET_PATH),
+    sourceUrl: BASE_TILESET_PATH,
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 3,
-    maxZoom: 14,
+    maxZoom: 12,
     style: {
       color: '#0A7E43',
       weight: 1.5,
