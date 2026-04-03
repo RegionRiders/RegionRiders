@@ -16,7 +16,7 @@ export interface RegionTileProfileConfig {
   };
 }
 
-const BASE_TILESET_PATH = '/data/regions/tiles/v1/{z}/{x}/{y}.pbf';
+const BASE_TILESET_PATH = '/api/regions/tiles/v1/{z}/{x}/{y}.pbf';
 
 const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig> = {
   mobile: {

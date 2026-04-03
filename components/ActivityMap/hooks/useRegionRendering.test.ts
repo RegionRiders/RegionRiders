@@ -10,7 +10,7 @@ jest.mock('@/lib/services/maps/selectRenderProfile', () => ({
 
 jest.mock('@/components/ActivityMap/config/regionTileProfiles', () => ({
   getRegionTileProfileConfig: jest.fn(() => ({
-    sourceUrl: 'http://localhost:3000/data/regions/tiles/v1/{z}/{x}/{y}.pbf',
+    sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 4,
