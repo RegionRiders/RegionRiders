@@ -26,9 +26,9 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     minZoom: 4,
     maxZoom: 12,
     style: {
-      color: '#c51b1f',
+      color: '#0A7E43',
       weight: 1,
-      fillColor: '#c51b1f',
+      fillColor: '#0A7E43',
       fillOpacity: 0.08,
       opacity: 0.9,
     },
@@ -40,9 +40,9 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     minZoom: 3,
     maxZoom: 14,
     style: {
-      color: '#d7301f',
+      color: '#0A7E43',
       weight: 1.5,
-      fillColor: '#d7301f',
+      fillColor: '#0A7E43',
       fillOpacity: 0.1,
       opacity: 1,
     },
