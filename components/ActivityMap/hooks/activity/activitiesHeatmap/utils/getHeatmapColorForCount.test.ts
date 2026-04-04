@@ -52,11 +52,11 @@ describe('getHeatmapColorForCount', () => {
 
   describe('line thickness normalization', () => {
     it('should normalize by line thickness', () => {
-      // With thickness=1, count=15 and thickness=4, count=45 represent the same normalized density:
-      // 15 / (2*1+1) = 45 / (2*4+1) = 5
-      const thin = getHeatmapColorForCount(15, 10, 1, TEST_THRESHOLDS);
+      // With diameter-based thickness scaling, proportional count should yield same normalized density.
+      // 10 / 1 = 40 / 4 = 10
+      const thin = getHeatmapColorForCount(10, 10, 1, TEST_THRESHOLDS);
 
-      const thick = getHeatmapColorForCount(45, 10, 4, TEST_THRESHOLDS);
+      const thick = getHeatmapColorForCount(40, 10, 4, TEST_THRESHOLDS);
 
       expect(thin).toEqual(thick);
     });
@@ -82,7 +82,7 @@ describe('getHeatmapColorForCount', () => {
 
   describe('zoom level adjustment', () => {
     it('should keep same result for reference and higher zoom for the same raw pixel count', () => {
-      const referenceZoom = getHeatmapColorForCount(10, 10, 1, TEST_THRESHOLDS);
+      const referenceZoom = getHeatmapColorForCount(10, 13, 1, TEST_THRESHOLDS);
       const higherZoom = getHeatmapColorForCount(10, 15, 1, TEST_THRESHOLDS);
 
       expect(referenceZoom).toEqual(higherZoom);
@@ -90,14 +90,14 @@ describe('getHeatmapColorForCount', () => {
 
     it('should keep same result across lower zoom levels when count is inversely scaled for zoom', () => {
       const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
-      const midZoomEquivalent = getHeatmapColorForCount(10 / 2 ** (10 - 5), 10, 1, TEST_THRESHOLDS);
+      const midZoomEquivalent = getHeatmapColorForCount(10 / 2 ** (13 - 5), 13, 1, TEST_THRESHOLDS);
 
       expect(lowZoom).toEqual(midZoomEquivalent);
     });
 
     it('should reduce intensity at lower zoom for the same raw pixel count', () => {
       const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
-      const referenceZoom = getHeatmapColorForCount(10, 10, 1, TEST_THRESHOLDS);
+      const referenceZoom = getHeatmapColorForCount(10, 13, 1, TEST_THRESHOLDS);
 
       expect(referenceZoom[3]).toBeGreaterThanOrEqual(lowZoom[3]);
     });
@@ -111,7 +111,7 @@ describe('getHeatmapColorForCount', () => {
 
     it('should handle extreme lower zoom values with inversely scaled equivalent counts', () => {
       const veryLowZoom = getHeatmapColorForCount(10, 1, 1, TEST_THRESHOLDS);
-      const referenceZoomEquivalent = getHeatmapColorForCount(10 / 2 ** (10 - 1), 10, 1, TEST_THRESHOLDS);
+      const referenceZoomEquivalent = getHeatmapColorForCount(10 / 2 ** (13 - 1), 13, 1, TEST_THRESHOLDS);
 
       expect(veryLowZoom).toEqual(referenceZoomEquivalent);
     });

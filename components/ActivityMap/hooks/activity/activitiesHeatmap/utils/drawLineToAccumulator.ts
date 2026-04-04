@@ -11,7 +11,7 @@ import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTyp
  * @param y0 - Start y coordinate
  * @param x1 - End x coordinate
  * @param y1 - End y coordinate
- * @param thickness - Line thickness radius in pixels
+ * @param thickness - Line thickness diameter in pixels
  */
 export function drawLineToAccumulator(
   accumulator: Float32Array,
@@ -25,9 +25,9 @@ export function drawLineToAccumulator(
   touchedBounds?: PixelBounds
 ): void {
   // Thickness is interpreted as brush diameter from UI settings.
-  // Subtracting 1 maps diameter 1 -> radius 0, diameter 2 -> radius 1, etc., matching the integer
-  // loop bounds [-radius, +radius] that stamp the circular brush into the accumulator.
-  const brushRadius = Math.max(0, Math.round(thickness - 1));
+  // The raster brush is symmetric with integer offsets in [-radius, +radius], so its actual stamped
+  // diameter is (2*radius + 1); choose the nearest odd diameter to the requested value.
+  const brushRadius = Math.max(0, Math.round((thickness - 1) / 2));
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
