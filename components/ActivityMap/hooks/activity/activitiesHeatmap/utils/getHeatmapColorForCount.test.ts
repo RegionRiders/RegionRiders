@@ -52,17 +52,13 @@ describe('getHeatmapColorForCount', () => {
 
   describe('line thickness normalization', () => {
     it('should normalize by line thickness', () => {
-      // With thickness=1, count=10 represents 10 unique activities
-      const thin = getHeatmapColorForCount(10, 10, 1, TEST_THRESHOLDS);
+      // With thickness=1, count=15 and thickness=4, count=45 represent the same normalized density:
+      // 15 / (2*1+1) = 45 / (2*4+1) = 5
+      const thin = getHeatmapColorForCount(15, 10, 1, TEST_THRESHOLDS);
 
-      // With thickness=5, count=50 also represents 10 unique activities (50 / (5*2))
-      const thick = getHeatmapColorForCount(50, 10, 5, TEST_THRESHOLDS);
+      const thick = getHeatmapColorForCount(45, 10, 4, TEST_THRESHOLDS);
 
-      // Should produce similar colors (allowing for rounding differences)
-      expect(Math.abs(thin[0] - thick[0])).toBeLessThan(50);
-      expect(Math.abs(thin[1] - thick[1])).toBeLessThan(50);
-      expect(Math.abs(thin[2] - thick[2])).toBeLessThan(50);
-      expect(Math.abs(thin[3] - thick[3])).toBeLessThan(50); // ← Added alpha check
+      expect(thin).toEqual(thick);
     });
 
     it('should handle thickness of 1', () => {
@@ -85,12 +81,18 @@ describe('getHeatmapColorForCount', () => {
   });
 
   describe('zoom level adjustment', () => {
-    it('should amplify effect at higher zoom levels', () => {
+    it('should keep same result across zoom levels when count is inversely scaled for zoom', () => {
+      const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
+      const highZoomEquivalent = getHeatmapColorForCount(10 / 2 ** (15 - 5), 15, 1, TEST_THRESHOLDS);
+
+      expect(lowZoom).toEqual(highZoomEquivalent);
+    });
+
+    it('should reduce intensity at lower zoom for the same raw pixel count', () => {
       const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
       const highZoom = getHeatmapColorForCount(10, 15, 1, TEST_THRESHOLDS);
 
-      // Higher zoom should result in different (generally brighter) colors
-      expect(lowZoom).not.toEqual(highZoom);
+      expect(highZoom[3]).toBeGreaterThan(lowZoom[3]);
     });
 
     it('should use default zoom when not provided', () => {
@@ -100,12 +102,11 @@ describe('getHeatmapColorForCount', () => {
       expect(withDefault).toEqual(withExplicit);
     });
 
-    it('should handle extreme zoom values', () => {
+    it('should handle extreme zoom values with inversely scaled equivalent counts', () => {
       const veryLowZoom = getHeatmapColorForCount(10, 1, 1, TEST_THRESHOLDS);
-      const veryHighZoom = getHeatmapColorForCount(10, 20, 1, TEST_THRESHOLDS);
+      const veryHighZoom = getHeatmapColorForCount(10 / 2 ** (20 - 1), 20, 1, TEST_THRESHOLDS);
 
-      expect(veryLowZoom).toBeDefined();
-      expect(veryHighZoom).toBeDefined();
+      expect(veryLowZoom).toEqual(veryHighZoom);
     });
   });
 

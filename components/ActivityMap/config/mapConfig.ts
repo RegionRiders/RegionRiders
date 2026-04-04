@@ -142,6 +142,7 @@ export const DEFAULT_MAP_SETTINGS: MapSettings = {
   showActivities: true,
   activityThickness: 2,
   activityLayerTransparency: 1,
+  activityHeatmapEdgeSmoothing: true,
   lineColorSwatches: DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES,
   selectedLineSwatchIndex: 0,
   activityHeatmapColorSwatches: DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES,
