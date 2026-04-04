@@ -71,10 +71,13 @@ export function drawLineToAccumulator(
 type BrushOffset = [number, number];
 
 const brushOffsetsCache = new Map<number, BrushOffset[]>();
+const MAX_BRUSH_CACHE_ENTRIES = 32;
 
 function getBrushOffsets(radius: number): BrushOffset[] {
   const cached = brushOffsetsCache.get(radius);
   if (cached) {
+    brushOffsetsCache.delete(radius);
+    brushOffsetsCache.set(radius, cached);
     return cached;
   }
 
@@ -94,6 +97,12 @@ function getBrushOffsets(radius: number): BrushOffset[] {
     }
   }
 
+  if (brushOffsetsCache.size >= MAX_BRUSH_CACHE_ENTRIES) {
+    const oldestKey = brushOffsetsCache.keys().next().value;
+    if (typeof oldestKey === 'number') {
+      brushOffsetsCache.delete(oldestKey);
+    }
+  }
   brushOffsetsCache.set(radius, offsets);
   return offsets;
 }
@@ -115,10 +124,18 @@ function stampBrush(
     if (px >= 0 && px < width && py >= 0 && py < height) {
       accumulator[py * width + px]++;
       if (touchedBounds) {
-        if (px < touchedBounds.minX) touchedBounds.minX = px;
-        if (py < touchedBounds.minY) touchedBounds.minY = py;
-        if (px > touchedBounds.maxX) touchedBounds.maxX = px;
-        if (py > touchedBounds.maxY) touchedBounds.maxY = py;
+        if (px < touchedBounds.minX) {
+          touchedBounds.minX = px;
+        }
+        if (py < touchedBounds.minY) {
+          touchedBounds.minY = py;
+        }
+        if (px > touchedBounds.maxX) {
+          touchedBounds.maxX = px;
+        }
+        if (py > touchedBounds.maxY) {
+          touchedBounds.maxY = py;
+        }
       }
     }
   }

@@ -47,6 +47,7 @@ describe('drawActivitiesAsHeatmap', () => {
   let mockMap: any;
   let mockTracks: Map<string, GPXTrack>;
   let currentImageLayerRef: { current: any };
+  let currentImageUrlRef: { current: string | null };
   let renderAbortRef: { current: boolean };
   let renderTimeoutRef: { current: NodeJS.Timeout | null };
   let refs: HeatmapRefs;
@@ -86,11 +87,13 @@ describe('drawActivitiesAsHeatmap', () => {
     ]);
 
     currentImageLayerRef = { current: null };
+    currentImageUrlRef = { current: null };
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
 
     refs = {
       currentImageLayerRef,
+      currentImageUrlRef,
       renderAbortRef,
       renderTimeoutRef,
       heatmapDensity: 2,

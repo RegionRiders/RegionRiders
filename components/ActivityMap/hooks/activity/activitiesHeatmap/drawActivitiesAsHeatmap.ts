@@ -16,6 +16,7 @@ import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../acti
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
+const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
 
 /**
  * Renders accumulator data as image and adds to map
@@ -23,6 +24,7 @@ const logger = createComponentLogger('drawActivitiesAsHeatmap');
 function finishRender(
   state: RenderState,
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
+  currentImageUrlRef: RefObject<string | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
   lineThickness: number = 2,
@@ -63,6 +65,10 @@ function finishRender(
       map.removeLayer(currentImageLayerRef.current);
       currentImageLayerRef.current = null;
     }
+    if (currentImageUrlRef.current) {
+      URL.revokeObjectURL(currentImageUrlRef.current);
+      currentImageUrlRef.current = null;
+    }
     return;
   }
 
@@ -96,7 +102,7 @@ function finishRender(
 
   const touchedArea = (maxX - minX + 1) * (maxY - minY + 1);
   const totalArea = canvasWidth * canvasHeight;
-  const smoothingAllowed = touchedArea / totalArea <= 0.5;
+  const smoothingAllowed = touchedArea / totalArea <= SMOOTHING_ADAPTIVE_THRESHOLD;
   if (edgeSmoothingEnabled && touchedBounds && smoothingAllowed) {
     smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight, touchedBounds);
   }
@@ -107,23 +113,33 @@ function finishRender(
   if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
     map.removeLayer(currentImageLayerRef.current);
   }
-  try {
-    currentImageLayerRef.current = L.imageOverlay(imageSource, bounds, {
-      pane: 'heatmapPane',
-    }).addTo(map);
-
-    if (renderAbortRef.current) {
+  imageSource.toBlob((blob) => {
+    if (!blob || renderAbortRef.current) {
       return;
     }
+    try {
+      if (currentImageUrlRef.current) {
+        URL.revokeObjectURL(currentImageUrlRef.current);
+      }
+      const imageUrl = URL.createObjectURL(blob);
+      currentImageUrlRef.current = imageUrl;
+      currentImageLayerRef.current = L.imageOverlay(imageUrl, bounds, {
+        pane: 'heatmapPane',
+      }).addTo(map);
 
-    const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
-    const finishDuration = (performance.now() - finishStartTime).toFixed(2);
-    logger.info(
-      `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
-    );
-  } catch (error) {
-    logger.error(`Error adding image overlay: ${error}`);
-  }
+      if (renderAbortRef.current) {
+        return;
+      }
+
+      const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
+      const finishDuration = (performance.now() - finishStartTime).toFixed(2);
+      logger.info(
+        `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
+      );
+    } catch (error) {
+      logger.error(`Error adding image overlay: ${error}`);
+    }
+  });
 }
 
 /**
@@ -216,6 +232,7 @@ function renderHeatmapInternal(
             touchedBounds: touchedBounds.maxX >= touchedBounds.minX ? touchedBounds : null,
           },
           refs.currentImageLayerRef,
+          refs.currentImageUrlRef,
           refs.renderAbortRef,
           map,
           lineThickness,
@@ -242,7 +259,7 @@ export function drawActivitiesAsHeatmap(
   tracks: Map<string, GPXTrack>,
   refs: HeatmapRefs
 ): () => void {
-  const { currentImageLayerRef, renderAbortRef, renderTimeoutRef } = refs;
+  const { currentImageLayerRef, currentImageUrlRef, renderAbortRef, renderTimeoutRef } = refs;
 
   let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -293,6 +310,10 @@ export function drawActivitiesAsHeatmap(
         } catch (e) {
           logger.warn('Failed to remove image layer during cleanup', e);
         }
+      }
+      if (currentImageUrlRef.current) {
+        URL.revokeObjectURL(currentImageUrlRef.current);
+        currentImageUrlRef.current = null;
       }
     }
   };

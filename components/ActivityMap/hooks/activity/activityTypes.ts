@@ -38,6 +38,7 @@ export interface RenderRefs {
 // Heatmap-specific refs
 export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
+  currentImageUrlRef: RefObject<string | null>;
   heatmapDensity: number;
   lineThickness: number;
   layerTransparency: number;

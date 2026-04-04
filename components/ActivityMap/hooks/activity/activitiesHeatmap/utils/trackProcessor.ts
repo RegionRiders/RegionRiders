@@ -3,6 +3,8 @@ import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/a
 import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { GPXTrack } from '@/lib/types';
 
+const CHUNK_FRAME_BUDGET_MS = 8;
+
 /**
  * Processes tracks in chunks using requestAnimationFrame for non-blocking rendering
  */
@@ -19,7 +21,8 @@ export function processTracksChunked(
 ): void {
   let trackIndex = 0;
   let segmentIndex = 0;
-  const frameBudgetMs = 8;
+  const frameBudgetMs = CHUNK_FRAME_BUDGET_MS;
+  // Keep at least 1px of margin so segments hugging the viewport border are not incorrectly culled.
   const cullPadding = Math.max(1, Math.round(lineThickness));
 
   const isOutsideViewport = (
