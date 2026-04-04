@@ -144,6 +144,7 @@ describe('ActivityMap', () => {
         savedAt: '2026-01-01T00:00:00.000Z',
         settings: {
           showActivities: false,
+          activityHeatmapEdgeSmoothing: false,
           tileLayerUrl: persistedTileLayerUrl,
           attribution: persistedAttribution,
         },
@@ -154,6 +155,7 @@ describe('ActivityMap', () => {
 
     const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
     expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+    expect(latestLayersPanelProps.settings.activityHeatmapEdgeSmoothing).toBe(false);
     expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
     expect(latestLayersPanelProps.settings.attribution).toBe(persistedAttribution);
 

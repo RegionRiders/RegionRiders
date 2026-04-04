@@ -7,6 +7,7 @@ import { createCanvasContext } from '@/components/ActivityMap/hooks/activity/act
 import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation';
 import { logDimensionError } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/dimensionLogging';
 import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
+import { smoothHeatmapEdges } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/smoothHeatmapEdges';
 import { processTracksChunked } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/trackProcessor';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
@@ -26,6 +27,7 @@ function finishRender(
   map: L.Map,
   lineThickness: number = 2,
   layerTransparency: number = 1,
+  edgeSmoothingEnabled: boolean = true,
   colorThresholds?: ColorThreshold[]
 ): void {
   if (renderAbortRef.current) {
@@ -73,6 +75,10 @@ function finishRender(
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
     data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+  }
+
+  if (edgeSmoothingEnabled) {
+    smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight);
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -183,6 +189,7 @@ function renderHeatmapInternal(
           map,
           lineThickness,
           refs.layerTransparency,
+          refs.edgeSmoothingEnabled,
           refs.heatmapColorThresholds
         )
     );

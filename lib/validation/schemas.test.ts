@@ -141,6 +141,7 @@ describe('validation schemas', () => {
           userId: '550e8400-e29b-41d4-a716-446655440000',
           settings: {
             activityLayerTransparency: 0.7,
+            activityHeatmapEdgeSmoothing: true,
             regionTransparency: 0.35,
             selectedLineSwatchIndex: 3,
             lineColorSwatches: [

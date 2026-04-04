@@ -96,6 +96,7 @@ describe('drawActivitiesAsHeatmap', () => {
       heatmapDensity: 2,
       lineThickness: 3,
       layerTransparency: 1,
+      edgeSmoothingEnabled: true,
     } as HeatmapRefs;
   });
 

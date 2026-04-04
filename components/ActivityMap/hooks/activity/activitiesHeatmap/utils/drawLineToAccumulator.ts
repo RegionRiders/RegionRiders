@@ -1,6 +1,6 @@
 /**
- * Draws an antialiased line segment into the accumulator buffer for heatmap rendering.
- * Uses linear interpolation between points with circular brush for smooth appearance.
+ * Draws a line segment into the accumulator buffer for heatmap rendering.
+ * This function writes only integer hit counts and does not apply visual smoothing.
  *
  * @param accumulator - Pixel count buffer (width × height)
  * @param width - Canvas width in pixels
@@ -21,8 +21,9 @@ export function drawLineToAccumulator(
   y1: number,
   thickness: number
 ): void {
-  const dx = Math.round(x1) - Math.round(x0);
-  const dy = Math.round(y1) - Math.round(y0);
+  const roundedThickness = Math.max(1, Math.round(thickness));
+  const dx = x1 - x0;
+  const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
 
   if (steps === 0) {
@@ -34,9 +35,6 @@ export function drawLineToAccumulator(
     return;
   }
 
-  const core = Math.floor(thickness * 0.7);
-  const coreThicknessSq = core * core;
-
   // Interpolate along line
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
@@ -44,26 +42,17 @@ export function drawLineToAccumulator(
     const y = Math.round(y0 + dy * t);
 
     // Draw circular brush at this point
-    for (let offsetX = -thickness; offsetX <= thickness; offsetX++) {
-      for (let offsetY = -thickness; offsetY <= thickness; offsetY++) {
+    for (let offsetX = -roundedThickness; offsetX <= roundedThickness; offsetX++) {
+      for (let offsetY = -roundedThickness; offsetY <= roundedThickness; offsetY++) {
         const distSq = offsetX * offsetX + offsetY * offsetY;
-        const dist = Math.sqrt(distSq);
 
-        if (dist <= thickness) {
+        if (distSq <= roundedThickness * roundedThickness) {
           const px = x + offsetX;
           const py = y + offsetY;
 
           if (px >= 0 && px < width && py >= 0 && py < height) {
             const idx = py * width + px;
-
-            if (distSq <= coreThicknessSq) {
-              // Solid core
-              accumulator[idx]++;
-            } else {
-              // Antialiased edge
-              const alpha = Math.max(0, 1 - (dist - core));
-              accumulator[idx] += alpha;
-            }
+            accumulator[idx]++;
           }
         }
       }

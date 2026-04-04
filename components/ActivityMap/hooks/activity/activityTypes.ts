@@ -33,6 +33,7 @@ export interface HeatmapRefs extends RenderRefs {
   heatmapDensity: number;
   lineThickness: number;
   layerTransparency: number;
+  edgeSmoothingEnabled: boolean;
   heatmapColorThresholds?: ColorThreshold[];
 }
 
