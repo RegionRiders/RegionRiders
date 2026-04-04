@@ -126,7 +126,7 @@ describe('MapStyleButton', () => {
       expect(container.querySelectorAll('img')).toHaveLength(0);
     });
 
-    it('should keep outgoing image until fade-out transition completes when switching to none', () => {
+    it('should not render an image after switching from image URL to none', () => {
       const { container, rerender } = render(
         <MapStyleButton {...defaultProps} imageUrl="https://example.com/tile1.png" />
       );
