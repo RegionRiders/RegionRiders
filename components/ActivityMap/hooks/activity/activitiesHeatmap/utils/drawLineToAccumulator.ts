@@ -22,11 +22,11 @@ export function drawLineToAccumulator(
   thickness: number
 ): void {
   const MIN_RADIUS_PX = 0.5;
-  const ANTIALIAS_EDGE_WIDTH_PX = 1;
+  const ANTIALIAS_FALLOFF_WIDTH_PX = 1;
 
   const radius = Math.max(MIN_RADIUS_PX, thickness);
   const brushRadius = Math.max(1, Math.round(radius));
-  const innerRadius = Math.max(0, radius - ANTIALIAS_EDGE_WIDTH_PX);
+  const innerRadius = Math.max(0, radius - ANTIALIAS_FALLOFF_WIDTH_PX);
   const innerRadiusSq = innerRadius * innerRadius;
   const dx = x1 - x0;
   const dy = y1 - y0;
