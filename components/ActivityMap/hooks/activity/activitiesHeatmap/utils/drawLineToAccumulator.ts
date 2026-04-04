@@ -21,7 +21,8 @@ export function drawLineToAccumulator(
   y1: number,
   thickness: number
 ): void {
-  const roundedThickness = Math.max(0, Math.round(thickness - 1));
+  // Thickness is interpreted as stroke diameter in pixels; convert to brush radius.
+  const brushRadius = Math.max(0, Math.round(thickness - 1));
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
@@ -42,11 +43,11 @@ export function drawLineToAccumulator(
     const y = Math.round(y0 + dy * t);
 
     // Draw circular brush at this point
-    for (let offsetX = -roundedThickness; offsetX <= roundedThickness; offsetX++) {
-      for (let offsetY = -roundedThickness; offsetY <= roundedThickness; offsetY++) {
+    for (let offsetX = -brushRadius; offsetX <= brushRadius; offsetX++) {
+      for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
         const distSq = offsetX * offsetX + offsetY * offsetY;
 
-        if (distSq <= roundedThickness * roundedThickness) {
+        if (distSq <= brushRadius * brushRadius) {
           const px = x + offsetX;
           const py = y + offsetY;
 
