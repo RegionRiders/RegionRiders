@@ -31,17 +31,18 @@ export function drawLineToAccumulator(
   const steps = Math.ceil(rawSteps);
 
   const drawBrush = (centerX: number, centerY: number): void => {
-    const x = Math.round(centerX);
-    const y = Math.round(centerY);
-
     for (let offsetX = -brushRadius; offsetX <= brushRadius; offsetX++) {
       for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
-        const distSq = offsetX * offsetX + offsetY * offsetY;
+        const sampleX = centerX + offsetX;
+        const sampleY = centerY + offsetY;
+        const distX = sampleX - centerX;
+        const distY = sampleY - centerY;
+        const distSq = distX * distX + distY * distY;
         const dist = Math.sqrt(distSq);
 
         if (dist <= radius) {
-          const px = x + offsetX;
-          const py = y + offsetY;
+          const px = Math.round(sampleX);
+          const py = Math.round(sampleY);
 
           if (px >= 0 && px < width && py >= 0 && py < height) {
             const idx = py * width + px;
