@@ -24,31 +24,74 @@ export default function MapStyleButton({
   const [displayedUrl, setDisplayedUrl] = useState(imageUrl);
   const [nextUrl, setNextUrl] = useState<string | null>(null);
   const [fadeIn, setFadeIn] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
+  const transitionStateRef = useRef({ incomingDone: false, outgoingDone: false });
+  const pendingUrlRef = useRef(imageUrl);
   const prevUrlRef = useRef(imageUrl);
+
+  const hasImage = useCallback((url?: string | null) => Boolean(url && url.trim().length > 0), []);
+
+  const tryFinalizeTransition = useCallback(() => {
+    if (transitionStateRef.current.incomingDone && transitionStateRef.current.outgoingDone) {
+      setDisplayedUrl(pendingUrlRef.current);
+      setNextUrl(null);
+      setFadeIn(false);
+      setFadeOut(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (imageUrl !== prevUrlRef.current) {
+      const previousUrl = prevUrlRef.current;
       prevUrlRef.current = imageUrl;
+
+      pendingUrlRef.current = imageUrl;
       setFadeIn(false);
-      setNextUrl(imageUrl);
+      setFadeOut(false);
+
+      const previousHasImage = hasImage(previousUrl);
+      const nextHasImage = hasImage(imageUrl);
+
+      transitionStateRef.current = {
+        incomingDone: !nextHasImage,
+        outgoingDone: !previousHasImage,
+      };
+
+      if (!previousHasImage) {
+        setDisplayedUrl(imageUrl);
+        setNextUrl(null);
+        return;
+      }
+
+      if (nextHasImage) {
+        setNextUrl(imageUrl);
+      } else {
+        setNextUrl(null);
+        requestAnimationFrame(() => {
+          setFadeOut(true);
+        });
+      }
     }
-  }, [imageUrl]);
+  }, [hasImage, imageUrl]);
 
   const handleNextLoaded = useCallback(() => {
     // Delay by one frame so the browser paints opacity:0 before transitioning
     // to opacity:1 — ensures the CSS transition fires even for cached images.
     requestAnimationFrame(() => {
       setFadeIn(true);
+      setFadeOut(true);
     });
   }, []);
 
-  const handleTransitionEnd = useCallback(() => {
-    if (nextUrl) {
-      setDisplayedUrl(nextUrl);
-      setNextUrl(null);
-      setFadeIn(false);
-    }
-  }, [nextUrl]);
+  const handleNextTransitionEnd = useCallback(() => {
+    transitionStateRef.current.incomingDone = true;
+    tryFinalizeTransition();
+  }, [tryFinalizeTransition]);
+
+  const handleCurrentTransitionEnd = useCallback(() => {
+    transitionStateRef.current.outgoingDone = true;
+    tryFinalizeTransition();
+  }, [tryFinalizeTransition]);
 
   return (
     <button
@@ -59,14 +102,21 @@ export default function MapStyleButton({
       aria-label={ariaLabel}
     >
       <div className={styles.mapStyleButtonImageWrapper}>
-        <img src={displayedUrl} alt="" className={styles.mapStyleButtonImage} />
+        {hasImage(displayedUrl) && (
+          <img
+            src={displayedUrl}
+            alt=""
+            className={`${styles.mapStyleButtonImage} ${styles.mapStyleButtonImageCurrent} ${nextUrl || fadeOut ? styles.mapStyleButtonImageCurrentTransition : ''} ${fadeOut ? styles.mapStyleButtonImageFadeOut : ''}`}
+            onTransitionEnd={handleCurrentTransitionEnd}
+          />
+        )}
         {nextUrl && (
           <img
             src={nextUrl}
             alt=""
             className={`${styles.mapStyleButtonImage} ${styles.mapStyleButtonImageNext} ${fadeIn ? styles.mapStyleButtonImageFadeIn : ''}`}
             onLoad={handleNextLoaded}
-            onTransitionEnd={handleTransitionEnd}
+            onTransitionEnd={handleNextTransitionEnd}
           />
         )}
         <div className={styles.mapStyleButtonGradient} />

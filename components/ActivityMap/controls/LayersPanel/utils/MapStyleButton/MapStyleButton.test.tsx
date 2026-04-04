@@ -119,6 +119,35 @@ describe('MapStyleButton', () => {
       // Component should still render
       expect(screen.getByRole('button')).toBeInTheDocument();
     });
+
+    it('should not render a fallback image when imageUrl is an empty string', () => {
+      const { container } = render(<MapStyleButton {...defaultProps} imageUrl="" />);
+
+      expect(container.querySelectorAll('img')).toHaveLength(0);
+    });
+
+    it('should not render an image after switching from image URL to none', () => {
+      const { container, rerender } = render(
+        <MapStyleButton {...defaultProps} imageUrl="https://example.com/tile1.png" />
+      );
+
+      expect(container.querySelectorAll('img').length).toBe(1);
+
+      rerender(<MapStyleButton {...defaultProps} imageUrl="" />);
+
+      const imagesBeforeTransitionEnd = container.querySelectorAll('img');
+      expect(imagesBeforeTransitionEnd.length).toBe(0);
+    });
+
+    it('should switch immediately from empty image to a loaded preview', () => {
+      const { container, rerender } = render(<MapStyleButton {...defaultProps} imageUrl="" />);
+
+      rerender(<MapStyleButton {...defaultProps} imageUrl="https://example.com/tile.png" />);
+
+      const images = container.querySelectorAll('img');
+      expect(images.length).toBe(1);
+      expect(images[0]).toHaveAttribute('src', 'https://example.com/tile.png');
+    });
   });
 
   describe('styling', () => {
