@@ -32,6 +32,7 @@ export function useActivityRendering(
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const currentImageUrlRef = useRef<string | null>(null);
+  const activeRenderIdRef = useRef<number>(0);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
 
@@ -48,6 +49,7 @@ export function useActivityRendering(
       const heatmapRefs: HeatmapRefs = {
         currentImageLayerRef,
         currentImageUrlRef,
+        activeRenderIdRef,
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,

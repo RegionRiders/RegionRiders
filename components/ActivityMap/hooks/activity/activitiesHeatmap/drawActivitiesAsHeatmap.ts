@@ -25,14 +25,16 @@ function finishRender(
   state: RenderState,
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   currentImageUrlRef: RefObject<string | null>,
-  renderAbortRef: RefObject<boolean>,
+  activeRenderIdRef: RefObject<number>,
+  renderId: number,
+  shouldAbort: () => boolean,
   map: L.Map,
   lineThickness: number = 2,
   layerTransparency: number = 1,
   edgeSmoothingEnabled: boolean = true,
   colorThresholds?: ColorThreshold[]
 ): void {
-  if (renderAbortRef.current) {
+  if (shouldAbort()) {
     return;
   }
 
@@ -61,14 +63,6 @@ function finishRender(
   const hasTouchedPixels = touchedBounds !== null;
 
   if (!hasTouchedPixels) {
-    if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
-      map.removeLayer(currentImageLayerRef.current);
-      currentImageLayerRef.current = null;
-    }
-    if (currentImageUrlRef.current) {
-      URL.revokeObjectURL(currentImageUrlRef.current);
-      currentImageUrlRef.current = null;
-    }
     return;
   }
 
@@ -110,25 +104,33 @@ function finishRender(
   ctx.putImageData(imageData, 0, 0);
   const imageSource = state.canvas;
 
-  if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
-    map.removeLayer(currentImageLayerRef.current);
-  }
   imageSource.toBlob((blob) => {
-    if (!blob || renderAbortRef.current) {
+    if (!blob || shouldAbort() || activeRenderIdRef.current !== renderId) {
       return;
     }
     try {
-      if (currentImageUrlRef.current) {
-        URL.revokeObjectURL(currentImageUrlRef.current);
-      }
       const imageUrl = URL.createObjectURL(blob);
-      currentImageUrlRef.current = imageUrl;
-      currentImageLayerRef.current = L.imageOverlay(imageUrl, bounds, {
+      const nextLayer = L.imageOverlay(imageUrl, bounds, {
         pane: 'heatmapPane',
       }).addTo(map);
 
-      if (renderAbortRef.current) {
+      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+        if (map.hasLayer(nextLayer)) {
+          map.removeLayer(nextLayer);
+        }
+        URL.revokeObjectURL(imageUrl);
         return;
+      }
+
+      const previousLayer = currentImageLayerRef.current;
+      const previousUrl = currentImageUrlRef.current;
+      currentImageLayerRef.current = nextLayer;
+      currentImageUrlRef.current = imageUrl;
+      if (previousLayer && map.hasLayer(previousLayer)) {
+        map.removeLayer(previousLayer);
+      }
+      if (previousUrl) {
+        URL.revokeObjectURL(previousUrl);
       }
 
       const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
@@ -149,7 +151,8 @@ function renderHeatmapInternal(
   map: L.Map,
   tracks: Map<string, GPXTrack>,
   refs: HeatmapRefs,
-  lineThickness: number
+  lineThickness: number,
+  renderId: number
 ): void {
   if (!map?.getBounds) {
     logger.warn('Map not available');
@@ -158,7 +161,7 @@ function renderHeatmapInternal(
 
   const renderStartTime = performance.now();
   const currentZoom = map.getZoom();
-  refs.renderAbortRef.current = true;
+  refs.renderAbortRef.current = false;
 
   if (refs.renderTimeoutRef.current) {
     clearTimeout(refs.renderTimeoutRef.current);
@@ -201,7 +204,8 @@ function renderHeatmapInternal(
       maxY: -1,
     };
 
-    refs.renderAbortRef.current = false;
+    const shouldAbort = (): boolean =>
+      refs.renderAbortRef.current || refs.activeRenderIdRef.current !== renderId;
 
     const renderState: RenderState = {
       canvas,
@@ -223,7 +227,7 @@ function renderHeatmapInternal(
       canvasHeight,
       latlngToPixel,
       lineThickness,
-      refs.renderAbortRef,
+      shouldAbort,
       touchedBounds,
       () =>
         finishRender(
@@ -233,7 +237,9 @@ function renderHeatmapInternal(
           },
           refs.currentImageLayerRef,
           refs.currentImageUrlRef,
-          refs.renderAbortRef,
+          refs.activeRenderIdRef,
+          renderId,
+          shouldAbort,
           map,
           lineThickness,
           refs.layerTransparency,
@@ -267,7 +273,8 @@ export function drawActivitiesAsHeatmap(
     if (!map) {
       return;
     }
-    renderHeatmapInternal(map, tracks, refs, refs.lineThickness);
+    refs.activeRenderIdRef.current += 1;
+    renderHeatmapInternal(map, tracks, refs, refs.lineThickness, refs.activeRenderIdRef.current);
   };
 
   const handleMapChange = (): void => {
@@ -291,6 +298,7 @@ export function drawActivitiesAsHeatmap(
   return () => {
     logger.info('Cleanup');
     renderAbortRef.current = true;
+    refs.activeRenderIdRef.current += 1;
 
     if (renderTimeoutRef.current) {
       clearTimeout(renderTimeoutRef.current);

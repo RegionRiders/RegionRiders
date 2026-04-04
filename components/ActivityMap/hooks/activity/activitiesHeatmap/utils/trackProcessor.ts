@@ -1,9 +1,9 @@
-import { RefObject } from 'react';
 import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/drawLineToAccumulator';
 import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { GPXTrack } from '@/lib/types';
 
 const CHUNK_FRAME_BUDGET_MS = 8;
+const TRACKS_PER_CHUNK = 24;
 
 /**
  * Processes tracks in chunks using requestAnimationFrame for non-blocking rendering
@@ -15,7 +15,7 @@ export function processTracksChunked(
   canvasHeight: number,
   latlngToPixel: (lat: number, lon: number) => { x: number; y: number },
   lineThickness: number,
-  renderAbortRef: RefObject<boolean>,
+  shouldAbort: () => boolean,
   touchedBounds: PixelBounds,
   onComplete: () => void
 ): void {
@@ -47,11 +47,12 @@ export function processTracksChunked(
   };
 
   const processChunk = (): void => {
-    if (renderAbortRef.current) {
+    if (shouldAbort()) {
       return;
     }
 
-    const chunkStart = performance.now();
+    const chunkStartTime = performance.now();
+    let processedTracks = 0;
     while (trackIndex < tracksArray.length) {
       const track = tracksArray[trackIndex];
       const points = track.points;
@@ -75,7 +76,7 @@ export function processTracksChunked(
           }
 
           segmentIndex++;
-          if (performance.now() - chunkStart >= frameBudgetMs) {
+          if (segmentIndex % 32 === 0 && performance.now() - chunkStartTime >= frameBudgetMs) {
             requestAnimationFrame(processChunk);
             return;
           }
@@ -84,13 +85,16 @@ export function processTracksChunked(
 
       trackIndex++;
       segmentIndex = 0;
-      if (performance.now() - chunkStart >= frameBudgetMs) {
+      processedTracks++;
+      if (processedTracks >= TRACKS_PER_CHUNK) {
         requestAnimationFrame(processChunk);
         return;
       }
     }
 
-    onComplete();
+    if (!shouldAbort()) {
+      onComplete();
+    }
   };
 
   processChunk();
