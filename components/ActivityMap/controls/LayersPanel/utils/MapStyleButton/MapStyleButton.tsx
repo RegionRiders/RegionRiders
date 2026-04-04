@@ -32,14 +32,12 @@ export default function MapStyleButton({
   const hasImage = useCallback((url?: string | null) => Boolean(url && url.trim().length > 0), []);
 
   const tryFinalizeTransition = useCallback(() => {
-    if (!transitionStateRef.current.incomingDone || !transitionStateRef.current.outgoingDone) {
-      return;
+    if (transitionStateRef.current.incomingDone && transitionStateRef.current.outgoingDone) {
+      setDisplayedUrl(pendingUrlRef.current);
+      setNextUrl(null);
+      setFadeIn(false);
+      setFadeOut(false);
     }
-
-    setDisplayedUrl(pendingUrlRef.current);
-    setNextUrl(null);
-    setFadeIn(false);
-    setFadeOut(false);
   }, []);
 
   useEffect(() => {
