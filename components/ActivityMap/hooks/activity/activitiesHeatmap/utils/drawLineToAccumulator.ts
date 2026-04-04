@@ -11,7 +11,7 @@ import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTyp
  * @param y0 - Start y coordinate
  * @param x1 - End x coordinate
  * @param y1 - End y coordinate
- * @param thickness - Line thickness radius in pixels
+ * @param thickness - Line thickness diameter in pixels (UI control)
  */
 export function drawLineToAccumulator(
   accumulator: Float32Array,
