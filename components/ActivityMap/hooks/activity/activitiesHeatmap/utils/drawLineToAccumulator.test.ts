@@ -1,11 +1,22 @@
 import { drawLineToAccumulator } from './drawLineToAccumulator';
 
 describe('drawLineToAccumulator', () => {
-  it('should handle zero-length line (same start and end)', () => {
+  it('should draw a pixel for zero-length line (same start and end)', () => {
     const accumulator = new Float32Array(100 * 100);
     drawLineToAccumulator(accumulator, 100, 100, 50, 50, 50, 50, 2);
 
-    // Should return early without modifying accumulator
+    // Tiny segments should still mark coverage
+    const sum = accumulator.reduce((a, b) => a + b, 0);
+    expect(sum).toBeGreaterThan(0);
+    expect(accumulator[50 * 100 + 50]).toBeGreaterThan(0);
+  });
+
+  it('should not clamp out-of-bounds zero-length line to canvas edge', () => {
+    const width = 10;
+    const height = 10;
+    const accumulator = new Float32Array(width * height);
+    drawLineToAccumulator(accumulator, width, height, 100, 100, 100, 100, 2);
+
     const sum = accumulator.reduce((a, b) => a + b, 0);
     expect(sum).toBe(0);
   });
