@@ -20,7 +20,7 @@ export function getHeatmapColorForCount(
 ): RGBA {
   const BASE_ZOOM_LEVEL = 10;
   const effectiveThickness = Math.max(1, lineThickness * 2);
-  const zoomFactor = Math.max(0.1, Math.max(1, zoomLevel) / BASE_ZOOM_LEVEL);
+  const zoomFactor = Math.max(0.1, zoomLevel / BASE_ZOOM_LEVEL);
   const uniqueActivities = (count / effectiveThickness) * zoomFactor;
 
   const color = getColorFromThresholds(uniqueActivities, thresholds);
