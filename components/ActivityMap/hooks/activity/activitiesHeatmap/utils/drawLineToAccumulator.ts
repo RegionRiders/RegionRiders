@@ -26,6 +26,11 @@ export function drawLineToAccumulator(
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
 
   if (steps === 0) {
+    const x = Math.round(x0);
+    const y = Math.round(y0);
+    const px = Math.min(width - 1, Math.max(0, x));
+    const py = Math.min(height - 1, Math.max(0, y));
+    accumulator[py * width + px]++;
     return;
   }
 
