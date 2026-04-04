@@ -21,10 +21,12 @@ const logger = createComponentLogger('drawActivitiesAsHeatmap');
  */
 function finishRender(
   state: RenderState,
+  edgeAccumulator: Float32Array | undefined,
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
   lineThickness: number = 2,
+  smoothEdges: boolean = true,
   layerTransparency: number = 1,
   colorThresholds?: ColorThreshold[]
 ): void {
@@ -34,6 +36,8 @@ function finishRender(
 
   const finishStartTime = performance.now();
   const { ctx, accumulator, canvasWidth, canvasHeight, currentZoom, bounds } = state;
+  const safeLineThickness = Math.max(0.5, lineThickness);
+  const edgeAlphaScale = Math.max(0, Math.min(1, Math.min(0.75, 1 / safeLineThickness)));
 
   if (
     !ctx ||
@@ -57,7 +61,7 @@ function finishRender(
 
   for (let i = 0; i < accumulator.length; i++) {
     const count = accumulator[i];
-    if (count === 0) {
+    if (count <= 0) {
       continue;
     }
 
@@ -72,7 +76,9 @@ function finishRender(
     data[pixelIndex] = r;
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = Math.round(Math.max(0, Math.min(1, a)) * layerTransparency * 255);
+    const edgeContribution = edgeAccumulator?.[i] ?? 0;
+    const alphaWithEdge = Math.max(0, Math.min(1, a + edgeContribution * edgeAlphaScale));
+    data[pixelIndex + 3] = Math.round(alphaWithEdge * layerTransparency * 255);
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -150,6 +156,7 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
+    const edgeAccumulator = refs.smoothEdges ? new Float32Array(canvasWidth * canvasHeight) : undefined;
     const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity);
     const tracksArray = Array.from(tracks.values());
 
@@ -174,14 +181,18 @@ function renderHeatmapInternal(
       canvasHeight,
       latlngToPixel,
       lineThickness,
+      refs.smoothEdges,
+      edgeAccumulator,
       refs.renderAbortRef,
       () =>
         finishRender(
           renderState,
+          edgeAccumulator,
           refs.currentImageLayerRef,
           refs.renderAbortRef,
           map,
           lineThickness,
+          refs.smoothEdges,
           refs.layerTransparency,
           refs.heatmapColorThresholds
         )

@@ -12,14 +12,16 @@
  * @param thickness - Line thickness radius in pixels
  */
 export function drawLineToAccumulator(
-  accumulator: Float32Array,
+  coreAccumulator: Float32Array,
   width: number,
   height: number,
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-  thickness: number
+  thickness: number,
+  smoothEdges: boolean = true,
+  edgeAccumulator?: Float32Array
 ): void {
   const MIN_THICKNESS_PX = 0.5;
   const ANTIALIAS_FALLOFF_WIDTH_PX = 1;
@@ -61,12 +63,15 @@ export function drawLineToAccumulator(
       }
 
       const idx = py * width + px;
-      if (distSq <= innerRadiusSq) {
-        accumulator[idx] += 1;
-      } else {
+      if (!smoothEdges || distSq <= innerRadiusSq) {
+        coreAccumulator[idx] += 1;
+      } else if (edgeAccumulator) {
         const dist = Math.sqrt(distSq);
         const falloff = (radius - dist) / ANTIALIAS_FALLOFF_WIDTH_PX;
-        accumulator[idx] += Math.max(0, Math.min(1, falloff));
+        edgeAccumulator[idx] = Math.max(
+          edgeAccumulator[idx],
+          Math.max(0, Math.min(1, falloff))
+        );
       }
     }
   }

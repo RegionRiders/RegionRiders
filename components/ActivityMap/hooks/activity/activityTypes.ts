@@ -32,6 +32,7 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
   heatmapDensity: number;
   lineThickness: number;
+  smoothEdges: boolean;
   layerTransparency: number;
   heatmapColorThresholds?: ColorThreshold[];
 }

@@ -7,11 +7,13 @@ import { GPXTrack } from '@/lib/types';
  */
 export function processTracksChunked(
   tracksArray: GPXTrack[],
-  accumulator: Float32Array,
+  coreAccumulator: Float32Array,
   canvasWidth: number,
   canvasHeight: number,
   latlngToPixel: (lat: number, lon: number) => { x: number; y: number },
   lineThickness: number,
+  smoothEdges: boolean,
+  edgeAccumulator: Float32Array | undefined,
   renderAbortRef: RefObject<boolean>,
   onComplete: () => void
 ): void {
@@ -31,14 +33,16 @@ export function processTracksChunked(
           const p1 = latlngToPixel(points[i].lat, points[i].lon);
           const p2 = latlngToPixel(points[i + 1].lat, points[i + 1].lon);
           drawLineToAccumulator(
-            accumulator,
+            coreAccumulator,
             canvasWidth,
             canvasHeight,
             p1.x,
             p1.y,
             p2.x,
             p2.y,
-            lineThickness
+            lineThickness,
+            smoothEdges,
+            edgeAccumulator
           );
         }
       }
