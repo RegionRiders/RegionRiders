@@ -81,12 +81,13 @@ describe('getHeatmapColorForCount', () => {
   });
 
   describe('zoom level adjustment', () => {
-    it('should keep same result for reference zoom and above for the same raw pixel count (no extra boost)', () => {
-      // referenceZoom = 13; zoomScale is clamped to 1 for zoom >= referenceZoom
+    it('should increase intensity above reference zoom for the same raw pixel count', () => {
+      // referenceZoom = 13; zoomScale is 2 for zoom > referenceZoom
       const atReferenceZoom = getHeatmapColorForCount(10, 13, 1, TEST_THRESHOLDS);
       const aboveReferenceZoom = getHeatmapColorForCount(10, 15, 1, TEST_THRESHOLDS);
 
-      expect(atReferenceZoom).toEqual(aboveReferenceZoom);
+      expect(aboveReferenceZoom[3]).toBeGreaterThanOrEqual(atReferenceZoom[3]);
+      expect(aboveReferenceZoom).not.toEqual(atReferenceZoom);
     });
 
     it('should keep same result across lower zoom levels when count is inversely scaled for zoom', () => {
