@@ -16,6 +16,7 @@ import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../acti
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
+// Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
 
 /**
@@ -161,6 +162,7 @@ function renderHeatmapInternal(
 
   const renderStartTime = performance.now();
   const currentZoom = map.getZoom();
+  // This render becomes the currently active generation; abort is now driven by render id changes.
   refs.renderAbortRef.current = false;
 
   if (refs.renderTimeoutRef.current) {

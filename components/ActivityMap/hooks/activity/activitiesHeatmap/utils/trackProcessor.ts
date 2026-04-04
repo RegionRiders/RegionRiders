@@ -4,6 +4,7 @@ import { GPXTrack } from '@/lib/types';
 
 const CHUNK_FRAME_BUDGET_MS = 8;
 const TRACKS_PER_CHUNK = 24;
+const SEGMENT_CHECK_INTERVAL = 32;
 
 /**
  * Processes tracks in chunks using requestAnimationFrame for non-blocking rendering
@@ -76,7 +77,11 @@ export function processTracksChunked(
           }
 
           segmentIndex++;
-          if (segmentIndex % 32 === 0 && performance.now() - chunkStartTime >= frameBudgetMs) {
+          // Check elapsed frame budget every N segments to avoid expensive timer reads per segment.
+          if (
+            segmentIndex % SEGMENT_CHECK_INTERVAL === 0 &&
+            performance.now() - chunkStartTime >= frameBudgetMs
+          ) {
             requestAnimationFrame(processChunk);
             return;
           }

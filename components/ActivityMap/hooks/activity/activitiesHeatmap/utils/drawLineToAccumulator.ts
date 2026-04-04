@@ -71,6 +71,7 @@ export function drawLineToAccumulator(
 type BrushOffset = [number, number];
 
 const brushOffsetsCache = new Map<number, BrushOffset[]>();
+// Cache remains intentionally small: brush radii come from a narrow UI range and this avoids unbounded growth.
 const MAX_BRUSH_CACHE_ENTRIES = 32;
 
 function getBrushOffsets(radius: number): BrushOffset[] {
