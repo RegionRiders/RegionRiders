@@ -20,9 +20,9 @@ export function getHeatmapColorForCount(
 ): RGBA {
   // Keep color mapping stable across line thickness and zoom for the same geographic overlap density.
   // Lower zoom compresses many geographic paths into fewer pixels (raising raw pixel counts), so zoom scaling
-  // must reduce normalized intensity at low zoom and increase it at high zoom.
+  // should attenuate normalized intensity at low zoom, while avoiding extra boost above the reference zoom.
   const referenceZoom = 10;
-  const zoomScale = 2 ** (zoomLevel - referenceZoom);
+  const zoomScale = zoomLevel < referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 1;
   const normalizedThickness = Math.max(1, Math.round(lineThickness));
 
   // Accumulator brush spans [-radius, +radius] around sampled line points, so center overlap intensity
