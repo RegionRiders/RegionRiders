@@ -87,6 +87,11 @@ describe('getHeatmapColorForCount', () => {
       const aboveReferenceZoom = getHeatmapColorForCount(10, 15, 1, TEST_THRESHOLDS);
 
       expect(aboveReferenceZoom[3]).toBeGreaterThanOrEqual(atReferenceZoom[3]);
+      expect(
+        aboveReferenceZoom[0] !== atReferenceZoom[0] ||
+          aboveReferenceZoom[1] !== atReferenceZoom[1] ||
+          aboveReferenceZoom[2] !== atReferenceZoom[2]
+      ).toBe(true);
       expect(aboveReferenceZoom).not.toEqual(atReferenceZoom);
     });
 
