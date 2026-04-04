@@ -109,4 +109,19 @@ describe('drawLineToAccumulator', () => {
     expect(secondSum).toBeGreaterThan(firstSum);
     expect(secondSum).toBeCloseTo(firstSum * 2, 1);
   });
+
+  it('should keep edge contributions out of core accumulator when smoothing is enabled', () => {
+    const width = 50;
+    const height = 50;
+    const coreAccumulator = new Float32Array(width * height);
+    const edgeAccumulator = new Float32Array(width * height);
+
+    drawLineToAccumulator(coreAccumulator, width, height, 10, 25, 40, 25, 3, true, edgeAccumulator);
+
+    const coreSum = coreAccumulator.reduce((a, b) => a + b, 0);
+    const edgeSum = edgeAccumulator.reduce((a, b) => a + b, 0);
+
+    expect(coreSum).toBeGreaterThan(0);
+    expect(edgeSum).toBeGreaterThan(0);
+  });
 });

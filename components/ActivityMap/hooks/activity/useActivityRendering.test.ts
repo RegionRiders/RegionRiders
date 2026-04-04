@@ -56,6 +56,7 @@ describe('useActivityRendering', () => {
         currentImageLayerRef: expect.any(Object),
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
+        smoothEdges: true,
         layerTransparency: 1,
       })
     );

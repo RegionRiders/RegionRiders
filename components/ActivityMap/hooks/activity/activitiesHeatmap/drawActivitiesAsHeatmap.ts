@@ -26,7 +26,6 @@ function finishRender(
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
   lineThickness: number = 2,
-  smoothEdges: boolean = true,
   layerTransparency: number = 1,
   colorThresholds?: ColorThreshold[]
 ): void {
@@ -61,12 +60,14 @@ function finishRender(
 
   for (let i = 0; i < accumulator.length; i++) {
     const count = accumulator[i];
-    if (count <= 0) {
+    const edgeContribution = edgeAccumulator?.[i] ?? 0;
+    if (count <= 0 && edgeContribution <= 0) {
       continue;
     }
+    const colorCount = count > 0 ? count : 1;
 
     const [r, g, b, a] = getHeatmapColorForCount(
-      count,
+      colorCount,
       currentZoom,
       lineThickness,
       colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
@@ -76,7 +77,6 @@ function finishRender(
     data[pixelIndex] = r;
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
-    const edgeContribution = edgeAccumulator?.[i] ?? 0;
     const alphaWithEdge = Math.max(0, Math.min(1, a + edgeContribution * edgeAlphaScale));
     data[pixelIndex + 3] = Math.round(alphaWithEdge * layerTransparency * 255);
   }
@@ -192,7 +192,6 @@ function renderHeatmapInternal(
           refs.renderAbortRef,
           map,
           lineThickness,
-          refs.smoothEdges,
           refs.layerTransparency,
           refs.heatmapColorThresholds
         )

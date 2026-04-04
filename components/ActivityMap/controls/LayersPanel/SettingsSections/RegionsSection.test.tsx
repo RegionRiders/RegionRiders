@@ -24,6 +24,7 @@ describe('RegionsSection', () => {
     showActivities: true,
     activityThickness: 3,
     heatmapDensity: 2,
+    activityHeatmapSmoothEdges: true,
     lineColorSwatches: [{ normal: [255, 0, 0, 1] as RGBA, hover: [255, 100, 100, 1] as RGBA }],
     selectedLineSwatchIndex: 0,
     regionMode: 'static',

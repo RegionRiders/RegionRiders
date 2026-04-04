@@ -95,6 +95,7 @@ describe('drawActivitiesAsHeatmap', () => {
       renderTimeoutRef,
       heatmapDensity: 2,
       lineThickness: 3,
+      smoothEdges: true,
       layerTransparency: 1,
     } as HeatmapRefs;
   });

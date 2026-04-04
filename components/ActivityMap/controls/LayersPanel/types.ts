@@ -16,6 +16,7 @@ export interface MapSettings {
   activityThickness: number;
   activityLayerTransparency?: number;
   heatmapDensity: number;
+  activityHeatmapSmoothEdges?: boolean;
   lineColorSwatches: LineColorSwatch[];
   selectedLineSwatchIndex: number;
   activityHeatmapColorSwatches?: ColorThreshold[][];

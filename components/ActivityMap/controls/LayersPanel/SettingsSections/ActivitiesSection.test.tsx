@@ -38,6 +38,7 @@ describe('ActivitiesSection', () => {
       ],
     ],
     selectedActivityHeatmapSwatchIndex: 0,
+    activityHeatmapSmoothEdges: true,
     regionMode: 'static',
     showRegions: true,
     regionBorderThickness: 2,
@@ -178,6 +179,29 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.getByText(/Heatmap pixel density:/)).toBeInTheDocument();
+    });
+
+    it('should render smooth edges switch in heatmap mode', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(screen.getByRole('switch', { name: 'Toggle heatmap smooth edges' })).toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when smooth edges switch is toggled', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('switch', { name: 'Toggle heatmap smooth edges' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('activityHeatmapSmoothEdges', false);
     });
 
     it('should not show heatmap density slider in lines mode', () => {
