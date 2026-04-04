@@ -2,8 +2,20 @@ import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/a
 import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { GPXTrack } from '@/lib/types';
 
+/**
+ * Soft per-frame processing budget for chunked heatmap rendering.
+ * Once a chunk reaches this elapsed time, work yields to the next animation frame.
+ */
 const CHUNK_FRAME_BUDGET_MS = 8;
+/**
+ * Hard cap on tracks processed in a single chunk.
+ * Prevents long tracks from monopolizing one frame even if time checks are infrequent.
+ */
 const TRACKS_PER_CHUNK = 24;
+/**
+ * Frequency for elapsed-time checks while iterating segments.
+ * We intentionally avoid checking on every segment to reduce `performance.now()` overhead.
+ */
 const SEGMENT_CHECK_INTERVAL = 32;
 
 /**
