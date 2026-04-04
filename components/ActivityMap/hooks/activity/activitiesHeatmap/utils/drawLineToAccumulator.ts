@@ -21,7 +21,7 @@ export function drawLineToAccumulator(
   y1: number,
   thickness: number
 ): void {
-  const roundedThickness = Math.max(1, Math.round(thickness));
+  const roundedThickness = Math.max(0, Math.round(thickness - 1));
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
