@@ -28,9 +28,9 @@ export function drawLineToAccumulator(
   if (steps === 0) {
     const x = Math.round(x0);
     const y = Math.round(y0);
-    const px = Math.min(width - 1, Math.max(0, x));
-    const py = Math.min(height - 1, Math.max(0, y));
-    accumulator[py * width + px]++;
+    if (x >= 0 && x < width && y >= 0 && y < height) {
+      accumulator[y * width + x]++;
+    }
     return;
   }
 

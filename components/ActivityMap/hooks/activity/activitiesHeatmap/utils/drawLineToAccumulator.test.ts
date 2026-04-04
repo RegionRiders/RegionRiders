@@ -11,6 +11,16 @@ describe('drawLineToAccumulator', () => {
     expect(accumulator[50 * 100 + 50]).toBeGreaterThan(0);
   });
 
+  it('should not clamp out-of-bounds zero-length line to canvas edge', () => {
+    const width = 10;
+    const height = 10;
+    const accumulator = new Float32Array(width * height);
+    drawLineToAccumulator(accumulator, width, height, 100, 100, 100, 100, 2);
+
+    const sum = accumulator.reduce((a, b) => a + b, 0);
+    expect(sum).toBe(0);
+  });
+
   it('should draw horizontal line', () => {
     const width = 100;
     const height = 100;
