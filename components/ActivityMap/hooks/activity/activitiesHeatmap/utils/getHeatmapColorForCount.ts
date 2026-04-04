@@ -4,11 +4,11 @@ import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInte
 
 /**
  * Maps accumulator count to heatmap color with smooth gradients and opacity.
- * Accounts for line thickness to normalize unique activity count.
+ * Accounts for line thickness (UI diameter) to normalize unique activity count.
  *
  * @param count - Pixel accumulator value
  * @param zoomLevel - Current map zoom level
- * @param lineThickness - Thickness of drawn lines
+ * @param lineThickness - Brush diameter in pixels from UI settings
  * @param thresholds - Optional custom color thresholds (defaults to COLOR_THRESHOLDS)
  * @returns RGBA tuple [r, g, b, a] where each value is 0-255
  */
@@ -22,7 +22,7 @@ export function getHeatmapColorForCount(
   // Lower zoom compresses many geographic paths into fewer pixels (raising raw pixel counts), so zoom scaling
   // should attenuate normalized intensity at low zoom, while avoiding extra boost above the reference zoom.
   const referenceZoom = 13;
-  const zoomScale = zoomLevel <= referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 2;
+  const zoomScale = zoomLevel <= referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 1;
   const normalizedThickness = Math.max(1, Math.round(lineThickness));
 
   // Accumulator brush spans [-radius, +radius] around sampled line points, so center overlap intensity
