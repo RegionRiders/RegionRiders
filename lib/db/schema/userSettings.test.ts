@@ -26,7 +26,6 @@ describe('User Settings Table Schema', () => {
       userId: 'user-uuid',
       settings: {
         activityLayerTransparency: 0.6,
-        activityHeatmapEdgeSmoothing: true,
         regionTransparency: 0.4,
         lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
       },

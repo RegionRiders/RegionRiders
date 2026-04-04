@@ -24,7 +24,6 @@ describe('ActivitiesSection', () => {
     showActivities: true,
     activityThickness: 3,
     activityLayerTransparency: 1,
-    activityHeatmapEdgeSmoothing: true,
     heatmapDensity: 2,
     lineColorSwatches: [{ normal: [255, 0, 0, 1] as RGBA, hover: [255, 100, 100, 1] as RGBA }],
     selectedLineSwatchIndex: 0,
@@ -181,17 +180,6 @@ describe('ActivitiesSection', () => {
       expect(screen.getByText(/Heatmap pixel density:/)).toBeInTheDocument();
     });
 
-    it('should show edge smoothing toggle in heatmap mode', () => {
-      render(
-        <ActivitiesSectionWrapper
-          settings={defaultSettings}
-          onSettingChange={mockOnSettingChange}
-        />
-      );
-
-      expect(screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' })).toBeInTheDocument();
-    });
-
     it('should not show heatmap density slider in lines mode', () => {
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
       render(
@@ -199,31 +187,6 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
-    });
-
-    it('should not show edge smoothing toggle in lines mode', () => {
-      const settings = { ...defaultSettings, activityMode: 'lines' as const };
-      render(
-        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
-
-      expect(
-        screen.queryByRole('switch', { name: 'Toggle heatmap edge smoothing' })
-      ).not.toBeInTheDocument();
-    });
-
-    it('should call onSettingChange when edge smoothing toggle is changed', () => {
-      render(
-        <ActivitiesSectionWrapper
-          settings={defaultSettings}
-          onSettingChange={mockOnSettingChange}
-        />
-      );
-
-      const toggle = screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' });
-      fireEvent.click(toggle);
-
-      expect(mockOnSettingChange).toHaveBeenCalledWith('activityHeatmapEdgeSmoothing', false);
     });
 
     it('should show heatmap color scheme section in heatmap mode', () => {

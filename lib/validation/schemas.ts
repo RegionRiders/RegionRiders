@@ -25,7 +25,6 @@ const mapSettingsSchema = z
     showActivities: z.boolean().optional(),
     activityLayerTransparency: z.number().min(0).max(1).optional(),
     activityThickness: z.number().min(0).max(100).optional(),
-    activityHeatmapEdgeSmoothing: z.boolean().optional(),
     heatmapDensity: z.number().min(0).max(10).optional(),
     lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
     selectedLineSwatchIndex: z.number().int().min(0).optional(),
