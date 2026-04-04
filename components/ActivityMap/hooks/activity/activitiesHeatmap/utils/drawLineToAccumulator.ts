@@ -35,12 +35,9 @@ export function drawLineToAccumulator(
       for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
         const sampleX = centerX + offsetX;
         const sampleY = centerY + offsetY;
-        const distX = sampleX - centerX;
-        const distY = sampleY - centerY;
-        const distSq = distX * distX + distY * distY;
-        const dist = Math.sqrt(distSq);
+        const distSq = offsetX * offsetX + offsetY * offsetY;
 
-        if (dist <= radius) {
+        if (distSq <= radius * radius) {
           const px = Math.round(sampleX);
           const py = Math.round(sampleY);
 
@@ -50,6 +47,7 @@ export function drawLineToAccumulator(
             if (distSq <= innerRadiusSq) {
               accumulator[idx] += 1;
             } else {
+              const dist = Math.sqrt(distSq);
               accumulator[idx] += Math.max(0, radius - dist);
             }
           }
