@@ -9,6 +9,13 @@ export interface CanvasDimensions {
   bottomRight: L.Point;
 }
 
+export interface PixelBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 export interface RenderState {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
@@ -19,6 +26,7 @@ export interface RenderState {
   topLeft: L.Point;
   currentZoom: number;
   renderStartTime: number;
+  touchedBounds: PixelBounds | null;
 }
 
 // Shared render refs
@@ -30,6 +38,8 @@ export interface RenderRefs {
 // Heatmap-specific refs
 export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
+  currentImageUrlRef: RefObject<string | null>;
+  activeRenderIdRef: RefObject<number>;
   heatmapDensity: number;
   lineThickness: number;
   layerTransparency: number;

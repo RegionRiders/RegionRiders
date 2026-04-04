@@ -31,6 +31,8 @@ export function useActivityRendering(
   heatmapColorThresholds?: ColorThreshold[]
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
+  const currentImageUrlRef = useRef<string | null>(null);
+  const activeRenderIdRef = useRef<number>(0);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
 
@@ -46,6 +48,8 @@ export function useActivityRendering(
     if (mode === 'heatmap') {
       const heatmapRefs: HeatmapRefs = {
         currentImageLayerRef,
+        currentImageUrlRef,
+        activeRenderIdRef,
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,

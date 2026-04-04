@@ -54,6 +54,8 @@ describe('useActivityRendering', () => {
       mockTracks,
       expect.objectContaining({
         currentImageLayerRef: expect.any(Object),
+        currentImageUrlRef: expect.any(Object),
+        activeRenderIdRef: expect.any(Object),
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
         layerTransparency: 1,
