@@ -20,15 +20,40 @@ export function ActivitiesSection({
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
-  const lineColorSwatches = settings.lineColorSwatches ?? DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES;
-  const selectedLineSwatchIndex = settings.selectedLineSwatchIndex ?? 0;
+
+  const lineColorSwatches =
+    settings.lineColorSwatches?.length && settings.lineColorSwatches.length > 0
+      ? settings.lineColorSwatches
+      : DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES;
+
+  const selectedLineSwatchIndex =
+    settings.selectedLineSwatchIndex >= 0 &&
+    settings.selectedLineSwatchIndex < lineColorSwatches.length
+      ? settings.selectedLineSwatchIndex
+      : 0;
+
   const activityHeatmapColorSwatches =
-    settings.activityHeatmapColorSwatches ?? DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES;
-  const selectedActivityHeatmapSwatchIndex = settings.selectedActivityHeatmapSwatchIndex || 0;
+    settings.activityHeatmapColorSwatches?.length &&
+    settings.activityHeatmapColorSwatches.length > 0
+      ? settings.activityHeatmapColorSwatches
+      : DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES;
+
+  const selectedActivityHeatmapSwatchIndex =
+    typeof settings.selectedActivityHeatmapSwatchIndex === 'number' &&
+    settings.selectedActivityHeatmapSwatchIndex >= 0 &&
+    settings.selectedActivityHeatmapSwatchIndex < activityHeatmapColorSwatches.length
+      ? settings.selectedActivityHeatmapSwatchIndex
+      : 0;
+
   const selectedLineSwatch =
-    lineColorSwatches[selectedLineSwatchIndex] ?? DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0];
+    lineColorSwatches[selectedLineSwatchIndex] ??
+    lineColorSwatches[0] ??
+    DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0];
+
   const selectedHeatmapColorThresholds =
-    activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] || [];
+    activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] ??
+    activityHeatmapColorSwatches[0] ??
+    [];
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);

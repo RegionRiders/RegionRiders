@@ -21,18 +21,38 @@ export function RegionsSection({
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
   const regionStaticColorSwatches =
-    settings.regionStaticColorSwatches ?? DEFAULT_REGION_STATIC_COLOR_SWATCHES;
-  const selectedIndex = settings.selectedRegionStaticSwatchIndex || 0;
+    settings.regionStaticColorSwatches?.length && settings.regionStaticColorSwatches.length > 0
+      ? settings.regionStaticColorSwatches
+      : DEFAULT_REGION_STATIC_COLOR_SWATCHES;
+
+  const selectedIndex =
+    settings.selectedRegionStaticSwatchIndex >= 0 &&
+    settings.selectedRegionStaticSwatchIndex < regionStaticColorSwatches.length
+      ? settings.selectedRegionStaticSwatchIndex
+      : 0;
+
   const regionHeatmapColorSwatches =
-    settings.regionHeatmapColorSwatches ?? DEFAULT_REGION_HEATMAP_COLOR_SWATCHES;
-  const selectedRegionHeatmapSwatchIndex = settings.selectedRegionHeatmapSwatchIndex || 0;
+    settings.regionHeatmapColorSwatches?.length && settings.regionHeatmapColorSwatches.length > 0
+      ? settings.regionHeatmapColorSwatches
+      : DEFAULT_REGION_HEATMAP_COLOR_SWATCHES;
+
+  const selectedRegionHeatmapSwatchIndex =
+    typeof settings.selectedRegionHeatmapSwatchIndex === 'number' &&
+    settings.selectedRegionHeatmapSwatchIndex >= 0 &&
+    settings.selectedRegionHeatmapSwatchIndex < regionHeatmapColorSwatches.length
+      ? settings.selectedRegionHeatmapSwatchIndex
+      : 0;
+
   const selectedHeatmapColorThresholds =
-    regionHeatmapColorSwatches[selectedRegionHeatmapSwatchIndex] || [];
+    regionHeatmapColorSwatches[selectedRegionHeatmapSwatchIndex] ?? [];
 
   const selectedSwatch =
-    regionStaticColorSwatches[selectedIndex] ?? DEFAULT_REGION_STATIC_COLOR_SWATCHES[0];
-  const unvisitedColor = selectedSwatch.find((ct) => ct.threshold === 0)?.color || [0, 0, 0, 0];
-  const visitedColor = selectedSwatch.find((ct) => ct.threshold === 1)?.color || [0, 255, 0, 0.2];
+    regionStaticColorSwatches[selectedIndex] ??
+    regionStaticColorSwatches[0] ??
+    DEFAULT_REGION_STATIC_COLOR_SWATCHES[0];
+
+  const unvisitedColor = selectedSwatch.find((ct) => ct.threshold === 0)?.color ?? [0, 0, 0, 0];
+  const visitedColor = selectedSwatch.find((ct) => ct.threshold === 1)?.color ?? [0, 255, 0, 0.2];
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
