@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
 import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } from '@mantine/core';
-import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
+import {
+  DEFAULT_REGION_HEATMAP_COLOR_SWATCHES,
+  DEFAULT_REGION_STATIC_COLOR_SWATCHES,
+} from '@/components/ActivityMap/config/mapConfig';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorPickerModalButton } from './utils/ColorPickerModalButton/ColorPickerModalButton';
@@ -17,15 +20,17 @@ export function RegionsSection({
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
+  const regionStaticColorSwatches =
+    settings.regionStaticColorSwatches ?? DEFAULT_REGION_STATIC_COLOR_SWATCHES;
   const selectedIndex = settings.selectedRegionStaticSwatchIndex || 0;
-  const regionHeatmapColorSwatches = settings.regionHeatmapColorSwatches || [
-    REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
-  ];
+  const regionHeatmapColorSwatches =
+    settings.regionHeatmapColorSwatches ?? DEFAULT_REGION_HEATMAP_COLOR_SWATCHES;
   const selectedRegionHeatmapSwatchIndex = settings.selectedRegionHeatmapSwatchIndex || 0;
   const selectedHeatmapColorThresholds =
     regionHeatmapColorSwatches[selectedRegionHeatmapSwatchIndex] || [];
 
-  const selectedSwatch = settings.regionStaticColorSwatches[selectedIndex] || [];
+  const selectedSwatch =
+    regionStaticColorSwatches[selectedIndex] ?? DEFAULT_REGION_STATIC_COLOR_SWATCHES[0];
   const unvisitedColor = selectedSwatch.find((ct) => ct.threshold === 0)?.color || [0, 0, 0, 0];
   const visitedColor = selectedSwatch.find((ct) => ct.threshold === 1)?.color || [0, 255, 0, 0.2];
 
@@ -76,7 +81,7 @@ export function RegionsSection({
       const hasExtraThresholds = parsedThresholds.some(
         (threshold) => threshold.threshold !== 0 && threshold.threshold !== 1
       );
-      const newSwatches = [...settings.regionStaticColorSwatches];
+      const newSwatches = [...regionStaticColorSwatches];
       newSwatches[settings.selectedRegionStaticSwatchIndex] = [
         { threshold: 0, color: unvisited },
         { threshold: 1, color: visited },
@@ -152,11 +157,11 @@ export function RegionsSection({
             />
           </div>
 
-          {settings.regionMode === 'static' && settings.regionStaticColorSwatches.length > 0 && (
+          {settings.regionMode === 'static' && regionStaticColorSwatches.length > 0 && (
             <ColorSchemeSwatchesGrid
               mode="static"
               label="Region ColorScheme"
-              swatches={settings.regionStaticColorSwatches.map((colorThresholds) => {
+              swatches={regionStaticColorSwatches.map((colorThresholds) => {
                 const unvisited = colorThresholds.find((ct) => ct.threshold === 0);
                 const visited = colorThresholds.find((ct) => ct.threshold === 1);
                 return {
@@ -164,7 +169,7 @@ export function RegionsSection({
                   secondaryColor: visited?.color || [0, 0, 0, 0],
                 };
               })}
-              selectedIndex={settings.selectedRegionStaticSwatchIndex}
+              selectedIndex={selectedIndex}
               onSwatchSelect={(index) => onSettingChange('selectedRegionStaticSwatchIndex', index)}
               onCopy={handleStaticCopy}
               onPaste={handleStaticPaste}
@@ -175,8 +180,8 @@ export function RegionsSection({
                   primaryLabel="Unvisited"
                   secondaryLabel="Visited"
                   onColorChange={(unvisited, visited) => {
-                    const newSwatches = [...settings.regionStaticColorSwatches];
-                    newSwatches[settings.selectedRegionStaticSwatchIndex] = [
+                    const newSwatches = [...regionStaticColorSwatches];
+                    newSwatches[selectedIndex] = [
                       { threshold: 0, color: unvisited },
                       { threshold: 1, color: visited },
                     ];

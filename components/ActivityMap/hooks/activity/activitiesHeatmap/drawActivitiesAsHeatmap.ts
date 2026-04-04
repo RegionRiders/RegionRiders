@@ -2,7 +2,6 @@
 
 import type { RefObject } from 'react';
 import L from 'leaflet';
-import { HEATMAP_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { createLatLngToPixelConverter } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasProjection';
 import { createCanvasContext } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasSetup';
 import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation';
@@ -25,7 +24,7 @@ function finishRender(
   currentImageLayerRef: RefObject<L.ImageOverlay | null>,
   renderAbortRef: RefObject<boolean>,
   map: L.Map,
-  lineThickness: number = HEATMAP_CONFIG.ACTIVITY_LINE_THICKNESS,
+  lineThickness: number = 2,
   layerTransparency: number = 1,
   colorThresholds?: ColorThreshold[]
 ): void {
@@ -223,7 +222,7 @@ export function drawActivitiesAsHeatmap(
 
     zoomChangeTimeout = setTimeout(() => {
       renderHeatmap();
-    }, HEATMAP_CONFIG.HEATMAP_RENDER_DELAY);
+    }, 0);
   };
 
   if (map) {

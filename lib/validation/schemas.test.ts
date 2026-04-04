@@ -140,7 +140,7 @@ describe('validation schemas', () => {
         const validInput = {
           userId: '550e8400-e29b-41d4-a716-446655440000',
           settings: {
-            activityTransparency: 0.7,
+            activityLayerTransparency: 0.7,
             regionTransparency: 0.35,
             selectedLineSwatchIndex: 3,
             lineColorSwatches: [
@@ -165,7 +165,7 @@ describe('validation schemas', () => {
         const invalidInput = {
           userId: '550e8400-e29b-41d4-a716-446655440000',
           settings: {
-            activityTransparency: 1.2,
+            activityLayerTransparency: 1.2,
             regionTransparency: -0.1,
           },
         };

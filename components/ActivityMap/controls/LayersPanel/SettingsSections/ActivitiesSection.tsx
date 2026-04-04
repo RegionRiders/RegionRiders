@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
 import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } from '@mantine/core';
-import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
+import {
+  DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES,
+  DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES,
+} from '@/components/ActivityMap/config/mapConfig';
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
@@ -17,11 +20,13 @@ export function ActivitiesSection({
   onSettingChange,
 }: Pick<LayersPanelProps, 'settings' | 'onSettingChange'>) {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
-  const activityHeatmapColorSwatches = settings.activityHeatmapColorSwatches || [
-    ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
-  ];
+  const lineColorSwatches = settings.lineColorSwatches ?? DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES;
+  const selectedLineSwatchIndex = settings.selectedLineSwatchIndex ?? 0;
+  const activityHeatmapColorSwatches =
+    settings.activityHeatmapColorSwatches ?? DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES;
   const selectedActivityHeatmapSwatchIndex = settings.selectedActivityHeatmapSwatchIndex || 0;
-  const selectedLineSwatch = settings.lineColorSwatches[settings.selectedLineSwatchIndex];
+  const selectedLineSwatch =
+    lineColorSwatches[selectedLineSwatchIndex] ?? DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0];
   const selectedHeatmapColorThresholds =
     activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] || [];
 
@@ -74,8 +79,8 @@ export function ActivitiesSection({
       if (!normal || !hover) {
         throw new Error('Clipboard data must include both threshold 0 and 1 colors');
       }
-      const newSwatches = [...settings.lineColorSwatches];
-      newSwatches[settings.selectedLineSwatchIndex] = { normal, hover };
+      const newSwatches = [...lineColorSwatches];
+      newSwatches[selectedLineSwatchIndex] = { normal, hover };
       onSettingChange('lineColorSwatches', newSwatches);
     } catch (error) {
       showClipboardErrorToast(getClipboardErrorMessage(error, 'Could not paste lines colors'));
@@ -162,11 +167,11 @@ export function ActivitiesSection({
             <ColorSchemeSwatchesGrid
               mode="static"
               label="Lines ColorScheme"
-              swatches={settings.lineColorSwatches.map((swatch) => ({
+              swatches={lineColorSwatches.map((swatch) => ({
                 color: swatch.normal,
                 secondaryColor: swatch.hover,
               }))}
-              selectedIndex={settings.selectedLineSwatchIndex}
+              selectedIndex={selectedLineSwatchIndex}
               onSwatchSelect={(index) => onSettingChange('selectedLineSwatchIndex', index)}
               onCopy={handleLinesCopy}
               onPaste={handleLinesPaste}
@@ -177,8 +182,8 @@ export function ActivitiesSection({
                   primaryLabel="Normal Color"
                   secondaryLabel="Hover Color"
                   onColorChange={(normal, hover) => {
-                    const newSwatches = [...settings.lineColorSwatches];
-                    newSwatches[settings.selectedLineSwatchIndex] = { normal, hover };
+                    const newSwatches = [...lineColorSwatches];
+                    newSwatches[selectedLineSwatchIndex] = { normal, hover };
                     onSettingChange('lineColorSwatches', newSwatches);
                   }}
                 />
