@@ -119,6 +119,46 @@ describe('MapStyleButton', () => {
       // Component should still render
       expect(screen.getByRole('button')).toBeInTheDocument();
     });
+
+    it('should not render a fallback image when imageUrl is an empty string', () => {
+      const { container } = render(<MapStyleButton {...defaultProps} imageUrl="" />);
+
+      expect(container.querySelectorAll('img')).toHaveLength(0);
+    });
+
+    it('should not keep outgoing image after incoming and outgoing transitions finish', () => {
+      const { container, rerender } = render(
+        <MapStyleButton {...defaultProps} imageUrl="https://example.com/tile1.png" />
+      );
+
+      rerender(<MapStyleButton {...defaultProps} imageUrl="https://example.com/tile2.png" />);
+
+      const incomingImage = container.querySelector('img[src="https://example.com/tile2.png"]');
+      expect(incomingImage).toBeTruthy();
+      fireEvent.load(incomingImage as HTMLImageElement);
+
+      const imagesAfterLoad = container.querySelectorAll('img');
+      expect(imagesAfterLoad.length).toBe(2);
+
+      fireEvent.transitionEnd(imagesAfterLoad[1]);
+      expect(container.querySelectorAll('img').length).toBe(2);
+
+      fireEvent.transitionEnd(imagesAfterLoad[0]);
+
+      const imagesAfterBothTransitions = container.querySelectorAll('img');
+      expect(imagesAfterBothTransitions.length).toBe(1);
+      expect(imagesAfterBothTransitions[0]).toHaveAttribute('src', 'https://example.com/tile2.png');
+    });
+
+    it('should switch immediately from empty image to a loaded preview', () => {
+      const { container, rerender } = render(<MapStyleButton {...defaultProps} imageUrl="" />);
+
+      rerender(<MapStyleButton {...defaultProps} imageUrl="https://example.com/tile.png" />);
+
+      const images = container.querySelectorAll('img');
+      expect(images.length).toBe(1);
+      expect(images[0]).toHaveAttribute('src', 'https://example.com/tile.png');
+    });
   });
 
   describe('styling', () => {
