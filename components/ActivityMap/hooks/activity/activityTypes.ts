@@ -9,6 +9,13 @@ export interface CanvasDimensions {
   bottomRight: L.Point;
 }
 
+export interface PixelBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 export interface RenderState {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
@@ -19,6 +26,7 @@ export interface RenderState {
   topLeft: L.Point;
   currentZoom: number;
   renderStartTime: number;
+  touchedBounds: PixelBounds | null;
 }
 
 // Shared render refs

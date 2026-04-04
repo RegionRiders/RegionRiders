@@ -12,7 +12,7 @@ import { processTracksChunked } from '@/components/ActivityMap/hooks/activity/ac
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
-import { CanvasDimensions, HeatmapRefs, RenderState } from '../activityTypes';
+import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
@@ -35,7 +35,7 @@ function finishRender(
   }
 
   const finishStartTime = performance.now();
-  const { ctx, accumulator, canvasWidth, canvasHeight, currentZoom, bounds } = state;
+  const { ctx, accumulator, canvasWidth, canvasHeight, currentZoom, bounds, touchedBounds } = state;
 
   if (
     !ctx ||
@@ -56,39 +56,59 @@ function finishRender(
 
   const imageData = ctx.createImageData(canvasWidth, canvasHeight);
   const data = imageData.data;
+  const hasTouchedPixels = touchedBounds !== null;
 
-  for (let i = 0; i < accumulator.length; i++) {
-    const count = accumulator[i];
-    if (count === 0) {
-      continue;
+  if (!hasTouchedPixels) {
+    if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
+      map.removeLayer(currentImageLayerRef.current);
+      currentImageLayerRef.current = null;
     }
-
-    const [r, g, b, a] = getHeatmapColorForCount(
-      count,
-      currentZoom,
-      lineThickness,
-      colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-    );
-    const pixelIndex = i * 4;
-
-    data[pixelIndex] = r;
-    data[pixelIndex + 1] = g;
-    data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+    return;
   }
 
-  if (edgeSmoothingEnabled) {
-    smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight);
+  const minX = touchedBounds ? Math.max(0, touchedBounds.minX) : 0;
+  const minY = touchedBounds ? Math.max(0, touchedBounds.minY) : 0;
+  const maxX = touchedBounds ? Math.min(canvasWidth - 1, touchedBounds.maxX) : canvasWidth - 1;
+  const maxY = touchedBounds ? Math.min(canvasHeight - 1, touchedBounds.maxY) : canvasHeight - 1;
+
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const i = y * canvasWidth + x;
+      const count = accumulator[i];
+      if (count === 0) {
+        continue;
+      }
+
+      const [r, g, b, a] = getHeatmapColorForCount(
+        count,
+        currentZoom,
+        lineThickness,
+        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+      );
+      const pixelIndex = i * 4;
+
+      data[pixelIndex] = r;
+      data[pixelIndex + 1] = g;
+      data[pixelIndex + 2] = b;
+      data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+    }
+  }
+
+  const touchedArea = (maxX - minX + 1) * (maxY - minY + 1);
+  const totalArea = canvasWidth * canvasHeight;
+  const smoothingAllowed = touchedArea / totalArea <= 0.5;
+  if (edgeSmoothingEnabled && touchedBounds && smoothingAllowed) {
+    smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight, touchedBounds);
   }
 
   ctx.putImageData(imageData, 0, 0);
-  const imageUrl = state.canvas.toDataURL();
+  const imageSource = state.canvas;
 
   if (currentImageLayerRef.current && map && map.hasLayer(currentImageLayerRef.current)) {
     map.removeLayer(currentImageLayerRef.current);
   }
   try {
-    currentImageLayerRef.current = L.imageOverlay(imageUrl, bounds, {
+    currentImageLayerRef.current = L.imageOverlay(imageSource, bounds, {
       pane: 'heatmapPane',
     }).addTo(map);
 
@@ -156,8 +176,14 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity);
+    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity, currentZoom);
     const tracksArray = Array.from(tracks.values());
+    const touchedBounds: PixelBounds = {
+      minX: canvasWidth,
+      minY: canvasHeight,
+      maxX: -1,
+      maxY: -1,
+    };
 
     refs.renderAbortRef.current = false;
 
@@ -171,6 +197,7 @@ function renderHeatmapInternal(
       topLeft,
       currentZoom,
       renderStartTime,
+      touchedBounds: null,
     };
 
     processTracksChunked(
@@ -181,9 +208,13 @@ function renderHeatmapInternal(
       latlngToPixel,
       lineThickness,
       refs.renderAbortRef,
+      touchedBounds,
       () =>
         finishRender(
-          renderState,
+          {
+            ...renderState,
+            touchedBounds: touchedBounds.maxX >= touchedBounds.minX ? touchedBounds : null,
+          },
           refs.currentImageLayerRef,
           refs.renderAbortRef,
           map,

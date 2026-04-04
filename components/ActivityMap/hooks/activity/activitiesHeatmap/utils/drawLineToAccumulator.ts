@@ -1,3 +1,5 @@
+import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+
 /**
  * Draws a line segment into the accumulator buffer for heatmap rendering.
  * This function writes only integer hit counts and does not apply visual smoothing.
@@ -19,7 +21,8 @@ export function drawLineToAccumulator(
   y0: number,
   x1: number,
   y1: number,
-  thickness: number
+  thickness: number,
+  touchedBounds?: PixelBounds
 ): void {
   // Thickness is interpreted as brush diameter from UI settings.
   // Subtracting 1 maps diameter 1 -> radius 0, diameter 2 -> radius 1, etc., matching the integer
@@ -28,36 +31,94 @@ export function drawLineToAccumulator(
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
+  const roundedX0 = Math.round(x0);
+  const roundedY0 = Math.round(y0);
+  const roundedX1 = Math.round(x1);
+  const roundedY1 = Math.round(y1);
 
   if (steps === 0) {
-    const x = Math.round(x0);
-    const y = Math.round(y0);
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-      accumulator[y * width + x]++;
-    }
+    stampBrush(accumulator, width, height, roundedX0, roundedY0, brushRadius, touchedBounds);
     return;
   }
 
-  // Interpolate along line
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const x = Math.round(x0 + dx * t);
-    const y = Math.round(y0 + dy * t);
+  let x = roundedX0;
+  let y = roundedY0;
+  const deltaX = Math.abs(roundedX1 - roundedX0);
+  const deltaY = Math.abs(roundedY1 - roundedY0);
+  const stepX = roundedX0 < roundedX1 ? 1 : -1;
+  const stepY = roundedY0 < roundedY1 ? 1 : -1;
+  let err = deltaX - deltaY;
 
-    // Draw circular brush at this point
-    for (let offsetX = -brushRadius; offsetX <= brushRadius; offsetX++) {
-      for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
-        const distSq = offsetX * offsetX + offsetY * offsetY;
+  while (true) {
+    stampBrush(accumulator, width, height, x, y, brushRadius, touchedBounds);
 
-        if (distSq <= brushRadius * brushRadius) {
-          const px = x + offsetX;
-          const py = y + offsetY;
+    if (x === roundedX1 && y === roundedY1) {
+      break;
+    }
 
-          if (px >= 0 && px < width && py >= 0 && py < height) {
-            const idx = py * width + px;
-            accumulator[idx]++;
-          }
-        }
+    const err2 = err * 2;
+    if (err2 > -deltaY) {
+      err -= deltaY;
+      x += stepX;
+    }
+    if (err2 < deltaX) {
+      err += deltaX;
+      y += stepY;
+    }
+  }
+}
+
+type BrushOffset = [number, number];
+
+const brushOffsetsCache = new Map<number, BrushOffset[]>();
+
+function getBrushOffsets(radius: number): BrushOffset[] {
+  const cached = brushOffsetsCache.get(radius);
+  if (cached) {
+    return cached;
+  }
+
+  if (radius <= 0) {
+    const single: BrushOffset[] = [[0, 0]];
+    brushOffsetsCache.set(radius, single);
+    return single;
+  }
+
+  const offsets: BrushOffset[] = [];
+  const radiusSq = radius * radius;
+  for (let offsetX = -radius; offsetX <= radius; offsetX++) {
+    for (let offsetY = -radius; offsetY <= radius; offsetY++) {
+      if (offsetX * offsetX + offsetY * offsetY <= radiusSq) {
+        offsets.push([offsetX, offsetY]);
+      }
+    }
+  }
+
+  brushOffsetsCache.set(radius, offsets);
+  return offsets;
+}
+
+function stampBrush(
+  accumulator: Float32Array,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+  brushRadius: number,
+  touchedBounds?: PixelBounds
+): void {
+  const offsets = getBrushOffsets(brushRadius);
+  for (let i = 0; i < offsets.length; i++) {
+    const [offsetX, offsetY] = offsets[i];
+    const px = x + offsetX;
+    const py = y + offsetY;
+    if (px >= 0 && px < width && py >= 0 && py < height) {
+      accumulator[py * width + px]++;
+      if (touchedBounds) {
+        if (px < touchedBounds.minX) touchedBounds.minX = px;
+        if (py < touchedBounds.minY) touchedBounds.minY = py;
+        if (px > touchedBounds.maxX) touchedBounds.maxX = px;
+        if (py > touchedBounds.maxY) touchedBounds.maxY = py;
       }
     }
   }

@@ -1,3 +1,5 @@
+import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+
 /**
  * Applies alpha-only edge smoothing for heatmap pixels.
  * This never changes RGB values and never adds new non-zero pixels.
@@ -6,15 +8,24 @@ export function smoothHeatmapEdges(
   data: Uint8ClampedArray,
   accumulator: Float32Array,
   width: number,
-  height: number
+  height: number,
+  bounds?: PixelBounds
 ): void {
   const originalAlpha = new Uint8ClampedArray(width * height);
-  for (let i = 0; i < originalAlpha.length; i++) {
-    originalAlpha[i] = data[i * 4 + 3];
+  const minX = bounds ? Math.max(0, bounds.minX - 1) : 0;
+  const minY = bounds ? Math.max(0, bounds.minY - 1) : 0;
+  const maxX = bounds ? Math.min(width - 1, bounds.maxX + 1) : width - 1;
+  const maxY = bounds ? Math.min(height - 1, bounds.maxY + 1) : height - 1;
+
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const idx = y * width + x;
+      originalAlpha[idx] = data[idx * 4 + 3];
+    }
   }
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
       const idx = y * width + x;
       const alpha = originalAlpha[idx];
       if (alpha === 0 || accumulator[idx] <= 0) {
