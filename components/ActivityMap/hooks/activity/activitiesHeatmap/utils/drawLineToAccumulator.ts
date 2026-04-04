@@ -65,7 +65,8 @@ export function drawLineToAccumulator(
         accumulator[idx] += 1;
       } else {
         const dist = Math.sqrt(distSq);
-        accumulator[idx] += Math.max(0, radius - dist);
+        const falloff = (radius - dist) / ANTIALIAS_FALLOFF_WIDTH_PX;
+        accumulator[idx] += Math.max(0, Math.min(1, falloff));
       }
     }
   }
