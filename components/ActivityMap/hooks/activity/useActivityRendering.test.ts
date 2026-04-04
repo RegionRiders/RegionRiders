@@ -52,15 +52,15 @@ describe('useActivityRendering', () => {
     expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
       mockMap,
       mockTracks,
-        expect.objectContaining({
-          currentImageLayerRef: expect.any(Object),
-          currentImageUrlRef: expect.any(Object),
-          activeRenderIdRef: expect.any(Object),
-          renderAbortRef: expect.any(Object),
-          renderTimeoutRef: expect.any(Object),
-          layerTransparency: 1,
-        })
-      );
+      expect.objectContaining({
+        currentImageLayerRef: expect.any(Object),
+        currentImageUrlRef: expect.any(Object),
+        activeRenderIdRef: expect.any(Object),
+        renderAbortRef: expect.any(Object),
+        renderTimeoutRef: expect.any(Object),
+        layerTransparency: 1,
+      })
+    );
   });
 
   it('should call drawActivitiesAsLines when mode is lines', () => {

@@ -196,7 +196,12 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity, currentZoom);
+    const latlngToPixel = createLatLngToPixelConverter(
+      map,
+      topLeft,
+      refs.heatmapDensity,
+      currentZoom
+    );
     const tracksArray = Array.from(tracks.values());
     const touchedBounds: PixelBounds = {
       minX: canvasWidth,
