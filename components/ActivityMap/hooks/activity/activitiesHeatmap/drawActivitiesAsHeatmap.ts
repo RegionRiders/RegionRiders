@@ -64,6 +64,7 @@ function finishRender(
     if (count <= 0 && edgeContribution <= 0) {
       continue;
     }
+    // Keep edge-only pixels visually consistent by mapping them with the lowest non-zero bucket.
     const colorCount = count > 0 ? count : 1;
 
     const [r, g, b, a] = getHeatmapColorForCount(

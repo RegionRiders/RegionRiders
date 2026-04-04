@@ -23,11 +23,11 @@ export function drawLineToAccumulator(
   smoothEdges: boolean = true,
   edgeAccumulator?: Float32Array
 ): void {
-  const MIN_THICKNESS_PX = 0.5;
-  const ANTIALIAS_FALLOFF_WIDTH_PX = 1;
+  const minThicknessPx = 0.5;
+  const antialiasFalloffWidthPx = 1;
 
-  const radius = Math.max(MIN_THICKNESS_PX, thickness);
-  const innerRadius = Math.max(0, radius - ANTIALIAS_FALLOFF_WIDTH_PX);
+  const radius = Math.max(minThicknessPx, thickness);
+  const innerRadius = Math.max(0, radius - antialiasFalloffWidthPx);
   const innerRadiusSq = innerRadius * innerRadius;
   const radiusSq = radius * radius;
   const dx = x1 - x0;
@@ -67,7 +67,7 @@ export function drawLineToAccumulator(
         coreAccumulator[idx] += 1;
       } else if (edgeAccumulator) {
         const dist = Math.sqrt(distSq);
-        const falloff = (radius - dist) / ANTIALIAS_FALLOFF_WIDTH_PX;
+        const falloff = (radius - dist) / antialiasFalloffWidthPx;
         edgeAccumulator[idx] = Math.max(
           edgeAccumulator[idx],
           Math.max(0, Math.min(1, falloff))
