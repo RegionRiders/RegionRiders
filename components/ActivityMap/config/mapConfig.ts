@@ -1,13 +1,6 @@
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { ColorThreshold, HeatmapConfig, LeafletConfig, RGBA } from '../mapTypes';
+import { ColorThreshold, LeafletConfig, RGBA } from '../mapTypes';
 import { TILE_PRESETS } from './tilePresets';
-
-export const HEATMAP_CONFIG: HeatmapConfig = {
-  HEATMAP_RENDER_DELAY: 0,
-  PIXEL_DENSITY: 1,
-  ACTIVITY_LINE_THICKNESS: 2,
-  REGION_LINE_THICKNESS: 3,
-} as const;
 
 export const DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES: MapSettings['lineColorSwatches'] = [
   {
@@ -145,16 +138,16 @@ export const DEFAULT_MAP_TINT_SWATCHES: RGBA[] = [
 ];
 
 export const DEFAULT_MAP_SETTINGS: MapSettings = {
-  activityMode: 'heatmap',
+  activityMode: 'lines',
   showActivities: true,
-  activityThickness: 3,
+  activityThickness: 2,
   activityLayerTransparency: 1,
   lineColorSwatches: DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES,
   selectedLineSwatchIndex: 0,
   activityHeatmapColorSwatches: DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES,
   selectedActivityHeatmapSwatchIndex: 0,
-  heatmapDensity: 2,
-  regionMode: 'heatmap',
+  heatmapDensity: 0.75,
+  regionMode: 'static',
   showRegions: true,
   regionBorderThickness: 2,
   regionLayerTransparency: 1,
@@ -166,7 +159,7 @@ export const DEFAULT_MAP_SETTINGS: MapSettings = {
   attribution: TILE_PRESETS.standard.attribution,
   overlayTileLayerUrl: TILE_PRESETS.none.url,
   overlayAttribution: TILE_PRESETS.none.attribution,
-  mapSourceMonochrome: false,
+  mapSourceMonochrome: true,
   mapOverlayMonochrome: false,
   mapTintSwatches: DEFAULT_MAP_TINT_SWATCHES,
   selectedMapTintSwatchIndex: 0,
