@@ -167,12 +167,12 @@ export function ActivitiesSection({
             <ColorSchemeSwatchesGrid
               mode="static"
               label="Lines ColorScheme"
-               swatches={lineColorSwatches.map((swatch) => ({
-                 color: swatch.normal,
-                 secondaryColor: swatch.hover,
-               }))}
-               selectedIndex={selectedLineSwatchIndex}
-               onSwatchSelect={(index) => onSettingChange('selectedLineSwatchIndex', index)}
+              swatches={lineColorSwatches.map((swatch) => ({
+                color: swatch.normal,
+                secondaryColor: swatch.hover,
+              }))}
+              selectedIndex={selectedLineSwatchIndex}
+              onSwatchSelect={(index) => onSettingChange('selectedLineSwatchIndex', index)}
               onCopy={handleLinesCopy}
               onPaste={handleLinesPaste}
               renderEditButton={() => (
@@ -182,10 +182,10 @@ export function ActivitiesSection({
                   primaryLabel="Normal Color"
                   secondaryLabel="Hover Color"
                   onColorChange={(normal, hover) => {
-                     const newSwatches = [...lineColorSwatches];
-                     newSwatches[selectedLineSwatchIndex] = { normal, hover };
-                     onSettingChange('lineColorSwatches', newSwatches);
-                   }}
+                    const newSwatches = [...lineColorSwatches];
+                    newSwatches[selectedLineSwatchIndex] = { normal, hover };
+                    onSettingChange('lineColorSwatches', newSwatches);
+                  }}
                 />
               )}
             />
