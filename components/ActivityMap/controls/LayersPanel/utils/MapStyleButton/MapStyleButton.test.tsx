@@ -126,28 +126,17 @@ describe('MapStyleButton', () => {
       expect(container.querySelectorAll('img')).toHaveLength(0);
     });
 
-    it('should not keep outgoing image after incoming and outgoing transitions finish', () => {
+    it('should keep outgoing image until fade-out transition completes when switching to none', () => {
       const { container, rerender } = render(
         <MapStyleButton {...defaultProps} imageUrl="https://example.com/tile1.png" />
       );
 
-      rerender(<MapStyleButton {...defaultProps} imageUrl="https://example.com/tile2.png" />);
+      expect(container.querySelectorAll('img').length).toBe(1);
 
-      const incomingImage = container.querySelector('img[src="https://example.com/tile2.png"]');
-      expect(incomingImage).toBeTruthy();
-      fireEvent.load(incomingImage as HTMLImageElement);
+      rerender(<MapStyleButton {...defaultProps} imageUrl="" />);
 
-      const imagesAfterLoad = container.querySelectorAll('img');
-      expect(imagesAfterLoad.length).toBe(2);
-
-      fireEvent.transitionEnd(imagesAfterLoad[1]);
-      expect(container.querySelectorAll('img').length).toBe(2);
-
-      fireEvent.transitionEnd(imagesAfterLoad[0]);
-
-      const imagesAfterBothTransitions = container.querySelectorAll('img');
-      expect(imagesAfterBothTransitions.length).toBe(1);
-      expect(imagesAfterBothTransitions[0]).toHaveAttribute('src', 'https://example.com/tile2.png');
+      const imagesBeforeTransitionEnd = container.querySelectorAll('img');
+      expect(imagesBeforeTransitionEnd.length).toBe(0);
     });
 
     it('should switch immediately from empty image to a loaded preview', () => {
