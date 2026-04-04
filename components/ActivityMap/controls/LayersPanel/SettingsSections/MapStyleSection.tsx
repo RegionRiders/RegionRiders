@@ -113,7 +113,7 @@ export function MapStyleSection({
             {sourcePresetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl={tileUrls?.[key] ?? undefined}
+                imageUrl={tileUrls?.[key]}
                 label={preset.name}
                 onClick={() => handleStyleChange(preset.url, preset.attribution)}
                 active={settings.tileLayerUrl === preset.url}
@@ -140,7 +140,7 @@ export function MapStyleSection({
             {overlayPresetEntries.map(([key, preset]) => (
               <MapStyleButton
                 key={key}
-                imageUrl={tileUrls?.[key] ?? undefined}
+                imageUrl={tileUrls?.[key]}
                 label={preset.name}
                 onClick={() => handleOverlayChange(preset.url, preset.attribution)}
                 active={settings.overlayTileLayerUrl === preset.url}
