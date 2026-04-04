@@ -32,7 +32,6 @@ function finishRender(
   map: L.Map,
   lineThickness: number = 2,
   layerTransparency: number = 1,
-  edgeSmoothingEnabled: boolean = true,
   colorThresholds?: ColorThreshold[]
 ): void {
   if (shouldAbort()) {
@@ -98,7 +97,7 @@ function finishRender(
   const touchedArea = (maxX - minX + 1) * (maxY - minY + 1);
   const totalArea = canvasWidth * canvasHeight;
   const smoothingAllowed = touchedArea / totalArea <= SMOOTHING_ADAPTIVE_THRESHOLD;
-  if (edgeSmoothingEnabled && touchedBounds && smoothingAllowed) {
+  if (touchedBounds && smoothingAllowed) {
     smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight, touchedBounds);
   }
 
@@ -245,7 +244,6 @@ function renderHeatmapInternal(
           map,
           lineThickness,
           refs.layerTransparency,
-          refs.edgeSmoothingEnabled,
           refs.heatmapColorThresholds
         )
     );
