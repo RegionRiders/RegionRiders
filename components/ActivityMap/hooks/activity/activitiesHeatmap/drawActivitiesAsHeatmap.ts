@@ -72,7 +72,7 @@ function finishRender(
     data[pixelIndex] = r;
     data[pixelIndex + 1] = g;
     data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+    data[pixelIndex + 3] = Math.round(Math.max(0, Math.min(1, a)) * layerTransparency * 255);
   }
 
   ctx.putImageData(imageData, 0, 0);

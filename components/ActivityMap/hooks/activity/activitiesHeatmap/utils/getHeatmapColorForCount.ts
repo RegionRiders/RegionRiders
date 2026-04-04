@@ -18,8 +18,9 @@ export function getHeatmapColorForCount(
   lineThickness: number = 1,
   thresholds: ColorThreshold[] = ACTIVITY_HEATMAP_COLOR_THRESHOLDS
 ): RGBA {
-  // Normalize for line thickness (both sides of the line)
-  const uniqueActivities = (count / (lineThickness * 2)) * (zoomLevel / 10);
+  const thicknessFactor = Math.max(1, lineThickness * 2);
+  const zoomFactor = Math.max(1, 10 / Math.max(1, zoomLevel));
+  const uniqueActivities = count / (thicknessFactor * zoomFactor);
 
   const color = getColorFromThresholds(uniqueActivities, thresholds);
 

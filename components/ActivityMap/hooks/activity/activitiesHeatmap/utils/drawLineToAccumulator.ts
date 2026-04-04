@@ -21,52 +21,50 @@ export function drawLineToAccumulator(
   y1: number,
   thickness: number
 ): void {
-  const dx = Math.round(x1) - Math.round(x0);
-  const dy = Math.round(y1) - Math.round(y0);
-  const steps = Math.max(Math.abs(dx), Math.abs(dy));
+  const radius = Math.max(0.5, thickness);
+  const brushRadius = Math.max(1, Math.round(radius));
+  const innerRadius = Math.max(0, radius - 1);
+  const innerRadiusSq = innerRadius * innerRadius;
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const rawSteps = Math.max(Math.abs(dx), Math.abs(dy));
+  const steps = Math.ceil(rawSteps);
 
-  if (steps === 0) {
-    const x = Math.round(x0);
-    const y = Math.round(y0);
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-      accumulator[y * width + x]++;
-    }
-    return;
-  }
+  const drawBrush = (centerX: number, centerY: number): void => {
+    const x = Math.round(centerX);
+    const y = Math.round(centerY);
 
-  const core = Math.floor(thickness * 0.7);
-  const coreThicknessSq = core * core;
-
-  // Interpolate along line
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const x = Math.round(x0 + dx * t);
-    const y = Math.round(y0 + dy * t);
-
-    // Draw circular brush at this point
-    for (let offsetX = -thickness; offsetX <= thickness; offsetX++) {
-      for (let offsetY = -thickness; offsetY <= thickness; offsetY++) {
+    for (let offsetX = -brushRadius; offsetX <= brushRadius; offsetX++) {
+      for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
         const distSq = offsetX * offsetX + offsetY * offsetY;
         const dist = Math.sqrt(distSq);
 
-        if (dist <= thickness) {
+        if (dist <= radius) {
           const px = x + offsetX;
           const py = y + offsetY;
 
           if (px >= 0 && px < width && py >= 0 && py < height) {
             const idx = py * width + px;
 
-            if (distSq <= coreThicknessSq) {
-              // Solid core
-              accumulator[idx]++;
+            if (distSq <= innerRadiusSq) {
+              accumulator[idx] += 1;
             } else {
-              // Antialiased edge
-              const alpha = Math.max(0, 1 - (dist - core));
-              accumulator[idx] += alpha;
+              accumulator[idx] += Math.max(0, radius - dist);
             }
           }
         }
       }
     }
+  };
+
+  if (steps === 0) {
+    drawBrush(x0, y0);
+    return;
+  }
+
+  // Interpolate along line
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    drawBrush(x0 + dx * t, y0 + dy * t);
   }
 }
