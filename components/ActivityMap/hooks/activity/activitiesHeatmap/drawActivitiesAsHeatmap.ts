@@ -63,7 +63,16 @@ function finishRender(
   const hasTouchedPixels = touchedBounds !== null;
 
   if (!hasTouchedPixels) {
-    return;
+    const imageLayerRef = currentImageLayerRef as { current: L.ImageOverlay | null };
+    const imageUrlRef = currentImageUrlRef as { current: string | null };
+    if (imageLayerRef.current) {
+      map.removeLayer(imageLayerRef.current);
+      imageLayerRef.current = null;
+    }
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
+      imageUrlRef.current = null;
+    }
   }
 
   const minX = touchedBounds ? Math.max(0, touchedBounds.minX) : 0;
@@ -196,7 +205,12 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, refs.heatmapDensity, currentZoom);
+    const latlngToPixel = createLatLngToPixelConverter(
+      map,
+      topLeft,
+      refs.heatmapDensity,
+      currentZoom
+    );
     const tracksArray = Array.from(tracks.values());
     const touchedBounds: PixelBounds = {
       minX: canvasWidth,

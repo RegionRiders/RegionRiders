@@ -11,23 +11,25 @@ export function smoothHeatmapEdges(
   height: number,
   bounds?: PixelBounds
 ): void {
-  const originalAlpha = new Uint8ClampedArray(width * height);
   const minX = bounds ? Math.max(0, bounds.minX - 1) : 0;
   const minY = bounds ? Math.max(0, bounds.minY - 1) : 0;
   const maxX = bounds ? Math.min(width - 1, bounds.maxX + 1) : width - 1;
   const maxY = bounds ? Math.min(height - 1, bounds.maxY + 1) : height - 1;
-
+  const regionWidth = maxX - minX + 1;
+  const regionHeight = maxY - minY + 1;
+  const originalAlpha = new Uint8ClampedArray(regionWidth * regionHeight);
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       const idx = y * width + x;
-      originalAlpha[idx] = data[idx * 4 + 3];
+      const regionIdx = (y - minY) * regionWidth + (x - minX);
+      originalAlpha[regionIdx] = data[idx * 4 + 3];
     }
   }
-
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       const idx = y * width + x;
-      const alpha = originalAlpha[idx];
+      const regionIdx = (y - minY) * regionWidth + (x - minX);
+      const alpha = originalAlpha[regionIdx];
       if (alpha === 0 || accumulator[idx] <= 0) {
         continue;
       }
