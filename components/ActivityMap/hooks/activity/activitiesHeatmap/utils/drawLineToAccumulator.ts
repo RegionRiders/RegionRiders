@@ -25,48 +25,48 @@ export function drawLineToAccumulator(
   const ANTIALIAS_FALLOFF_WIDTH_PX = 1;
 
   const radius = Math.max(MIN_RADIUS_PX, thickness);
-  const brushRadius = Math.max(1, Math.round(radius));
   const innerRadius = Math.max(0, radius - ANTIALIAS_FALLOFF_WIDTH_PX);
   const innerRadiusSq = innerRadius * innerRadius;
+  const radiusSq = radius * radius;
   const dx = x1 - x0;
   const dy = y1 - y0;
-  const rawSteps = Math.max(Math.abs(dx), Math.abs(dy));
-  const steps = Math.ceil(rawSteps);
+  const segmentLengthSq = dx * dx + dy * dy;
 
-  const drawBrush = (centerX: number, centerY: number): void => {
-    for (let offsetX = -brushRadius; offsetX <= brushRadius; offsetX++) {
-      for (let offsetY = -brushRadius; offsetY <= brushRadius; offsetY++) {
-        const sampleX = centerX + offsetX;
-        const sampleY = centerY + offsetY;
-        const distSq = offsetX * offsetX + offsetY * offsetY;
+  const minX = Math.max(0, Math.floor(Math.min(x0, x1) - radius));
+  const maxX = Math.min(width - 1, Math.ceil(Math.max(x0, x1) + radius));
+  const minY = Math.max(0, Math.floor(Math.min(y0, y1) - radius));
+  const maxY = Math.min(height - 1, Math.ceil(Math.max(y0, y1) + radius));
 
-        if (distSq <= radius * radius) {
-          const px = Math.round(sampleX);
-          const py = Math.round(sampleY);
+  for (let py = minY; py <= maxY; py++) {
+    const sampleY = py + 0.5;
+    for (let px = minX; px <= maxX; px++) {
+      const sampleX = px + 0.5;
 
-          if (px >= 0 && px < width && py >= 0 && py < height) {
-            const idx = py * width + px;
+      let closestX = x0;
+      let closestY = y0;
 
-            if (distSq <= innerRadiusSq) {
-              accumulator[idx] += 1;
-            } else {
-              const dist = Math.sqrt(distSq);
-              accumulator[idx] += Math.max(0, radius - dist);
-            }
-          }
-        }
+      if (segmentLengthSq > 0) {
+        const tRaw = ((sampleX - x0) * dx + (sampleY - y0) * dy) / segmentLengthSq;
+        const t = Math.max(0, Math.min(1, tRaw));
+        closestX = x0 + dx * t;
+        closestY = y0 + dy * t;
+      }
+
+      const distX = sampleX - closestX;
+      const distY = sampleY - closestY;
+      const distSq = distX * distX + distY * distY;
+
+      if (distSq > radiusSq) {
+        continue;
+      }
+
+      const idx = py * width + px;
+      if (distSq <= innerRadiusSq) {
+        accumulator[idx] += 1;
+      } else {
+        const dist = Math.sqrt(distSq);
+        accumulator[idx] += Math.max(0, radius - dist);
       }
     }
-  };
-
-  if (steps === 0) {
-    drawBrush(x0, y0);
-    return;
-  }
-
-  // Interpolate along line
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    drawBrush(x0 + dx * t, y0 + dy * t);
   }
 }
