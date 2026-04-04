@@ -165,6 +165,8 @@ function clampIndex(index: number, maxIndex: number): number {
 }
 
 function normalizeSwatchSelectionPairs(normalized: Partial<MapSettings>): void {
+  const normalizedRecord = normalized as Record<string, unknown>;
+
   for (const { swatchesKey, selectedIndexKey } of SWATCH_SELECTION_PAIRS) {
     const hasPersistedSwatches = swatchesKey in normalized;
     const hasPersistedIndex = selectedIndexKey in normalized;
@@ -180,8 +182,8 @@ function normalizeSwatchSelectionPairs(normalized: Partial<MapSettings>): void {
     const defaultIndex = DEFAULT_MAP_SETTINGS[selectedIndexKey] as number;
 
     if (!Array.isArray(persistedOrDefaultSwatches) || persistedOrDefaultSwatches.length === 0) {
-      normalized[swatchesKey] = defaultSwatches;
-      normalized[selectedIndexKey] = defaultIndex;
+      normalizedRecord[swatchesKey] = defaultSwatches;
+      normalizedRecord[selectedIndexKey] = defaultIndex;
       continue;
     }
 
@@ -189,8 +191,8 @@ function normalizeSwatchSelectionPairs(normalized: Partial<MapSettings>): void {
       ? ((normalized[selectedIndexKey] as number | undefined) ?? defaultIndex)
       : defaultIndex;
 
-    normalized[swatchesKey] = persistedOrDefaultSwatches as any;
-    normalized[selectedIndexKey] = clampIndex(index, persistedOrDefaultSwatches.length - 1) as any;
+    normalizedRecord[swatchesKey] = persistedOrDefaultSwatches;
+    normalizedRecord[selectedIndexKey] = clampIndex(index, persistedOrDefaultSwatches.length - 1);
   }
 }
 
@@ -200,6 +202,9 @@ function normalizeMapSettingsPayload(payload: unknown): Partial<MapSettings> | n
   }
 
   const normalized: Partial<MapSettings> = {};
+  const normalizedRecord = normalized as Record<string, unknown>;
+  const payloadRecord = payload as Record<string, unknown>;
+
   for (const [key, validator] of Object.entries(MAP_SETTINGS_VALIDATORS) as [
     keyof MapSettings,
     MapSettingValidator<keyof MapSettings>,
@@ -207,9 +212,9 @@ function normalizeMapSettingsPayload(payload: unknown): Partial<MapSettings> | n
     if (!(key in payload)) {
       continue;
     }
-    const parsedValue = validator(payload[key]);
+    const parsedValue = validator(payloadRecord[key]);
     if (parsedValue !== undefined) {
-      normalized[key] = parsedValue;
+      normalizedRecord[key] = parsedValue;
     }
   }
 
