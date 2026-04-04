@@ -81,11 +81,18 @@ describe('getHeatmapColorForCount', () => {
   });
 
   describe('zoom level adjustment', () => {
-    it('should keep same result across zoom levels for same count and thickness', () => {
+    it('should keep same result across zoom levels when count is scaled by Leaflet zoom pixels', () => {
+      const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
+      const highZoomEquivalent = getHeatmapColorForCount(10 * 2 ** (15 - 5), 15, 1, TEST_THRESHOLDS);
+
+      expect(lowZoom).toEqual(highZoomEquivalent);
+    });
+
+    it('should change result across zoom levels for same raw pixel count', () => {
       const lowZoom = getHeatmapColorForCount(10, 5, 1, TEST_THRESHOLDS);
       const highZoom = getHeatmapColorForCount(10, 15, 1, TEST_THRESHOLDS);
 
-      expect(lowZoom).toEqual(highZoom);
+      expect(lowZoom).not.toEqual(highZoom);
     });
 
     it('should use default zoom when not provided', () => {
@@ -95,9 +102,9 @@ describe('getHeatmapColorForCount', () => {
       expect(withDefault).toEqual(withExplicit);
     });
 
-    it('should handle extreme zoom values without changing the same density output', () => {
+    it('should handle extreme zoom values with equivalent scaled counts', () => {
       const veryLowZoom = getHeatmapColorForCount(10, 1, 1, TEST_THRESHOLDS);
-      const veryHighZoom = getHeatmapColorForCount(10, 20, 1, TEST_THRESHOLDS);
+      const veryHighZoom = getHeatmapColorForCount(10 * 2 ** (20 - 1), 20, 1, TEST_THRESHOLDS);
 
       expect(veryLowZoom).toEqual(veryHighZoom);
     });

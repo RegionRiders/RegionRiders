@@ -21,7 +21,9 @@ export function drawLineToAccumulator(
   y1: number,
   thickness: number
 ): void {
-  // Thickness is interpreted as stroke diameter in pixels; convert to brush radius.
+  // Thickness is interpreted as brush diameter from UI settings.
+  // Subtracting 1 maps diameter 1 -> radius 0, diameter 2 -> radius 1, etc., matching the integer
+  // loop bounds [-radius, +radius] that stamp the circular brush into the accumulator.
   const brushRadius = Math.max(0, Math.round(thickness - 1));
   const dx = x1 - x0;
   const dy = y1 - y0;

@@ -14,17 +14,21 @@ import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInte
  */
 export function getHeatmapColorForCount(
   count: number,
-  unusedZoomLevel: number = 10,
+  zoomLevel: number = 10,
   lineThickness: number = 1,
   thresholds: ColorThreshold[] = ACTIVITY_HEATMAP_COLOR_THRESHOLDS
 ): RGBA {
-  // Keep color mapping stable across zoom and line thickness.
-  // Each draw step stamps a circular brush, so center pixel intensity scales with brush diameter.
+  // Keep color mapping stable across line thickness and zoom for the same geographic overlap density.
+  // Leaflet projected pixel distances scale by 2^zoom, so accumulator counts for the same geometry scale
+  // proportionally with 2^(zoom - referenceZoom).
+  const referenceZoom = 10;
+  const zoomScale = 2 ** (zoomLevel - referenceZoom);
   const normalizedThickness = Math.max(1, Math.round(lineThickness));
-  const normalizationFactor = normalizedThickness * 2 + 1;
+  // Accumulator brush spans [-radius, +radius] around sampled line points, so center overlap intensity
+  // scales with brush diameter in pixels (2r + 1) for equivalent track density.
+  const thicknessScale = normalizedThickness * 2 + 1;
   const clampedCount = Math.max(0, count);
-  const uniqueActivities = clampedCount / normalizationFactor;
-  void unusedZoomLevel;
+  const uniqueActivities = clampedCount / (thicknessScale * zoomScale);
 
   const color = getColorFromThresholds(uniqueActivities, thresholds);
 
