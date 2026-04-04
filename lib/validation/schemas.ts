@@ -23,7 +23,7 @@ const mapSettingsSchema = z
   .object({
     activityMode: z.enum(['heatmap', 'lines']).optional(),
     showActivities: z.boolean().optional(),
-    activityTransparency: z.number().min(0).max(1).optional(),
+    activityLayerTransparency: z.number().min(0).max(1).optional(),
     activityThickness: z.number().min(0).max(100).optional(),
     heatmapDensity: z.number().min(0).max(10).optional(),
     lineColorSwatches: z.array(lineColorSwatchSchema).optional(),

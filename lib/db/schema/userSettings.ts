@@ -16,7 +16,7 @@ export interface UserSettingsLineColorSwatch {
 export interface UserMapSettings {
   activityMode?: 'heatmap' | 'lines';
   showActivities?: boolean;
-  activityTransparency?: number;
+  activityLayerTransparency?: number;
   activityThickness?: number;
   heatmapDensity?: number;
   lineColorSwatches?: UserSettingsLineColorSwatch[];

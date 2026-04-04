@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { NewUserSettings, UserSettings, userSettings, UserSettingsUpdate } from './userSettings';
+import { NewUserSettings, UserSettings, userSettings, UserSettingsUpdate } from '@/lib/db';
 
 describe('User Settings Table Schema', () => {
   it('has all required columns', () => {
@@ -25,7 +25,7 @@ describe('User Settings Table Schema', () => {
     const newSettings: NewUserSettings = {
       userId: 'user-uuid',
       settings: {
-        activityTransparency: 0.6,
+        activityLayerTransparency: 0.6,
         regionTransparency: 0.4,
         lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
       },
