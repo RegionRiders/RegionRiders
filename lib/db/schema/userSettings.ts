@@ -25,7 +25,7 @@ export interface UserMapSettings {
   selectedActivityHeatmapSwatchIndex?: number;
   regionMode?: 'heatmap' | 'static';
   showRegions?: boolean;
-  regionTransparency?: number;
+  regionLayerTransparency?: number;
   regionBorderThickness?: number;
   regionStaticColorSwatches?: UserSettingsColorThreshold[][];
   selectedRegionStaticSwatchIndex?: number;
