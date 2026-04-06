@@ -103,6 +103,7 @@ export function ActivitiesListElement(
       hideNavbar(false);
       setSelectedActivities([]);
       tripCreationMenuHandlers.close();
+      tripForm.reset();
     }
   }
 
@@ -142,9 +143,21 @@ export function ActivitiesListElement(
       <div hidden={tripCreationMode}>
         <Menu shadow="md" position="right">
           <Menu.Target>
-            <Text size="35px" fw={650}>
+            <button
+              type="button"
+              aria-label="Open activity menu"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: '35px',
+                fontWeight: 650,
+                lineHeight: 1
+              }}
+            >
               ⫶
-            </Text>
+            </button>
           </Menu.Target>
 
           <Menu.Dropdown>
