@@ -257,7 +257,7 @@ describe('regionVisitAnalyzer', () => {
         country: 'TEST',
         adminLevel: 1,
         geometry: {
-          // Intentionally invalid for Regions geometry union to verify unsupported-shape handling.
+          // Intentionally invalid geometry type to verify handling of unsupported shapes.
           type: 'Point',
           coordinates: [14.5, 50.5],
         } as unknown as Regions['geometry'],
