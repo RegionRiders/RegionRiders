@@ -9,11 +9,11 @@ const ActivityStat = ({ value }: { name: string; value: string }) => (
 );
 
 const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
-  <Card shadow="sm" radius="md" withBorder p={{base: "xs", lg: 0}} pr={5}>
+  <Card shadow="sm" radius="md" withBorder p={{base: 5, lg: 0}}>
     <Flex
       direction="row"
       gap={{base: 5, lg: "md"}}
-      align={{ base: 'stretch', lg: 'center' }}
+      align="center"
       justify="flex-start"
     >
       <Anchor onClick={() => onSelect(data)}>
@@ -28,7 +28,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
 
       {/* Content */}
       <Stack flex={1} gap={0}>
-        <Group pb={{base: 0, lg: "xs"}}>
+        <Group pb={{base: 0, lg: 5}} gap={5}>
           <ActivityTypeIcon type={data.activityType} size={28}/>
 
           <Stack gap={0}>
@@ -37,7 +37,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
             </Text>
 
             <Anchor onClick={() => onSelect(data)}>
-              <Text fw={650} truncate="end" w={{ base: 174, lg: 245}}>
+              <Text fw={650} truncate="end" w={{ base: 200, lg: 245}}>
                 {data.title}
               </Text>
             </Anchor>

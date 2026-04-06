@@ -1,6 +1,21 @@
 import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { AppShell, Button, Checkbox, CloseButton, Divider, Flex, Group, Menu, Modal, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
+import {
+  Anchor,
+  AppShell,
+  Button,
+  Checkbox,
+  CloseButton,
+  Divider,
+  Flex,
+  Group,
+  Menu,
+  Modal,
+  ScrollArea,
+  Stack,
+  Text,
+  TextInput
+} from "@mantine/core";
 import { useForm } from '@mantine/form';
 import { useDisclosure } from "@mantine/hooks";
 import ActivityDetails from "@/components/ActivityComponents/ActivityDetails/ActivityDetails";
@@ -11,6 +26,7 @@ import { dateWithTime } from "@/components/Utils/DateFormattingFunctions";
 import { mockActivities, mockTrips } from '@/lib/mockData';
 import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
+
 
 export function ActivitiesListElement(
   {toggleActivity, isActivityToggled, hideNavbar} :
@@ -110,42 +126,42 @@ export function ActivitiesListElement(
 
   
   const ActivityPostMenu = ({ activityId }: { activityId: string }) => (
-    <div hidden={tripCreationMode}>
-      <Menu shadow="md" position="right">
-        <Menu.Target>
-          <Text size="35px" fw={650}>
-            ⫶
-          </Text>
-        </Menu.Target>
+    <Anchor underline="never">
+      <div hidden={tripCreationMode}>
+        <Menu shadow="md" position="right">
+          <Menu.Target>
+            <Text size="35px" fw={650}>
+              ⫶
+            </Text>
+          </Menu.Target>
 
-        <Menu.Dropdown>
-          <Menu.Item>Add to trip</Menu.Item>
-          <Menu.Item onClick={() => toggleTripCreation(activityId)}>Create new trip</Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    </div>
+          <Menu.Dropdown>
+            <Menu.Item>Add to trip</Menu.Item>
+            <Menu.Item onClick={() => toggleTripCreation(activityId)}>Create new trip</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </div>
+    </Anchor>
   );
-  
+
   const ActivitySelectCheckbox = ({ activityId }: { activityId: string }) => {
     const correspondingActivity = getActivityById(visibleActivities, activityId);
     const removeElement = () => {
-      setSelectedActivities(l => l.filter(a => a.id !== activityId));
-    }
+      setSelectedActivities((l) => l.filter((a) => a.id !== activityId));
+    };
     const isChecked = () => selectedActivities.includes(correspondingActivity);
 
     return (
       <div hidden={!tripCreationMode}>
         <Checkbox
           checked={isChecked()}
-          onChange={() =>
-            {
-              if (isChecked()) {
-                removeElement();
-              } else {
-                setSelectedActivities((prev) => [...prev, correspondingActivity])
-              }
+          onChange={() => {
+            if (isChecked()) {
+              removeElement();
+            } else {
+              setSelectedActivities((prev) => [...prev, correspondingActivity]);
             }
-          }
+          }}
         />
       </div>
     );
