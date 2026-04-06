@@ -1,6 +1,6 @@
 import {
   Anchor,
-  Card,
+  Card, Collapse,
   createTheme,
   Divider,
   Group,
@@ -15,6 +15,7 @@ import TripDateFormatter from "@/components/TripComponents/TripDateFormatter/Tri
 import { dateNoTime, dateOnlyTime, dayDifference } from "@/components/Utils/DateFormattingFunctions";
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
+import {useDisclosure} from "@mantine/hooks";
 
 
 const tripsBreakpoints = createTheme({
@@ -41,6 +42,51 @@ const TripStat = ({ header, value }: { header: string; value: string }) => (
   </>
 );
 
+const ActivitiesListItem = ({
+  activity,
+  isNewDay,
+  dayCount,
+  days
+}: {
+  activity: Activity;
+  isNewDay: boolean;
+  dayCount: number;
+  days: number;
+}) => (
+  <>
+    {isNewDay && (
+      <Group>
+        <Text fw="bold">{dateNoTime(activity.startDate)}</Text>
+        <Divider orientation="vertical" size="md" />
+        <Text fw="bold">
+          Day {dayCount}/{days}
+        </Text>
+      </Group>
+    )}
+    <List size="sm" c="dimmed" pl="md" icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
+      <List.Item c="dimmed">
+        <Group w="100%">
+
+          <Group>
+            <ActivityTypeIcon type={activity.activityType} size={25} />
+            <Anchor href="https://http.cat/images/404.jpg">
+              <Text truncate="end" w={170}>
+                {activity.title}
+              </Text>
+            </Anchor>
+          </Group>
+
+
+          <Group display={{base: "none", asideOpenHide: "flex"}} ml="auto">
+            <TripPostActivityStat value={activity.distance} />
+            <TripPostActivityStat value={activity.time} />
+          </Group>
+        </Group>
+      </List.Item>
+    </List>
+  </>
+)
+
 const Activities = ({
   activities,
   tripStartDate,
@@ -60,9 +106,12 @@ const Activities = ({
   let prevActivityDate: Date | null = null;
   let dayCount = 1;
 
+  const activitiesToShow = activities.length < 6 ? 5 : 4;
+  const [activitiesExpanded, { toggle }] = useDisclosure(false);
+
   return (
     <>
-      {activities.map((activity: Activity) => {
+      {activities.slice(0, activitiesToShow).map((activity: Activity) => {
         const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
 
         if (isNewDay) {
@@ -74,40 +123,35 @@ const Activities = ({
         }
 
         return (
-          <>
-            {isNewDay && (
-              <Group>
-                <Text fw="bold">{dateNoTime(activity.startDate)}</Text>
-                <Divider orientation="vertical" size="md" />
-                <Text fw="bold">
-                  Day {dayCount}/{days}
-                </Text>
-              </Group>
-            )}
-            <List size="sm" c="dimmed" pl="md" icon={<Text>{dateOnlyTime(activity.startDate)}</Text>}>
-              <List.Item c="dimmed">
-                <Group w="100%">
-
-                  <Group>
-                    <ActivityTypeIcon type={activity.activityType} size={25} />
-                    <Anchor href="https://http.cat/images/404.jpg">
-                      <Text truncate="end" w={170}>
-                        {activity.title}
-                      </Text>
-                    </Anchor>
-                  </Group>
-
-
-                  <Group display={{base: "none", asideOpenHide: "flex"}} ml="auto">
-                    <TripPostActivityStat value={activity.distance} />
-                    <TripPostActivityStat value={activity.time} />
-                  </Group>
-                </Group>
-              </List.Item>
-            </List>
-          </>
+          <ActivitiesListItem activity={activity} isNewDay={isNewDay} dayCount={dayCount} days={days} key={activity.id} />
         );
       })}
+
+      {activities.length > 5 && (
+        <>
+          <Anchor onClick={toggle}>
+            {activitiesExpanded ? "Hide activities" : `...and ${activities.length - 4} more activities`}
+          </Anchor>
+          <Collapse in={activitiesExpanded}>
+            {activities.slice(activitiesToShow).map((activity: Activity) => {
+              const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
+
+              if (isNewDay) {
+                if (prevActivityDate !== null) {
+                  dayCount += dayDifference(activity.startDate, prevActivityDate);
+                }
+
+                prevActivityDate = activity.startDate;
+              }
+
+              return (
+                <ActivitiesListItem activity={activity} isNewDay={isNewDay} dayCount={dayCount} days={days} key={activity.id} />
+              );
+            })}
+          </Collapse>
+        </>
+
+      )}
     </>
   );
 };
