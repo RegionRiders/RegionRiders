@@ -109,23 +109,25 @@ const Activities = ({
   const activitiesToShow = activities.length < 6 ? 5 : 4;
   const [activitiesExpanded, { toggle }] = useDisclosure(false);
 
+  const mapActivities = (start: number, end?: number) => (activities.slice(start, end).map((activity: Activity) => {
+    const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
+
+    if (isNewDay) {
+      if (prevActivityDate !== null) {
+        dayCount += dayDifference(activity.startDate, prevActivityDate);
+      }
+
+      prevActivityDate = activity.startDate;
+    }
+
+    return (
+      <ActivitiesListItem activity={activity} isNewDay={isNewDay} dayCount={dayCount} days={days} key={activity.id} />
+    );
+  }))
+
   return (
     <>
-      {activities.slice(0, activitiesToShow).map((activity: Activity) => {
-        const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
-
-        if (isNewDay) {
-          if (prevActivityDate !== null) {
-            dayCount += dayDifference(activity.startDate, prevActivityDate);
-          }
-
-          prevActivityDate = activity.startDate;
-        }
-
-        return (
-          <ActivitiesListItem activity={activity} isNewDay={isNewDay} dayCount={dayCount} days={days} key={activity.id} />
-        );
-      })}
+      {mapActivities(0, activitiesToShow)}
 
       {activities.length > 5 && (
         <>
@@ -133,21 +135,7 @@ const Activities = ({
             {activitiesExpanded ? "Hide activities" : `...and ${activities.length - 4} more activities`}
           </Anchor>
           <Collapse in={activitiesExpanded}>
-            {activities.slice(activitiesToShow).map((activity: Activity) => {
-              const isNewDay = !prevActivityDate || !isSameDay(prevActivityDate, activity.startDate);
-
-              if (isNewDay) {
-                if (prevActivityDate !== null) {
-                  dayCount += dayDifference(activity.startDate, prevActivityDate);
-                }
-
-                prevActivityDate = activity.startDate;
-              }
-
-              return (
-                <ActivitiesListItem activity={activity} isNewDay={isNewDay} dayCount={dayCount} days={days} key={activity.id} />
-              );
-            })}
+            {mapActivities(activitiesToShow)}
           </Collapse>
         </>
 
