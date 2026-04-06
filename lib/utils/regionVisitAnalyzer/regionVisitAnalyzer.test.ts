@@ -231,7 +231,7 @@ describe('regionVisitAnalyzer', () => {
       expect(result.get('region-1')?.trackIds).toEqual([]);
     });
 
-    it('should preserve unique trackIds while counting repeated visits per track', () => {
+    it('should count multiple points from same track as single visit', () => {
       const multiPointTrack: GPXTrack = {
         id: 'track-multi-hit',
         name: 'Multi Hit Track',
@@ -257,6 +257,7 @@ describe('regionVisitAnalyzer', () => {
         country: 'TEST',
         adminLevel: 1,
         geometry: {
+          // Intentionally invalid for Regions geometry union to verify unsupported-shape handling.
           type: 'Point',
           coordinates: [14.5, 50.5],
         } as unknown as Regions['geometry'],
