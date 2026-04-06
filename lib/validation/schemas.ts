@@ -19,7 +19,7 @@ const lineColorSwatchSchema = z.object({
   normal: rgbaSchema,
   hover: rgbaSchema,
 });
-const mapSettingsSchema = z
+export const mapSettingsSchema = z
   .object({
     activityMode: z.enum(['heatmap', 'lines']).optional(),
     showActivities: z.boolean().optional(),
