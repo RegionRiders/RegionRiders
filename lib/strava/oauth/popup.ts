@@ -8,19 +8,12 @@ interface OAuthPopupOptions {
 }
 
 /**
- * Opens a centered OAuth popup window and polls for the authorization code
+ * Open a centered OAuth popup and invoke callbacks when authentication completes or the popup closes.
  *
- * This function creates a popup window for OAuth authentication, automatically
- * centers it on the screen with a margin, and polls the popup's URL every
- * 500ms to detect when the OAuth provider redirects back with an authorization code.
+ * Polls the popup's URL every 500ms and, when a `code` query parameter is detected, closes the popup and calls `onCode(code)`. If the popup is closed before a code is received, calls `onClose` if provided. Cross-origin access errors are ignored until the provider redirects back to a same-origin URL.
  *
- * @param options - Configuration options for the popup
- * @param options.authUrl - The OAuth authorization URL to open
- * @param options.windowName - The name/target for the popup window
- * @param options.width - Width of the popup in pixels (default: 600)
- * @param options.height - Height of the popup in pixels (default: 850)
- * @param options.onCode - Callback invoked with the authorization code when received
- * @param options.onClose - Optional callback invoked when popup closes without a code
+ * @param onCode - Callback invoked with the authorization `code` when detected in the popup URL
+ * @param onClose - Optional callback invoked if the popup is closed before an authorization code is received
  */
 export function openOAuthPopup({
   authUrl,

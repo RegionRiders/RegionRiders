@@ -31,6 +31,15 @@ const NavbarTabContent = ({ value, Content }: { value: string; Content: ReactEle
   </Tabs.Panel>
 );
 
+/**
+ * Render the application's responsive navigation shell with tabbed views and user/login controls.
+ *
+ * The component provides four tabs ("welcome", "map", "activities", "trips"), an adaptive aside whose width changes per active tab, and a right-side area that shows a user menu when `user` is present or a Strava login button otherwise.
+ *
+ * @param user - Optional authenticated user. When not provided, the "map", "activities", and "trips" tabs are hidden and the default active tab becomes `"welcome"`.
+ * @param defaultTab - Initial active tab; defaults to `"welcome"` when `user` is undefined and `"map"` when `user` is present.
+ * @returns The AppShell containing the Tabs list, header, aside, and tab panels for the application navigation.
+ */
 export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "map" }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);

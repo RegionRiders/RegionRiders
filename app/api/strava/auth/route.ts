@@ -4,9 +4,11 @@ import { generateState, storeState } from '@/lib/oauth/state';
 import { getAuthorizationUrl } from '@/lib/strava';
 
 /**
- * GET /api/strava/auth
- * Initiates Strava OAuth flow by redirecting to Strava authorization page
- * Generates and stores CSRF protection state parameter
+ * Initiates the Strava OAuth flow by creating and persisting a CSRF state, then redirecting the client to Strava's authorization URL.
+ *
+ * If the Strava authorization URL cannot be constructed, responds with a JSON error and HTTP 503. On unexpected failures, returns a standardized 500 error response.
+ *
+ * @returns A NextResponse that redirects to the Strava authorization URL, or a JSON error response with status 503 if OAuth is not configured, or a standardized 500 error response on failure.
  */
 export async function GET() {
   try {

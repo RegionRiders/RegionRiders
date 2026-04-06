@@ -10,6 +10,15 @@ import TripDetails from "@/components/TripComponents/TripDetails/TripDetails";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {PostsLoading} from "@/components/PostsList/PostsLoading";
 
+/**
+ * Render a paginated list of trip posts with selection handling and a details pane.
+ *
+ * Manages currently selected trip and appends more trips via infinite scroll; coordinates opening and closing the details view by calling `toggleTrip` according to the component's selection rules.
+ *
+ * @param toggleTrip - Callback invoked to open or close the trip details pane
+ * @param isTripToggled - Current open/closed state of the trip details pane
+ * @returns A React element containing the infinite-scrolling trips list and an aside showing the selected trip's details
+ */
 export function TripsListElement({toggleTrip, isTripToggled} : {toggleTrip: () => void, isTripToggled: boolean}) {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 

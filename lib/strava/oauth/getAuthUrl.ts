@@ -1,10 +1,11 @@
 import { logger } from '@/lib/logger/client';
 
 /**
- * Generates the Strava OAuth authorization URL with CSRF protection
- * @param scope - OAuth scope (default: 'read,activity:read_all')
- * @param state - Optional CSRF protection state parameter
- * @returns Authorization URL string
+ * Builds a Strava OAuth authorization URL including an optional CSRF `state` parameter.
+ *
+ * @param scope - OAuth scope string (defaults to `'read,activity:read_all'`)
+ * @param state - Optional CSRF `state` parameter to include in the URL
+ * @returns The authorization URL, or an empty string if Strava client credentials or redirect URI are not configured
  */
 export function getAuthorizationUrl(scope = 'read,activity:read_all', state?: string): string {
   const CLIENT_ID = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || process.env.STRAVA_CLIENT_ID;

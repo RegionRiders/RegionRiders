@@ -30,6 +30,16 @@ import { Activity } from "@/types/activity";
 import classes from "./ActivitiesListElement.module.css";
 
 
+/**
+ * Render an infinite-scroll list of activities with selection, an aside details panel, and a trip-creation workflow.
+ *
+ * The component manages the focused activity, synchronizes the external activity-toggled UI via `toggleActivity`, supports a trip creation mode that collects selected activities, provides a modal form to name and create a trip, and incrementally loads activities for the infinite scroll.
+ *
+ * @param toggleActivity - Callback to toggle the external "activity selected" UI state
+ * @param isActivityToggled - Current state of the external activity-toggled UI
+ * @param hideNavbar - Controls navbar visibility; called with `true` to hide and `false` to show
+ * @returns The JSX element containing the activities list, trip creation toolbar and modals, and the activity details aside
+ */
 export function ActivitiesListElement(
   {toggleActivity, isActivityToggled, hideNavbar} :
   {toggleActivity: () => void, isActivityToggled: boolean, hideNavbar: (value: boolean) => void }

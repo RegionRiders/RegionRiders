@@ -10,6 +10,18 @@ interface ActivityTypeIconProps {
   overrideColor?: string;
 }
 
+/**
+ * Render an activity icon with a themed background and an optional hover tooltip.
+ *
+ * Looks up the activity configuration for the given `type` to determine the icon, label, and default color.
+ *
+ * @param type - Activity type key used to select the configured icon, label, and color
+ * @param size - Icon size in pixels (default: 20)
+ * @param radius - Corner radius passed to the ThemeIcon (default: 'sm')
+ * @param withHoverLabel - If true, wrap the icon in a Tooltip that shows the activity label on hover (default: true)
+ * @param overrideColor - Optional color to use for the ThemeIcon background instead of the configured color
+ * @returns A JSX element containing the themed activity icon; wrapped in a tooltip when `withHoverLabel` is true
+ */
 export function ActivityTypeIcon({
   type,
   size = 20,
