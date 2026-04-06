@@ -1,5 +1,5 @@
 import { REGION_VISIT_STATIC_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { ColorThreshold, RGB, RGBA } from '@/components/ActivityMap/mapTypes';
+import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 export function getRegionColorsStatic(
@@ -8,7 +8,7 @@ export function getRegionColorsStatic(
 ) {
   const visited = !!visit?.visited && (visit?.visitCount ?? 0) > 0;
 
-  let color: RGBA | RGB;
+  let color: RGBA;
   if (!visited) {
     color = thresholds[0].color;
   } else {
