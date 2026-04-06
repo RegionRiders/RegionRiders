@@ -15,6 +15,7 @@ const customJestConfig = {
     '^@/app/(.*)$': '<rootDir>/app/$1',
     '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
     '^@/theme$': '<rootDir>/theme.ts',
+    '^rbush$': '<rootDir>/node_modules/rbush/rbush.js',
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
@@ -34,8 +35,6 @@ const customJestConfig = {
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },
-  // Transform ESM modules like rbush and quickselect
-  transformIgnorePatterns: ['node_modules/(?!(rbush|quickselect)/)'],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',

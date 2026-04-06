@@ -226,6 +226,51 @@ describe('regionVisitAnalyzer', () => {
       const result = analyzeRegionVisits([invalidTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
+      expect(result.get('region-1')?.visited).toBe(false);
+      expect(result.get('region-1')?.visitCount).toBe(0);
+      expect(result.get('region-1')?.trackIds).toEqual([]);
+    });
+
+    it('should count multiple points from same track as single visit', () => {
+      const multiPointTrack: GPXTrack = {
+        id: 'track-multi-hit',
+        name: 'Multi Hit Track',
+        points: [
+          { lat: 50.1, lon: 14.1 },
+          { lat: 50.2, lon: 14.2 },
+          { lat: 50.3, lon: 14.3 },
+        ],
+        metadata: { distance: 1.0 },
+      };
+
+      const result = analyzeRegionVisits([multiPointTrack], [mockRegion]);
+      const visitData = result.get('region-1');
+
+      expect(visitData?.visitCount).toBe(1);
+      expect(visitData?.trackIds).toEqual(['track-multi-hit']);
+    });
+
+    it('should ignore regions with unsupported geometry when checking points', () => {
+      const pointGeometryRegion: Regions = {
+        id: 'region-point',
+        name: 'Point Geometry',
+        country: 'TEST',
+        adminLevel: 1,
+        geometry: {
+          // Intentionally invalid geometry type to verify handling of unsupported shapes.
+          type: 'Point',
+          coordinates: [14.5, 50.5],
+        } as unknown as Regions['geometry'],
+        properties: {},
+      };
+
+      const result = analyzeRegionVisits([insideTrack], [pointGeometryRegion]);
+      const visitData = result.get('region-point');
+
+      expect(visitData).toBeDefined();
+      expect(visitData?.visited).toBe(false);
+      expect(visitData?.visitCount).toBe(0);
+      expect(visitData?.trackIds).toEqual([]);
     });
   });
 
