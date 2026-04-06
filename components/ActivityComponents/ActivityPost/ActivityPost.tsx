@@ -9,7 +9,7 @@ const ActivityStat = ({ value }: { name: string; value: string }) => (
 );
 
 const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?: string; onSelect: (activity: Activity | null) => void }) => (
-  <Card shadow="sm" radius="md" withBorder p={{base: 5, lg: 0}}>
+  <Card shadow="sm" radius="md" withBorder p={{base: 5, lg: 0}} mx={{ base: 5, lg: "md" }}>
     <Flex
       direction="row"
       gap={{base: 5, lg: "md"}}
@@ -37,7 +37,7 @@ const ActivityPost = ({ data, imageUrl, onSelect }: { data: Activity; imageUrl?:
             </Text>
 
             <Anchor onClick={() => onSelect(data)}>
-              <Text fw={650} truncate="end" w={{ base: 200, lg: 245}}>
+              <Text fw={650} truncate="end" w={{ base: 190, lg: 245}}>
                 {data.title}
               </Text>
             </Anchor>

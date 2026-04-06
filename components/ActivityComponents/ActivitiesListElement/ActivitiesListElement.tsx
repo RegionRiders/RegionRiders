@@ -200,7 +200,7 @@ export function ActivitiesListElement(
                     {...tripForm.getInputProps('tripName')}
                   />
 
-                  <Group>
+                  <Group gap="xs">
                     <Text>
                       {selectedActivities.length
                         ? dateWithTime(sortedSelectedActivities[0].startDate)
@@ -218,7 +218,7 @@ export function ActivitiesListElement(
 
                   <ScrollArea h="12rem" type="always" scrollbars="y">
                     {selectedActivities.map((activity) => (
-                      <Text key={activity.id}>{activity.title}</Text>
+                      <Text key={activity.id} truncate="end">{activity.title}</Text>
                     ))}
                   </ScrollArea>
 
@@ -287,7 +287,7 @@ export function ActivitiesListElement(
         <InfiniteScroll next={fetchActivities} hasMore={hasMoreActivities} loader={<PostsLoading/>} dataLength={visibleActivities.length} style={{ overflow: "hidden" }}>
           <PostsList
             Content={visibleActivities.map((activity) => (
-              <Flex key={activity.id} direction="row" gap={{ base: 5, lg: "md"}} justify="flex-start" align="center">
+              <Flex key={activity.id} direction="row" justify="flex-start" align="center">
                 <ActivitySelectCheckbox activityId={activity.id}/>
 
                 <ActivityPost
