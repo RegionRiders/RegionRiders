@@ -33,19 +33,28 @@ export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { tracks } = useGPXData();
-  const [persistedUserId] = useState<string | null>(() => getPersistedMapSettingsUserId());
-
-  const [settings, setSettings] = useState<MapSettings>(() => {
-    const persistedSettings = loadMapSettingsFromStorage(persistedUserId);
-
-    if (persistedSettings) {
-      return { ...DEFAULT_MAP_SETTINGS, ...persistedSettings };
-    }
-
-    return DEFAULT_MAP_SETTINGS;
-  });
+  const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
+  const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
 
   useEffect(() => {
+    const resolvedPersistedUserId = getPersistedMapSettingsUserId();
+    setPersistedUserId(resolvedPersistedUserId);
+
+    const persistedSettings = loadMapSettingsFromStorage(resolvedPersistedUserId);
+
+    if (persistedSettings) {
+      setSettings({ ...DEFAULT_MAP_SETTINGS, ...persistedSettings });
+    }
+
+    setIsSettingsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isSettingsHydrated) {
+      return;
+    }
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -59,7 +68,7 @@ export default function ActivityMap() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [persistedUserId, settings]);
+  }, [isSettingsHydrated, persistedUserId, settings]);
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
