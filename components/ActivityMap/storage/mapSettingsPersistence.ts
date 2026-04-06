@@ -1,5 +1,5 @@
-import { mapSettingsSchema } from '@/lib/validation/schemas';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { mapSettingsSchema } from '@/lib/validation/schemas';
 
 export const MAP_SETTINGS_STORAGE_KEY_PREFIX = 'rr:map-settings';
 export const MAP_SETTINGS_ANON_STORAGE_KEY = `${MAP_SETTINGS_STORAGE_KEY_PREFIX}:anon`;
