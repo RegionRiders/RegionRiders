@@ -35,6 +35,21 @@ export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "ma
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
+const getAsideWidth = (tab: string | null) => {
+  switch (tab) {
+    case 'welcome':
+      return { base: 0 };
+    case 'map':
+      return { base: 0 };
+    case 'activities':
+      return { base: '100%', md: 500, xl: 700 };
+    case 'trips':
+      return { base: '100%', sm: '45vw', md: '50vw' };
+    default:
+      return { base: 0 };
+  }
+};
+
   const [asideWidth, setAsideWidth] = useState<{
     base: string | number,
     xs?: string | number,
@@ -42,7 +57,7 @@ export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "ma
     md?: string | number,
     lg?: string | number,
     xl?: string | number}>
-  ({base: 0, xs: 0, sm: 0, md: 0, lg: 0, xl: 0});
+  (() => getAsideWidth(defaultTab));
 
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
@@ -50,20 +65,7 @@ export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "ma
   const [desktopAsideOpened, { toggle: toggleAsideDesktop }] = useDisclosure(true);
 
   const changeContentWidth = (activeTab: string | null) => {
-    switch (activeTab) {
-      case 'map':
-        setAsideWidth({base: 0});
-        break;
-      case 'activities':
-        setAsideWidth({base: "100%", md: 500, xl: 700});
-        break;
-      case 'trips':
-        setAsideWidth({base: "100%", sm: "45vw", md: "50vw"});
-        break;
-      default:
-        setAsideWidth({base: 0});
-        break;
-    }
+    setAsideWidth(getAsideWidth(activeTab));
 
     if (!desktopAsideOpened) {
       toggleAsideDesktop();
