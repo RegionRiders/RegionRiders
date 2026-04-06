@@ -80,7 +80,7 @@ export function Navbar({ user, defaultTab = user === undefined ? "welcome" : "ma
                   collapsed: {mobile: desktopAsideOpened, desktop: desktopAsideOpened} }}
                 >
         <AppShell.Header display={hideNavbar ? 'none' : ''}>
-          <Tabs.List className={classes.tabsList} h="4rem">
+          <Tabs.List h="4rem">
             <Logo />
             <NavbarTab value="welcome" text="" display="none"/>
             <NavbarTab value="map" text="Map" display={user === undefined ? 'none' : 'flex'}/>
