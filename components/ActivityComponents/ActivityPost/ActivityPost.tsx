@@ -1,3 +1,5 @@
+'use client'
+
 import {Anchor, Card, Flex, Group, Image, SimpleGrid, Stack, Text} from '@mantine/core';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';

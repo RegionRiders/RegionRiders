@@ -1,3 +1,5 @@
+'use client'
+
 import {CloseButton, Flex, Group, Image, Stack, Text} from "@mantine/core";
 import {Activity} from "@/types/activity";
 

@@ -1,3 +1,5 @@
+'use client'
+
 import {useState} from "react";
 import {AppShell} from "@mantine/core";
 import { PostsList } from '@/components/PostsList/PostsList';
