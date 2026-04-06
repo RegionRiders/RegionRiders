@@ -183,6 +183,21 @@ export async function updateUserSettings(
 }
 
 /**
+ * Stringifies a value with recursively sorted keys for stable object comparison,
+ * avoiding false positives caused by differing key insertion order.
+ */
+function stableStringify(value: unknown): string {
+  return JSON.stringify(value, (_key, val: unknown) => {
+    if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+      return Object.fromEntries(
+        Object.entries(val as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))
+      );
+    }
+    return val;
+  });
+}
+
+/**
  * Returns true when persisted settings differ from given in-memory settings.
  */
 export async function haveUserSettingsChanged(
@@ -197,8 +212,8 @@ export async function haveUserSettingsChanged(
       .where(eq(userSettings.userId, userId))
       .limit(1);
 
-    const storedJson = JSON.stringify(stored?.settings ?? null);
-    const inMemoryJson = JSON.stringify(inMemorySettings ?? null);
+    const storedJson = stableStringify(stored?.settings ?? null);
+    const inMemoryJson = stableStringify(inMemorySettings ?? null);
     return storedJson !== inMemoryJson;
   } catch (error) {
     dbLogger.error(
