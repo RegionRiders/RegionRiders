@@ -35,10 +35,24 @@ const MapContainerMemo = memo(MapContainer);
 export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { tracks } = useGPXData();
   const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
   const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+
+  const showSaveErrorToast = () => {
+    setSaveErrorMessage('Could not save settings to your account. Saved locally instead.');
+
+    if (saveErrorTimeoutRef.current) {
+      clearTimeout(saveErrorTimeoutRef.current);
+    }
+
+    saveErrorTimeoutRef.current = setTimeout(() => {
+      setSaveErrorMessage(null);
+    }, 6000);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -79,23 +93,30 @@ export default function ActivityMap() {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    saveTimeoutRef.current = setTimeout(() => {
-      void (async () => {
-        if (persistedUserId) {
-          const persisted = await saveMapSettingsToApi(settings);
-          if (!persisted) {
-            saveMapSettingsToStorage(settings);
-          }
-          return;
+    const persistSettings = async () => {
+      if (persistedUserId) {
+        const persisted = await saveMapSettingsToApi(settings);
+        if (!persisted) {
+          saveMapSettingsToStorage(settings);
+          showSaveErrorToast();
         }
+        return;
+      }
 
-        saveMapSettingsToStorage(settings);
-      })();
+      saveMapSettingsToStorage(settings);
+    };
+
+    saveTimeoutRef.current = setTimeout(() => {
+      void persistSettings();
     }, 250);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+
+      if (saveErrorTimeoutRef.current) {
+        clearTimeout(saveErrorTimeoutRef.current);
       }
     };
   }, [isSettingsHydrated, persistedUserId, settings]);
@@ -131,6 +152,25 @@ export default function ActivityMap() {
 
   return (
     <div className={styles.container}>
+      {saveErrorMessage && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            top: 12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 4000,
+            backgroundColor: '#fa5252',
+            color: 'white',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          }}
+        >
+          {saveErrorMessage}
+        </div>
+      )}
       <div className={styles.wrapper}>
         <div className={styles.controls}>
           <LayersPanel settings={settings} onSettingChange={updateSetting} map={map} />

@@ -222,4 +222,26 @@ describe('ActivityMap', () => {
       expect(parsed.settings.showActivities).toBe(false);
     });
   });
+
+  it('falls back to local storage when authenticated API save fails', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+    });
+
+    render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+
+    mockSaveMapSettingsToApi.mockResolvedValue(false);
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
+      const persisted = window.localStorage.getItem('rr:map-settings:anon');
+      expect(persisted).toBeTruthy();
+    });
+  });
 });
