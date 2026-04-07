@@ -5,8 +5,6 @@ import { cookies } from 'next/headers';
 
 const SESSION_COOKIE_NAME = 'rr_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
-const devSessionSecret =
-  process.env.SESSION_SECRET_DEV ?? 'development-only-session-secret-not-for-production';
 
 interface SessionPayload {
   userId: string;
@@ -24,7 +22,13 @@ function getSessionSecret(): string {
     throw new Error('SESSION_SECRET is required in production');
   }
 
-  return devSessionSecret;
+  if (!process.env.SESSION_SECRET_DEV) {
+    throw new Error(
+      'SESSION_SECRET_DEV is required in development when SESSION_SECRET is not configured'
+    );
+  }
+
+  return process.env.SESSION_SECRET_DEV;
 }
 
 function encodePayload(payload: SessionPayload): string {

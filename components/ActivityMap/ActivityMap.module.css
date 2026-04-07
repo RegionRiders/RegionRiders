@@ -71,9 +71,21 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 4000;
-    background-color: #fa5252;
+    background-color: #c92a2a;
     color: #fff;
-    padding: 10px 14px;
+    padding: 10px 36px 10px 14px;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+}
+
+.saveErrorToastClose {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
 }

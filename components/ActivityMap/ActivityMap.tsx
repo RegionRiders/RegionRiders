@@ -156,8 +156,17 @@ export default function ActivityMap() {
         <div
           role="alert"
           aria-live="assertive"
+          aria-label="Settings save failed"
           className={styles.saveErrorToast}
         >
+          <button
+            type="button"
+            aria-label="Dismiss settings save error"
+            className={styles.saveErrorToastClose}
+            onClick={() => setSaveErrorMessage(null)}
+          >
+            ×
+          </button>
           {saveErrorMessage}
         </div>
       )}
