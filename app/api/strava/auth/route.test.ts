@@ -20,7 +20,6 @@ describe('GET /api/strava/auth', () => {
   });
 
   it('should redirect with hardcoded scope read,activity:read_all', async () => {
-
     (getAuthorizationUrl as jest.Mock).mockResolvedValue(mockUrl);
     (generateState as jest.Mock).mockReturnValue('mock-state');
     (storeState as jest.Mock).mockResolvedValue(undefined);

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -98,7 +98,9 @@ export const StravaLoginButton: React.FC<StravaLoginButtonProps> = ({
     const authUrl = getAuthorizationUrl();
 
     if (!authUrl) {
-      console.error('Strava OAuth is not configured. Please set the required environment variables.');
+      console.error(
+        'Strava OAuth is not configured. Please set the required environment variables.'
+      );
       return;
     }
 

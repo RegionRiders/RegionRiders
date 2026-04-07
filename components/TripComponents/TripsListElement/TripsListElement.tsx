@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import {useState} from "react";
-import {AppShell} from "@mantine/core";
+import { useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { AppShell } from '@mantine/core';
 import { PostsList } from '@/components/PostsList/PostsList';
+import { PostsLoading } from '@/components/PostsList/PostsLoading';
+import TripDetails from '@/components/TripComponents/TripDetails/TripDetails';
 import { TripPost } from '@/components/TripComponents/TripPost/TripPost';
 import { mockTrips } from '@/lib/mockData';
-import { Trip } from "@/types/trip";
-import TripDetails from "@/components/TripComponents/TripDetails/TripDetails";
-import InfiniteScroll from "react-infinite-scroll-component";
-import {PostsLoading} from "@/components/PostsList/PostsLoading";
+import { Trip } from '@/types/trip';
 
 /**
  * Render a paginated list of trip posts with selection handling and a details pane.
@@ -19,7 +19,13 @@ import {PostsLoading} from "@/components/PostsList/PostsLoading";
  * @param isTripToggled - Current open/closed state of the trip details pane
  * @returns A React element containing the infinite-scrolling trips list and an aside showing the selected trip's details
  */
-export function TripsListElement({toggleTrip, isTripToggled} : {toggleTrip: () => void, isTripToggled: boolean}) {
+export function TripsListElement({
+  toggleTrip,
+  isTripToggled,
+}: {
+  toggleTrip: () => void;
+  isTripToggled: boolean;
+}) {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const handleTripChange = (newTrip: Trip | null) => {
@@ -52,30 +58,50 @@ export function TripsListElement({toggleTrip, isTripToggled} : {toggleTrip: () =
 
   const fetchTrips = () => {
     setTimeout(() => {
-      const nextTrips = mockTrips.slice(visibleTrips.length, visibleTrips.length + postsAmountPerLoad);
+      const nextTrips = mockTrips.slice(
+        visibleTrips.length,
+        visibleTrips.length + postsAmountPerLoad
+      );
 
-      setVisibleTrips(prev => [...prev, ...nextTrips]);
+      setVisibleTrips((prev) => [...prev, ...nextTrips]);
 
       if (visibleTrips.length + nextTrips.length >= mockTrips.length) {
         setHasMoreTrips(false);
       }
-    }, 1500)
-  }
+    }, 1500);
+  };
 
   return (
     <>
       <AppShell.Main>
-        <InfiniteScroll next={fetchTrips} hasMore={hasMoreTrips} loader={<PostsLoading/>} dataLength={visibleTrips.length} style={{ overflow: "hidden" }}>
+        <InfiniteScroll
+          next={fetchTrips}
+          hasMore={hasMoreTrips}
+          loader={<PostsLoading />}
+          dataLength={visibleTrips.length}
+          style={{ overflow: 'hidden' }}
+        >
           <PostsList
             Content={visibleTrips.map((trip) => (
-              <TripPost key={trip.id} data={trip} onSelect={(data: Trip) => {handleTripChange(data)}}/>
+              <TripPost
+                key={trip.id}
+                data={trip}
+                onSelect={(data: Trip) => {
+                  handleTripChange(data);
+                }}
+              />
             ))}
           />
         </InfiniteScroll>
       </AppShell.Main>
 
       <AppShell.Aside>
-        <TripDetails selectedTrip={selectedTrip} handleTripChange={(trip: Trip | null) => {handleTripChange(trip)}} />
+        <TripDetails
+          selectedTrip={selectedTrip}
+          handleTripChange={(trip: Trip | null) => {
+            handleTripChange(trip);
+          }}
+        />
       </AppShell.Aside>
     </>
   );
