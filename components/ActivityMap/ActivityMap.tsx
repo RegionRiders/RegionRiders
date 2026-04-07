@@ -26,6 +26,8 @@ import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPan
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 
 const MapContainerMemo = memo(MapContainer);
+const SAVE_ERROR_TOAST_DURATION_MS = 6000;
+const ACTIVITY_MAP_DEBUG_FLAG = '__RR_ACTIVITY_MAP_DEBUG__';
 
 /**
  * ActivityMap component renders an interactive map with GPX tracks and region overlays
@@ -41,8 +43,28 @@ export default function ActivityMap() {
   const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+  const isDebugEnabled =
+    typeof window !== 'undefined' &&
+    (
+      window as Window & {
+        __RR_ACTIVITY_MAP_DEBUG__?: boolean;
+      }
+    )[ACTIVITY_MAP_DEBUG_FLAG] === true;
+  const debugLog = (message: string, payload?: unknown) => {
+    if (!isDebugEnabled) {
+      return;
+    }
+
+    if (payload === undefined) {
+      console.info(`[ActivityMap] ${message}`);
+      return;
+    }
+
+    console.info(`[ActivityMap] ${message}`, payload);
+  };
 
   const showSaveErrorToast = () => {
+    debugLog('Showing save-failure toast');
     setSaveErrorMessage('Could not save settings to your account. Saved locally instead.');
 
     if (saveErrorTimeoutRef.current) {
@@ -51,19 +73,21 @@ export default function ActivityMap() {
 
     saveErrorTimeoutRef.current = setTimeout(() => {
       setSaveErrorMessage(null);
-    }, 6000);
+    }, SAVE_ERROR_TOAST_DURATION_MS);
   };
 
   useEffect(() => {
     let isMounted = true;
     const hydrateSettings = async () => {
       const localSettings = loadMapSettingsFromStorage();
+      debugLog('Hydration started', { localSettings });
 
       if (isMounted && localSettings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...localSettings });
       }
 
       const userSettingsFromApi = await loadMapSettingsFromApi();
+      debugLog('Hydration API response', userSettingsFromApi);
       if (!isMounted) {
         return;
       }
@@ -75,6 +99,10 @@ export default function ActivityMap() {
       }
 
       setIsSettingsHydrated(true);
+      debugLog('Hydration completed', {
+        persistedUserId: userSettingsFromApi?.userId ?? null,
+        usedApiSettings: Boolean(userSettingsFromApi?.settings),
+      });
     };
 
     void hydrateSettings();
@@ -95,14 +123,18 @@ export default function ActivityMap() {
 
     const persistSettings = async () => {
       if (persistedUserId) {
+        debugLog('Attempting API save', { persistedUserId, settings });
         const persisted = await saveMapSettingsToApi(settings);
+        debugLog('API save completed', { persisted });
         if (!persisted) {
           saveMapSettingsToStorage(settings);
+          debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         }
         return;
       }
 
+      debugLog('Persisting anonymous settings to local storage');
       saveMapSettingsToStorage(settings);
     };
 
@@ -120,6 +152,14 @@ export default function ActivityMap() {
       }
     };
   }, [isSettingsHydrated, persistedUserId, settings]);
+
+  useEffect(() => {
+    if (!saveErrorMessage) {
+      return;
+    }
+
+    debugLog('Toast rendered with message', { saveErrorMessage });
+  }, [saveErrorMessage]);
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -163,7 +203,10 @@ export default function ActivityMap() {
             type="button"
             aria-label="Dismiss settings save error"
             className={styles.saveErrorToastClose}
-            onClick={() => setSaveErrorMessage(null)}
+            onClick={() => {
+              debugLog('Toast dismissed by user');
+              setSaveErrorMessage(null);
+            }}
           >
             ×
           </button>

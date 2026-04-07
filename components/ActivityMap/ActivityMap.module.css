@@ -70,7 +70,9 @@
     top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 4000;
+    z-index: 11000;
+    width: max-content;
+    max-width: calc(100vw - 24px);
     background-color: #c92a2a;
     color: #fff;
     padding: 10px 36px 10px 14px;

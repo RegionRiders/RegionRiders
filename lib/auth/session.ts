@@ -24,7 +24,7 @@ function getSessionSecret(): string {
 
   if (!process.env.SESSION_SECRET_DEV) {
     throw new Error(
-      'SESSION_SECRET_DEV is required in development when SESSION_SECRET is not configured'
+      'SESSION_SECRET_DEV is required in non-production environments when SESSION_SECRET is not configured'
     );
   }
 
