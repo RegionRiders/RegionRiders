@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUserSession } from '@/lib/auth/session';
 import { handle500Error, handleApiError } from '@/lib/api';
+import { createUserSession } from '@/lib/auth/session';
 import { findOrCreateUser } from '@/lib/db/operations/users';
 import { validateState } from '@/lib/oauth/state';
 import { exchangeToken } from '@/lib/strava';

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUserId } from '@/lib/auth/session';
 import { handle500Error, handleApiError } from '@/lib/api';
+import { getAuthenticatedUserId } from '@/lib/auth/session';
 import { getUserSettingsByUserId, upsertUserSettings } from '@/lib/db/operations/users';
 import { mapSettingsSchema } from '@/lib/validation/schemas';
 

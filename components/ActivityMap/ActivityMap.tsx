@@ -118,7 +118,9 @@ export default function ActivityMap() {
       debugLog('Hydration completed', {
         persistedUserId: userSettingsFromApi.userId,
         usedApiSettings: Boolean(userSettingsFromApi.settings),
-        usedUserScopedStorageSettings: Boolean(!userSettingsFromApi.settings && userScopedLocalSettings),
+        usedUserScopedStorageSettings: Boolean(
+          !userSettingsFromApi.settings && userScopedLocalSettings
+        ),
       });
     };
 
