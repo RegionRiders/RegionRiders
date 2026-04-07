@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 
 const SESSION_COOKIE_NAME = 'rr_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
-const DEV_SESSION_SECRET = 'dev-only-session-secret-change-me';
+const devSessionSecret = randomBytes(32).toString('hex');
 
 interface SessionPayload {
   userId: string;
@@ -23,7 +23,7 @@ function getSessionSecret(): string {
     throw new Error('SESSION_SECRET is required in production');
   }
 
-  return DEV_SESSION_SECRET;
+  return devSessionSecret;
 }
 
 function encodePayload(payload: SessionPayload): string {

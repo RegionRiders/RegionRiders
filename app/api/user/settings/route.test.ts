@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 
+import type { NextRequest as NextRequestType } from 'next/server';
 import { getAuthenticatedUserId } from '@/lib/auth/session';
 import { getUserSettingsByUserId, upsertUserSettings } from '@/lib/db/operations/users';
 import { GET, PUT } from './route';
@@ -65,7 +66,7 @@ describe('/api/user/settings', () => {
         settings: { showActivities: false },
       });
 
-      const response = await PUT(request as unknown as any);
+      const response = await PUT(request as unknown as NextRequestType);
       expect(response.status).toBe(401);
     });
 
@@ -75,7 +76,7 @@ describe('/api/user/settings', () => {
         settings: { activityThickness: -10 },
       });
 
-      const response = await PUT(request as unknown as any);
+      const response = await PUT(request as unknown as NextRequestType);
       expect(response.status).toBe(400);
       expect(upsertUserSettings).not.toHaveBeenCalled();
     });
@@ -89,7 +90,7 @@ describe('/api/user/settings', () => {
         settings: { showActivities: false },
       });
 
-      const response = await PUT(request as unknown as any);
+      const response = await PUT(request as unknown as NextRequestType);
       expect(response.status).toBe(200);
       expect(upsertUserSettings).toHaveBeenCalledWith('user-123', {
         settings: { showActivities: false },
