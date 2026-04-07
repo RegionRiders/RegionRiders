@@ -10,10 +10,12 @@ import { GET, PUT } from './route';
 class NextRequest {
   url: string;
   private readonly payload: unknown;
+  private readonly shouldThrowJson: boolean;
 
-  constructor(input: string, payload?: unknown) {
+  constructor(input: string, payload?: unknown, options?: { shouldThrowJson?: boolean }) {
     this.url = input;
     this.payload = payload;
+    this.shouldThrowJson = options?.shouldThrowJson ?? false;
   }
 
   get nextUrl() {
@@ -21,8 +23,8 @@ class NextRequest {
   }
 
   async json() {
-    if (this.payload instanceof Error) {
-      throw this.payload;
+    if (this.shouldThrowJson) {
+      throw new SyntaxError('Unexpected end of JSON input');
     }
     return this.payload;
   }
@@ -86,10 +88,9 @@ describe('/api/user/settings', () => {
 
     it('returns 400 for malformed JSON payload', async () => {
       (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
-      const request = new NextRequest(
-        'http://localhost:3000/api/user/settings',
-        new Error('invalid json')
-      );
+      const request = new NextRequest('http://localhost:3000/api/user/settings', undefined, {
+        shouldThrowJson: true,
+      });
 
       const response = await PUT(request as unknown as NextRequestType);
       expect(response.status).toBe(400);

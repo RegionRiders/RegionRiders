@@ -80,6 +80,34 @@ describe('session auth', () => {
     expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');
   });
 
+  it('clears sessions with empty string userId', async () => {
+    const encodedPayload = Buffer.from(
+      JSON.stringify({ userId: '', iat: 1, exp: Number.MAX_SAFE_INTEGER }),
+      'utf8'
+    ).toString('base64url');
+    const signature = createHmac('sha256', process.env.SESSION_SECRET as string)
+      .update(encodedPayload)
+      .digest('base64url');
+    mockCookieStore.get.mockReturnValue({ value: `${encodedPayload}.${signature}` });
+
+    await expect(getAuthenticatedUserId()).resolves.toBeNull();
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');
+  });
+
+  it('clears sessions with missing iat in payload', async () => {
+    const encodedPayload = Buffer.from(
+      JSON.stringify({ userId: 'user-123', exp: Number.MAX_SAFE_INTEGER }),
+      'utf8'
+    ).toString('base64url');
+    const signature = createHmac('sha256', process.env.SESSION_SECRET as string)
+      .update(encodedPayload)
+      .digest('base64url');
+    mockCookieStore.get.mockReturnValue({ value: `${encodedPayload}.${signature}` });
+
+    await expect(getAuthenticatedUserId()).resolves.toBeNull();
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');
+  });
+
   it('clears session cookie', async () => {
     await clearUserSession();
     expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');
