@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 
+import { createUserSession } from '@/lib/auth/session';
 import { findOrCreateUser } from '@/lib/db/operations/users';
 import { validateState } from '@/lib/oauth/state';
 import { exchangeToken, type StravaTokenResponse } from '@/lib/strava';
@@ -22,6 +23,9 @@ class NextRequest {
 jest.mock('@/lib/strava');
 jest.mock('@/lib/oauth/state', () => ({
   validateState: jest.fn(),
+}));
+jest.mock('@/lib/auth/session', () => ({
+  createUserSession: jest.fn(),
 }));
 jest.mock('@/lib/db/operations/users');
 
@@ -71,6 +75,7 @@ describe('GET /api/strava/callback', () => {
       tokenExpiresAt: new Date(1234567890 * 1000),
       isActive: true,
     });
+    expect(createUserSession).toHaveBeenCalledWith(12345);
     expect(res.status).toBe(200);
 
     const data = await res.json();

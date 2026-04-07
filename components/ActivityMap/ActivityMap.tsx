@@ -5,9 +5,12 @@
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { getPersistedMapSettingsUserId } from '@/components/ActivityMap/auth/getPersistedMapSettingsUserId';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
+import {
+  loadMapSettingsFromApi,
+  saveMapSettingsToApi,
+} from '@/components/ActivityMap/storage/mapSettingsApi';
 import {
   loadMapSettingsFromStorage,
   saveMapSettingsToStorage,
@@ -38,16 +41,33 @@ export default function ActivityMap() {
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
 
   useEffect(() => {
-    const resolvedPersistedUserId = getPersistedMapSettingsUserId();
-    setPersistedUserId(resolvedPersistedUserId);
+    let isMounted = true;
+    const hydrateSettings = async () => {
+      const localSettings = loadMapSettingsFromStorage();
 
-    const persistedSettings = loadMapSettingsFromStorage(resolvedPersistedUserId);
+      if (isMounted && localSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...localSettings });
+      }
 
-    if (persistedSettings) {
-      setSettings({ ...DEFAULT_MAP_SETTINGS, ...persistedSettings });
-    }
+      const userSettingsFromApi = await loadMapSettingsFromApi();
+      if (!isMounted) {
+        return;
+      }
 
-    setIsSettingsHydrated(true);
+      setPersistedUserId(userSettingsFromApi?.userId ?? null);
+
+      if (userSettingsFromApi?.settings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userSettingsFromApi.settings });
+      }
+
+      setIsSettingsHydrated(true);
+    };
+
+    void hydrateSettings();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -60,7 +80,17 @@ export default function ActivityMap() {
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      saveMapSettingsToStorage(settings, persistedUserId);
+      void (async () => {
+        if (persistedUserId) {
+          const persisted = await saveMapSettingsToApi(settings);
+          if (!persisted) {
+            saveMapSettingsToStorage(settings);
+          }
+          return;
+        }
+
+        saveMapSettingsToStorage(settings);
+      })();
     }, 250);
 
     return () => {
