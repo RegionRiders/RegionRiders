@@ -194,11 +194,15 @@ describe('ActivityMap', () => {
     });
 
     render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
 
     await waitFor(() => {
       expect(mockSaveMapSettingsToApi).toHaveBeenCalledWith(
         expect.objectContaining({
-          showActivities: true,
+          showActivities: false,
         })
       );
     });
