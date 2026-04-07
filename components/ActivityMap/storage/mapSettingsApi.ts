@@ -41,7 +41,8 @@ export async function loadMapSettingsFromApi(): Promise<{
 
     const inputSettings = payload.settings;
     const parsed = mapSettingsSchema.safeParse(inputSettings);
-    const strippedToEmptyObject =
+    // Guard against payloads containing only unknown keys that Zod strips to an empty object.
+    const isStrippedToEmpty =
       inputSettings != null &&
       typeof inputSettings === 'object' &&
       !Array.isArray(inputSettings) &&
@@ -50,7 +51,7 @@ export async function loadMapSettingsFromApi(): Promise<{
       Object.keys(parsed.data).length === 0;
     return {
       userId: payload.userId,
-      settings: parsed.success && !strippedToEmptyObject ? parsed.data : null,
+      settings: parsed.success && !isStrippedToEmpty ? parsed.data : null,
     };
   } catch {
     return null;
