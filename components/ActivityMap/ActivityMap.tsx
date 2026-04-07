@@ -79,11 +79,11 @@ export default function ActivityMap() {
   useEffect(() => {
     let isMounted = true;
     const hydrateSettings = async () => {
-      const localSettings = loadMapSettingsFromStorage();
-      debugLog('Hydration started', { localSettings });
+      const anonymousLocalSettings = loadMapSettingsFromStorage();
+      debugLog('Hydration started', { anonymousLocalSettings });
 
-      if (isMounted && localSettings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...localSettings });
+      if (isMounted && anonymousLocalSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...anonymousLocalSettings });
       }
 
       const userSettingsFromApi = await loadMapSettingsFromApi();
@@ -94,14 +94,31 @@ export default function ActivityMap() {
 
       setPersistedUserId(userSettingsFromApi?.userId ?? null);
 
-      if (userSettingsFromApi?.settings) {
+      if (!userSettingsFromApi?.userId) {
+        setIsSettingsHydrated(true);
+        debugLog('Hydration completed', {
+          persistedUserId: null,
+          usedApiSettings: false,
+          usedUserScopedStorageSettings: false,
+        });
+        return;
+      }
+
+      const userScopedLocalSettings = loadMapSettingsFromStorage(userSettingsFromApi.userId);
+
+      if (userSettingsFromApi.settings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userSettingsFromApi.settings });
+      } else if (userScopedLocalSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings });
+      } else {
+        setSettings(DEFAULT_MAP_SETTINGS);
       }
 
       setIsSettingsHydrated(true);
       debugLog('Hydration completed', {
-        persistedUserId: userSettingsFromApi?.userId ?? null,
-        usedApiSettings: Boolean(userSettingsFromApi?.settings),
+        persistedUserId: userSettingsFromApi.userId,
+        usedApiSettings: Boolean(userSettingsFromApi.settings),
+        usedUserScopedStorageSettings: Boolean(!userSettingsFromApi.settings && userScopedLocalSettings),
       });
     };
 
@@ -127,7 +144,7 @@ export default function ActivityMap() {
         const persisted = await saveMapSettingsToApi(settings);
         debugLog('API save completed', { persisted });
         if (!persisted) {
-          saveMapSettingsToStorage(settings);
+          saveMapSettingsToStorage(settings, persistedUserId);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         }
@@ -146,12 +163,16 @@ export default function ActivityMap() {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+    };
+  }, [isSettingsHydrated, persistedUserId, settings]);
 
+  useEffect(() => {
+    return () => {
       if (saveErrorTimeoutRef.current) {
         clearTimeout(saveErrorTimeoutRef.current);
       }
     };
-  }, [isSettingsHydrated, persistedUserId, settings]);
+  }, []);
 
   useEffect(() => {
     if (!saveErrorMessage) {

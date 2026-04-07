@@ -240,7 +240,7 @@ describe('ActivityMap', () => {
 
     await waitFor(() => {
       expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
-      const persisted = window.localStorage.getItem('rr:map-settings:anon');
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
       expect(persisted).toBeTruthy();
     });
   });
