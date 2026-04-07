@@ -2,11 +2,10 @@ import { render, screen } from '@/test-utils';
 import Home from './page';
 
 describe('app/page', () => {
-  it('should render the Navbar', () => {
+  it('should render the Navbar with logo', () => {
     render(<Home />);
 
-    // Update this to whatever the Navbar actually renders, e.g. "RegionRiders"
-    expect(screen.getByText('YOUR_NAV_TEXT')).toBeInTheDocument();
+    expect(screen.getByAltText(/RegionRiders Logo/i)).toBeInTheDocument();
   });
 
   it('should render without errors', () => {
