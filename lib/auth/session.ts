@@ -1,11 +1,12 @@
 import 'server-only';
 
-import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 
 const SESSION_COOKIE_NAME = 'rr_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
-const devSessionSecret = randomBytes(32).toString('hex');
+const devSessionSecret =
+  process.env.SESSION_SECRET_DEV ?? 'development-only-session-secret-not-for-production';
 
 interface SessionPayload {
   userId: string;

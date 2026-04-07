@@ -155,18 +155,8 @@ export default function ActivityMap() {
       {saveErrorMessage && (
         <div
           role="alert"
-          style={{
-            position: 'fixed',
-            top: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 4000,
-            backgroundColor: '#fa5252',
-            color: 'white',
-            padding: '10px 14px',
-            borderRadius: '6px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-          }}
+          aria-live="assertive"
+          className={styles.saveErrorToast}
         >
           {saveErrorMessage}
         </div>
