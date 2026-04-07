@@ -89,7 +89,7 @@ export const getAllUsers = cache(async (options?: GetUsersOptions): Promise<User
  * Cached for the duration of the request (React cache)
  */
 export const getUserSettingsByUserId = cache(
-  async (userId: string): Promise<UserSettings | undefined> => {
+  async (userId: string): Promise<UserSettings | null> => {
     try {
       const db = getDb();
       const [settings] = await db
@@ -97,13 +97,13 @@ export const getUserSettingsByUserId = cache(
         .from(userSettings)
         .where(eq(userSettings.userId, userId))
         .limit(1);
-      return settings;
+      return settings ?? null;
     } catch (error) {
       dbLogger.error(
         { error, userIdFingerprint: fingerprint(userId), operation: 'getUserSettingsByUserId' },
         'Error fetching user settings by user ID'
       );
-      return undefined;
+      throw error;
     }
   }
 );

@@ -39,10 +39,18 @@ export async function loadMapSettingsFromApi(): Promise<{
       return null;
     }
 
-    const parsed = mapSettingsSchema.safeParse(payload.settings);
+    const inputSettings = payload.settings;
+    const parsed = mapSettingsSchema.safeParse(inputSettings);
+    const strippedToEmptyObject =
+      inputSettings != null &&
+      typeof inputSettings === 'object' &&
+      !Array.isArray(inputSettings) &&
+      Object.keys(inputSettings as Record<string, unknown>).length > 0 &&
+      parsed.success &&
+      Object.keys(parsed.data).length === 0;
     return {
       userId: payload.userId,
-      settings: parsed.success ? parsed.data : null,
+      settings: parsed.success && !strippedToEmptyObject ? parsed.data : null,
     };
   } catch {
     return null;

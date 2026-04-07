@@ -55,7 +55,7 @@ describe('GET /api/strava/callback', () => {
   it('should exchange code for tokens', async () => {
     (validateState as jest.Mock).mockResolvedValue({ valid: true });
     (exchangeToken as jest.Mock).mockResolvedValue(mockToken);
-    (findOrCreateUser as jest.Mock).mockResolvedValue({ id: 12345 });
+    (findOrCreateUser as jest.Mock).mockResolvedValue({ id: 'user-uuid' });
 
     const req = new NextRequest(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/strava/callback?code=abc123&state=mock-state`
@@ -75,7 +75,7 @@ describe('GET /api/strava/callback', () => {
       tokenExpiresAt: new Date(1234567890 * 1000),
       isActive: true,
     });
-    expect(createUserSession).toHaveBeenCalledWith(12345);
+    expect(createUserSession).toHaveBeenCalledWith('user-uuid');
     expect(res.status).toBe(200);
 
     const data = await res.json();
@@ -83,7 +83,7 @@ describe('GET /api/strava/callback', () => {
       success: true,
       message: 'Successfully authorized with Strava',
       athlete_id: 12345,
-      user_id: 12345,
+      user_id: 'user-uuid',
     });
   });
 

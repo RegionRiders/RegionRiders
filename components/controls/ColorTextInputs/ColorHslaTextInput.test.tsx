@@ -99,8 +99,7 @@ describe('ColorHslaTextInput', () => {
 
     rerender(<ColorHslaTextInput h={0} s={100} l={50} a={1} onChange={defaultProps.onChange} />);
 
-    // After rerender, get the input again
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveValue('hsl(0, 100%, 50%)');
   });
 
   it('should not update display when props change while focused', () => {
