@@ -62,6 +62,29 @@ describe('/api/user/settings', () => {
         settings: { showActivities: false },
       });
     });
+
+    it('returns null settings when no settings row exists', async () => {
+      (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
+      (getUserSettingsByUserId as jest.Mock).mockResolvedValue(null);
+
+      const response = await GET();
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual({
+        success: true,
+        userId: 'user-123',
+        settings: null,
+      });
+    });
+
+    it('returns 500 when settings read fails', async () => {
+      (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
+      (getUserSettingsByUserId as jest.Mock).mockRejectedValue(new Error('db read failed'));
+
+      const response = await GET();
+      expect(response.status).toBe(500);
+    });
   });
 
   describe('PUT', () => {
