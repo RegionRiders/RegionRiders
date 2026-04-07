@@ -109,13 +109,10 @@ function withSettingsApiMock(settingsApiMock: SettingsApiMock) {
             `Returning ${settingsApiMock.saveSucceeds ? '200' : '500'} for /api/user/settings PUT`
           );
 
-          return new Response(
-            JSON.stringify({ success: settingsApiMock.saveSucceeds }),
-            {
-              status: settingsApiMock.saveSucceeds ? 200 : 500,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
+          return new Response(JSON.stringify({ success: settingsApiMock.saveSucceeds }), {
+            status: settingsApiMock.saveSucceeds ? 200 : 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
 
         return originalFetch(input, init);
@@ -191,11 +188,7 @@ export const AuthenticatedUserSaveFailureShowsTopToast: Story = {
       };
       const state = storyWindow.__storybookSettingsMockState;
       console.info('[ActivityMap.story] Waiting for hydration readiness', state);
-      if (
-        !state?.isMockReady ||
-        !state.settingsHydrated ||
-        state.getSettingsRequests < 1
-      ) {
+      if (!state?.isMockReady || !state.settingsHydrated || state.getSettingsRequests < 1) {
         const failureReasons = [
           !state?.isMockReady ? 'mock not ready' : null,
           state?.isMockReady && !state.settingsHydrated ? 'settings not hydrated' : null,

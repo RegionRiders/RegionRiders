@@ -3,6 +3,7 @@
  */
 
 import { cookies } from 'next/headers';
+import { createHmac } from 'crypto';
 import { clearUserSession, createUserSession, getAuthenticatedUserId } from './session';
 
 jest.mock('next/headers', () => ({
@@ -60,6 +61,20 @@ describe('session auth', () => {
     const signedValue = mockCookieStore.set.mock.calls[0]?.[1] as string;
     const [payload] = signedValue.split('.');
     mockCookieStore.get.mockReturnValue({ value: `${payload}.invalid` });
+
+    await expect(getAuthenticatedUserId()).resolves.toBeNull();
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');
+  });
+
+  it('clears sessions with malformed signed payload shape', async () => {
+    const encodedPayload = Buffer.from(
+      JSON.stringify({ userId: 123, iat: 1, exp: Number.MAX_SAFE_INTEGER }),
+      'utf8'
+    ).toString('base64url');
+    const signature = createHmac('sha256', process.env.SESSION_SECRET as string)
+      .update(encodedPayload)
+      .digest('base64url');
+    mockCookieStore.get.mockReturnValue({ value: `${encodedPayload}.${signature}` });
 
     await expect(getAuthenticatedUserId()).resolves.toBeNull();
     expect(mockCookieStore.delete).toHaveBeenCalledWith('rr_session');

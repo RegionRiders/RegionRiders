@@ -36,7 +36,15 @@ export async function PUT(request: NextRequest) {
       return getUnauthorizedResponse();
     }
 
-    const payload = (await request.json()) as unknown;
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return handleApiError(
+        { statusCode: 400, message: 'Invalid map settings payload' },
+        'User Settings API: Validation'
+      );
+    }
     const candidate =
       payload && typeof payload === 'object' && 'settings' in payload
         ? (payload as { settings?: unknown }).settings
@@ -54,10 +62,17 @@ export async function PUT(request: NextRequest) {
       settings: parsed.data,
     });
 
+    if (upserted.settings == null) {
+      return handleApiError(
+        { statusCode: 500, message: 'Failed to persist map settings' },
+        'User Settings API: Persistence'
+      );
+    }
+
     return NextResponse.json({
       success: true,
       userId,
-      settings: upserted.settings ?? parsed.data,
+      settings: upserted.settings,
     });
   } catch (error) {
     return handle500Error(error, 'User Settings API: PUT');

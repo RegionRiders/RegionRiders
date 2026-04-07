@@ -21,6 +21,9 @@ class NextRequest {
   }
 
   async json() {
+    if (this.payload instanceof Error) {
+      throw this.payload;
+    }
     return this.payload;
   }
 }
@@ -81,6 +84,18 @@ describe('/api/user/settings', () => {
       expect(upsertUserSettings).not.toHaveBeenCalled();
     });
 
+    it('returns 400 for malformed JSON payload', async () => {
+      (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
+      const request = new NextRequest(
+        'http://localhost:3000/api/user/settings',
+        new Error('invalid json')
+      );
+
+      const response = await PUT(request as unknown as NextRequestType);
+      expect(response.status).toBe(400);
+      expect(upsertUserSettings).not.toHaveBeenCalled();
+    });
+
     it('upserts settings for authenticated users', async () => {
       (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
       (upsertUserSettings as jest.Mock).mockResolvedValue({
@@ -102,6 +117,19 @@ describe('/api/user/settings', () => {
         userId: 'user-123',
         settings: { showActivities: false },
       });
+    });
+
+    it('returns 500 when settings persistence result is empty', async () => {
+      (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
+      (upsertUserSettings as jest.Mock).mockResolvedValue({
+        settings: null,
+      });
+      const request = new NextRequest('http://localhost:3000/api/user/settings', {
+        settings: { showActivities: false },
+      });
+
+      const response = await PUT(request as unknown as NextRequestType);
+      expect(response.status).toBe(500);
     });
   });
 });

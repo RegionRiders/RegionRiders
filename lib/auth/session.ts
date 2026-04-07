@@ -91,7 +91,13 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
     return null;
   }
 
-  const [encodedPayload, providedSignature] = sessionCookie.split('.');
+  const parts = sessionCookie.split('.');
+  if (parts.length !== 2) {
+    await clearUserSession();
+    return null;
+  }
+
+  const [encodedPayload, providedSignature] = parts;
   if (!encodedPayload || !providedSignature) {
     await clearUserSession();
     return null;
@@ -104,7 +110,13 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
   }
 
   const payload = decodePayload(encodedPayload);
-  if (!payload?.userId || typeof payload.exp !== 'number') {
+  if (
+    !payload ||
+    typeof payload.userId !== 'string' ||
+    payload.userId.length === 0 ||
+    typeof payload.iat !== 'number' ||
+    typeof payload.exp !== 'number'
+  ) {
     await clearUserSession();
     return null;
   }
