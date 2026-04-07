@@ -98,6 +98,7 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
   }
 
   const [encodedPayload, providedSignature] = parts;
+  // Keep this guard even after parts-length validation to reject empty segments like ".sig" or "payload."
   if (!encodedPayload || !providedSignature) {
     await clearUserSession();
     return null;
