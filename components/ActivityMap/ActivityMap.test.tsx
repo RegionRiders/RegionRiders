@@ -1,4 +1,8 @@
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
+import {
+  loadMapSettingsFromApi,
+  saveMapSettingsToApi,
+} from '@/components/ActivityMap/storage/mapSettingsApi';
 import { useGPXData } from '@/hooks/useGPXData';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap from './ActivityMap';
@@ -12,6 +16,11 @@ jest.mock('../../hooks/useGPXData', () => ({
 
 jest.mock('./hooks/map/useLeafletMap', () => ({
   useLeafletMap: jest.fn(),
+}));
+
+jest.mock('./storage/mapSettingsApi', () => ({
+  loadMapSettingsFromApi: jest.fn(),
+  saveMapSettingsToApi: jest.fn(),
 }));
 
 // Mock the child components
@@ -50,11 +59,19 @@ jest.mock('./controls/LayersPanel/LayersPanel', () => ({
 
 const mockUseGPXData = useGPXData as jest.MockedFunction<typeof useGPXData>;
 const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeafletMap>;
+const mockLoadMapSettingsFromApi = loadMapSettingsFromApi as jest.MockedFunction<
+  typeof loadMapSettingsFromApi
+>;
+const mockSaveMapSettingsToApi = saveMapSettingsToApi as jest.MockedFunction<
+  typeof saveMapSettingsToApi
+>;
 
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+    mockSaveMapSettingsToApi.mockResolvedValue(true);
 
     // Default mock implementations
     mockUseGPXData.mockReturnValue({
@@ -168,18 +185,26 @@ describe('ActivityMap', () => {
     });
   });
 
-  it('saves settings to user-specific localStorage key when user id is present', async () => {
-    window.localStorage.setItem('rr:user-id', 'user-123');
+  it('saves settings to authenticated API when user id is present', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+    });
 
     render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
 
     await waitFor(() => {
-      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
-      expect(persisted).toBeTruthy();
-
-      const parsed = JSON.parse(persisted as string);
-      expect(parsed.version).toBe(1);
-      expect(parsed.settings.showActivities).toBe(true);
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showActivities: false,
+        })
+      );
     });
   });
 
@@ -195,6 +220,28 @@ describe('ActivityMap', () => {
 
       const parsed = JSON.parse(persisted as string);
       expect(parsed.settings.showActivities).toBe(false);
+    });
+  });
+
+  it('falls back to local storage when authenticated API save fails', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+    });
+
+    render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+
+    mockSaveMapSettingsToApi.mockResolvedValue(false);
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+      expect(persisted).toBeTruthy();
     });
   });
 });
