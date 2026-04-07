@@ -35,7 +35,10 @@ describe('StravaLoginButton', () => {
     (getAuthorizationUrl as jest.Mock).mockReturnValue('https://www.strava.com/oauth/authorize');
     render(<StravaLoginButton onAuthCode={jest.fn()} />);
     const img = screen.getByAltText('Connect with Strava');
-    expect(img).toHaveAttribute('src', expect.stringContaining('btn_strava_connect_with_orange.svg'));
+    expect(img).toHaveAttribute(
+      'src',
+      expect.stringContaining('btn_strava_connect_with_orange.svg')
+    );
   });
 
   it('uses 2x image when size="2x"', () => {
@@ -62,14 +65,20 @@ describe('StravaLoginButton', () => {
     (getAuthorizationUrl as jest.Mock).mockReturnValue('https://www.strava.com/oauth/authorize');
     render(<StravaLoginButton onAuthCode={jest.fn()} size="custom" height={60} />);
     const img = screen.getByAltText('Connect with Strava');
-    expect(img).toHaveAttribute('src', expect.stringContaining('btn_strava_connect_with_orange.svg'));
+    expect(img).toHaveAttribute(
+      'src',
+      expect.stringContaining('btn_strava_connect_with_orange.svg')
+    );
   });
 
   it('uses 1x image when size="custom" but no height is provided', () => {
     (getAuthorizationUrl as jest.Mock).mockReturnValue('https://www.strava.com/oauth/authorize');
     render(<StravaLoginButton onAuthCode={jest.fn()} size="custom" />);
     const img = screen.getByAltText('Connect with Strava');
-    expect(img).toHaveAttribute('src', expect.stringContaining('btn_strava_connect_with_orange.svg'));
+    expect(img).toHaveAttribute(
+      'src',
+      expect.stringContaining('btn_strava_connect_with_orange.svg')
+    );
   });
 
   it('opens an OAuth popup when clicked and authUrl is configured', () => {

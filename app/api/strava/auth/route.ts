@@ -18,6 +18,10 @@ export async function GET() {
     const scope = 'read,activity:read_all';
     const authUrl = await getAuthorizationUrl(scope, state);
 
+    if (!authUrl) {
+      return NextResponse.json({ error: 'Strava OAuth not configured' }, { status: 503 });
+    }
+
     return NextResponse.redirect(authUrl);
   } catch (error) {
     return handle500Error(error, `Strava API: ${'Authorization Request'}`);

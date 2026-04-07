@@ -2,11 +2,7 @@
  * @jest-environment node
  */
 
-import {
-  ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY,
-  getActivityConfig,
-} from './activityConfig';
+import { ACTIVITY_TYPES, DEFAULT_ACTIVITY, getActivityConfig } from './activityConfig';
 
 describe('activityConfig', () => {
   describe('getActivityConfig', () => {

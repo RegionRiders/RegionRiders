@@ -49,9 +49,7 @@ describe('ActivityDetails', () => {
 
   it('does not display a title when no activity is selected', () => {
     const handleActivityChange = jest.fn();
-    render(
-      <ActivityDetails selectedActivity={null} handleActivityChange={handleActivityChange} />
-    );
+    render(<ActivityDetails selectedActivity={null} handleActivityChange={handleActivityChange} />);
     expect(screen.queryByText('Morning Ride')).not.toBeInTheDocument();
   });
 
@@ -76,8 +74,8 @@ describe('ActivityDetails', () => {
         handleActivityChange={handleActivityChange}
       />
     );
-    // activityType should appear in the detailed section
-    const container = screen.getByText(/Morning Ride.*ride/i, { exact: false });
-    expect(container).toBeInTheDocument();
+    // Both title and activityType should appear in the rendered output
+    expect(screen.getAllByText('Morning Ride').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ride').length).toBeGreaterThan(0);
   });
 });

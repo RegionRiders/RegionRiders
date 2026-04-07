@@ -29,7 +29,9 @@ jest.mock('@/components/StravaLoginButton/StravaLoginButton', () => ({
 
 jest.mock('./UserMenu', () => ({
   UserMenu: ({ user }: { user: User }) => (
-    <div>UserMenu: {user.firstname} {user.lastname}</div>
+    <div>
+      UserMenu: {user.firstname} {user.lastname}
+    </div>
   ),
 }));
 

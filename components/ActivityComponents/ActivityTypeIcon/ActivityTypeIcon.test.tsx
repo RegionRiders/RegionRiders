@@ -59,9 +59,7 @@ describe('ActivityTypeIcon', () => {
   });
 
   it('renders without tooltip when withHoverLabel is explicitly false', () => {
-    const { container } = render(
-      <ActivityTypeIcon type="ride" withHoverLabel={false} size={24} />
-    );
+    const { container } = render(<ActivityTypeIcon type="ride" withHoverLabel={false} size={24} />);
     expect(container.firstChild).toBeInTheDocument();
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });

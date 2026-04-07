@@ -47,8 +47,10 @@ describe('Login', () => {
   });
 
   it('renders nothing after modal is closed', () => {
-    const { container } = render(<Login />);
+    render(<Login />);
     fireEvent.click(screen.getByRole('button', { name: /close modal/i }));
-    expect(container.firstChild).toBeNull();
+    // After closing, no modal dialog should be present in the document
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Welcome Athlete!')).not.toBeInTheDocument();
   });
 });

@@ -40,9 +40,7 @@ describe('UserButton', () => {
   });
 
   it('does not render extra SVG when showChevron is false', () => {
-    const { container: withChevron } = render(
-      <UserButton user={mockUser} showChevron={true} />
-    );
+    const { container: withChevron } = render(<UserButton user={mockUser} showChevron={true} />);
     const { container: withoutChevron } = render(
       <UserButton user={mockUser} showChevron={false} />
     );
