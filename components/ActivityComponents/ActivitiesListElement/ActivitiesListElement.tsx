@@ -96,14 +96,14 @@ export function ActivitiesListElement(
     }
   }
 
-  const createTrip = (title: string) => {
+  const createTrip = (title: string, activities: Activity[]) => {
     mockTrips.push({
       id: "trip-random",
       title,
       distance: "1.73 km",
-      startDate: selectedActivities[0].startDate,
-      endDate: selectedActivities[selectedActivities.length - 1].startDate,
-      activities: selectedActivities
+      startDate: activities[0].startDate,
+      endDate: activities[activities.length - 1].startDate,
+      activities
     })
   }
 
@@ -169,8 +169,10 @@ export function ActivitiesListElement(
     );
   };
 
+  const SortActivitiesByDate = (activities: Activity[]) => ([...activities].sort((a, b) => a.startDate.getTime() - b.startDate.getTime()))
+
   const TripCreationMenu = () => {
-    const sortedSelectedActivities = [...selectedActivities].sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+    const sortedSelectedActivities = SortActivitiesByDate(selectedActivities);
 
     return (
       <>
@@ -191,7 +193,7 @@ export function ActivitiesListElement(
 
             <Modal.Body>
               <form onSubmit={tripForm.onSubmit(() => {
-                createTrip(tripForm.getValues().tripName);
+                createTrip(tripForm.getValues().tripName, sortedSelectedActivities);
                 toggleTripCreation();
               })}>
                 <Stack gap="md">
