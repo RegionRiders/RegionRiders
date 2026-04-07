@@ -11,6 +11,16 @@ export interface UserMenuProps {
   onLogoutClick?: () => void;
 }
 
+/**
+ * Render a dropdown user menu anchored to a UserButton.
+ *
+ * The menu contains "Settings" and "Log out" items and wires their clicks to the
+ * provided callbacks when present.
+ *
+ * @param onSettingsClick - Optional callback invoked when the "Settings" item is clicked
+ * @param onLogoutClick - Optional callback invoked when the "Log out" item is clicked
+ * @returns A JSX element rendering the user dropdown menu
+ */
 export function UserMenu({ user, onSettingsClick, onLogoutClick }: UserMenuProps) {
   return (
     <Menu position="bottom" width="target">
