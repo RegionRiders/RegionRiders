@@ -85,7 +85,9 @@ export function useRegionRendering(
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
   }, [
+    map,
     regions,
+    visitData,
     showRegions,
     mode,
     regionBorderThickness,

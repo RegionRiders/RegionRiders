@@ -12,6 +12,20 @@ describe('latLngToTile', () => {
     const b = latLngToTile(54.3521, 18.6561, 11);
     expect(a).toEqual(b);
   });
+
+  it('wraps x at the dateline boundary', () => {
+    const { x } = latLngToTile(0, 180, 1);
+    expect(x).toBe(0);
+  });
+
+  it('clamps y to valid tile bounds near poles', () => {
+    const north = latLngToTile(89.9999, 0, 2);
+    const south = latLngToTile(-89.9999, 0, 2);
+    expect(north.y).toBeGreaterThanOrEqual(0);
+    expect(north.y).toBeLessThanOrEqual(3);
+    expect(south.y).toBeGreaterThanOrEqual(0);
+    expect(south.y).toBeLessThanOrEqual(3);
+  });
 });
 
 describe('resolveTileUrl', () => {
