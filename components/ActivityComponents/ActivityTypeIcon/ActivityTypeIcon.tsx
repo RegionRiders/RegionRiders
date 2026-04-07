@@ -1,5 +1,6 @@
 'use client';
 
+import type { FC } from 'react';
 import {
   IconBike,
   IconFish,
@@ -15,7 +16,6 @@ import {
 } from '@tabler/icons-react';
 import { ThemeIcon, Tooltip } from '@mantine/core';
 import { getActivityConfig } from '@/lib/client/activityConfig';
-import type { FC } from 'react';
 
 const ICON_COMPONENTS: Record<string, FC<{ size?: number; color?: string }>> = {
   IconRun,

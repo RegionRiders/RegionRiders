@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@/test-utils';
-import { UserMenu } from './UserMenu';
 import { User } from '@/types/user';
+import { UserMenu } from './UserMenu';
 
 const mockUser: User = {
   id: 99999,

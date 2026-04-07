@@ -4,8 +4,8 @@ import { Group, Stack, Tabs } from '@mantine/core';
 import { Logo } from '@/components/Logo/Logo';
 import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
 import { Welcome } from '@/components/Welcome/Welcome';
-import { UserMenu } from './UserMenu';
 import type { User } from '@/types/user';
+import { UserMenu } from './UserMenu';
 
 interface NavbarProps {
   user?: User;
@@ -41,9 +41,9 @@ export function Navbar({ user, defaultTab = 'home', onAuthCode }: NavbarProps) {
         <Tabs.Panel value="home">
           <Welcome />
         </Tabs.Panel>
-        <Tabs.Panel value="map" />
-        <Tabs.Panel value="activities" />
-        <Tabs.Panel value="trips" />
+        <Tabs.Panel value="map">{null}</Tabs.Panel>
+        <Tabs.Panel value="activities">{null}</Tabs.Panel>
+        <Tabs.Panel value="trips">{null}</Tabs.Panel>
       </Tabs>
     </Stack>
   );

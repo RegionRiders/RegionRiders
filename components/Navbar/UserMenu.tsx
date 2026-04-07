@@ -1,7 +1,7 @@
 'use client';
 
-import { Group, Menu, Text, UnstyledButton } from '@mantine/core';
 import { IconChevronDown, IconLogout, IconSettings } from '@tabler/icons-react';
+import { Group, Menu, Text, UnstyledButton } from '@mantine/core';
 import type { User } from '@/types/user';
 
 interface UserMenuProps {

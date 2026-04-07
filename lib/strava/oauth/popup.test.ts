@@ -7,8 +7,6 @@ describe('openOAuthPopup', () => {
     close: jest.Mock;
   };
   let openMock: jest.Mock;
-  let originalSetInterval: typeof setInterval;
-  let originalClearInterval: typeof clearInterval;
 
   beforeEach(() => {
     jest.useFakeTimers();

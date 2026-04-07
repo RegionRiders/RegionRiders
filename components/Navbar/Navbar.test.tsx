@@ -1,6 +1,6 @@
 import { render, screen } from '@/test-utils';
-import { Navbar } from './Navbar';
 import { User } from '@/types/user';
+import { Navbar } from './Navbar';
 
 // Mock all heavy child components to keep tests fast and focused
 jest.mock('@/components/ActivityComponents/ActivitiesListElement/ActivitiesListElement', () => ({

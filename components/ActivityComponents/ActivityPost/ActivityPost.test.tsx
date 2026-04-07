@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@/test-utils';
-import { ActivityPost } from './ActivityPost';
 import { Activity } from '@/types/activity';
+import { ActivityPost } from './ActivityPost';
 
 const mockActivity: Activity = {
   id: 'act-123',

@@ -55,7 +55,9 @@ export const ACTIVITY_TYPES: Record<string, ActivityConfig> = {
  * Case-insensitive. Returns DEFAULT_ACTIVITY for unknown types.
  */
 export function getActivityConfig(type: string): ActivityConfig {
-  if (!type) return DEFAULT_ACTIVITY;
+  if (!type) {
+    return DEFAULT_ACTIVITY;
+  }
   const config = ACTIVITY_TYPES[type.toLowerCase()];
   return config ?? DEFAULT_ACTIVITY;
 }

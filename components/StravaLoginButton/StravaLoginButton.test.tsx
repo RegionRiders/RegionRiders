@@ -1,3 +1,5 @@
+import { getAuthorizationUrl } from '@/lib/strava/oauth/getAuthUrl';
+import { openOAuthPopup } from '@/lib/strava/oauth/popup';
 import { fireEvent, render, screen } from '@/test-utils';
 import { StravaLoginButton } from './StravaLoginButton';
 
@@ -9,9 +11,6 @@ jest.mock('@/lib/strava/oauth/getAuthUrl', () => ({
 jest.mock('@/lib/strava/oauth/popup', () => ({
   openOAuthPopup: jest.fn(),
 }));
-
-import { getAuthorizationUrl } from '@/lib/strava/oauth/getAuthUrl';
-import { openOAuthPopup } from '@/lib/strava/oauth/popup';
 
 describe('StravaLoginButton', () => {
   beforeEach(() => {

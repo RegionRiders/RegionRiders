@@ -1,7 +1,7 @@
 'use client';
 
-import { ActionIcon, Group, Stack, Text } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
+import { ActionIcon, Group, Stack, Text } from '@mantine/core';
 import type { Activity } from '@/types/activity';
 
 interface ActivityDetailsProps {

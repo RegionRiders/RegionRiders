@@ -1,7 +1,7 @@
 'use client';
 
-import { Stack } from '@mantine/core';
 import type { ReactNode } from 'react';
+import { Stack } from '@mantine/core';
 
 interface PostsListProps {
   Content: ReactNode;

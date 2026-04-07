@@ -82,7 +82,7 @@ describe('activityConfig', () => {
     });
 
     it('every entry has an icon and label', () => {
-      for (const [key, config] of Object.entries(ACTIVITY_TYPES)) {
+      for (const [, config] of Object.entries(ACTIVITY_TYPES)) {
         expect(config.icon).toBeDefined();
         expect(typeof config.label).toBe('string');
         expect(config.label.length).toBeGreaterThan(0);

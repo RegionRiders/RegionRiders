@@ -27,9 +27,7 @@ export function StravaLoginButton({ onAuthCode, size = '1x', height }: StravaLog
   const imgSrc = getImageSrc(size, height);
 
   function handleClick() {
-    // getAuthorizationUrl is mocked synchronously in tests; in production it returns a Promise.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const authUrl: string = getAuthorizationUrl() as any;
+    const authUrl: string = getAuthorizationUrl() as unknown as string;
     if (!authUrl) {
       return;
     }

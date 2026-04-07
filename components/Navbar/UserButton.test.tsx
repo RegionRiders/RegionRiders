@@ -1,6 +1,6 @@
 import { render, screen } from '@/test-utils';
-import { UserButton } from './UserButton';
 import { User } from '@/types/user';
+import { UserButton } from './UserButton';
 
 const mockUser: User = {
   id: 12345,
@@ -33,14 +33,14 @@ describe('UserButton', () => {
   });
 
   it('renders the chevron icon by default (showChevron=true)', () => {
-    const { container } = render(<UserButton user={mockUser} showChevron={true} />);
+    const { container } = render(<UserButton user={mockUser} showChevron />);
     // IconChevronDown is an SVG
     const svgs = container.querySelectorAll('svg');
     expect(svgs.length).toBeGreaterThan(0);
   });
 
   it('does not render extra SVG when showChevron is false', () => {
-    const { container: withChevron } = render(<UserButton user={mockUser} showChevron={true} />);
+    const { container: withChevron } = render(<UserButton user={mockUser} showChevron />);
     const { container: withoutChevron } = render(
       <UserButton user={mockUser} showChevron={false} />
     );
