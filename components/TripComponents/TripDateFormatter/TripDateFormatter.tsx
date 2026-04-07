@@ -8,14 +8,17 @@ interface TripDateFormatterProps {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function TripDateFormatter({ startDate, endDate }: TripDateFormatterProps) {
   return (
     <Group gap="xs">
-      <Text size="sm">🚥 {formatDate(startDate)}</Text>
-      <Text size="sm">🏁 {formatDate(endDate)}</Text>
+      <Text size="sm">Start date: {formatDate(startDate)}</Text>
+      <Text size="sm">End date: {formatDate(endDate)}</Text>
     </Group>
   );
 }

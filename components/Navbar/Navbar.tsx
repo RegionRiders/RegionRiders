@@ -27,15 +27,9 @@ export function Navbar({ user, defaultTab = 'home', onAuthCode }: NavbarProps) {
 
       <Tabs defaultValue={defaultTab}>
         <Tabs.List>
-          <Tabs.Tab value="map" style={!user ? { display: 'none' } : undefined}>
-            Map
-          </Tabs.Tab>
-          <Tabs.Tab value="activities" style={!user ? { display: 'none' } : undefined}>
-            Activities
-          </Tabs.Tab>
-          <Tabs.Tab value="trips" style={!user ? { display: 'none' } : undefined}>
-            Trips
-          </Tabs.Tab>
+          {user && <Tabs.Tab value="map">Map</Tabs.Tab>}
+          {user && <Tabs.Tab value="activities">Activities</Tabs.Tab>}
+          {user && <Tabs.Tab value="trips">Trips</Tabs.Tab>}
         </Tabs.List>
 
         <Tabs.Panel value="home">

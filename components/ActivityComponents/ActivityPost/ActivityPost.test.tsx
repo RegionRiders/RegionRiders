@@ -47,19 +47,19 @@ describe('ActivityPost', () => {
   it('calls onSelect with the activity data when the title is clicked', () => {
     const onSelect = jest.fn();
     render(<ActivityPost data={mockActivity} onSelect={onSelect} />);
-    const titleLink = screen.getAllByText('Saturday Morning Ride')[0].closest('a');
-    if (titleLink) {
-      fireEvent.click(titleLink);
+    const titleButton = screen.getAllByText('Saturday Morning Ride')[0].closest('button');
+    if (titleButton) {
+      fireEvent.click(titleButton);
     }
     expect(onSelect).toHaveBeenCalledWith(mockActivity);
   });
 
-  it('calls onSelect when the image is clicked', () => {
+  it('calls onSelect when the image button is clicked', () => {
     const onSelect = jest.fn();
     render(<ActivityPost data={mockActivity} onSelect={onSelect} />);
-    // The image is wrapped in an anchor
-    const imageAnchor = screen.getAllByRole('link')[0];
-    fireEvent.click(imageAnchor);
+    // The image is wrapped in an UnstyledButton
+    const imageButton = screen.getAllByRole('button')[0];
+    fireEvent.click(imageButton);
     expect(onSelect).toHaveBeenCalledWith(mockActivity);
   });
 

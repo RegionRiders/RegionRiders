@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { UnstyledButton } from '@mantine/core';
-import { getAuthorizationUrl } from '@/lib/strava/oauth/getAuthUrl';
 import { openOAuthPopup } from '@/lib/strava/oauth/popup';
 
 type ButtonSize = '1x' | '2x' | 'custom';
@@ -27,12 +26,8 @@ export function StravaLoginButton({ onAuthCode, size = '1x', height }: StravaLog
   const imgSrc = getImageSrc(size, height);
 
   function handleClick() {
-    const authUrl: string = getAuthorizationUrl() as unknown as string;
-    if (!authUrl) {
-      return;
-    }
     openOAuthPopup({
-      authUrl,
+      authUrl: '/api/strava/auth',
       windowName: 'StravaLogin',
       onCode: onAuthCode,
     });

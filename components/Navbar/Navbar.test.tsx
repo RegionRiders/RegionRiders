@@ -79,15 +79,9 @@ describe('Navbar', () => {
 
   it('hides Map, Activities, and Trips tabs when no user is logged in', () => {
     render(<Navbar />);
-    // The tabs should have display:none style or be hidden
-    const mapTabs = screen.queryAllByText('Map');
-    const activitiesTabs = screen.queryAllByText('Activities');
-    const tripsTabs = screen.queryAllByText('Trips');
-
-    // Either not present or hidden
-    mapTabs.forEach((el) => expect(el.closest('[display="none"]') || el).toBeTruthy());
-    activitiesTabs.forEach((el) => expect(el.closest('[display="none"]') || el).toBeTruthy());
-    tripsTabs.forEach((el) => expect(el.closest('[display="none"]') || el).toBeTruthy());
+    expect(screen.queryByText('Map')).not.toBeInTheDocument();
+    expect(screen.queryByText('Activities')).not.toBeInTheDocument();
+    expect(screen.queryByText('Trips')).not.toBeInTheDocument();
   });
 
   it('renders the Welcome panel content by default when no user', () => {

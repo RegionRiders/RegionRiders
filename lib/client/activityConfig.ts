@@ -30,7 +30,7 @@ export const ACTIVITY_TYPES: Record<string, ActivityConfig> = {
   inline_skate: { label: 'Inline Skate', icon: 'IconRun', color: 'orange' },
   kayaking: { label: 'Kayaking', icon: 'IconFish', color: 'cyan' },
   kitesurf: { label: 'Kitesurf', icon: 'IconSwimming', color: 'cyan' },
-  mountain_bike_ride: { label: 'Mountain Bike Ride', icon: 'IconBike', color: 'brown' },
+  mountain_bike_ride: { label: 'Mountain Bike Ride', icon: 'IconBike', color: '#8B4513' },
   nordic_ski: { label: 'Nordic Ski', icon: 'IconSnowflake', color: 'indigo' },
   rock_climbing: { label: 'Rock Climbing', icon: 'IconMountain', color: 'teal' },
   roller_ski: { label: 'Roller Ski', icon: 'IconRun', color: 'orange' },

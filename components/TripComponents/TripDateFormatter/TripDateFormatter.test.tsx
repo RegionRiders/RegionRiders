@@ -13,9 +13,9 @@ describe('TripDateFormatter', () => {
     const end = new Date('2024-01-05T20:00:00');
     const { container } = render(<TripDateFormatter startDate={start} endDate={end} />);
     expect(container).toBeInTheDocument();
-    // Both date texts should be present
-    expect(container.textContent).toContain('🚥');
-    expect(container.textContent).toContain('🏁');
+    // Both date labels should be present
+    expect(container.textContent).toContain('Start date:');
+    expect(container.textContent).toContain('End date:');
   });
 
   it('includes the year in the start date display', () => {

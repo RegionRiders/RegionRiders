@@ -1,14 +1,14 @@
 'use client';
 
+import type React from 'react';
 import Image from 'next/image';
 import { IconChevronDown } from '@tabler/icons-react';
 import { Group, Text, UnstyledButton } from '@mantine/core';
 import type { User } from '@/types/user';
 
-interface UserButtonProps {
+interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'> {
   user: User;
   showChevron?: boolean;
-  [key: string]: unknown;
 }
 
 export function UserButton({ user, showChevron = true, ...props }: UserButtonProps) {
