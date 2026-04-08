@@ -21,7 +21,18 @@ export function getApiBaseUrl(): string {
  * @returns Complete URL
  */
 export function getApiUrl(path: string): string {
+  if (/^\/{3,}/.test(path)) {
+    throw new Error(
+      `Invalid API path: multiple leading slashes are not allowed ("${path}")`
+    );
+  }
+  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(path) || /^\/\//.test(path)) {
+    throw new Error(
+      `Invalid API path: absolute or protocol-relative URLs are not allowed ("${path}")`
+    );
+  }
   const baseUrl = getApiBaseUrl();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return new URL(cleanPath, normalizedBaseUrl).toString();
 }
