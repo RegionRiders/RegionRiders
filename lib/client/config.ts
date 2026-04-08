@@ -21,7 +21,7 @@ export function getApiBaseUrl(): string {
  * @returns Complete URL
  */
 export function getApiUrl(path: string): string {
-  if (/^\/\//.test(path) || /^\/{3,}/.test(path) || /:\/\//.test(path)) {
+  if (/^\/\//.test(path) || /^\/{3,}/.test(path) || /^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(path)) {
     throw new Error(
       `getApiUrl: path must not be absolute or protocol-relative: "${path}"`
     );
