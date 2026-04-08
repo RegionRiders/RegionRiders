@@ -21,6 +21,12 @@ export function getApiBaseUrl(): string {
  * @returns Complete URL
  */
 export function getApiUrl(path: string): string {
+  if (/^\/\//.test(path) || /^\/+\//.test(path)) {
+    throw new Error(`Invalid API path: multiple leading slashes are not allowed ("${path}")`);
+  }
+  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(path)) {
+    throw new Error(`Invalid API path: absolute URLs with a scheme are not allowed ("${path}")`);
+  }
   const baseUrl = getApiBaseUrl();
   const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
