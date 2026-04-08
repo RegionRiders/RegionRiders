@@ -150,7 +150,7 @@ export default function ActivityMap() {
         localTimestamp != null && apiTimestamp != null && localTimestamp > apiTimestamp;
       const shouldPreferUserScopedLocalSettings =
         hasUserScopedLocalSettings &&
-        (!hasApiSettings || apiTimestamp == null || isLocalSettingsNewerThanApi);
+        (!hasApiSettings || apiTimestamp === null || isLocalSettingsNewerThanApi);
       const usedUserScopedStorageSettings =
         shouldPreferUserScopedLocalSettings || (!hasApiSettings && hasUserScopedLocalSettings);
       const usedApiSettings = hasApiSettings && !shouldPreferUserScopedLocalSettings;
@@ -233,6 +233,8 @@ export default function ActivityMap() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
+    // `apiPersistUserId` gates API PUT eligibility, while `persistedUserId`
+    // is still needed for user-scoped local fallback persistence.
   }, [apiPersistUserId, isSettingsHydrated, persistedUserId, settings]);
 
   useEffect(() => {
