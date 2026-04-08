@@ -226,10 +226,9 @@ describe('ActivityMap', () => {
     });
   });
 
-  it('uses auth-session user id for authenticated saves when settings API read fails', async () => {
+  it('uses auth-session user id for local fallback saves when settings API read fails', async () => {
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue(null);
-    mockSaveMapSettingsToApi.mockResolvedValue(false);
 
     render(<ActivityMap />);
     await waitFor(() => expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled());
@@ -238,9 +237,37 @@ describe('ActivityMap', () => {
     await userEvent.click(button);
 
     await waitFor(() => {
-      expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
+      expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
       const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
       expect(persisted).toBeTruthy();
+    });
+  });
+
+  it('does not treat epoch API updatedAt as missing timestamp', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '1970-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: 1,
+        savedAt: '1969-12-31T23:59:59.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(true);
     });
   });
 

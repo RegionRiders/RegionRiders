@@ -15,6 +15,7 @@ import {
 import {
   loadMapSettingsFromStorage,
   loadPersistedMapSettingsFromStorage,
+  resolveMapSettingsStorageKey,
   saveMapSettingsToStorage,
 } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 import { useGPXData } from '@/hooks/useGPXData';
@@ -26,7 +27,6 @@ import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { resolveMapSettingsStorageKey } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
@@ -56,6 +56,7 @@ export default function ActivityMap() {
   const saveErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { tracks } = useGPXData();
   const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
+  const [apiPersistUserId, setApiPersistUserId] = useState<string | null>(null);
   const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
@@ -128,6 +129,7 @@ export default function ActivityMap() {
 
       const persistedUserId = userSettingsFromApi?.userId ?? authenticatedUserId ?? null;
       setPersistedUserId(persistedUserId);
+      setApiPersistUserId(userSettingsFromApi?.userId ?? null);
 
       if (!persistedUserId) {
         setIsSettingsHydrated(true);
@@ -148,7 +150,7 @@ export default function ActivityMap() {
         localTimestamp != null && apiTimestamp != null && localTimestamp > apiTimestamp;
       const shouldPreferUserScopedLocalSettings =
         hasUserScopedLocalSettings &&
-        (!hasApiSettings || !apiTimestamp || isLocalSettingsNewerThanApi);
+        (!hasApiSettings || apiTimestamp == null || isLocalSettingsNewerThanApi);
       const usedUserScopedStorageSettings =
         shouldPreferUserScopedLocalSettings || (!hasApiSettings && hasUserScopedLocalSettings);
       const usedApiSettings = hasApiSettings && !shouldPreferUserScopedLocalSettings;
@@ -195,18 +197,26 @@ export default function ActivityMap() {
     }
 
     const persistSettings = async () => {
-      if (persistedUserId) {
-        debugLog('Attempting API save', { persistedUserId, settings });
+      if (apiPersistUserId) {
+        debugLog('Attempting API save', { persistedUserId: apiPersistUserId, settings });
         const persisted = await saveMapSettingsToApi(settings);
         debugLog('API save completed', { persisted });
         if (!persisted) {
-          saveMapSettingsToStorage(settings, persistedUserId);
+          saveMapSettingsToStorage(settings, apiPersistUserId);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         } else {
           // Clear local fallback after successful API save to prevent stale data preference
-          clearUserScopedLocalSettings(persistedUserId);
+          clearUserScopedLocalSettings(apiPersistUserId);
         }
+        return;
+      }
+
+      if (persistedUserId) {
+        debugLog('Persisting authenticated fallback settings to local storage', {
+          persistedUserId,
+        });
+        saveMapSettingsToStorage(settings, persistedUserId);
         return;
       }
 
@@ -223,7 +233,7 @@ export default function ActivityMap() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [isSettingsHydrated, persistedUserId, settings]);
+  }, [apiPersistUserId, isSettingsHydrated, persistedUserId, settings]);
 
   useEffect(() => {
     return () => {
