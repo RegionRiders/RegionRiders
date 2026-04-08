@@ -13,6 +13,7 @@ interface MapOrchestratorProps {
   showHeatmap?: boolean;
   showBorders?: boolean;
   activityMode?: ActivityRenderMode;
+  onRegionTileError?: (message: string) => void;
 }
 
 /**
@@ -25,11 +26,12 @@ export default function MapOrchestrator({
   showHeatmap = true,
   showBorders = true,
   activityMode = 'heatmap',
+  onRegionTileError,
 }: MapOrchestratorProps) {
   const { visitData } = useRegionAnalysis(tracks, []);
 
   useActivityRendering(map, tracks, showHeatmap, activityMode);
-  useRegionRendering(map, showBorders, visitData);
+  useRegionRendering(map, showBorders, visitData, onRegionTileError);
 
   // This component is a side effect coordinator, doesn't render
   return null;

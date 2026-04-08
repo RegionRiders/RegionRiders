@@ -1,3 +1,4 @@
+import { act } from 'react';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/useLeafletMap';
 import { useGPXData } from '@/hooks/useGPXData';
 import { fireEvent, render, screen } from '@/test-utils';
@@ -22,7 +23,11 @@ jest.mock('./MapContainer', () => ({
 
 jest.mock('./MapOrchestrator', () => ({
   __esModule: true,
-  default: function MockMapOrchestrator() {
+  default: function MockMapOrchestrator(props: { onRegionTileError?: (message: string) => void }) {
+    if (props.onRegionTileError) {
+      (globalThis as any).__mockOnRegionTileError = props.onRegionTileError;
+    }
+
     return <div data-testid="map-orchestrator">Map Orchestrator</div>;
   },
 }));
@@ -33,6 +38,7 @@ const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeaflet
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete (globalThis as any).__mockOnRegionTileError;
 
     // Default mock implementations
     mockUseGPXData.mockReturnValue({
@@ -125,6 +131,23 @@ describe('ActivityMap', () => {
     });
 
     render(<ActivityMap />);
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+  });
+
+  it('shows a non-fatal region overlay error message', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    expect(reportError).toBeDefined();
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByText('Region overlay unavailable')).toBeInTheDocument();
     expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
   });
 });

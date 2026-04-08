@@ -17,6 +17,52 @@ import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 const logger = createComponentLogger('useRegionRendering');
 
+type RegionTileFeature = {
+  properties?: Record<string, unknown>;
+  id?: string | number;
+};
+
+type RegionVectorGridLayer = L.Layer & {
+  setFeatureStyle?: (featureId: string | number, style: L.PathOptions) => void;
+  resetFeatureStyle?: (featureId: string | number) => void;
+};
+
+function getUnvisitedRegionStyle(
+  config: ReturnType<typeof getRegionTileProfileConfig>
+): L.PathOptions {
+  return {
+    color: config.style.color,
+    weight: config.style.weight,
+    fillColor: config.style.fillColor,
+    fillOpacity: config.style.fillOpacity,
+    opacity: config.style.opacity,
+  };
+}
+
+function getVisitedRegionStyle(
+  config: ReturnType<typeof getRegionTileProfileConfig>
+): L.PathOptions {
+  return {
+    color: '#dc1414',
+    weight: Math.max(config.style.weight, 1.5),
+    fillColor: '#dc1414',
+    fillOpacity: Math.max(config.style.fillOpacity, 0.12),
+    opacity: 1,
+  };
+}
+
+function getRegionFeatureId(feature: RegionTileFeature): string {
+  const regionId = feature.properties?.region_id;
+
+  if (typeof regionId === 'string' && regionId.trim().length > 0) {
+    return regionId;
+  }
+
+  return String(feature.id ?? '');
+}
+
+export { getRegionFeatureId, getUnvisitedRegionStyle, getVisitedRegionStyle };
+
 /**
  * Renders region polygons from vector tiles using Leaflet VectorGrid.
  * Uses profile-based styling tuned for mobile and desktop.
@@ -24,9 +70,11 @@ const logger = createComponentLogger('useRegionRendering');
 export function useRegionRendering(
   map: L.Map | null,
   showBorders: boolean = true,
-  _visitData: Map<string, RegionVisitData> = new Map()
+  visitData: Map<string, RegionVisitData> = new Map(),
+  onTileError?: (message: string) => void
 ) {
-  const regionLayerRef = useRef<L.Layer | null>(null);
+  const regionLayerRef = useRef<RegionVectorGridLayer | null>(null);
+  const previousVisitedIdsRef = useRef<Set<string>>(new Set());
   const profile = useMemo(() => selectRegionRenderProfile(), []);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
 
@@ -54,16 +102,11 @@ export function useRegionRendering(
       pane: config.paneName,
       minZoom: config.minZoom,
       maxZoom: config.maxZoom,
+      getFeatureId: getRegionFeatureId,
       vectorTileLayerStyles: {
-        [config.layerName]: {
-          color: config.style.color,
-          weight: config.style.weight,
-          fillColor: config.style.fillColor,
-          fillOpacity: config.style.fillOpacity,
-          opacity: config.style.opacity,
-        },
+        [config.layerName]: getUnvisitedRegionStyle(config),
       },
-    }) as L.Layer;
+    }) as RegionVectorGridLayer;
 
     const handleTileLoad = () => {
       markFirstRegionLayerAdded();
@@ -71,6 +114,17 @@ export function useRegionRendering(
 
     const handleTileError = (event: unknown) => {
       logRegionTileError(event);
+
+      if (map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+
+      if (regionLayerRef.current === layer) {
+        regionLayerRef.current = null;
+      }
+
+      previousVisitedIdsRef.current = new Set();
+      onTileError?.('Region overlay unavailable');
     };
 
     layer.on('load', handleTileLoad);
@@ -91,6 +145,44 @@ export function useRegionRendering(
       if (regionLayerRef.current === layer) {
         regionLayerRef.current = null;
       }
+
+      previousVisitedIdsRef.current = new Set();
     };
-  }, [map, showBorders, config, profile]);
+  }, [map, showBorders, config, profile, onTileError]);
+
+  useEffect(() => {
+    if (!showBorders) {
+      previousVisitedIdsRef.current = new Set();
+      return;
+    }
+
+    const layer = regionLayerRef.current;
+
+    if (!layer?.setFeatureStyle || !layer?.resetFeatureStyle) {
+      return;
+    }
+
+    const nextVisitedIds = new Set(
+      Array.from(visitData.entries())
+        .filter(([, data]) => data.visited || data.visitCount > 0)
+        .map(([regionId]) => regionId)
+    );
+
+    const previousVisitedIds = previousVisitedIdsRef.current;
+    const visitedStyle = getVisitedRegionStyle(config);
+
+    nextVisitedIds.forEach((regionId) => {
+      if (!previousVisitedIds.has(regionId)) {
+        layer.setFeatureStyle?.(regionId, visitedStyle);
+      }
+    });
+
+    previousVisitedIds.forEach((regionId) => {
+      if (!nextVisitedIds.has(regionId)) {
+        layer.resetFeatureStyle?.(regionId);
+      }
+    });
+
+    previousVisitedIdsRef.current = nextVisitedIds;
+  }, [config, showBorders, visitData]);
 }

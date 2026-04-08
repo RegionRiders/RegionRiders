@@ -27,6 +27,7 @@ describe('MapOrchestrator', () => {
   const mockMap: any = {};
   const mockTracks = new Map<string, any>();
   const mockVisitData = new Map<string, any>();
+  const onRegionTileError = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -53,12 +54,15 @@ describe('MapOrchestrator', () => {
   });
 
   it('should call useRegionRendering with correct parameters', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
+    render(
+      <MapOrchestrator map={mockMap} tracks={mockTracks} onRegionTileError={onRegionTileError} />
+    );
 
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
       mockMap,
       true, // showBorders default
-      mockVisitData
+      mockVisitData,
+      onRegionTileError
     );
   });
 
@@ -70,12 +74,18 @@ describe('MapOrchestrator', () => {
         showHeatmap={false}
         showBorders={false}
         activityMode="lines"
+        onRegionTileError={onRegionTileError}
       />
     );
 
     expect(mockUseActivityRendering).toHaveBeenCalledWith(mockMap, mockTracks, false, 'lines');
 
-    expect(mockUseRegionRendering).toHaveBeenCalledWith(mockMap, false, mockVisitData);
+    expect(mockUseRegionRendering).toHaveBeenCalledWith(
+      mockMap,
+      false,
+      mockVisitData,
+      onRegionTileError
+    );
   });
 
   it('should render null', () => {

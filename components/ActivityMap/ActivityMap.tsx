@@ -18,10 +18,15 @@ export default function ActivityMap() {
   const { map, isReady, error } = useLeafletMap(mapContainerRef);
 
   const [activityMode, setActivityMode] = useState<ActivityRenderMode>('heatmap');
+  const [regionTileError, setRegionTileError] = useState<string | null>(null);
   const memoizedTracks = useMemo(() => tracks, [tracks]);
 
   const handleModeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setActivityMode(e.target.value as ActivityRenderMode);
+  }, []);
+
+  const handleRegionTileError = useCallback((message: string) => {
+    setRegionTileError(message);
   }, []);
 
   if (error) {
@@ -63,8 +68,15 @@ export default function ActivityMap() {
 
       <MapContainerMemo ref={mapContainerRef} />
 
+      {regionTileError ? <div className={styles.errorMessage}>{regionTileError}</div> : null}
+
       {isReady && map ? (
-        <MapOrchestrator map={map} tracks={memoizedTracks} activityMode={activityMode} />
+        <MapOrchestrator
+          map={map}
+          tracks={memoizedTracks}
+          activityMode={activityMode}
+          onRegionTileError={handleRegionTileError}
+        />
       ) : null}
     </div>
   );

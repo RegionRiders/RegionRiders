@@ -1,5 +1,5 @@
-import { RegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
 import { getRegionTileSourceUrl } from '@/components/ActivityMap/config/regionTileSource';
+import { RegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
 
 export interface RegionTileProfileConfig {
   sourceUrl: string;
