@@ -17,10 +17,7 @@ const Login: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
 
   /** Stores the OAuth authorization code received from Strava */
-  const [authCode, setAuthCode] = useState<string | null>(null);
-
-  // Log code whenever it changes
-  console.log('Strava OAuth code:', authCode);
+  const [, setAuthCode] = useState<string | null>(null);
 
   if (!isOpen) {
     return null;
