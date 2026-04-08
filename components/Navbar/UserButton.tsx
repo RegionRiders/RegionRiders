@@ -12,7 +12,11 @@ export interface UserButtonProps extends React.ComponentPropsWithoutRef<'button'
 
 export const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   ({ user, showChevron = true, ...others }, ref) => (
-    <UnstyledButton ref={ref} {...others}>
+    <UnstyledButton
+      ref={ref}
+      aria-label={`${user.firstname} ${user.lastname}`.trim() || 'User menu'}
+      {...others}
+    >
       <Group gap="sm">
         <Avatar src={user.profileImage} radius="xl" />
 

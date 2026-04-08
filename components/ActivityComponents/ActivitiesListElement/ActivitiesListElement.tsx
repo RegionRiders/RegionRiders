@@ -5,6 +5,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   Anchor,
   AppShell,
+  ActionIcon,
   Button,
   Checkbox,
   CloseButton,
@@ -89,6 +90,7 @@ export function ActivitiesListElement({
       hideNavbar(true);
       setSelectedActivities((prev) => [...prev, getActivityById(visibleActivities, activityId)]);
     } else {
+      tripForm.reset();
       setTripCreationMode(false);
       hideNavbar(false);
       setSelectedActivities([]);
@@ -133,10 +135,12 @@ export function ActivitiesListElement({
       <div hidden={tripCreationMode}>
         <Menu shadow="md" position="right">
           <Menu.Target>
-            <Text size="35px" fw={650}>
-              ⫶
-            </Text>
-          </Menu.Target>
+              <ActionIcon variant="subtle" aria-label="Open activity menu">
+                <Text size="35px" fw={650}>
+                  ⫶
+                </Text>
+              </ActionIcon>
+            </Menu.Target>
 
           <Menu.Dropdown>
             <Menu.Item>Add to trip</Menu.Item>

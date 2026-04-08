@@ -48,7 +48,7 @@ describe('StravaLoginButton', () => {
   });
 
   it('opens an OAuth popup when clicked and auth URL is available', () => {
-    mockGetAuthorizationUrl.mockReturnValue('https://strava.com/oauth/authorize?client_id=1');
+    mockGetAuthorizationUrl.mockReturnValue('/api/strava/auth');
 
     const onAuthCode = jest.fn();
     render(<StravaLoginButton onAuthCode={onAuthCode} />);
@@ -57,7 +57,7 @@ describe('StravaLoginButton', () => {
     expect(mockGetAuthorizationUrl).toHaveBeenCalled();
     expect(mockOpenOAuthPopup).toHaveBeenCalledWith(
       expect.objectContaining({
-        authUrl: 'https://strava.com/oauth/authorize?client_id=1',
+        authUrl: '/api/strava/auth',
         windowName: 'StravaLogin',
         onCode: onAuthCode,
       })
