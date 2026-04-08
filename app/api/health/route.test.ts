@@ -38,9 +38,12 @@ const REQUIRED_ENV = [
   'STRAVA_CLIENT_SECRET',
 ];
 
+const originalEnv = process.env;
+
 beforeEach(() => {
   jest.clearAllMocks();
-  // Set all required env vars by default
+  // Clone env so each test starts from a clean slate without clobbering pre-existing vars
+  process.env = { ...originalEnv };
   setEnv({
     POSTGRES_HOST: 'localhost',
     POSTGRES_DB: 'regionriders',
@@ -56,6 +59,10 @@ beforeEach(() => {
 
 afterEach(() => {
   clearEnv(...REQUIRED_ENV);
+});
+
+afterAll(() => {
+  process.env = originalEnv;
 });
 
 describe('GET /api/health', () => {

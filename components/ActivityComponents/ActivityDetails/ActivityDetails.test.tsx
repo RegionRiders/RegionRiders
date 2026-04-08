@@ -26,7 +26,7 @@ describe('ActivityDetails', () => {
     expect(screen.getAllByText('Morning Ride').length).toBeGreaterThan(0);
   });
 
-  it('renders nothing visible when selectedActivity is null', () => {
+  it('does not render the activity title when selectedActivity is null', () => {
     const handleActivityChange = jest.fn();
     const { container } = render(
       <ActivityDetails selectedActivity={null} handleActivityChange={handleActivityChange} />

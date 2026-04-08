@@ -17,7 +17,7 @@ describe('TripDetails', () => {
     expect(screen.getAllByText('My Awesome Trip').length).toBeGreaterThan(0);
   });
 
-  it('renders nothing visible when selectedTrip is null', () => {
+  it('does not render the trip title when selectedTrip is null', () => {
     render(<TripDetails selectedTrip={null} handleTripChange={jest.fn()} />);
     expect(screen.queryByText('My Awesome Trip')).not.toBeInTheDocument();
   });

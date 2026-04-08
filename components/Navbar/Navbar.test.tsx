@@ -52,6 +52,8 @@ describe('Navbar – unauthenticated (no user)', () => {
     render(<Navbar />);
     // These tabs are hidden via display: none when no user is present
     expect(screen.queryByRole('tab', { name: /map/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /activities/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /trips/i })).not.toBeInTheDocument();
   });
 });
 
