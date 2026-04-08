@@ -22,6 +22,7 @@ export function getApiBaseUrl(): string {
  */
 export function getApiUrl(path: string): string {
   const baseUrl = getApiBaseUrl();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return new URL(cleanPath, normalizedBaseUrl).toString();
 }

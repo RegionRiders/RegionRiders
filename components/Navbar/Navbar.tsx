@@ -97,7 +97,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
           collapsed: { mobile: desktopAsideOpened, desktop: desktopAsideOpened },
         }}
       >
-        <AppShell.Header display={hideNavbar ? 'none' : ''}>
+        <AppShell.Header display={hideNavbar ? 'none' : undefined}>
           <Tabs.List h="4rem">
             <Logo />
             <NavbarTab value="welcome" text="" display="none" />
@@ -115,7 +115,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
           </Tabs.List>
         </AppShell.Header>
 
-        <NavbarTabContent value="welcome" Content={Welcome()} />
+        <NavbarTabContent value="welcome" Content={<Welcome />} />
         <NavbarTabContent value="map" Content={<Text m="100">here will be map</Text>} />
         <NavbarTabContent
           value="activities"
