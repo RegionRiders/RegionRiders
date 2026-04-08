@@ -47,7 +47,7 @@ beforeEach(() => {
   // Clone env so each test starts from a clean slate without clobbering pre-existing vars
   process.env = { ...originalEnv };
   // Save snapshot of current values for REQUIRED_ENV keys
-  savedEnvSnapshot = Object.fromEntries(REQUIRED_ENV.map(k => [k, process.env[k]]));
+  savedEnvSnapshot = Object.fromEntries(REQUIRED_ENV.map((k) => [k, process.env[k]]));
   setEnv({
     POSTGRES_HOST: 'localhost',
     POSTGRES_DB: 'regionriders',
