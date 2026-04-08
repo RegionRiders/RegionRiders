@@ -34,7 +34,7 @@ describe('dateNoTime', () => {
 
 describe('dateWithTime', () => {
   it('formats a date using local timezone components', () => {
-    // Use a fixed UTC date and derive the expected string from the local timezone
+    // Use a fixed local-time Date (new Date(y, m, d, h, min)) and verify the formatted local components
     const date = new Date(2024, 5, 15, 8, 3); // June 15, 2024, 08:03 local
     const expected = `2024-06-15 08:03`;
     expect(dateWithTime(date)).toBe(expected);

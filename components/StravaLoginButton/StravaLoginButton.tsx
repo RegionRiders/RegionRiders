@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { stravaLogger } from '@/lib/logger/client';
 import { getAuthorizationUrl } from '@/lib/strava/oauth/getAuthUrl';
 import { openOAuthPopup } from '@/lib/strava/oauth/popup';
 import styles from './StravaLoginButton.module.css';
@@ -98,8 +99,7 @@ export const StravaLoginButton: React.FC<StravaLoginButtonProps> = ({
     const authUrl = getAuthorizationUrl();
 
     if (!authUrl) {
-      // eslint-disable-next-line no-console
-      console.error(
+      stravaLogger.error(
         'Strava OAuth is not configured. Please set the required environment variables.'
       );
       return;
