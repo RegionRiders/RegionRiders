@@ -1,8 +1,4 @@
-import {
-  ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY,
-  getActivityConfig,
-} from '@/lib/client/activityConfig';
+import { ACTIVITY_TYPES, DEFAULT_ACTIVITY, getActivityConfig } from '@/lib/client/activityConfig';
 
 describe('ACTIVITY_TYPES', () => {
   it('contains common activity types', () => {

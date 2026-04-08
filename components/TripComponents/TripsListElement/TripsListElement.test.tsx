@@ -52,9 +52,7 @@ describe('TripsListElement', () => {
   it('renders the first batch of trip posts', () => {
     render(<TripsListElement {...defaultProps} />);
     // mockTrips starts with 'Wycieczka poranna baaaardzo długa...'
-    expect(
-      screen.getAllByText(/Wycieczka poranna/i).length
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Wycieczka poranna/i).length).toBeGreaterThan(0);
   });
 
   it('calls toggleTrip when a trip is selected for the first time', () => {

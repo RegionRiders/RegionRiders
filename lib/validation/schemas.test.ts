@@ -103,15 +103,15 @@ describe('activitySchemas.create', () => {
   });
 
   it('rejects negative distance', () => {
-    expect(
-      activitySchemas.create.safeParse({ ...validActivity, distance: -1 }).success
-    ).toBe(false);
+    expect(activitySchemas.create.safeParse({ ...validActivity, distance: -1 }).success).toBe(
+      false
+    );
   });
 
   it('rejects startLatitude out of range', () => {
-    expect(
-      activitySchemas.create.safeParse({ ...validActivity, startLatitude: 200 }).success
-    ).toBe(false);
+    expect(activitySchemas.create.safeParse({ ...validActivity, startLatitude: 200 }).success).toBe(
+      false
+    );
   });
 
   it('accepts optional fields', () => {

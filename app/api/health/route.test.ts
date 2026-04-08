@@ -2,13 +2,12 @@
  * @jest-environment node
  */
 
+import { getDb } from '@/lib/db';
 import { GET, HEAD } from './route';
 
 jest.mock('@/lib/db', () => ({
   getDb: jest.fn(),
 }));
-
-import { getDb } from '@/lib/db';
 
 const mockExecute = jest.fn();
 
