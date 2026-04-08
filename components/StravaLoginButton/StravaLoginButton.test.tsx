@@ -14,9 +14,11 @@ jest.mock('@/lib/strava/oauth/popup', () => ({
 const mockGetAuthorizationUrl = getAuthorizationUrl as jest.Mock;
 const mockOpenOAuthPopup = openOAuthPopup as jest.Mock;
 
+let consoleErrorSpy: jest.SpyInstance;
+
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.spyOn(console, 'error').mockImplementation(() => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -68,6 +70,6 @@ describe('StravaLoginButton', () => {
     fireEvent.click(screen.getByRole('button', { name: /Connect with Strava/i }));
 
     expect(mockOpenOAuthPopup).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 });

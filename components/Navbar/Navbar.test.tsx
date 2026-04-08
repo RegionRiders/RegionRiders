@@ -19,7 +19,7 @@ jest.mock('@/components/Welcome/Welcome', () => ({
 
 jest.mock('@/components/StravaLoginButton/StravaLoginButton', () => ({
   StravaLoginButton: ({ onAuthCode }: { onAuthCode: (code: string) => void }) => (
-    <button data-testid="strava-login-btn" onClick={() => onAuthCode('code')}>
+    <button type="button" data-testid="strava-login-btn" onClick={() => onAuthCode('code')}>
       Connect with Strava
     </button>
   ),

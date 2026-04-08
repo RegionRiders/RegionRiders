@@ -98,6 +98,7 @@ export const StravaLoginButton: React.FC<StravaLoginButtonProps> = ({
     const authUrl = getAuthorizationUrl();
 
     if (!authUrl) {
+      // eslint-disable-next-line no-console
       console.error(
         'Strava OAuth is not configured. Please set the required environment variables.'
       );
