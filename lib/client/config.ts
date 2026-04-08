@@ -21,11 +21,10 @@ export function getApiBaseUrl(): string {
  * @returns Complete URL
  */
 export function getApiUrl(path: string): string {
-  if (/^\/\//.test(path) || /^\/+\//.test(path)) {
-    throw new Error(`Invalid API path: multiple leading slashes are not allowed ("${path}")`);
-  }
-  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(path)) {
-    throw new Error(`Invalid API path: absolute URLs with a scheme are not allowed ("${path}")`);
+  if (/^\/\//.test(path) || /^\/{3,}/.test(path) || /:\/\//.test(path)) {
+    throw new Error(
+      `getApiUrl: path must not be absolute or protocol-relative: "${path}"`
+    );
   }
   const baseUrl = getApiBaseUrl();
   const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
