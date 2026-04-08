@@ -29,22 +29,22 @@ describe('getApiBaseUrl', () => {
 describe('getApiUrl', () => {
   it('throws on a protocol-relative path (//)', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
-    expect(() => getApiUrl('//evil.com/path')).toThrow('multiple leading slashes');
+    expect(() => getApiUrl('//evil.com/path')).toThrow('absolute or protocol-relative');
   });
 
   it('throws on a path with multiple leading slashes (///)', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
-    expect(() => getApiUrl('///evil')).toThrow('multiple leading slashes');
+    expect(() => getApiUrl('///evil')).toThrow('absolute or protocol-relative');
   });
 
   it('throws on an absolute URL with http scheme', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
-    expect(() => getApiUrl('http://evil.com/path')).toThrow('absolute URLs with a scheme');
+    expect(() => getApiUrl('http://evil.com/path')).toThrow('absolute or protocol-relative');
   });
 
   it('throws on an absolute URL with https scheme', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
-    expect(() => getApiUrl('https://evil.com/path')).toThrow('absolute URLs with a scheme');
+    expect(() => getApiUrl('https://evil.com/path')).toThrow('absolute or protocol-relative');
   });
 
   it('prepends base URL to a path that starts with /', () => {
