@@ -1,5 +1,6 @@
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
+  loadAuthenticatedUserIdFromApi,
   loadMapSettingsFromApi,
   saveMapSettingsToApi,
 } from '@/components/ActivityMap/storage/mapSettingsApi';
@@ -19,6 +20,7 @@ jest.mock('./hooks/map/useLeafletMap', () => ({
 }));
 
 jest.mock('./storage/mapSettingsApi', () => ({
+  loadAuthenticatedUserIdFromApi: jest.fn(),
   loadMapSettingsFromApi: jest.fn(),
   saveMapSettingsToApi: jest.fn(),
 }));
@@ -62,6 +64,9 @@ const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeaflet
 const mockLoadMapSettingsFromApi = loadMapSettingsFromApi as jest.MockedFunction<
   typeof loadMapSettingsFromApi
 >;
+const mockLoadAuthenticatedUserIdFromApi = loadAuthenticatedUserIdFromApi as jest.MockedFunction<
+  typeof loadAuthenticatedUserIdFromApi
+>;
 const mockSaveMapSettingsToApi = saveMapSettingsToApi as jest.MockedFunction<
   typeof saveMapSettingsToApi
 >;
@@ -70,6 +75,7 @@ describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(null);
     mockLoadMapSettingsFromApi.mockResolvedValue(null);
     mockSaveMapSettingsToApi.mockResolvedValue(true);
 
@@ -186,11 +192,13 @@ describe('ActivityMap', () => {
   });
 
   it('saves settings to authenticated API when user id is present', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue({
       userId: 'user-123',
       settings: {
         showActivities: true,
       },
+      updatedAt: '2026-01-01T00:00:00.000Z',
     });
 
     render(<ActivityMap />);
@@ -224,11 +232,13 @@ describe('ActivityMap', () => {
   });
 
   it('falls back to local storage when authenticated API save fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue({
       userId: 'user-123',
       settings: {
         showActivities: true,
       },
+      updatedAt: '2026-01-01T00:00:00.000Z',
     });
 
     render(<ActivityMap />);
@@ -242,6 +252,56 @@ describe('ActivityMap', () => {
       expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
       const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
       expect(persisted).toBeTruthy();
+    });
+  });
+
+  it('hydrates from user-scoped local fallback when authenticated and settings API read fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-01-02T00:00:00.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+    });
+  });
+
+  it('prefers newer user-scoped local settings over older API settings', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-01-02T00:00:00.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
     });
   });
 });

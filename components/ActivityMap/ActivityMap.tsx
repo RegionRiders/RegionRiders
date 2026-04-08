@@ -8,10 +8,12 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
+  loadAuthenticatedUserIdFromApi,
   loadMapSettingsFromApi,
   saveMapSettingsToApi,
 } from '@/components/ActivityMap/storage/mapSettingsApi';
 import {
+  loadPersistedMapSettingsFromStorage,
   loadMapSettingsFromStorage,
   saveMapSettingsToStorage,
 } from '@/components/ActivityMap/storage/mapSettingsPersistence';
@@ -28,6 +30,15 @@ import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
 const ACTIVITY_MAP_DEBUG_FLAG = '__RR_ACTIVITY_MAP_DEBUG__';
+
+function parseTimestamp(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 /**
  * ActivityMap component renders an interactive map with GPX tracks and region overlays
@@ -86,15 +97,19 @@ export default function ActivityMap() {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...anonymousLocalSettings });
       }
 
-      const userSettingsFromApi = await loadMapSettingsFromApi();
-      debugLog('Hydration API response', userSettingsFromApi);
+      const authenticatedUserId = await loadAuthenticatedUserIdFromApi();
+      debugLog('Hydration auth session response', { authenticatedUserId });
+
+      const userSettingsFromApi = authenticatedUserId ? await loadMapSettingsFromApi() : null;
+      debugLog('Hydration settings API response', userSettingsFromApi);
       if (!isMounted) {
         return;
       }
 
-      setPersistedUserId(userSettingsFromApi?.userId ?? null);
+      const persistedUserId = userSettingsFromApi?.userId ?? authenticatedUserId ?? null;
+      setPersistedUserId(persistedUserId);
 
-      if (!userSettingsFromApi?.userId) {
+      if (!persistedUserId) {
         setIsSettingsHydrated(true);
         debugLog('Hydration completed', {
           persistedUserId: null,
@@ -104,24 +119,39 @@ export default function ActivityMap() {
         return;
       }
 
-      const userScopedLocalSettings = loadMapSettingsFromStorage(userSettingsFromApi.userId);
+      const userScopedLocalSettings = loadPersistedMapSettingsFromStorage(persistedUserId);
+      const apiTimestamp = parseTimestamp(userSettingsFromApi?.updatedAt ?? null);
+      const localTimestamp = parseTimestamp(userScopedLocalSettings?.savedAt ?? null);
+      const shouldPreferUserScopedLocalSettings =
+        Boolean(userScopedLocalSettings?.settings) &&
+        (
+          !userSettingsFromApi?.settings ||
+          !apiTimestamp ||
+          (localTimestamp != null && localTimestamp > apiTimestamp)
+        );
 
-      if (userSettingsFromApi.settings) {
+      if (shouldPreferUserScopedLocalSettings && userScopedLocalSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
+      } else if (userSettingsFromApi?.settings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userSettingsFromApi.settings });
-      } else if (userScopedLocalSettings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings });
+      } else if (userScopedLocalSettings?.settings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
       } else {
         setSettings(DEFAULT_MAP_SETTINGS);
       }
 
       setIsSettingsHydrated(true);
-      debugLog('Hydration completed', {
-        persistedUserId: userSettingsFromApi.userId,
-        usedApiSettings: Boolean(userSettingsFromApi.settings),
-        usedUserScopedStorageSettings: Boolean(
-          !userSettingsFromApi.settings && userScopedLocalSettings
-        ),
-      });
+        debugLog('Hydration completed', {
+          persistedUserId,
+          usedApiSettings: Boolean(userSettingsFromApi?.settings),
+          usedUserScopedStorageSettings: Boolean(
+            shouldPreferUserScopedLocalSettings ||
+              (!userSettingsFromApi?.settings && userScopedLocalSettings)
+          ),
+          shouldPreferUserScopedLocalSettings,
+          apiTimestamp,
+          localTimestamp,
+        });
     };
 
     void hydrateSettings();
