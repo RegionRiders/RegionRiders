@@ -1,3 +1,4 @@
+import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
   loadAuthenticatedUserIdFromApi,
@@ -191,6 +192,84 @@ describe('ActivityMap', () => {
     });
   });
 
+  it('prefers newer user-scoped local settings when they are fresher than API settings', async () => {
+    const persistedTileLayerUrl = 'https://example.com/local/{z}/{x}/{y}';
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        ...DEFAULT_MAP_SETTINGS,
+        showActivities: true,
+        tileLayerUrl: 'https://example.com/api/{z}/{x}/{y}',
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-02-01T00:00:00.000Z',
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+          tileLayerUrl: persistedTileLayerUrl,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+      expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
+    });
+  });
+
+  it('uses auth-session user id for authenticated saves when settings API read fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+    mockSaveMapSettingsToApi.mockResolvedValue(false);
+
+    render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled());
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+      expect(persisted).toBeTruthy();
+    });
+  });
+
+  it('does not prefer empty user-scoped local settings over non-empty API settings', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-02-01T00:00:00.000Z',
+        settings: {},
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(true);
+    });
+  });
+
   it('saves settings to authenticated API when user id is present', async () => {
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue({
@@ -254,5 +333,4 @@ describe('ActivityMap', () => {
       expect(persisted).toBeTruthy();
     });
   });
-
 });
