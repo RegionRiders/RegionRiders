@@ -1,3 +1,4 @@
+import { mockTrips } from '@/lib/mockData';
 import { fireEvent, render, screen, within } from '@/test-utils';
 import { TripsListElement } from './TripsListElement';
 
@@ -51,15 +52,14 @@ describe('TripsListElement', () => {
 
   it('renders the first batch of trip posts', () => {
     render(<TripsListElement {...defaultProps} />);
-    // mockTrips starts with 'Wycieczka poranna baaaardzo długa...'
-    expect(screen.getAllByText(/Wycieczka poranna/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(mockTrips[0].title).length).toBeGreaterThan(0);
   });
 
   it('calls toggleTrip when a trip is selected for the first time', () => {
     const toggleTrip = jest.fn();
     render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={false} />);
 
-    const firstTripTitle = screen.getAllByText(/Wycieczka poranna/i)[0];
+    const firstTripTitle = screen.getAllByText(mockTrips[0].title)[0];
     fireEvent.click(firstTripTitle);
     expect(toggleTrip).toHaveBeenCalled();
   });
@@ -67,12 +67,12 @@ describe('TripsListElement', () => {
   it('shows the TripDetails aside after selecting a trip', () => {
     render(<TripsListElement {...defaultProps} />);
 
-    const occurrencesBeforeClick = screen.getAllByText(/Wycieczka poranna/i).length;
-    const firstTitle = screen.getAllByText(/Wycieczka poranna/i)[0];
+    const occurrencesBeforeClick = screen.getAllByText(mockTrips[0].title).length;
+    const firstTitle = screen.getAllByText(mockTrips[0].title)[0];
     fireEvent.click(firstTitle);
 
     // TripDetails in the aside renders the selected trip title in addition to the list item
-    const occurrencesAfterClick = screen.getAllByText(/Wycieczka poranna/i).length;
+    const occurrencesAfterClick = screen.getAllByText(mockTrips[0].title).length;
     expect(occurrencesAfterClick).toBeGreaterThan(occurrencesBeforeClick);
   });
 
@@ -81,7 +81,7 @@ describe('TripsListElement', () => {
     render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={false} />);
 
     // Select a trip first
-    const firstTitle = screen.getAllByText(/Wycieczka poranna/i)[0];
+    const firstTitle = screen.getAllByText(mockTrips[0].title)[0];
     fireEvent.click(firstTitle);
     expect(toggleTrip).toHaveBeenCalledTimes(1);
 

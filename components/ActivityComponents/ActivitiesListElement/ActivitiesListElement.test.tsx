@@ -1,3 +1,4 @@
+import { mockActivities } from '@/lib/mockData';
 import { fireEvent, render, screen } from '@/test-utils';
 import { ActivitiesListElement } from './ActivitiesListElement';
 
@@ -52,8 +53,7 @@ describe('ActivitiesListElement', () => {
 
   it('renders the first batch of activities', () => {
     render(<ActivitiesListElement {...defaultProps} />);
-    // The mock data has activities with titles starting with "Wycieczka"
-    expect(screen.getAllByText(/Wycieczka/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(mockActivities[0].title).length).toBeGreaterThan(0);
   });
 
   it('calls toggleActivity when an activity title is clicked for the first time', () => {
@@ -66,7 +66,7 @@ describe('ActivitiesListElement', () => {
       />
     );
 
-    const firstActivityTitle = screen.getAllByText(/Wycieczka wgłąb torby i to takiej/i)[0];
+    const firstActivityTitle = screen.getAllByText(mockActivities[0].title)[0];
     fireEvent.click(firstActivityTitle);
     expect(toggleActivity).toHaveBeenCalled();
   });

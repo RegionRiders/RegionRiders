@@ -15,7 +15,7 @@ afterEach(() => {
   jest.runOnlyPendingTimers();
   jest.clearAllTimers();
   jest.useRealTimers();
-  jest.clearAllMocks();
+  jest.restoreAllMocks();
 });
 
 describe('openOAuthPopup', () => {
