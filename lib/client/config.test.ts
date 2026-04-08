@@ -27,6 +27,26 @@ describe('getApiBaseUrl', () => {
 });
 
 describe('getApiUrl', () => {
+  it('throws on a protocol-relative path (//)', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('//evil.com/path')).toThrow('multiple leading slashes');
+  });
+
+  it('throws on a path with multiple leading slashes (///)', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('///evil')).toThrow('multiple leading slashes');
+  });
+
+  it('throws on an absolute URL with http scheme', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('http://evil.com/path')).toThrow('absolute URLs with a scheme');
+  });
+
+  it('throws on an absolute URL with https scheme', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('https://evil.com/path')).toThrow('absolute URLs with a scheme');
+  });
+
   it('prepends base URL to a path that starts with /', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
     expect(getApiUrl('/api/strava/auth')).toBe('https://example.com/api/strava/auth');

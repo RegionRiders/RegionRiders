@@ -14,7 +14,7 @@ export const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   ({ user, showChevron = true, ...others }, ref) => (
     <UnstyledButton
       ref={ref}
-      aria-label={`${user.firstname} ${user.lastname}`.trim() || 'User menu'}
+      aria-label={`${user.firstname ?? ''} ${user.lastname ?? ''}`.trim() || 'User menu'}
       {...others}
     >
       <Group gap="sm">
