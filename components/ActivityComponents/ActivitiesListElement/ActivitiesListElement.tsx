@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
+  ActionIcon,
   Anchor,
   AppShell,
-  ActionIcon,
   Button,
   Checkbox,
   CloseButton,
@@ -135,12 +135,12 @@ export function ActivitiesListElement({
       <div hidden={tripCreationMode}>
         <Menu shadow="md" position="right">
           <Menu.Target>
-              <ActionIcon variant="subtle" aria-label="Open activity menu">
-                <Text size="35px" fw={650}>
-                  ⫶
-                </Text>
-              </ActionIcon>
-            </Menu.Target>
+            <ActionIcon variant="subtle" aria-label="Open activity menu">
+              <Text size="35px" fw={650}>
+                ⫶
+              </Text>
+            </ActionIcon>
+          </Menu.Target>
 
           <Menu.Dropdown>
             <Menu.Item>Add to trip</Menu.Item>
