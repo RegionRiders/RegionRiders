@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@/test-utils';
+import { fireEvent, render, screen, within } from '@/test-utils';
 import { TripsListElement } from './TripsListElement';
 
 // Mock InfiniteScroll to simply render its children
@@ -68,26 +68,30 @@ describe('TripsListElement', () => {
 
   it('shows the TripDetails aside after selecting a trip', () => {
     render(<TripsListElement {...defaultProps} />);
+
+    const occurrencesBeforeClick = screen.getAllByText(/Wycieczka poranna/i).length;
     const firstTitle = screen.getAllByText(/Wycieczka poranna/i)[0];
     fireEvent.click(firstTitle);
 
-    // Aside shows the selected trip via TripDetails (title appears there too)
-    const allOccurrences = screen.getAllByText(/Wycieczka poranna/i);
-    expect(allOccurrences.length).toBeGreaterThan(0);
+    // TripDetails in the aside renders the selected trip title in addition to the list item
+    const occurrencesAfterClick = screen.getAllByText(/Wycieczka poranna/i).length;
+    expect(occurrencesAfterClick).toBeGreaterThan(occurrencesBeforeClick);
   });
 
   it('closes the trip details when the close button in the aside is clicked', () => {
     const toggleTrip = jest.fn();
-    render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={true} />);
+    render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={false} />);
 
     // Select a trip first
     const firstTitle = screen.getAllByText(/Wycieczka poranna/i)[0];
     fireEvent.click(firstTitle);
+    expect(toggleTrip).toHaveBeenCalledTimes(1);
 
-    // Click the close button in TripDetails
-    const closeButton = screen.queryByRole('button', { name: '' });
-    if (closeButton) {
-      fireEvent.click(closeButton);
-    }
+    // Click the close button scoped to the aside container
+    const aside = screen.getByTestId('appshell-aside');
+    const closeButton = within(aside).getByRole('button');
+    fireEvent.click(closeButton);
+
+    expect(toggleTrip).toHaveBeenCalledTimes(2);
   });
 });

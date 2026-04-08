@@ -60,20 +60,20 @@ describe('dateOnlyTime', () => {
 
 describe('dayDifference', () => {
   it('returns 0 for the same day', () => {
-    const dateA = new Date(2024, 5, 15, 8, 0);
-    const dateB = new Date(2024, 5, 15, 23, 59);
+    const dateA = new Date('2024-06-15T08:00:00.000Z');
+    const dateB = new Date('2024-06-15T23:59:00.000Z');
     expect(dayDifference(dateA, dateB)).toBe(0);
   });
 
   it('returns positive value when dateA is after dateB', () => {
-    const dateA = new Date(2024, 5, 18);
-    const dateB = new Date(2024, 5, 15);
+    const dateA = new Date('2024-06-18T00:00:00.000Z');
+    const dateB = new Date('2024-06-15T00:00:00.000Z');
     expect(dayDifference(dateA, dateB)).toBe(3);
   });
 
   it('returns negative value when dateA is before dateB', () => {
-    const dateA = new Date(2024, 5, 15);
-    const dateB = new Date(2024, 5, 18);
+    const dateA = new Date('2024-06-15T00:00:00.000Z');
+    const dateB = new Date('2024-06-18T00:00:00.000Z');
     expect(dayDifference(dateA, dateB)).toBe(-3);
   });
 });

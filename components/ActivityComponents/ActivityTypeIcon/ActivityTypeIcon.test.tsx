@@ -6,11 +6,11 @@ describe('ActivityTypeIcon', () => {
     render(<ActivityTypeIcon type="run" />);
   });
 
-  it('renders a tooltip with the activity label by default', async () => {
+  it('renders the icon inside a themed container', () => {
     render(<ActivityTypeIcon type="ride" />);
-    // ThemeIcon should be present in the DOM
-    const icon = document.querySelector('[class*="ThemeIcon"], svg');
-    expect(icon).toBeTruthy();
+    // The icon SVG should be in the document
+    const svg = document.querySelector('svg');
+    expect(svg).toBeTruthy();
   });
 
   it('renders without a tooltip when withHoverLabel is false', () => {
