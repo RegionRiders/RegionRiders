@@ -40,10 +40,14 @@ const REQUIRED_ENV = [
 
 const originalEnv = process.env;
 
+let savedEnvSnapshot: Record<string, string | undefined>;
+
 beforeEach(() => {
   jest.clearAllMocks();
   // Clone env so each test starts from a clean slate without clobbering pre-existing vars
   process.env = { ...originalEnv };
+  // Save snapshot of current values for REQUIRED_ENV keys
+  savedEnvSnapshot = Object.fromEntries(REQUIRED_ENV.map(k => [k, process.env[k]]));
   setEnv({
     POSTGRES_HOST: 'localhost',
     POSTGRES_DB: 'regionriders',
@@ -58,7 +62,15 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  clearEnv(...REQUIRED_ENV);
+  // Restore saved values instead of only deleting
+  for (const key of REQUIRED_ENV) {
+    const originalValue = savedEnvSnapshot[key];
+    if (originalValue !== undefined) {
+      process.env[key] = originalValue;
+    } else {
+      delete process.env[key];
+    }
+  }
 });
 
 afterAll(() => {

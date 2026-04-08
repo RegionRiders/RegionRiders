@@ -21,5 +21,6 @@ describe('Logo', () => {
     render(<Logo src="/custom-logo.svg" />);
     const img = screen.getByAltText('RegionRiders Logo');
     expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/custom-logo.svg');
   });
 });

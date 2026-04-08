@@ -41,4 +41,22 @@ describe('getApiUrl', () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
     expect(getApiUrl('')).toBe('https://example.com/');
   });
+
+  describe('with trailing slash in NEXT_PUBLIC_API_BASE_URL', () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com/';
+    });
+
+    it('does not produce double slashes with path starting with /', () => {
+      expect(getApiUrl('/api/strava/auth')).toBe('https://example.com/api/strava/auth');
+    });
+
+    it('does not produce double slashes with path not starting with /', () => {
+      expect(getApiUrl('api/health')).toBe('https://example.com/api/health');
+    });
+
+    it('works with an empty path (root)', () => {
+      expect(getApiUrl('')).toBe('https://example.com/');
+    });
+  });
 });
