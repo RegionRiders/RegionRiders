@@ -62,6 +62,21 @@ describe('getApiUrl', () => {
     expect(getApiUrl('')).toBe('https://example.com/');
   });
 
+  it('throws for protocol-relative paths starting with //', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('//evil.com/path')).toThrow(/absolute or protocol-relative/);
+  });
+
+  it('throws for paths with multiple leading slashes', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('///evil.com')).toThrow(/absolute or protocol-relative/);
+  });
+
+  it('throws for absolute URLs with scheme', () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com';
+    expect(() => getApiUrl('https://evil.com/path')).toThrow(/absolute or protocol-relative/);
+  });
+
   describe('with trailing slash in NEXT_PUBLIC_API_BASE_URL', () => {
     beforeEach(() => {
       process.env.NEXT_PUBLIC_API_BASE_URL = 'https://example.com/';

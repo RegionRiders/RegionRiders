@@ -49,6 +49,11 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
 
+  // When no user is present, force the active tab to 'welcome' regardless of
+  // what defaultTab was passed in, to prevent unauthenticated users from being
+  // seeded into protected panels.
+  const initialTab = user === undefined ? 'welcome' : defaultTab;
+
   const getAsideWidth = (tab: string | null) => {
     switch (tab) {
       case 'welcome':
@@ -71,7 +76,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
     md?: string | number;
     lg?: string | number;
     xl?: string | number;
-  }>(() => getAsideWidth(defaultTab));
+  }>(() => getAsideWidth(initialTab));
 
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
@@ -88,7 +93,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
   };
 
   return (
-    <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
+    <Tabs defaultValue={initialTab} onChange={(value) => changeContentWidth(value)}>
       <AppShell
         header={{ height: '4rem' }}
         aside={{

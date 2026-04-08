@@ -16,12 +16,15 @@ const Login: React.FC = () => {
   /** Controls the visibility of the login modal */
   const [isOpen, setIsOpen] = useState(true);
 
-  /** Stores the OAuth authorization code received from Strava */
-  const [, setAuthCode] = useState<string | null>(null);
-
   if (!isOpen) {
     return null;
   }
+
+  const handleAuthCode = (_code: string) => {
+    // The server callback has already handled token exchange and set the session cookie.
+    // Reload the page so the app picks up the new authenticated session.
+    window.location.reload();
+  };
 
   return (
     <div className={styles.overlay}>
@@ -43,7 +46,7 @@ const Login: React.FC = () => {
 
             <Text className={styles.dimmedText}>Log in to connect your Strava account</Text>
 
-            <StravaLoginButton onAuthCode={setAuthCode} />
+            <StravaLoginButton onAuthCode={handleAuthCode} />
           </div>
         </Paper>
       </Container>

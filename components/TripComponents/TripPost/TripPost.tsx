@@ -12,6 +12,7 @@ import {
   MantineProvider,
   Stack,
   Text,
+  UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
@@ -142,11 +143,11 @@ const Activities = ({
 
       {activities.length > 5 && (
         <>
-          <Anchor onClick={toggle}>
+          <UnstyledButton onClick={toggle}>
             {activitiesExpanded
               ? 'Hide activities'
               : `...and ${activities.length - 4} more activities`}
-          </Anchor>
+          </UnstyledButton>
           <Collapse in={activitiesExpanded}>{mapActivities(activitiesToShow)}</Collapse>
         </>
       )}
@@ -165,7 +166,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
     >
       <Group mb="xs" align="flex-start">
         <Card.Section>
-          <Anchor
+          <UnstyledButton
             onClick={() => {
               onSelect(data);
             }}
@@ -177,11 +178,11 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
               radius="md"
               fit="fill"
             />
-          </Anchor>
+          </UnstyledButton>
         </Card.Section>
 
         <Stack ml={{ base: 0, asideOpenHide: 'md' }} gap={0} w={{ base: 'auto', xs: 270 }}>
-          <Anchor
+          <UnstyledButton
             onClick={() => {
               onSelect(data);
             }}
@@ -189,7 +190,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
             <Text fw="bold" size="xl" mb={0} lineClamp={2}>
               {data.title}
             </Text>
-          </Anchor>
+          </UnstyledButton>
 
           <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
