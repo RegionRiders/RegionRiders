@@ -3,14 +3,30 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const DEFAULT_SOURCE_DIR = '/home/fra/Dokumenty/rr_import_20260325/mobile_geojson_balanced';
-const DEFAULT_OUTPUT_DIR = '/home/fra/WebstormProjects/RegionRiders/public/data/regions/tiles/v1';
-const DEFAULT_TMP_GPKG =
-  '/home/fra/WebstormProjects/RegionRiders/public/data/regions/tiles/.tmp_regions_v1.gpkg';
-const DEFAULT_NORMALIZED_GPKG =
-  '/home/fra/WebstormProjects/RegionRiders/public/data/regions/tiles/.tmp_regions_v1_normalized.gpkg';
+const REPO_ROOT = process.cwd();
+const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, 'public', 'data', 'regions', 'tiles', 'v1');
+const DEFAULT_TMP_GPKG = path.join(
+  REPO_ROOT,
+  'public',
+  'data',
+  'regions',
+  'tiles',
+  '.tmp_regions_v1.gpkg'
+);
+const DEFAULT_NORMALIZED_GPKG = path.join(
+  REPO_ROOT,
+  'public',
+  'data',
+  'regions',
+  'tiles',
+  '.tmp_regions_v1_normalized.gpkg'
+);
 const DEFAULT_MIN_ZOOM = 3;
 const DEFAULT_MAX_ZOOM = 14;
+const DEFAULT_SOURCE_DIR_CANDIDATES = [
+  process.env.REGION_SOURCE_DIR,
+  path.join(REPO_ROOT, 'public', 'data', 'rr_import', 'mobile_geojson_balanced'),
+].filter((value): value is string => Boolean(value));
 
 interface BuildOptions {
   sourceDir: string;
@@ -60,8 +76,22 @@ function parseIntArg(value: string | undefined, fallback: number, name: string):
   return parsed;
 }
 
+function resolveDefaultSourceDir(): string {
+  const existingCandidate = DEFAULT_SOURCE_DIR_CANDIDATES.find((candidate) =>
+    fs.existsSync(candidate)
+  );
+
+  if (existingCandidate) {
+    return existingCandidate;
+  }
+
+  throw new Error(
+    'No default source directory found. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+  );
+}
+
 function getBuildOptions(): BuildOptions {
-  const sourceDir = getArgValue('--source') ?? DEFAULT_SOURCE_DIR;
+  const sourceDir = getArgValue('--source') ?? resolveDefaultSourceDir();
   const outputDir = getArgValue('--output') ?? DEFAULT_OUTPUT_DIR;
   const tempGpkg = getArgValue('--temp') ?? DEFAULT_TMP_GPKG;
   const normalizedGpkg = getArgValue('--normalized') ?? DEFAULT_NORMALIZED_GPKG;

@@ -104,14 +104,30 @@ Use this protocol for each candidate build.
 ## Notes
 
 - Current scripts rely on GDAL tools (`ogrmerge.py`, `ogr2ogr`) being installed.
+- Source dataset defaults for `regions:validate-source` and `regions:build-tiles` are resolved in this order:
+  - `--source`
+  - `REGION_SOURCE_DIR`
+  - `public/data/rr_import/mobile_geojson_balanced` when present
+  - otherwise the command fails and requires an explicit source path
 - Runtime rendering expects vector tile layer `regions` with stable `region_id` values.
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.
 
 ## Hosting and distribution strategy
 
+- Runtime path classification:
+  - primary runtime source:
+    - `NEXT_PUBLIC_REGION_TILE_URL` when set
+    - otherwise `https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf`
+  - alternate / self-host runtime source:
+    - `/api/regions/tiles/v1/{z}/{x}/{y}.pbf`
+    - this serves tiles from local artifacts in `public/data/regions/tiles/v1`
+  - local artifact path:
+    - `public/data/regions/tiles/v1`
+    - intended for local build output and self-host/API serving, not as the default remote production origin
+
 - For VPS-first deployment with Dokku (and later CDN migration), see:
-  - `docs/tiles-hosting-vps-dokku-plan.md`
+  - `docs/architecture/tile-hosting-migration-plan.md`
 - Repository policy: large tile artifacts should not be source-controlled in the app repo.
 - Local optimization note: current in-repo sample may include only a main chunk (e.g. `z=11`) for development/testing;
   full production tile set should be deployed from external artifact storage.

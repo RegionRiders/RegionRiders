@@ -25,8 +25,19 @@ interface ValidationReport {
 
 const REQUIRED_PROPERTIES = ['region_id', 'country_code', 'admin_level', 'name'] as const;
 
-const DEFAULT_SOURCE_DIR = '../public/data/rr_import/mobile_geojson_balanced';
-const DEFAULT_REPORT_PATH = '../public/data/regions/reports/source-validation-v1.json';
+const REPO_ROOT = process.cwd();
+const DEFAULT_REPORT_PATH = path.join(
+  REPO_ROOT,
+  'public',
+  'data',
+  'regions',
+  'reports',
+  'source-validation-v1.json'
+);
+const DEFAULT_SOURCE_DIR_CANDIDATES = [
+  process.env.REGION_SOURCE_DIR,
+  path.join(REPO_ROOT, 'public', 'data', 'rr_import', 'mobile_geojson_balanced'),
+].filter((value): value is string => Boolean(value));
 const MAX_ISSUES = 500;
 
 function getArgValue(flag: string): string | undefined {
@@ -85,8 +96,22 @@ function ensureDirForFile(filePath: string): void {
   }
 }
 
+function resolveDefaultSourceDir(): string {
+  const existingCandidate = DEFAULT_SOURCE_DIR_CANDIDATES.find((candidate) =>
+    fs.existsSync(candidate)
+  );
+
+  if (existingCandidate) {
+    return existingCandidate;
+  }
+
+  throw new Error(
+    'No default source directory found. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+  );
+}
+
 function main(): void {
-  const sourceDir = getArgValue('--source') ?? DEFAULT_SOURCE_DIR;
+  const sourceDir = getArgValue('--source') ?? resolveDefaultSourceDir();
   const reportPath = getArgValue('--report') ?? DEFAULT_REPORT_PATH;
 
   if (!fs.existsSync(sourceDir)) {
