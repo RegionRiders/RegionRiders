@@ -29,6 +29,7 @@ describe('useRegionRendering', () => {
   const addTo = jest.fn();
   const on = jest.fn();
   const off = jest.fn();
+  const visitData = new Map<string, any>();
 
   const mockLayer: any = {
     addTo,
@@ -51,19 +52,19 @@ describe('useRegionRendering', () => {
   });
 
   it('does nothing when map is null', () => {
-    renderHook(() => useRegionRendering(null, true));
+    renderHook(() => useRegionRendering(null, true, visitData));
 
     expect((L as any).vectorGrid.protobuf).not.toHaveBeenCalled();
   });
 
   it('does not render layer when borders are hidden', () => {
-    renderHook(() => useRegionRendering(mockMap, false));
+    renderHook(() => useRegionRendering(mockMap, false, visitData));
 
     expect((L as any).vectorGrid.protobuf).not.toHaveBeenCalled();
   });
 
   it('creates vector tile layer and adds it to map', () => {
-    renderHook(() => useRegionRendering(mockMap, true));
+    renderHook(() => useRegionRendering(mockMap, true, visitData));
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
     expect(addTo).toHaveBeenCalledWith(mockMap);
@@ -74,7 +75,7 @@ describe('useRegionRendering', () => {
   it('cleans up tile listeners and map layer on unmount', () => {
     mockMap.hasLayer.mockReturnValue(true);
 
-    const { unmount } = renderHook(() => useRegionRendering(mockMap, true));
+    const { unmount } = renderHook(() => useRegionRendering(mockMap, true, visitData));
 
     unmount();
 

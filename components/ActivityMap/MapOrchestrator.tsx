@@ -4,6 +4,7 @@ import type { Map as LeafletMap } from 'leaflet';
 import { GPXTrack } from '@/lib/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import { useActivityRendering } from './hooks/useActivityRendering';
+import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useRegionRendering } from './hooks/useRegionRendering';
 
 interface MapOrchestratorProps {
@@ -25,8 +26,10 @@ export default function MapOrchestrator({
   showBorders = true,
   activityMode = 'heatmap',
 }: MapOrchestratorProps) {
+  const { visitData } = useRegionAnalysis(tracks, []);
+
   useActivityRendering(map, tracks, showHeatmap, activityMode);
-  useRegionRendering(map, showBorders);
+  useRegionRendering(map, showBorders, visitData);
 
   // This component is a side effect coordinator, doesn't render
   return null;

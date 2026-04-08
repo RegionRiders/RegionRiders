@@ -1,4 +1,5 @@
 import { RegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
+import { getRegionTileSourceUrl } from '@/components/ActivityMap/config/regionTileSource';
 
 export interface RegionTileProfileConfig {
   sourceUrl: string;
@@ -15,11 +16,9 @@ export interface RegionTileProfileConfig {
   };
 }
 
-const BASE_TILESET_PATH = 'https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf';
-
 const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig> = {
   mobile: {
-    sourceUrl: BASE_TILESET_PATH,
+    sourceUrl: '',
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 4,
@@ -33,7 +32,7 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     },
   },
   desktop: {
-    sourceUrl: BASE_TILESET_PATH,
+    sourceUrl: '',
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 3,
@@ -49,5 +48,8 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
 };
 
 export function getRegionTileProfileConfig(profile: RegionRenderProfile): RegionTileProfileConfig {
-  return REGION_TILE_PROFILES[profile];
+  return {
+    ...REGION_TILE_PROFILES[profile],
+    sourceUrl: getRegionTileSourceUrl(),
+  };
 }

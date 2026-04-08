@@ -13,6 +13,7 @@ import {
   markFirstRegionLayerAdded,
 } from '@/lib/services/maps/regionPerfMetrics';
 import { selectRegionRenderProfile } from '@/lib/services/maps/selectRenderProfile';
+import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 const logger = createComponentLogger('useRegionRendering');
 
@@ -20,7 +21,11 @@ const logger = createComponentLogger('useRegionRendering');
  * Renders region polygons from vector tiles using Leaflet VectorGrid.
  * Uses profile-based styling tuned for mobile and desktop.
  */
-export function useRegionRendering(map: L.Map | null, showBorders: boolean = true) {
+export function useRegionRendering(
+  map: L.Map | null,
+  showBorders: boolean = true,
+  _visitData: Map<string, RegionVisitData> = new Map()
+) {
   const regionLayerRef = useRef<L.Layer | null>(null);
   const profile = useMemo(() => selectRegionRenderProfile(), []);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
