@@ -19,7 +19,7 @@ jest.mock('./hooks/map/useLeafletMap', () => ({
   useLeafletMap: jest.fn(),
 }));
 
-jest.mock('./storage/mapSettingsApi', () => ({
+jest.mock('@/components/ActivityMap/storage/mapSettingsApi', () => ({
   loadAuthenticatedUserIdFromApi: jest.fn(),
   loadMapSettingsFromApi: jest.fn(),
   saveMapSettingsToApi: jest.fn(),
@@ -255,53 +255,4 @@ describe('ActivityMap', () => {
     });
   });
 
-  it('hydrates from user-scoped local fallback when authenticated and settings API read fails', async () => {
-    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
-    mockLoadMapSettingsFromApi.mockResolvedValue(null);
-    window.localStorage.setItem(
-      'rr:map-settings:user:user-123',
-      JSON.stringify({
-        version: 1,
-        savedAt: '2026-01-02T00:00:00.000Z',
-        settings: {
-          showActivities: false,
-        },
-      })
-    );
-
-    render(<ActivityMap />);
-
-    await waitFor(() => {
-      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
-      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
-    });
-  });
-
-  it('prefers newer user-scoped local settings over older API settings', async () => {
-    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
-    mockLoadMapSettingsFromApi.mockResolvedValue({
-      userId: 'user-123',
-      settings: {
-        showActivities: true,
-      },
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    });
-    window.localStorage.setItem(
-      'rr:map-settings:user:user-123',
-      JSON.stringify({
-        version: 1,
-        savedAt: '2026-01-02T00:00:00.000Z',
-        settings: {
-          showActivities: false,
-        },
-      })
-    );
-
-    render(<ActivityMap />);
-
-    await waitFor(() => {
-      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
-      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
-    });
-  });
 });

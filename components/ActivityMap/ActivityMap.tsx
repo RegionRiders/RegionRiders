@@ -100,7 +100,7 @@ export default function ActivityMap() {
       const authenticatedUserId = await loadAuthenticatedUserIdFromApi();
       debugLog('Hydration auth session response', { authenticatedUserId });
 
-      const userSettingsFromApi = authenticatedUserId ? await loadMapSettingsFromApi() : null;
+      const userSettingsFromApi = await loadMapSettingsFromApi();
       debugLog('Hydration settings API response', userSettingsFromApi);
       if (!isMounted) {
         return;
@@ -122,13 +122,15 @@ export default function ActivityMap() {
       const userScopedLocalSettings = loadPersistedMapSettingsFromStorage(persistedUserId);
       const apiTimestamp = parseTimestamp(userSettingsFromApi?.updatedAt ?? null);
       const localTimestamp = parseTimestamp(userScopedLocalSettings?.savedAt ?? null);
+      const hasUserScopedLocalSettings = Boolean(userScopedLocalSettings?.settings);
+      const hasApiSettings = Boolean(userSettingsFromApi?.settings);
+      const isLocalSettingsNewerThanApi =
+        localTimestamp != null && apiTimestamp != null && localTimestamp > apiTimestamp;
       const shouldPreferUserScopedLocalSettings =
-        Boolean(userScopedLocalSettings?.settings) &&
-        (
-          !userSettingsFromApi?.settings ||
-          !apiTimestamp ||
-          (localTimestamp != null && localTimestamp > apiTimestamp)
-        );
+        hasUserScopedLocalSettings && (!hasApiSettings || !apiTimestamp || isLocalSettingsNewerThanApi);
+      const usedUserScopedStorageSettings =
+        shouldPreferUserScopedLocalSettings || (!hasApiSettings && hasUserScopedLocalSettings);
+      const usedApiSettings = hasApiSettings && !shouldPreferUserScopedLocalSettings;
 
       if (shouldPreferUserScopedLocalSettings && userScopedLocalSettings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
@@ -143,11 +145,8 @@ export default function ActivityMap() {
       setIsSettingsHydrated(true);
         debugLog('Hydration completed', {
           persistedUserId,
-          usedApiSettings: Boolean(userSettingsFromApi?.settings),
-          usedUserScopedStorageSettings: Boolean(
-            shouldPreferUserScopedLocalSettings ||
-              (!userSettingsFromApi?.settings && userScopedLocalSettings)
-          ),
+          usedApiSettings,
+          usedUserScopedStorageSettings,
           shouldPreferUserScopedLocalSettings,
           apiTimestamp,
           localTimestamp,
