@@ -35,7 +35,7 @@ export interface ActivityTypeConfig {
   color?: string;
 }
 
-export const ACTIVITY_TYPES: Record<string, ActivityTypeConfig> = {
+export const ACTIVITY_TYPES = {
   // Foot Sports
   run: {
     icon: IconRun,
@@ -245,7 +245,7 @@ export const ACTIVITY_TYPES: Record<string, ActivityTypeConfig> = {
     icon: IconSailboat,
     label: 'Virtual Rowing',
   },
-} as const;
+} as const satisfies Record<string, ActivityTypeConfig>;
 
 export type ActivityType = keyof typeof ACTIVITY_TYPES;
 
@@ -258,5 +258,9 @@ export const DEFAULT_ACTIVITY: ActivityTypeConfig = {
 
 // Helper function to get activity config
 export const getActivityConfig = (activityType: string): ActivityTypeConfig => {
-  return ACTIVITY_TYPES[activityType.toLowerCase()] || DEFAULT_ACTIVITY;
+  const normalizedType = activityType.toLowerCase();
+  if (Object.hasOwn(ACTIVITY_TYPES, normalizedType)) {
+    return ACTIVITY_TYPES[normalizedType as ActivityType];
+  }
+  return DEFAULT_ACTIVITY;
 };

@@ -23,8 +23,8 @@ export function openOAuthPopup({
   onCode,
   onClose,
 }: OAuthPopupOptions): void {
-  const screenLeft = window.screenLeft;
-  const screenTop = window.screenTop;
+  const screenLeft = window.screenX ?? window.screenLeft ?? 0;
+  const screenTop = window.screenY ?? window.screenTop ?? 0;
   const screenWidth = screen.availWidth;
   const screenHeight = screen.availHeight;
 

@@ -66,7 +66,7 @@ export const mockActivities: Activity[] = [
   },
   {
     id: '5e6f7g8h',
-    activityType: 'invalid',
+    activityType: 'invalid' as Activity['activityType'],
     title: 'Wycieczka wgłąb torby',
     desc: 'Wycieczka wgłąb papierowej torby co w niej znajdziemy????? ja obstawiam że będzie tam kocimiętka!',
     distance: '0.13 km',
