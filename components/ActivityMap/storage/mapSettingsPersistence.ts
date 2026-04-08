@@ -88,7 +88,7 @@ export function loadPersistedMapSettingsFromStorage(
     if ('version' in parsed && 'settings' in parsed) {
       // Versioned payload (current or legacy): extract and validate the settings object.
       const settings = validateAndNormalizeSettings(parsed.settings);
-      if (!settings) {
+      if (!settings || Object.keys(settings).length === 0) {
         return null;
       }
 
@@ -101,7 +101,7 @@ export function loadPersistedMapSettingsFromStorage(
 
     // Backward-compatible fallback for legacy raw settings payloads (no version wrapper).
     const settings = validateAndNormalizeSettings(parsed);
-    if (!settings) {
+    if (!settings || Object.keys(settings).length === 0) {
       return null;
     }
 

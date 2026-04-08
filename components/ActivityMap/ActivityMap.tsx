@@ -26,6 +26,7 @@ import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { resolveMapSettingsStorageKey } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
@@ -91,6 +92,20 @@ export default function ActivityMap() {
     }, SAVE_ERROR_TOAST_DURATION_MS);
   };
 
+  const clearUserScopedLocalSettings = (userId: string) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const storageKey = resolveMapSettingsStorageKey(userId);
+      window.localStorage.removeItem(storageKey);
+      debugLog('Cleared user-scoped local fallback settings', { userId });
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const hydrateSettings = async () => {
@@ -142,6 +157,10 @@ export default function ActivityMap() {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
       } else if (userSettingsFromApi?.settings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userSettingsFromApi.settings });
+        // Clear stale local fallback when API settings exist and are preferred
+        if (hasUserScopedLocalSettings) {
+          clearUserScopedLocalSettings(persistedUserId);
+        }
       } else if (userScopedLocalSettings?.settings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
       } else {
@@ -184,6 +203,9 @@ export default function ActivityMap() {
           saveMapSettingsToStorage(settings, persistedUserId);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
+        } else {
+          // Clear local fallback after successful API save to prevent stale data preference
+          clearUserScopedLocalSettings(persistedUserId);
         }
         return;
       }
