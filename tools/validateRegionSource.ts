@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from '@/lib/logger';
 
-interface ValidationIssue {
+export interface ValidationIssue {
   file: string;
   featureIndex?: number;
   regionId?: string;
@@ -11,12 +11,14 @@ interface ValidationIssue {
   message: string;
 }
 
-interface ValidationReport {
+export interface ValidationReport {
   generatedAt: string;
   sourceDir: string;
   filesProcessed: number;
   featuresProcessed: number;
   uniqueRegionIds: number;
+  invalidJsonFiles: number;
+  invalidFeatureCollections: number;
   duplicateRegionIds: number;
   missingRequiredFields: number;
   invalidGeometries: number;
@@ -111,10 +113,10 @@ function resolveDefaultSourceDir(): string {
   );
 }
 
-function main(): void {
-  const sourceDir = getArgValue('--source') ?? resolveDefaultSourceDir();
-  const reportPath = getArgValue('--report') ?? DEFAULT_REPORT_PATH;
-
+export function validateRegionSource(
+  sourceDir: string,
+  reportPath: string = DEFAULT_REPORT_PATH
+): ValidationReport {
   if (!fs.existsSync(sourceDir)) {
     throw new Error(`Source directory does not exist: ${sourceDir}`);
   }
@@ -131,6 +133,8 @@ function main(): void {
   const issues: ValidationIssue[] = [];
   const seenRegionIds = new Map<string, string>();
   let featuresProcessed = 0;
+  let invalidJsonFiles = 0;
+  let invalidFeatureCollections = 0;
   let duplicateRegionIds = 0;
   let missingRequiredFields = 0;
   let invalidGeometries = 0;
@@ -143,6 +147,7 @@ function main(): void {
     try {
       parsed = JSON.parse(raw);
     } catch (error) {
+      invalidJsonFiles += 1;
       addIssue(issues, {
         file: fileName,
         code: 'invalid_json',
@@ -154,6 +159,7 @@ function main(): void {
     const collection = parsed as { type?: string; features?: unknown[] };
 
     if (collection.type !== 'FeatureCollection' || !Array.isArray(collection.features)) {
+      invalidFeatureCollections += 1;
       addIssue(issues, {
         file: fileName,
         code: 'invalid_feature_collection',
@@ -218,15 +224,35 @@ function main(): void {
     filesProcessed: files.length,
     featuresProcessed,
     uniqueRegionIds: seenRegionIds.size,
+    invalidJsonFiles,
+    invalidFeatureCollections,
     duplicateRegionIds,
     missingRequiredFields,
     invalidGeometries,
     issues,
-    isValid: duplicateRegionIds === 0 && missingRequiredFields === 0 && invalidGeometries === 0,
+    isValid:
+      invalidJsonFiles === 0 &&
+      invalidFeatureCollections === 0 &&
+      duplicateRegionIds === 0 &&
+      missingRequiredFields === 0 &&
+      invalidGeometries === 0,
   };
 
   ensureDirForFile(reportPath);
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
+
+  return report;
+}
+
+function isExecutedAsScript(): boolean {
+  const entryPoint = process.argv[1];
+  return Boolean(entryPoint && /validateRegionSource\.(ts|js)$/.test(entryPoint));
+}
+
+export function main(): void {
+  const sourceDir = getArgValue('--source') ?? resolveDefaultSourceDir();
+  const reportPath = getArgValue('--report') ?? DEFAULT_REPORT_PATH;
+  const report = validateRegionSource(sourceDir, reportPath);
 
   logger.info(`Validation report saved to ${reportPath}`);
   logger.info(
@@ -234,6 +260,8 @@ function main(): void {
       `files=${report.filesProcessed}`,
       `features=${report.featuresProcessed}`,
       `uniqueRegionIds=${report.uniqueRegionIds}`,
+      `invalidJsonFiles=${report.invalidJsonFiles}`,
+      `invalidFeatureCollections=${report.invalidFeatureCollections}`,
       `duplicates=${report.duplicateRegionIds}`,
       `missingRequiredFields=${report.missingRequiredFields}`,
       `invalidGeometries=${report.invalidGeometries}`,
@@ -246,4 +274,6 @@ function main(): void {
   }
 }
 
-main();
+if (isExecutedAsScript()) {
+  main();
+}
