@@ -5,6 +5,7 @@ import {
   loadMapSettingsFromApi,
   saveMapSettingsToApi,
 } from '@/components/ActivityMap/storage/mapSettingsApi';
+import { MAP_SETTINGS_STORAGE_VERSION } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 import { useGPXData } from '@/hooks/useGPXData';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap from './ActivityMap';
@@ -164,7 +165,7 @@ describe('ActivityMap', () => {
     window.localStorage.setItem(
       'rr:map-settings:anon',
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-01-01T00:00:00.000Z',
         settings: {
           showActivities: false,
@@ -207,7 +208,7 @@ describe('ActivityMap', () => {
     window.localStorage.setItem(
       'rr:map-settings:user:user-123',
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-02-01T00:00:00.000Z',
         settings: {
           ...DEFAULT_MAP_SETTINGS,
@@ -255,7 +256,7 @@ describe('ActivityMap', () => {
     window.localStorage.setItem(
       'rr:map-settings:user:user-123',
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '1969-12-31T23:59:59.000Z',
         settings: {
           showActivities: false,
@@ -283,7 +284,7 @@ describe('ActivityMap', () => {
     window.localStorage.setItem(
       'rr:map-settings:user:user-123',
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-02-01T00:00:00.000Z',
         settings: {},
       })

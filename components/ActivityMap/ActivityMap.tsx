@@ -19,6 +19,7 @@ import {
   saveMapSettingsToStorage,
 } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 import { useGPXData } from '@/hooks/useGPXData';
+import { createComponentLogger } from '@/lib/logger/client';
 import MapContainer from './MapContainer';
 import MapOrchestrator from './MapOrchestrator';
 import styles from './ActivityMap.module.css';
@@ -31,6 +32,7 @@ import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
 const ACTIVITY_MAP_DEBUG_FLAG = '__RR_ACTIVITY_MAP_DEBUG__';
+const logger = createComponentLogger('ActivityMap');
 
 function parseTimestamp(value: string | null): number | null {
   if (!value) {
@@ -73,11 +75,11 @@ export default function ActivityMap() {
     }
 
     if (payload === undefined) {
-      console.info(`[ActivityMap] ${message}`);
+      logger.info(message);
       return;
     }
 
-    console.info(`[ActivityMap] ${message}`, payload);
+    logger.info(message, payload);
   };
 
   const showSaveErrorToast = () => {
