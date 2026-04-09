@@ -86,6 +86,13 @@ export function loadPersistedMapSettingsFromStorage(
     }
 
     if ('version' in parsed && 'settings' in parsed) {
+      if (
+        typeof parsed.version !== 'number' ||
+        parsed.version !== MAP_SETTINGS_STORAGE_VERSION
+      ) {
+        return null;
+      }
+
       // Versioned payload: extract and validate the settings object.
       const settings = validateAndNormalizeSettings(parsed.settings);
       if (!settings || Object.keys(settings).length === 0) {

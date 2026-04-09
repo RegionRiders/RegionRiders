@@ -44,4 +44,36 @@ describe('mapSettingsPersistence', () => {
     expect(loadPersistedMapSettingsFromStorage()).toBeNull();
     expect(loadMapSettingsFromStorage()).toBeNull();
   });
+
+  it('ignores unsupported payload versions from storage', () => {
+    window.localStorage.setItem(
+      resolveMapSettingsStorageKey(),
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION + 1,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    expect(loadPersistedMapSettingsFromStorage()).toBeNull();
+    expect(loadMapSettingsFromStorage()).toBeNull();
+  });
+
+  it('ignores non-numeric payload versions from storage', () => {
+    window.localStorage.setItem(
+      resolveMapSettingsStorageKey(),
+      JSON.stringify({
+        version: String(MAP_SETTINGS_STORAGE_VERSION),
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    expect(loadPersistedMapSettingsFromStorage()).toBeNull();
+    expect(loadMapSettingsFromStorage()).toBeNull();
+  });
 });
