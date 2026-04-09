@@ -170,4 +170,19 @@ describe('ActivityMap', () => {
 
     expect(screen.queryByText('Region overlay unavailable')).not.toBeInTheDocument();
   });
+
+  it('keeps a single visible overlay error when the same message is reported repeatedly', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getAllByText('Region overlay unavailable')).toHaveLength(1);
+  });
 });

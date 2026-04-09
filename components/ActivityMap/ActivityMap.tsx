@@ -26,7 +26,10 @@ export default function ActivityMap() {
   }, []);
 
   const handleRegionTileError = useCallback((message: string) => {
-    setRegionTileError(message || null);
+    const nextMessage = message || null;
+    setRegionTileError((currentMessage) =>
+      currentMessage === nextMessage ? currentMessage : nextMessage
+    );
   }, []);
 
   if (error) {
