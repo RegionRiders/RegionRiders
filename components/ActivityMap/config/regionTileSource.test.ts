@@ -1,4 +1,8 @@
-import { getRegionTileSourceOrigin, getRegionTileSourceUrl } from './regionTileSource';
+import {
+  DEFAULT_REGION_TILE_SOURCE,
+  getRegionTileSourceOrigin,
+  getRegionTileSourceUrl,
+} from './regionTileSource';
 
 describe('regionTileSource', () => {
   const originalRegionTileUrl = process.env.NEXT_PUBLIC_REGION_TILE_URL;
@@ -20,7 +24,7 @@ describe('regionTileSource', () => {
   it('falls back to the default region tile host', () => {
     delete process.env.NEXT_PUBLIC_REGION_TILE_URL;
 
-    expect(getRegionTileSourceUrl()).toBe('https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf');
+    expect(getRegionTileSourceUrl()).toBe(DEFAULT_REGION_TILE_SOURCE);
   });
 
   it('normalizes a trailing slash in the tile source override', () => {

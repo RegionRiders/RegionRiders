@@ -1,4 +1,6 @@
-const DEFAULT_REGION_TILE_SOURCE = 'https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf';
+import { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/defaultRegionTileSource.mjs';
+
+export { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/defaultRegionTileSource.mjs';
 
 function normalizeRegionTileUrl(url: string): string {
   return url.trim().replace(/\/$/, '');
