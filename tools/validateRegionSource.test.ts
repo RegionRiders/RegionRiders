@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { validateRegionSource } from './validateRegionSource';
+import { resolveDefaultSourceDir, validateRegionSource } from './validateRegionSource';
 
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'validate-region-source-'));
@@ -106,5 +106,22 @@ describe('validateRegionSource', () => {
     expect(report.invalidFeatureCollections).toBe(0);
     expect(report.featuresProcessed).toBe(1);
     expect(report.uniqueRegionIds).toBe(1);
+  });
+
+  it('requires an explicit source when REGION_SOURCE_DIR is unset', () => {
+    const originalEnv = process.env.REGION_SOURCE_DIR;
+    delete process.env.REGION_SOURCE_DIR;
+
+    try {
+      expect(() => resolveDefaultSourceDir()).toThrow(
+        'No source directory configured. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+      );
+    } finally {
+      if (originalEnv === undefined) {
+        delete process.env.REGION_SOURCE_DIR;
+      } else {
+        process.env.REGION_SOURCE_DIR = originalEnv;
+      }
+    }
   });
 });

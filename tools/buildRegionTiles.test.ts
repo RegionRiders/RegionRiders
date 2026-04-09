@@ -76,6 +76,12 @@ describe('buildRegionTiles', () => {
     }
   });
 
+  it('requires an explicit source when argv and REGION_SOURCE_DIR are absent', () => {
+    expect(() => getBuildOptions(['node', 'tools/buildRegionTiles.ts'])).toThrow(
+      'No source directory configured. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+    );
+  });
+
   it('rejects an inverted zoom range', () => {
     const sourceDir = createTempDir();
 

@@ -24,10 +24,9 @@ const DEFAULT_NORMALIZED_GPKG = path.join(
 );
 const DEFAULT_MIN_ZOOM = 3;
 const DEFAULT_MAX_ZOOM = 14;
-const DEFAULT_SOURCE_DIR_CANDIDATES = [
-  process.env.REGION_SOURCE_DIR,
-  path.join(REPO_ROOT, 'public', 'data', 'rr_import', 'mobile_geojson_balanced'),
-].filter((value): value is string => Boolean(value));
+function getDefaultSourceDirCandidates(): string[] {
+  return [process.env.REGION_SOURCE_DIR].filter((value): value is string => Boolean(value));
+}
 
 export interface BuildOptions {
   sourceDir: string;
@@ -65,16 +64,22 @@ function parseIntArg(value: string | undefined, fallback: number, name: string):
 }
 
 function resolveDefaultSourceDir(): string {
-  const existingCandidate = DEFAULT_SOURCE_DIR_CANDIDATES.find((candidate) =>
-    fs.existsSync(candidate)
-  );
+  const sourceDirCandidates = getDefaultSourceDirCandidates();
+
+  if (sourceDirCandidates.length === 0) {
+    throw new Error(
+      'No source directory configured. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+    );
+  }
+
+  const existingCandidate = sourceDirCandidates.find((candidate) => fs.existsSync(candidate));
 
   if (existingCandidate) {
     return existingCandidate;
   }
 
   throw new Error(
-    'No default source directory found. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+    'No configured source directory exists. Pass --source <dir> or set REGION_SOURCE_DIR to an existing GeoJSON dataset directory.'
   );
 }
 
