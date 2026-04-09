@@ -233,6 +233,10 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
     await waitFor(() => expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 350));
+
+    expect(window.localStorage.getItem('rr:map-settings:user:user-123')).toBeNull();
+    expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
 
     const button = screen.getByTestId('update-settings');
     await userEvent.click(button);
@@ -310,6 +314,8 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
     await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
 
     const button = screen.getByTestId('update-settings');
     await userEvent.click(button);
@@ -361,4 +367,5 @@ describe('ActivityMap', () => {
       expect(persisted).toBeTruthy();
     });
   });
+
 });

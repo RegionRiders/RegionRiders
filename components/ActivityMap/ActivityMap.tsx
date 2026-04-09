@@ -56,6 +56,10 @@ export default function ActivityMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasHandledInitialPersistRef = useRef(false);
+  const hasUserInteractedWithSettingsRef = useRef(false);
+  const hydrationUsedUserScopedLocalSettingsRef = useRef(false);
+  const hydrationApiPersistUserIdRef = useRef<string | null>(null);
   const { tracks } = useGPXData();
   const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
   const [apiPersistUserId, setApiPersistUserId] = useState<string | null>(null);
@@ -131,9 +135,11 @@ export default function ActivityMap() {
 
       const persistedUserId = userSettingsFromApi?.userId ?? authenticatedUserId ?? null;
       setPersistedUserId(persistedUserId);
+      hydrationApiPersistUserIdRef.current = userSettingsFromApi?.userId ?? null;
       setApiPersistUserId(userSettingsFromApi?.userId ?? null);
 
       if (!persistedUserId) {
+        hydrationUsedUserScopedLocalSettingsRef.current = false;
         setIsSettingsHydrated(true);
         debugLog('Hydration completed', {
           persistedUserId: null,
@@ -156,6 +162,9 @@ export default function ActivityMap() {
       const usedUserScopedStorageSettings =
         shouldPreferUserScopedLocalSettings || (!hasApiSettings && hasUserScopedLocalSettings);
       const usedApiSettings = hasApiSettings && !shouldPreferUserScopedLocalSettings;
+      const hydrationUsedUserScopedLocalSettings =
+        shouldPreferUserScopedLocalSettings && Boolean(userScopedLocalSettings);
+      hydrationUsedUserScopedLocalSettingsRef.current = hydrationUsedUserScopedLocalSettings;
 
       if (shouldPreferUserScopedLocalSettings && userScopedLocalSettings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
@@ -194,22 +203,44 @@ export default function ActivityMap() {
       return;
     }
 
+    let isInitialPersistRun = false;
+    if (!hasHandledInitialPersistRef.current) {
+      isInitialPersistRun = true;
+      hasHandledInitialPersistRef.current = true;
+      if (
+        !hydrationUsedUserScopedLocalSettingsRef.current &&
+        !hasUserInteractedWithSettingsRef.current
+      ) {
+        debugLog('Skipping initial persist after hydration', {
+          persistedUserId,
+          apiPersistUserId,
+          hydrationUsedUserScopedLocalSettings:
+            hydrationUsedUserScopedLocalSettingsRef.current,
+          hasUserInteractedWithSettings: hasUserInteractedWithSettingsRef.current,
+        });
+        return;
+      }
+    }
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
     const persistSettings = async () => {
-      if (apiPersistUserId) {
-        debugLog('Attempting API save', { persistedUserId: apiPersistUserId, settings });
+      const effectiveApiPersistUserId =
+        apiPersistUserId ?? (isInitialPersistRun ? hydrationApiPersistUserIdRef.current : null);
+
+      if (effectiveApiPersistUserId) {
+        debugLog('Attempting API save', { persistedUserId: effectiveApiPersistUserId, settings });
         const persisted = await saveMapSettingsToApi(settings);
         debugLog('API save completed', { persisted });
         if (!persisted) {
-          saveMapSettingsToStorage(settings, apiPersistUserId);
+          saveMapSettingsToStorage(settings, effectiveApiPersistUserId);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         } else {
           // Clear local fallback after successful API save to prevent stale data preference
-          clearUserScopedLocalSettings(apiPersistUserId);
+          clearUserScopedLocalSettings(effectiveApiPersistUserId);
         }
         return;
       }
@@ -237,7 +268,12 @@ export default function ActivityMap() {
     };
     // `apiPersistUserId` gates API PUT eligibility, while `persistedUserId`
     // is still needed for user-scoped local fallback persistence.
-  }, [apiPersistUserId, isSettingsHydrated, persistedUserId, settings]);
+  }, [
+    apiPersistUserId,
+    isSettingsHydrated,
+    persistedUserId,
+    settings,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -256,6 +292,7 @@ export default function ActivityMap() {
   }, [saveErrorMessage]);
 
   const updateSetting = <K extends keyof MapSettings>(key: K, value: MapSettings[K]) => {
+    hasUserInteractedWithSettingsRef.current = true;
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
