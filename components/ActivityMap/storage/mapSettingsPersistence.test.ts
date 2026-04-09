@@ -1,4 +1,5 @@
 import {
+  MAP_SETTINGS_STORAGE_VERSION,
   loadMapSettingsFromStorage,
   loadPersistedMapSettingsFromStorage,
   resolveMapSettingsStorageKey,
@@ -13,7 +14,7 @@ describe('mapSettingsPersistence', () => {
     window.localStorage.setItem(
       resolveMapSettingsStorageKey(),
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-01-01T00:00:00.000Z',
         settings: {
           showActivities: false,
