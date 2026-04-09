@@ -5,6 +5,13 @@
 
 import { z } from 'zod';
 
+const tripStatusSchema = z.enum(['draft', 'active', 'completed', 'archived']);
+const creationModeSchema = z.enum(['manual', 'date_range', 'activity_selection', 'active']);
+const dayDateSchema = z.iso.date();
+const tripDateSchema = z
+  .union([z.iso.datetime({ offset: true }), z.iso.datetime({ local: true }), dayDateSchema])
+  .transform((value) => new Date(value));
+
 /**
  * User validation schemas
  */
@@ -85,6 +92,77 @@ export const activitySchemas = {
   }),
 };
 
+export const tripSchemas = {
+  create: z
+    .object({
+      creationMode: creationModeSchema,
+      title: z.string().min(1).max(255),
+      description: z.string().max(5000).optional().nullable(),
+      status: tripStatusSchema.optional(),
+      startDate: tripDateSchema.optional().nullable(),
+      endDate: tripDateSchema.optional().nullable(),
+      coverActivityId: z.uuid().optional().nullable(),
+      metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+      activityIds: z.array(z.uuid()).optional(),
+      rangeStart: dayDateSchema.optional(),
+      rangeEnd: dayDateSchema.optional(),
+      allowEmptyRange: z.boolean().optional(),
+    })
+    .superRefine((value, ctx) => {
+      if (
+        value.creationMode === 'activity_selection' &&
+        (!value.activityIds || value.activityIds.length === 0)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'activityIds are required when creationMode is activity_selection',
+          path: ['activityIds'],
+        });
+      }
+
+      if (value.creationMode === 'date_range') {
+        if (!value.rangeStart) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'rangeStart is required when creationMode is date_range',
+            path: ['rangeStart'],
+          });
+        }
+        if (!value.rangeEnd) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'rangeEnd is required when creationMode is date_range',
+            path: ['rangeEnd'],
+          });
+        }
+      }
+    }),
+
+  update: z.object({
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(5000).optional().nullable(),
+    status: tripStatusSchema.optional(),
+    startDate: tripDateSchema.optional().nullable(),
+    endDate: tripDateSchema.optional().nullable(),
+    coverActivityId: z.uuid().optional().nullable(),
+    metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+  }),
+
+  listFilters: z.object({
+    status: tripStatusSchema.optional(),
+  }),
+
+  attachActivities: z.object({
+    activityIds: z.array(z.uuid()).min(1),
+  }),
+
+  upsertDay: z.object({
+    title: z.string().min(1).max(255).optional().nullable(),
+    summary: z.string().min(1).max(500).optional().nullable(),
+    note: z.string().max(20000).optional().nullable(),
+  }),
+};
+
 /**
  * Pagination validation schema
  */
@@ -103,4 +181,9 @@ export type UserTokenUpdateInput = z.infer<typeof userSchemas.tokenUpdate>;
 export type ActivityCreateInput = z.infer<typeof activitySchemas.create>;
 export type ActivityUpdateInput = z.infer<typeof activitySchemas.update>;
 export type ActivityFilters = z.infer<typeof activitySchemas.filters>;
+export type TripCreateInput = z.infer<typeof tripSchemas.create>;
+export type TripUpdateInput = z.infer<typeof tripSchemas.update>;
+export type TripListFilters = z.infer<typeof tripSchemas.listFilters>;
+export type TripAttachActivitiesInput = z.infer<typeof tripSchemas.attachActivities>;
+export type TripUpsertDayInput = z.infer<typeof tripSchemas.upsertDay>;
 export type PaginationParams = z.infer<typeof paginationSchema>;
