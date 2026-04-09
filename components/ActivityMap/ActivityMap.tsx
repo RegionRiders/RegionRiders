@@ -60,7 +60,6 @@ export default function ActivityMap() {
   const hasHandledInitialPersistRef = useRef(false);
   const hasUserInteractedWithSettingsRef = useRef(false);
   const hydrationUsedUserScopedLocalSettingsRef = useRef(false);
-  const hydrationApiPersistUserIdRef = useRef<string | null>(null);
   const { tracks } = useGPXData();
   const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
   const [apiPersistUserId, setApiPersistUserId] = useState<string | null>(null);
@@ -136,7 +135,6 @@ export default function ActivityMap() {
 
       const persistedUserId = userSettingsFromApi?.userId ?? authenticatedUserId ?? null;
       setPersistedUserId(persistedUserId);
-      hydrationApiPersistUserIdRef.current = userSettingsFromApi?.userId ?? null;
       setApiPersistUserId(userSettingsFromApi?.userId ?? null);
 
       if (!persistedUserId) {
@@ -204,9 +202,7 @@ export default function ActivityMap() {
       return;
     }
 
-    let isInitialPersistRun = false;
     if (!hasHandledInitialPersistRef.current) {
-      isInitialPersistRun = true;
       hasHandledInitialPersistRef.current = true;
       if (
         !hydrationUsedUserScopedLocalSettingsRef.current &&
@@ -228,22 +224,17 @@ export default function ActivityMap() {
     }
 
     const persistSettings = async () => {
-      let persistUserIdToUse = apiPersistUserId;
-      if (!persistUserIdToUse && isInitialPersistRun) {
-        persistUserIdToUse = hydrationApiPersistUserIdRef.current;
-      }
-
-      if (persistUserIdToUse) {
-        debugLog('Attempting API save', { persistedUserId: persistUserIdToUse, settings });
+      if (apiPersistUserId) {
+        debugLog('Attempting API save', { persistedUserId: apiPersistUserId, settings });
         const persisted = await saveMapSettingsToApi(settings);
         debugLog('API save completed', { persisted });
         if (!persisted) {
-          saveMapSettingsToStorage(settings, persistUserIdToUse);
+          saveMapSettingsToStorage(settings, apiPersistUserId);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         } else {
           // Clear local fallback after successful API save to prevent stale data preference
-          clearUserScopedLocalSettings(persistUserIdToUse);
+          clearUserScopedLocalSettings(apiPersistUserId);
         }
         return;
       }

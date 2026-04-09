@@ -11,6 +11,7 @@ import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
+// Buffer gives debounce timer a small scheduling margin in CI.
 const PERSIST_WAIT_BUFFER_MS = 100;
 const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS + PERSIST_WAIT_BUFFER_MS;
 const waitForInitialPersistWindow = () =>
