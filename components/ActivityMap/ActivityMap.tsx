@@ -123,12 +123,13 @@ export default function ActivityMap() {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...anonymousLocalSettings });
       }
 
-      const [authenticatedUserId, userSettingsFromApi] = await Promise.all([
-        loadAuthenticatedUserIdFromApi(),
-        loadMapSettingsFromApi(),
-      ]);
-      debugLog('Hydration auth session response', { authenticatedUserId });
+      const userSettingsFromApi = await loadMapSettingsFromApi();
+      let authenticatedUserId: string | null = null;
+      if (!userSettingsFromApi?.userId) {
+        authenticatedUserId = await loadAuthenticatedUserIdFromApi();
+      }
       debugLog('Hydration settings API response', userSettingsFromApi);
+      debugLog('Hydration auth session response', { authenticatedUserId });
       if (!isMounted) {
         return;
       }
@@ -204,14 +205,14 @@ export default function ActivityMap() {
 
     if (!hasHandledInitialPersistRef.current) {
       hasHandledInitialPersistRef.current = true;
-      if (
-        !hydrationUsedUserScopedLocalSettingsRef.current &&
-        !hasUserInteractedWithSettingsRef.current
-      ) {
+      const shouldAllowHydrationTriggeredPersist =
+        hydrationUsedUserScopedLocalSettingsRef.current && Boolean(apiPersistUserId);
+      if (!shouldAllowHydrationTriggeredPersist && !hasUserInteractedWithSettingsRef.current) {
         debugLog('Skipping initial persist after hydration', {
           persistedUserId,
           apiPersistUserId,
           hydrationUsedUserScopedLocalSettings: hydrationUsedUserScopedLocalSettingsRef.current,
+          shouldAllowHydrationTriggeredPersist,
           hasUserInteractedWithSettings: hasUserInteractedWithSettingsRef.current,
         });
         return;

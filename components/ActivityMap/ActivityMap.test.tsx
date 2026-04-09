@@ -211,10 +211,11 @@ describe('ActivityMap', () => {
   });
 
   it('prefers newer user-scoped local settings when they are fresher than API settings', async () => {
+    const userId = 'user-local-fresh-123';
     const persistedTileLayerUrl = 'https://example.com/local/{z}/{x}/{y}';
-    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(userId);
     mockLoadMapSettingsFromApi.mockResolvedValue({
-      userId: 'user-123',
+      userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
         showActivities: true,
@@ -223,7 +224,7 @@ describe('ActivityMap', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
     });
     window.localStorage.setItem(
-      'rr:map-settings:user:user-123',
+      `rr:map-settings:user:${userId}`,
       JSON.stringify({
         version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-02-01T00:00:00.000Z',
@@ -266,6 +267,52 @@ describe('ActivityMap', () => {
       const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
       expect(persisted).toBeTruthy();
     });
+  });
+
+  it('does not bump user-scoped local savedAt during hydration when settings API read fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+
+    const originalSavedAt = '2026-03-01T00:00:00.000Z';
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: originalSavedAt,
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+        },
+      })
+    );
+
+    jest.useFakeTimers();
+    render(<ActivityMap />);
+    await flushHydrationPromises();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
+
+    const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+    expect(persisted).toBeTruthy();
+    const parsed = JSON.parse(persisted as string);
+    expect(parsed.savedAt).toBe(originalSavedAt);
+  });
+
+  it('does not request auth-session when settings API provides user id', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    });
+    expect(mockLoadAuthenticatedUserIdFromApi).not.toHaveBeenCalled();
   });
 
   it('does not treat epoch API updatedAt as missing timestamp', async () => {
