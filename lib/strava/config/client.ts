@@ -1,5 +1,5 @@
 import strava from 'strava-v3';
-import { validateStravaEnv, validateStravaOAuthEnv } from '@/lib/strava';
+import { validateStravaEnv, validateStravaOAuthEnv } from './validateEnv';
 
 /**
  * Creates a new Strava API client instance with the provided configuration

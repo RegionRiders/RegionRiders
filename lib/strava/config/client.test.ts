@@ -3,8 +3,8 @@
  */
 
 import strava from 'strava-v3';
-import { validateStravaEnv, validateStravaOAuthEnv } from '@/lib/strava';
 import { createStravaClient, getStravaClient, getStravaOAuthClient } from './client';
+import { validateStravaEnv, validateStravaOAuthEnv } from './validateEnv';
 
 jest.mock('./validateEnv');
 jest.mock('strava-v3');
