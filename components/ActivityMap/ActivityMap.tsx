@@ -211,8 +211,7 @@ export default function ActivityMap() {
         debugLog('Skipping initial persist after hydration', {
           persistedUserId,
           apiPersistUserId,
-          hydrationUsedUserScopedLocalSettings:
-            hydrationUsedUserScopedLocalSettingsRef.current,
+          hydrationUsedUserScopedLocalSettings: hydrationUsedUserScopedLocalSettingsRef.current,
           hasUserInteractedWithSettings: hasUserInteractedWithSettingsRef.current,
         });
         return;
@@ -262,12 +261,7 @@ export default function ActivityMap() {
     };
     // `apiPersistUserId` gates API PUT eligibility, while `persistedUserId`
     // is still needed for user-scoped local fallback persistence.
-  }, [
-    apiPersistUserId,
-    isSettingsHydrated,
-    persistedUserId,
-    settings,
-  ]);
+  }, [apiPersistUserId, isSettingsHydrated, persistedUserId, settings]);
 
   useEffect(() => {
     return () => {

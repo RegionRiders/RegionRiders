@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
@@ -11,11 +12,13 @@ import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
-// Buffer gives debounce timer a small scheduling margin in CI.
-const PERSIST_WAIT_BUFFER_MS = 100;
-const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS + PERSIST_WAIT_BUFFER_MS;
-const waitForInitialPersistWindow = () =>
-  new Promise((resolve) => setTimeout(resolve, INITIAL_PERSIST_WAIT_MS));
+const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS;
+
+const advanceInitialPersistWindow = () => {
+  act(() => {
+    jest.advanceTimersByTime(INITIAL_PERSIST_WAIT_MS);
+  });
+};
 
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
@@ -236,9 +239,17 @@ describe('ActivityMap', () => {
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue(null);
 
+    jest.useFakeTimers();
     render(<ActivityMap />);
-    await waitFor(() => expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled());
-    await waitForInitialPersistWindow();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
 
     expect(window.localStorage.getItem('rr:map-settings:user:user-123')).toBeNull();
     expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
@@ -317,9 +328,17 @@ describe('ActivityMap', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
     });
 
+    jest.useFakeTimers();
     render(<ActivityMap />);
-    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
-    await waitForInitialPersistWindow();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
     expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
 
     const button = screen.getByTestId('update-settings');
@@ -372,5 +391,4 @@ describe('ActivityMap', () => {
       expect(persisted).toBeTruthy();
     });
   });
-
 });

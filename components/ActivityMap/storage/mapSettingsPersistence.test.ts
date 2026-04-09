@@ -33,11 +33,30 @@ describe('mapSettingsPersistence', () => {
     });
   });
 
-  it('ignores unversioned payloads from storage', () => {
+  it('loads legacy unversioned payloads from storage', () => {
     window.localStorage.setItem(
       resolveMapSettingsStorageKey(),
       JSON.stringify({
         showActivities: false,
+      })
+    );
+
+    expect(loadPersistedMapSettingsFromStorage()).toEqual({
+      savedAt: null,
+      settings: {
+        showActivities: false,
+      },
+    });
+    expect(loadMapSettingsFromStorage()).toEqual({
+      showActivities: false,
+    });
+  });
+
+  it('ignores legacy unversioned payloads that normalize to empty settings', () => {
+    window.localStorage.setItem(
+      resolveMapSettingsStorageKey(),
+      JSON.stringify({
+        unknownSetting: true,
       })
     );
 

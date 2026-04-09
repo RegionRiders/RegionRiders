@@ -102,7 +102,17 @@ export function loadPersistedMapSettingsFromStorage(
         savedAt,
       };
     }
-    return null;
+
+    // Backward-compatible legacy payload support (unversioned settings object).
+    const settings = validateAndNormalizeSettings(parsed);
+    if (!settings || Object.keys(settings).length === 0) {
+      return null;
+    }
+
+    return {
+      settings,
+      savedAt: null,
+    };
   } catch {
     return null;
   }
