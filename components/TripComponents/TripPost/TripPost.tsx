@@ -189,7 +189,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
               onSelect(data);
             }}
           >
-            <Anchor fw="bold" size="xl" mb={0} lineClamp={2} >
+            <Anchor fw="bold" size="xl" mb={0} lineClamp={2}>
               {data.title}
             </Anchor>
           </UnstyledButton>

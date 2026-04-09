@@ -135,7 +135,12 @@ export function ActivitiesListElement({
       <div hidden={tripCreationMode}>
         <Menu shadow="md" position="right">
           <Menu.Target>
-            <ActionIcon size="lg" variant="subtle" aria-label="Open activity menu" ml={{ base: 5, lg: "md" }}>
+            <ActionIcon
+              size="lg"
+              variant="subtle"
+              aria-label="Open activity menu"
+              ml={{ base: 5, lg: 'md' }}
+            >
               <Text size="35px" fw={650}>
                 ⫶
               </Text>
@@ -161,7 +166,7 @@ export function ActivitiesListElement({
     return (
       <div hidden={!tripCreationMode}>
         <Checkbox
-          mr={{ base: 5, lg: "md" }}
+          mr={{ base: 5, lg: 'md' }}
           checked={isChecked()}
           onChange={() => {
             if (isChecked()) {
