@@ -143,13 +143,11 @@ const Activities = ({
 
       {activities.length > 5 && (
         <>
-          <UnstyledButton onClick={toggle}>
-            <Anchor>
-              {activitiesExpanded
-                ? 'Hide activities'
-                : `...and ${activities.length - 4} more activities`}
-            </Anchor>
-          </UnstyledButton>
+          <Anchor onClick={toggle}>
+            {activitiesExpanded
+              ? 'Hide activities'
+              : `...and ${activities.length - 4} more activities`}
+          </Anchor>
           <Collapse in={activitiesExpanded}>{mapActivities(activitiesToShow)}</Collapse>
         </>
       )}
@@ -184,15 +182,17 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
         </Card.Section>
 
         <Stack ml={{ base: 0, asideOpenHide: 'md' }} gap={0} w={{ base: 'auto', xs: 270 }}>
-          <UnstyledButton
+          <Anchor
+            fw="bold"
+            size="xl"
+            mb={0}
+            lineClamp={2}
             onClick={() => {
               onSelect(data);
             }}
           >
-            <Anchor fw="bold" size="xl" mb={0} lineClamp={2}>
-              {data.title}
-            </Anchor>
-          </UnstyledButton>
+            {data.title}
+          </Anchor>
 
           <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />
 
