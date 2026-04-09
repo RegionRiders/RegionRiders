@@ -105,7 +105,13 @@ function getArgValueFromArgv(argv: string[], flag: string): string | undefined {
     return undefined;
   }
 
-  return argv[index + 1];
+  const value = argv[index + 1];
+
+  if (value === undefined || value.startsWith('-')) {
+    throw new Error(`Missing value for flag ${flag}`);
+  }
+
+  return value;
 }
 
 function hasFlagInArgv(argv: string[], flag: string): boolean {
@@ -173,42 +179,47 @@ export function runBuild(options: BuildOptions, sourceFiles: string[]): void {
     ...sourceFiles,
   ];
 
-  runCommand('ogrmerge.py', mergeArgs);
+  try {
+    runCommand('ogrmerge.py', mergeArgs);
 
-  const normalizeArgs = [
-    '-f',
-    'GPKG',
-    options.normalizedGpkg,
-    options.tempGpkg,
-    'regions',
-    '-nln',
-    'regions',
-    '-nlt',
-    'PROMOTE_TO_MULTI',
-  ];
+    const normalizeArgs = [
+      '-f',
+      'GPKG',
+      options.normalizedGpkg,
+      options.tempGpkg,
+      'regions',
+      '-nln',
+      'regions',
+      '-nlt',
+      'PROMOTE_TO_MULTI',
+    ];
 
-  runCommand('ogr2ogr', normalizeArgs);
+    runCommand('ogr2ogr', normalizeArgs);
 
-  const tileArgs = [
-    '-f',
-    'MVT',
-    options.outputDir,
-    options.normalizedGpkg,
-    'regions',
-    '-nln',
-    'regions',
-    '-dsco',
-    'FORMAT=DIRECTORY',
-    '-dsco',
-    `MINZOOM=${options.minZoom}`,
-    '-dsco',
-    `MAXZOOM=${options.maxZoom}`,
-  ];
+    const tileArgs = [
+      '-f',
+      'MVT',
+      options.outputDir,
+      options.normalizedGpkg,
+      'regions',
+      '-nln',
+      'regions',
+      '-dsco',
+      'FORMAT=DIRECTORY',
+      '-dsco',
+      `MINZOOM=${options.minZoom}`,
+      '-dsco',
+      `MAXZOOM=${options.maxZoom}`,
+    ];
 
-  runCommand('ogr2ogr', tileArgs);
-
-  removeIfExists(options.tempGpkg);
-  removeIfExists(options.normalizedGpkg);
+    runCommand('ogr2ogr', tileArgs);
+  } catch (error) {
+    removeIfExists(options.outputDir);
+    throw error;
+  } finally {
+    removeIfExists(options.tempGpkg);
+    removeIfExists(options.normalizedGpkg);
+  }
 }
 
 function isExecutedAsScript(): boolean {

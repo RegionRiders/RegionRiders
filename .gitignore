@@ -161,3 +161,4 @@ test-results.txt
 # Region tiles artifacts (generated output, not source of truth)
 public/data/regions/tiles/v*/
 public/data/regions/tiles/.tmp_*
+.omx/

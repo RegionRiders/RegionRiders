@@ -107,7 +107,7 @@ flowchart TD
 
 ## Data Model
 
-## Region identity
+### Region identity
 
 The shared key across all layers must be:
 
@@ -120,7 +120,7 @@ This identifier must match across:
 - persisted visit status rows
 - frontend styling contract
 
-## Proposed status shape
+### Proposed status shape
 
 ```ts
 type RegionVisitStatus = {
@@ -132,7 +132,7 @@ type RegionVisitStatus = {
 };
 ```
 
-## Proposed persistence model
+### Proposed persistence model
 
 Minimum table:
 
@@ -203,7 +203,7 @@ Region status should be recomputed when:
 4. the region dataset version changes
 5. an explicit rebuild/recompute is requested
 
-## Recommended strategy
+### Recommended strategy
 
 ### Phase 1
 
@@ -219,7 +219,7 @@ Move recomputation into a background job queue if ingestion latency becomes a pr
 
 The frontend should fetch persisted region statuses from a dedicated endpoint.
 
-## Proposed endpoint
+### Proposed endpoint
 
 ### `GET /api/region-status`
 
@@ -255,18 +255,18 @@ In many cases this should not be user-facing and can instead be triggered as par
 
 The client should stop treating region analysis as a browser-side responsibility.
 
-## Target client flow
+### Target client flow
 
 1. map loads vector tiles
 2. client fetches region statuses for current user
 3. client maps status records by `regionId`
 4. `useRegionRendering` applies visited/unvisited styles using `setFeatureStyle(regionId, style)`
 
-## Consequence
+### Consequence
 
 `useRegionAnalysis` becomes obsolete in the long-term map flow unless retained for a local/dev-only analysis mode.
 
-## Recommendation
+### Recommendation
 
 Do not extend the current client analysis path further if server-side analysis is the chosen direction.
 

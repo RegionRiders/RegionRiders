@@ -180,5 +180,5 @@ export function useRegionRendering(
     });
 
     previousVisitedIdsRef.current = nextVisitedIds;
-  }, [config, showBorders, visitData]);
+  }, [config, map, showBorders, visitData]);
 }

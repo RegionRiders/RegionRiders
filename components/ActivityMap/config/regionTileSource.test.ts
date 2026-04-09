@@ -36,6 +36,12 @@ describe('regionTileSource', () => {
     expect(getRegionTileSourceUrl()).toBe(TEST_REGION_TILE_URL);
   });
 
+  it('normalizes multiple trailing slashes in the tile source override', () => {
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = `${TEST_REGION_TILE_URL}///`;
+
+    expect(getRegionTileSourceUrl()).toBe(TEST_REGION_TILE_URL);
+  });
+
   it('falls back to the default source when the env override is only whitespace', () => {
     process.env.NEXT_PUBLIC_REGION_TILE_URL = '   ';
 

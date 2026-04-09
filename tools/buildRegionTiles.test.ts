@@ -13,6 +13,8 @@ jest.mock('child_process', () => ({
   execFileSync: jest.fn(),
 }));
 
+const ORIGINAL_REGION_SOURCE_DIR = process.env.REGION_SOURCE_DIR;
+
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'build-region-tiles-'));
 }
@@ -20,7 +22,12 @@ function createTempDir(): string {
 describe('buildRegionTiles', () => {
   afterEach(() => {
     jest.clearAllMocks();
-    delete process.env.REGION_SOURCE_DIR;
+
+    if (ORIGINAL_REGION_SOURCE_DIR === undefined) {
+      delete process.env.REGION_SOURCE_DIR;
+    } else {
+      process.env.REGION_SOURCE_DIR = ORIGINAL_REGION_SOURCE_DIR;
+    }
   });
 
   it('collects only geojson files in sorted order', () => {
@@ -98,6 +105,26 @@ describe('buildRegionTiles', () => {
           '12',
         ])
       ).toThrow('Invalid zoom range: minzoom (14) must be <= maxzoom (12)');
+    } finally {
+      fs.rmSync(sourceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails fast when a flag is present without a value', () => {
+    const sourceDir = createTempDir();
+
+    try {
+      expect(() =>
+        getBuildOptions([
+          'node',
+          'tools/buildRegionTiles.ts',
+          '--source',
+          sourceDir,
+          '--output',
+          '--maxzoom',
+          '12',
+        ])
+      ).toThrow('Missing value for flag --output');
     } finally {
       fs.rmSync(sourceDir, { recursive: true, force: true });
     }
@@ -187,6 +214,44 @@ describe('buildRegionTiles', () => {
 
       expect(fs.existsSync(tempGpkg)).toBe(false);
       expect(fs.existsSync(normalizedGpkg)).toBe(false);
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('cleans temp artifacts and partial output when a GDAL command fails', () => {
+    const workspaceDir = createTempDir();
+    const outputDir = path.join(workspaceDir, 'tiles', 'v1');
+    const tempGpkg = path.join(workspaceDir, 'tiles', '.tmp_regions_v1.gpkg');
+    const normalizedGpkg = path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg');
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir,
+      tempGpkg,
+      normalizedGpkg,
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    fs.mkdirSync(path.dirname(tempGpkg), { recursive: true });
+    fs.writeFileSync(tempGpkg, 'temp', 'utf8');
+    fs.writeFileSync(normalizedGpkg, 'normalized', 'utf8');
+
+    (execFileSync as jest.Mock).mockImplementation((command: string, args: string[]) => {
+      if (command === 'ogr2ogr' && args[2] === outputDir) {
+        fs.mkdirSync(outputDir, { recursive: true });
+        fs.writeFileSync(path.join(outputDir, 'partial.pbf'), 'partial', 'utf8');
+        throw new Error('normalize failed');
+      }
+    });
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow('normalize failed');
+      expect(fs.existsSync(tempGpkg)).toBe(false);
+      expect(fs.existsSync(normalizedGpkg)).toBe(false);
+      expect(fs.existsSync(outputDir)).toBe(false);
     } finally {
       fs.rmSync(workspaceDir, { recursive: true, force: true });
     }

@@ -263,4 +263,71 @@ describe('useRegionRendering', () => {
       expect.objectContaining({ fillColor: '#dc1414' })
     );
   });
+
+  it('reapplies visited styles when the map instance changes', () => {
+    const initialVisitData = new Map([
+      [
+        'RR1::PL::POM::001',
+        {
+          regionId: 'RR1::PL::POM::001',
+          regionName: 'Test Region',
+          visitCount: 1,
+          visited: true,
+          trackIds: ['track-1'],
+          geometry: testPolygon,
+        },
+      ],
+    ]);
+
+    const firstLayer = {
+      addTo: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      setFeatureStyle: jest.fn(),
+      resetFeatureStyle: jest.fn(),
+    };
+    const secondLayer = {
+      addTo: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      setFeatureStyle: jest.fn(),
+      resetFeatureStyle: jest.fn(),
+    };
+    const firstMap = {
+      hasLayer: jest.fn(() => false),
+      removeLayer: jest.fn(),
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => ({ style: { zIndex: '' } })),
+    } as any;
+    const secondMap = {
+      hasLayer: jest.fn(() => false),
+      removeLayer: jest.fn(),
+      getPane: jest.fn(() => null),
+      createPane: jest.fn(() => ({ style: { zIndex: '' } })),
+    } as any;
+
+    (L as any).vectorGrid.protobuf = jest
+      .fn()
+      .mockImplementationOnce(() => firstLayer)
+      .mockImplementationOnce(() => secondLayer);
+
+    const { rerender } = renderHook(
+      ({ currentMap }) => useRegionRendering(currentMap, true, initialVisitData, onTileError),
+      {
+        initialProps: { currentMap: firstMap },
+      }
+    );
+
+    expect(firstLayer.setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      expect.objectContaining({ fillColor: '#dc1414' })
+    );
+
+    rerender({ currentMap: secondMap });
+
+    expect(secondLayer.setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      expect.objectContaining({ fillColor: '#dc1414' })
+    );
+  });
 });
