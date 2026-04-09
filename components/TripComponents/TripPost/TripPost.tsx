@@ -144,9 +144,11 @@ const Activities = ({
       {activities.length > 5 && (
         <>
           <UnstyledButton onClick={toggle}>
-            {activitiesExpanded
-              ? 'Hide activities'
-              : `...and ${activities.length - 4} more activities`}
+            <Anchor>
+              {activitiesExpanded
+                ? 'Hide activities'
+                : `...and ${activities.length - 4} more activities`}
+            </Anchor>
           </UnstyledButton>
           <Collapse in={activitiesExpanded}>{mapActivities(activitiesToShow)}</Collapse>
         </>
@@ -187,9 +189,9 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
               onSelect(data);
             }}
           >
-            <Text fw="bold" size="xl" mb={0} lineClamp={2}>
+            <Anchor fw="bold" size="xl" mb={0} lineClamp={2} >
               {data.title}
-            </Text>
+            </Anchor>
           </UnstyledButton>
 
           <TripDateFormatter startDate={data.startDate} endDate={data.endDate} />

@@ -16,7 +16,7 @@ const ActivityPost = ({
   imageUrl?: string;
   onSelect: (activity: Activity | null) => void;
 }) => (
-  <Card shadow="sm" radius="md" withBorder p={{ base: 5, lg: 0 }} mx={{ base: 5, lg: 'md' }}>
+  <Card shadow="sm" radius="md" withBorder p={{ base: 5, lg: 0 }}>
     <Flex direction="row" gap={{ base: 5, lg: 'md' }} align="center" justify="flex-start">
       <Anchor onClick={() => onSelect(data)}>
         <Image
