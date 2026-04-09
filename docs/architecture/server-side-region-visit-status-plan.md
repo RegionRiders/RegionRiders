@@ -13,7 +13,7 @@ Today:
 - the client renders region geometry from vector tiles
 - `useRegionRendering` can style regions by `region_id`
 - `useRegionAnalysis` still expects full `Regions[]` geometry in the browser
-- `MapOrchestrator` currently calls `useRegionAnalysis(tracks, [])`
+- `MapOrchestrator` intentionally passes an empty `visitData` map to `useRegionRendering` until server-side status delivery exists
 
 This means the branch is ready for tile-based rendering, but not for a reliable long-term client-side region-analysis model.
 

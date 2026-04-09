@@ -118,11 +118,10 @@ Use this protocol for each candidate build.
 - Source dataset defaults for `regions:validate-source` and `regions:build-tiles` are resolved in this order:
   - `--source`
   - `REGION_SOURCE_DIR`
-  - `public/data/rr_import/mobile_geojson_balanced` when present
   - otherwise the command fails and requires an explicit source path
 - Runtime rendering expects vector tile layer `regions` with stable `region_id` values.
 - Runtime rendering currently requests region tiles only through zoom `12` even though the build tooling can pre-generate up to `14`; this is an intentional performance cap for the current shipped overlay profiles.
-- Visited/unvisited styling is not part of the current release scope; the production path intentionally ships tile rendering infrastructure first, with server-side status delivery tracked separately in follow-up work (`#190`).
+- Visited/unvisited styling is not part of the current release scope; the production path intentionally ships tile rendering infrastructure first, with server-side status delivery tracked separately in follow-up work (`#188`).
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.
 - The currently hosted/generated tile set should be treated as a draft render for iteration; expect a clean re-render before production rollout.
