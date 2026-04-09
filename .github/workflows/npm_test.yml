@@ -42,10 +42,10 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
       - name: Install dependencies
-        run: yarn
+        run: corepack yarn
       - name: Run database migrations
-        run: yarn db:migrate
+        run: corepack yarn db:migrate
       - name: Run build
-        run: npm run build
+        run: corepack yarn build
       - name: Run tests
-        run: npm run test:all
+        run: corepack yarn test:all

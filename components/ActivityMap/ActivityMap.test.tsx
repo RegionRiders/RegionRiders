@@ -150,4 +150,24 @@ describe('ActivityMap', () => {
     expect(screen.getByText('Region overlay unavailable')).toBeInTheDocument();
     expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
   });
+
+  it('clears a prior region overlay error when the overlay recovers', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByText('Region overlay unavailable')).toBeInTheDocument();
+
+    act(() => {
+      reportError?.('');
+    });
+
+    expect(screen.queryByText('Region overlay unavailable')).not.toBeInTheDocument();
+  });
 });

@@ -2,6 +2,7 @@
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { logger } from '@/lib/logger';
 
 const REPO_ROOT = process.cwd();
 const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, 'public', 'data', 'regions', 'tiles', 'v1');
@@ -212,9 +213,9 @@ function main(): void {
   const options = getBuildOptions();
   const sourceFiles = collectSourceFiles(options.sourceDir);
 
-  console.log(`Building region tiles from ${sourceFiles.length} GeoJSON source files...`);
+  logger.info(`Building region tiles from ${sourceFiles.length} GeoJSON source files...`);
   runBuild(options, sourceFiles);
-  console.log(`Region tiles generated in ${options.outputDir}`);
+  logger.info(`Region tiles generated in ${options.outputDir}`);
 }
 
 main();

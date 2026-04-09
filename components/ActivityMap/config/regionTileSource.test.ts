@@ -1,4 +1,4 @@
-import { getRegionTileSourceUrl } from './regionTileSource';
+import { getRegionTileSourceOrigin, getRegionTileSourceUrl } from './regionTileSource';
 
 describe('regionTileSource', () => {
   const originalRegionTileUrl = process.env.NEXT_PUBLIC_REGION_TILE_URL;
@@ -21,5 +21,23 @@ describe('regionTileSource', () => {
     delete process.env.NEXT_PUBLIC_REGION_TILE_URL;
 
     expect(getRegionTileSourceUrl()).toBe('https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf');
+  });
+
+  it('normalizes a trailing slash in the tile source override', () => {
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf/';
+
+    expect(getRegionTileSourceUrl()).toBe('https://example.com/regions/{z}/{x}/{y}.pbf');
+  });
+
+  it('extracts the tile source origin for CSP allowlisting', () => {
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf';
+
+    expect(getRegionTileSourceOrigin()).toBe('https://example.com');
+  });
+
+  it('returns null origin for an invalid tile source URL', () => {
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = '/api/regions/tiles/v1/{z}/{x}/{y}.pbf';
+
+    expect(getRegionTileSourceOrigin()).toBeNull();
   });
 });

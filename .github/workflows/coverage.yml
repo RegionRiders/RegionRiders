@@ -50,13 +50,13 @@ jobs:
           cache-dependency-path: '**/yarn.lock'
 
       - name: Install dependencies
-        run: yarn
+        run: corepack yarn
 
       - name: Run database migrations
-        run: yarn db:migrate
+        run: corepack yarn db:migrate
 
       - name: Generate coverage report
-        run: npx jest --coverage
+        run: corepack yarn jest --coverage
 
       - name: Upload coverage reports to Codecov
         # Skip upload for Dependabot PRs as secrets are not available

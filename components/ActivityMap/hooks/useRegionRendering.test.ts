@@ -217,4 +217,50 @@ describe('useRegionRendering', () => {
     expect(onTileError).toHaveBeenCalledWith('Region overlay unavailable');
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
   });
+
+  it('clears a prior tile error once the layer loads successfully', () => {
+    renderHook(() => useRegionRendering(mockMap, true, visitData, onTileError));
+
+    const loadHandler = on.mock.calls.find(([eventName]) => eventName === 'load')?.[1];
+
+    expect(loadHandler).toBeDefined();
+
+    loadHandler?.();
+
+    expect(onTileError).toHaveBeenCalledWith('');
+  });
+
+  it('resets tracked visited ids when borders are toggled off', () => {
+    const initialVisitData = new Map([
+      [
+        'RR1::PL::POM::001',
+        {
+          regionId: 'RR1::PL::POM::001',
+          regionName: 'Test Region',
+          visitCount: 1,
+          visited: true,
+          trackIds: ['track-1'],
+          geometry: testPolygon,
+        },
+      ],
+    ]);
+
+    const { rerender } = renderHook(
+      ({ showBorders, currentVisitData }) =>
+        useRegionRendering(mockMap, showBorders, currentVisitData, onTileError),
+      {
+        initialProps: { showBorders: true, currentVisitData: initialVisitData },
+      }
+    );
+
+    setFeatureStyle.mockClear();
+
+    rerender({ showBorders: false, currentVisitData: initialVisitData });
+    rerender({ showBorders: true, currentVisitData: initialVisitData });
+
+    expect(setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      expect.objectContaining({ fillColor: '#dc1414' })
+    );
+  });
 });

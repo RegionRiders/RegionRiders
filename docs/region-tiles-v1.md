@@ -110,6 +110,7 @@ Use this protocol for each candidate build.
   - `public/data/rr_import/mobile_geojson_balanced` when present
   - otherwise the command fails and requires an explicit source path
 - Runtime rendering expects vector tile layer `regions` with stable `region_id` values.
+- Visited/unvisited styling also requires a runtime region geometry dataset; this branch currently has the analysis/rendering path, but no committed runtime loader or in-repo geometry artifact to feed it.
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.
 
@@ -119,6 +120,7 @@ Use this protocol for each candidate build.
   - primary runtime source:
     - `NEXT_PUBLIC_REGION_TILE_URL` when set
     - otherwise `https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf`
+    - CSP `connect-src` must allow the resolved tile origin; the app now derives that allowlist from `NEXT_PUBLIC_REGION_TILE_URL` when it is an absolute URL
   - alternate / self-host runtime source:
     - `/api/regions/tiles/v1/{z}/{x}/{y}.pbf`
     - this serves tiles from local artifacts in `public/data/regions/tiles/v1`

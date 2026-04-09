@@ -3,6 +3,7 @@
  */
 
 import { readFile } from 'fs/promises';
+import { logger } from '@/lib/logger';
 import { GET } from './route';
 
 jest.mock('fs/promises', () => ({
@@ -104,5 +105,41 @@ describe('app/api/regions/tiles/[version]/[z]/[x]/[y]/route', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  it('rejects path traversal attempts in x and y segments', async () => {
+    const xTraversalResponse = await GET(
+      new Request('http://localhost:3000/api/regions/tiles/v1/11/1130/654.pbf'),
+      {
+        params: createParams({ x: '../1130' }),
+      }
+    );
+
+    const yTraversalResponse = await GET(
+      new Request('http://localhost:3000/api/regions/tiles/v1/11/1130/654.pbf'),
+      {
+        params: createParams({ y: '..\\654' }),
+      }
+    );
+
+    expect(xTraversalResponse.status).toBe(400);
+    expect(yTraversalResponse.status).toBe(400);
+  });
+
+  it('returns 500 and logs unexpected tile read errors', async () => {
+    (readFile as jest.Mock).mockRejectedValue(new Error('disk failure'));
+
+    const response = await GET(
+      new Request('http://localhost:3000/api/regions/tiles/v1/11/1130/654.pbf'),
+      {
+        params: createParams(),
+      }
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.text()).toBe('Failed to read tile');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to serve region tile v1/11/1130/654')
+    );
   });
 });

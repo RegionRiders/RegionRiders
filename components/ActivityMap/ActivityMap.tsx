@@ -26,7 +26,7 @@ export default function ActivityMap() {
   }, []);
 
   const handleRegionTileError = useCallback((message: string) => {
-    setRegionTileError(message);
+    setRegionTileError(message || null);
   }, []);
 
   if (error) {

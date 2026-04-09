@@ -1,3 +1,4 @@
+import { act } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { GeoJSON } from 'geojson';
 import { analyzeRegionVisitsAsync } from '@/lib/utils/regionVisitAnalyzer';
@@ -85,11 +86,34 @@ describe('useRegionAnalysis', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    (analyzeRegionVisitsAsync as jest.Mock).mockImplementation(() =>
+      Promise.resolve(
+        new Map([
+          [
+            'region1',
+            {
+              regionId: 'region1',
+              regionName: 'Test Region',
+              visitCount: 1,
+              trackIds: ['track1'],
+              visited: true,
+              geometry: { type: 'Polygon', coordinates: [] },
+            },
+          ],
+        ])
+      )
+    );
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
+
+  async function flushAnalysis() {
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+  }
 
   describe('initial state', () => {
     it('should start with empty visitData', () => {
@@ -104,8 +128,7 @@ describe('useRegionAnalysis', () => {
     it('should analyze regions when tracks and regions are provided', async () => {
       renderHook(() => useRegionAnalysis(mockTracks, mockRegions)); // ✅ Added missing renderHook
 
-      // Fast-forward debounce timeout
-      jest.advanceTimersByTime(500);
+      await flushAnalysis();
 
       await waitFor(() => {
         expect(analyzeRegionVisitsAsync).toHaveBeenCalled();
@@ -129,19 +152,20 @@ describe('useRegionAnalysis', () => {
         initialProps: { tracks: mockTracks, regions: mockRegions },
       });
 
-      // First render should trigger analysis
-      jest.advanceTimersByTime(500);
+      return flushAnalysis().then(() => {
+        // Reset mock to check if called again
+        (analyzeRegionVisitsAsync as jest.Mock).mockClear();
 
-      // Reset mock to check if called again
-      (analyzeRegionVisitsAsync as jest.Mock).mockClear();
+        // Rerender with same data
+        rerender({ tracks: mockTracks, regions: mockRegions });
 
-      // Rerender with same data
-      rerender({ tracks: mockTracks, regions: mockRegions });
+        act(() => {
+          jest.advanceTimersByTime(500);
+        });
 
-      jest.advanceTimersByTime(500);
-
-      // Should not call analyze again
-      expect(analyzeRegionVisitsAsync).not.toHaveBeenCalled();
+        // Should not call analyze again
+        expect(analyzeRegionVisitsAsync).not.toHaveBeenCalled();
+      });
     });
 
     it('should clear previous timeout when called again', () => {
@@ -189,11 +213,49 @@ describe('useRegionAnalysis', () => {
 
       renderHook(() => useRegionAnalysis(mockTracks, mockRegions));
 
-      jest.advanceTimersByTime(500);
+      await flushAnalysis();
 
       await waitFor(() => {
         expect(analyzeRegionVisitsAsync).toHaveBeenCalled();
       });
+    });
+
+    it('clears stale visit data when tracks become empty', async () => {
+      const { result, rerender } = renderHook(
+        ({ tracks, regions }) => useRegionAnalysis(tracks, regions),
+        {
+          initialProps: { tracks: mockTracks, regions: mockRegions },
+        }
+      );
+
+      await flushAnalysis();
+
+      await waitFor(() => {
+        expect(result.current.visitData.size).toBe(1);
+      });
+
+      rerender({ tracks: new Map(), regions: mockRegions });
+
+      expect(result.current.visitData.size).toBe(0);
+    });
+
+    it('clears stale visit data when regions become empty', async () => {
+      const { result, rerender } = renderHook(
+        ({ tracks, regions }) => useRegionAnalysis(tracks, regions),
+        {
+          initialProps: { tracks: mockTracks, regions: mockRegions },
+        }
+      );
+
+      await flushAnalysis();
+
+      await waitFor(() => {
+        expect(result.current.visitData.size).toBe(1);
+      });
+
+      rerender({ tracks: mockTracks, regions: [] });
+
+      expect(result.current.visitData.size).toBe(0);
     });
   });
 });

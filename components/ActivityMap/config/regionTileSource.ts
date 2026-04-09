@@ -1,10 +1,26 @@
 const DEFAULT_REGION_TILE_SOURCE = 'https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf';
 
+function normalizeRegionTileUrl(url: string): string {
+  return url.trim().replace(/\/$/, '');
+}
+
+export function getRegionTileSourceOrigin(): string | null {
+  const tileUrl = getRegionTileSourceUrl();
+
+  try {
+    return new URL(tileUrl).origin;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Returns the canonical region vector tile source URL.
  * The public env override allows deployments to switch hosts without
  * spreading tile source knowledge across rendering code.
  */
 export function getRegionTileSourceUrl(): string {
-  return process.env.NEXT_PUBLIC_REGION_TILE_URL || DEFAULT_REGION_TILE_SOURCE;
+  return normalizeRegionTileUrl(
+    process.env.NEXT_PUBLIC_REGION_TILE_URL || DEFAULT_REGION_TILE_SOURCE
+  );
 }

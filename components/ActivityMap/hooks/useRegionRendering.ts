@@ -70,7 +70,7 @@ export { getRegionFeatureId, getUnvisitedRegionStyle, getVisitedRegionStyle };
 export function useRegionRendering(
   map: L.Map | null,
   showBorders: boolean = true,
-  visitData: Map<string, RegionVisitData> = new Map(),
+  visitData: Map<string, RegionVisitData> = new Map<string, RegionVisitData>(),
   onTileError?: (message: string) => void
 ) {
   const regionLayerRef = useRef<RegionVectorGridLayer | null>(null);
@@ -79,7 +79,12 @@ export function useRegionRendering(
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
 
   useEffect(() => {
-    if (!map || !showBorders) {
+    if (!showBorders) {
+      previousVisitedIdsRef.current = new Set();
+      return;
+    }
+
+    if (!map) {
       return;
     }
 
@@ -110,6 +115,7 @@ export function useRegionRendering(
 
     const handleTileLoad = () => {
       markFirstRegionLayerAdded();
+      onTileError?.('');
     };
 
     const handleTileError = (event: unknown) => {

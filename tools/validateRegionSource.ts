@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import * as fs from 'fs';
 import * as path from 'path';
+import { logger } from '@/lib/logger';
 
 interface ValidationIssue {
   file: string;
@@ -227,8 +228,8 @@ function main(): void {
   ensureDirForFile(reportPath);
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
 
-  console.log(`Validation report saved to ${reportPath}`);
-  console.log(
+  logger.info(`Validation report saved to ${reportPath}`);
+  logger.info(
     [
       `files=${report.filesProcessed}`,
       `features=${report.featuresProcessed}`,
