@@ -10,6 +10,10 @@ jest.mock('@/lib/db', () => ({
 }));
 
 describe('app/api/trips/[id]/days/[date]/route', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('upserts a trip day note', async () => {
     (upsertTripDay as jest.Mock).mockResolvedValue({ id: 'day-1', dayDate: '2026-04-09' });
 
@@ -29,5 +33,22 @@ describe('app/api/trips/[id]/days/[date]/route', () => {
     expect(upsertTripDay).toHaveBeenCalledWith('user-1', 'trip-1', '2026-04-09', {
       note: 'Strong headwinds today',
     });
+  });
+
+  it('rejects invalid trip day dates', async () => {
+    const response = await PUT(
+      new Request('http://localhost/api/trips/trip-1/days/not-a-date', {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({ note: 'Strong headwinds today' }),
+      }),
+      { params: Promise.resolve({ id: 'trip-1', date: 'not-a-date' }) }
+    );
+
+    expect(response.status).toBe(400);
+    expect(upsertTripDay).not.toHaveBeenCalled();
   });
 });

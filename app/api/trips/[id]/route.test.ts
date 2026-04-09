@@ -64,4 +64,20 @@ describe('app/api/trips/[id]/route', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ deleted: true });
   });
+
+  it('rejects updates without an authenticated user header', async () => {
+    const response = await PATCH(
+      new Request('http://localhost/api/trips/trip-1', {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Updated trip' }),
+      }),
+      context
+    );
+
+    expect(response.status).toBe(401);
+    expect(updateTrip).not.toHaveBeenCalled();
+  });
 });

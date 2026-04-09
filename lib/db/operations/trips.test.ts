@@ -250,7 +250,40 @@ describe('Trip Operations', () => {
     );
   });
 
-  it('enforces ownership on reads and deletes', async () => {
+  it('stores day notes for dates without activities', async () => {
+    const notesOnlyTrip = await createTrip(ownerId, {
+      creationMode: 'manual',
+      title: 'Notes only trip',
+    });
+
+    const day = await upsertTripDay(ownerId, notesOnlyTrip.id, '2026-04-10', {
+      note: 'Rest day with a private journal entry',
+    });
+
+    expect(day?.dayDate).toBe('2026-04-10');
+
+    const detail = await getTripDetailById(ownerId, notesOnlyTrip.id);
+    expect(detail?.days).toHaveLength(1);
+    expect(detail?.days[0]).toMatchObject({
+      dayDate: '2026-04-10',
+      note: 'Rest day with a private journal entry',
+    });
+    expect(detail?.days[0]?.activities).toEqual([]);
+  });
+
+  it('enforces ownership on reads and writes', async () => {
+    await expect(
+      updateTrip(otherUserId, selectedTripId, { title: 'Intrusion attempt' })
+    ).rejects.toMatchObject({
+      statusCode: 404,
+    });
+
+    await expect(
+      upsertTripDay(otherUserId, selectedTripId, '2026-04-03', { note: 'Nope' })
+    ).rejects.toMatchObject({
+      statusCode: 404,
+    });
+
     const foreignRead = await getTripById(otherUserId, selectedTripId);
     expect(foreignRead).toBeUndefined();
 
