@@ -1,10 +1,10 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { GPXTrack } from '@/lib/types';
 import type { ActivityRenderMode } from './drawActivities/drawActivities';
 import { useActivityRendering } from './hooks/useActivityRendering';
-import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useRegionRendering } from './hooks/useRegionRendering';
 
 interface MapOrchestratorProps {
@@ -28,7 +28,7 @@ export default function MapOrchestrator({
   activityMode = 'heatmap',
   onRegionTileError,
 }: MapOrchestratorProps) {
-  const { visitData } = useRegionAnalysis(tracks, []);
+  const visitData = useMemo(() => new Map(), []);
 
   useActivityRendering(map, tracks, showHeatmap, activityMode);
   useRegionRendering(map, showBorders, visitData, onRegionTileError);

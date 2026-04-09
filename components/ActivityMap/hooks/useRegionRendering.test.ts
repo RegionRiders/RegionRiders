@@ -215,7 +215,7 @@ describe('useRegionRendering', () => {
     tileErrorHandler?.({ message: 'boom' });
 
     expect(onTileError).toHaveBeenCalledWith('Region overlay unavailable');
-    expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
+    expect(mockMap.removeLayer).not.toHaveBeenCalled();
   });
 
   it('clears a prior tile error once the layer loads successfully', () => {

@@ -1,16 +1,11 @@
 import { render } from '@testing-library/react';
 import { useActivityRendering } from './hooks/useActivityRendering';
-import { useRegionAnalysis } from './hooks/useRegionAnalysis';
 import { useRegionRendering } from './hooks/useRegionRendering';
 import MapOrchestrator from './MapOrchestrator';
 
 // Mock the hooks
 jest.mock('./hooks/useActivityRendering', () => ({
   useActivityRendering: jest.fn(),
-}));
-
-jest.mock('./hooks/useRegionAnalysis', () => ({
-  useRegionAnalysis: jest.fn(),
 }));
 
 jest.mock('./hooks/useRegionRendering', () => ({
@@ -20,19 +15,16 @@ jest.mock('./hooks/useRegionRendering', () => ({
 const mockUseActivityRendering = useActivityRendering as jest.MockedFunction<
   typeof useActivityRendering
 >;
-const mockUseRegionAnalysis = useRegionAnalysis as jest.MockedFunction<typeof useRegionAnalysis>;
 const mockUseRegionRendering = useRegionRendering as jest.MockedFunction<typeof useRegionRendering>;
 
 describe('MapOrchestrator', () => {
   const mockMap: any = {};
   const mockTracks = new Map<string, any>();
-  const mockVisitData = new Map<string, any>();
   const onRegionTileError = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseActivityRendering.mockReturnValue(undefined);
-    mockUseRegionAnalysis.mockReturnValue({ visitData: mockVisitData });
     mockUseRegionRendering.mockReturnValue(undefined);
   });
 
@@ -47,12 +39,6 @@ describe('MapOrchestrator', () => {
     );
   });
 
-  it('should call useRegionAnalysis with track data', () => {
-    render(<MapOrchestrator map={mockMap} tracks={mockTracks} />);
-
-    expect(mockUseRegionAnalysis).toHaveBeenCalledWith(mockTracks, []);
-  });
-
   it('should call useRegionRendering with correct parameters', () => {
     render(
       <MapOrchestrator map={mockMap} tracks={mockTracks} onRegionTileError={onRegionTileError} />
@@ -61,9 +47,11 @@ describe('MapOrchestrator', () => {
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
       mockMap,
       true, // showBorders default
-      mockVisitData,
+      expect.any(Map),
       onRegionTileError
     );
+
+    expect(mockUseRegionRendering.mock.calls[0]?.[2]).toEqual(new Map());
   });
 
   it('should pass custom props correctly', () => {
@@ -83,9 +71,11 @@ describe('MapOrchestrator', () => {
     expect(mockUseRegionRendering).toHaveBeenCalledWith(
       mockMap,
       false,
-      mockVisitData,
+      expect.any(Map),
       onRegionTileError
     );
+
+    expect(mockUseRegionRendering.mock.calls[0]?.[2]).toEqual(new Map());
   });
 
   it('should render null', () => {

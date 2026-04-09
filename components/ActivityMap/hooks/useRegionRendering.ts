@@ -120,16 +120,6 @@ export function useRegionRendering(
 
     const handleTileError = (event: unknown) => {
       logRegionTileError(event);
-
-      if (map.hasLayer(layer)) {
-        map.removeLayer(layer);
-      }
-
-      if (regionLayerRef.current === layer) {
-        regionLayerRef.current = null;
-      }
-
-      previousVisitedIdsRef.current = new Set();
       onTileError?.('Region overlay unavailable');
     };
 

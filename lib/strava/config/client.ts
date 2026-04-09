@@ -1,5 +1,5 @@
 import strava from 'strava-v3';
-import { validateStravaEnv } from '@/lib/strava';
+import { validateStravaEnv, validateStravaOAuthEnv } from '@/lib/strava';
 
 /**
  * Creates a new Strava API client instance with the provided configuration
@@ -9,12 +9,26 @@ import { validateStravaEnv } from '@/lib/strava';
 export function createStravaClient(config: {
   client_id: string;
   client_secret: string;
-  access_token: string;
+  access_token?: string;
   redirect_uri: string;
 }) {
   const client = Object.create(strava);
   client.config(config);
   return client;
+}
+
+/**
+ * Creates a Strava client suitable for OAuth bootstrap flows.
+ * Only OAuth config is required; no pre-existing access token is needed.
+ */
+export function getStravaOAuthClient() {
+  validateStravaOAuthEnv();
+
+  return createStravaClient({
+    client_id: process.env.STRAVA_CLIENT_ID!,
+    client_secret: process.env.STRAVA_CLIENT_SECRET!,
+    redirect_uri: process.env.STRAVA_REDIRECT_URI!,
+  });
 }
 
 /**
