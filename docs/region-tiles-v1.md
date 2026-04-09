@@ -50,6 +50,8 @@ Build behavior:
 - merges all `*.geojson` files from source into one `regions` layer
 - generates MVT directory tiles with zoom range `3..14`
 - rewrites output directory when `--force` is used
+- current runtime region overlay profiles intentionally stop requesting region tiles above zoom `12`
+- keeping build output through zoom `14` preserves headroom for offline inspection and future hosting changes without changing the current runtime contract
 
 ## 3) Smoke checks
 
@@ -62,6 +64,12 @@ After tile build:
    - otherwise `https://rr-tiles.404fra.pl/v1/{z}/{x}/{y}.pbf`
 4. confirm tiles expose the `regions` layer and `region_id` feature property
 5. confirm there are no recurring `tileerror` logs
+
+Missing-tile behavior:
+
+- the local API returns `204 No Content` for missing tile files
+- `leaflet.vectorgrid` treats non-error HTTP fetch results as an empty vector tile response rather than a transport failure, so sparse/missing tiles do not need to trip degraded-mode UI by themselves
+- keep the `tileerror` banner reserved for true transport/runtime failures such as host unavailability or fetch rejection
 
 ## 4) KPI acceptance thresholds
 
@@ -110,6 +118,7 @@ Use this protocol for each candidate build.
   - `public/data/rr_import/mobile_geojson_balanced` when present
   - otherwise the command fails and requires an explicit source path
 - Runtime rendering expects vector tile layer `regions` with stable `region_id` values.
+- Runtime rendering currently requests region tiles only through zoom `12` even though the build tooling can pre-generate up to `14`; this is an intentional performance cap for the current shipped overlay profiles.
 - Visited/unvisited styling also requires a runtime region geometry dataset; this branch currently has the analysis/rendering path, but no committed runtime loader or in-repo geometry artifact to feed it.
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.
