@@ -1,22 +1,20 @@
+import { TEST_REGION_TILE_URL } from '@/test-utils/regionTileSource';
+import { createRegionTileEnvTestHarness } from '@/test-utils/withRegionTileEnv';
 import { getRegionTileProfileConfig } from './regionTileProfiles';
 
 describe('regionTileProfiles', () => {
-  const originalRegionTileUrl = process.env.NEXT_PUBLIC_REGION_TILE_URL;
+  const regionTileEnv = createRegionTileEnvTestHarness();
 
   afterEach(() => {
-    if (originalRegionTileUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_REGION_TILE_URL;
-    } else {
-      process.env.NEXT_PUBLIC_REGION_TILE_URL = originalRegionTileUrl;
-    }
+    regionTileEnv.restore();
   });
 
   it('injects the canonical tile source URL into the mobile profile', () => {
-    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf';
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_REGION_TILE_URL;
 
     expect(getRegionTileProfileConfig('mobile')).toEqual(
       expect.objectContaining({
-        sourceUrl: 'https://example.com/regions/{z}/{x}/{y}.pbf',
+        sourceUrl: TEST_REGION_TILE_URL,
         minZoom: 4,
         maxZoom: 12,
       })

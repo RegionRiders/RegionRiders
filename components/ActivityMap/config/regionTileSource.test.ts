@@ -1,24 +1,27 @@
 import {
+  TEST_REGION_TILE_ORIGIN,
+  TEST_REGION_TILE_URL,
+  TEST_REGION_TILE_URL_WITH_TRAILING_SLASH,
+  TEST_RELATIVE_REGION_TILE_URL,
+} from '@/test-utils/regionTileSource';
+import { createRegionTileEnvTestHarness } from '@/test-utils/withRegionTileEnv';
+import {
   DEFAULT_REGION_TILE_SOURCE,
   getRegionTileSourceOrigin,
   getRegionTileSourceUrl,
 } from './regionTileSource';
 
 describe('regionTileSource', () => {
-  const originalRegionTileUrl = process.env.NEXT_PUBLIC_REGION_TILE_URL;
+  const regionTileEnv = createRegionTileEnvTestHarness();
 
   afterEach(() => {
-    if (originalRegionTileUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_REGION_TILE_URL;
-    } else {
-      process.env.NEXT_PUBLIC_REGION_TILE_URL = originalRegionTileUrl;
-    }
+    regionTileEnv.restore();
   });
 
   it('returns env override when present', () => {
-    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf';
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_REGION_TILE_URL;
 
-    expect(getRegionTileSourceUrl()).toBe('https://example.com/regions/{z}/{x}/{y}.pbf');
+    expect(getRegionTileSourceUrl()).toBe(TEST_REGION_TILE_URL);
   });
 
   it('falls back to the default region tile host', () => {
@@ -28,19 +31,19 @@ describe('regionTileSource', () => {
   });
 
   it('normalizes a trailing slash in the tile source override', () => {
-    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf/';
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_REGION_TILE_URL_WITH_TRAILING_SLASH;
 
-    expect(getRegionTileSourceUrl()).toBe('https://example.com/regions/{z}/{x}/{y}.pbf');
+    expect(getRegionTileSourceUrl()).toBe(TEST_REGION_TILE_URL);
   });
 
   it('extracts the tile source origin for CSP allowlisting', () => {
-    process.env.NEXT_PUBLIC_REGION_TILE_URL = 'https://example.com/regions/{z}/{x}/{y}.pbf';
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_REGION_TILE_URL;
 
-    expect(getRegionTileSourceOrigin()).toBe('https://example.com');
+    expect(getRegionTileSourceOrigin()).toBe(TEST_REGION_TILE_ORIGIN);
   });
 
   it('returns null origin for an invalid tile source URL', () => {
-    process.env.NEXT_PUBLIC_REGION_TILE_URL = '/api/regions/tiles/v1/{z}/{x}/{y}.pbf';
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_RELATIVE_REGION_TILE_URL;
 
     expect(getRegionTileSourceOrigin()).toBeNull();
   });

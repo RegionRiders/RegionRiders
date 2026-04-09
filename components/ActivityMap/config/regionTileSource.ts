@@ -1,19 +1,13 @@
-import { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/defaultRegionTileSource.mjs';
+import {
+  DEFAULT_REGION_TILE_SOURCE,
+  getRegionTileSourceOrigin as getSharedRegionTileSourceOrigin,
+  getRegionTileSourceUrl as getSharedRegionTileSourceUrl,
+} from '@/lib/regions/regionTileSource.mjs';
 
-export { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/defaultRegionTileSource.mjs';
-
-function normalizeRegionTileUrl(url: string): string {
-  return url.trim().replace(/\/$/, '');
-}
+export { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/regionTileSource.mjs';
 
 export function getRegionTileSourceOrigin(): string | null {
-  const tileUrl = getRegionTileSourceUrl();
-
-  try {
-    return new URL(tileUrl).origin;
-  } catch {
-    return null;
-  }
+  return getSharedRegionTileSourceOrigin();
 }
 
 /**
@@ -22,7 +16,5 @@ export function getRegionTileSourceOrigin(): string | null {
  * spreading tile source knowledge across rendering code.
  */
 export function getRegionTileSourceUrl(): string {
-  return normalizeRegionTileUrl(
-    process.env.NEXT_PUBLIC_REGION_TILE_URL || DEFAULT_REGION_TILE_SOURCE
-  );
+  return getSharedRegionTileSourceUrl();
 }
