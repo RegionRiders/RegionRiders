@@ -1,7 +1,7 @@
 import {
-  MAP_SETTINGS_STORAGE_VERSION,
   loadMapSettingsFromStorage,
   loadPersistedMapSettingsFromStorage,
+  MAP_SETTINGS_STORAGE_VERSION,
   resolveMapSettingsStorageKey,
 } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 
