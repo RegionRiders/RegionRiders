@@ -29,7 +29,7 @@ const DEFAULT_SOURCE_DIR_CANDIDATES = [
   path.join(REPO_ROOT, 'public', 'data', 'rr_import', 'mobile_geojson_balanced'),
 ].filter((value): value is string => Boolean(value));
 
-interface BuildOptions {
+export interface BuildOptions {
   sourceDir: string;
   outputDir: string;
   tempGpkg: string;
@@ -37,19 +37,6 @@ interface BuildOptions {
   minZoom: number;
   maxZoom: number;
   force: boolean;
-}
-
-function getArgValue(flag: string): string | undefined {
-  const index = process.argv.indexOf(flag);
-  if (index === -1) {
-    return undefined;
-  }
-
-  return process.argv[index + 1];
-}
-
-function hasFlag(flag: string): boolean {
-  return process.argv.includes(flag);
 }
 
 function runCommand(command: string, args: string[]): void {
@@ -91,14 +78,14 @@ function resolveDefaultSourceDir(): string {
   );
 }
 
-function getBuildOptions(): BuildOptions {
-  const sourceDir = getArgValue('--source') ?? resolveDefaultSourceDir();
-  const outputDir = getArgValue('--output') ?? DEFAULT_OUTPUT_DIR;
-  const tempGpkg = getArgValue('--temp') ?? DEFAULT_TMP_GPKG;
-  const normalizedGpkg = getArgValue('--normalized') ?? DEFAULT_NORMALIZED_GPKG;
-  const minZoom = parseIntArg(getArgValue('--minzoom'), DEFAULT_MIN_ZOOM, 'minzoom');
-  const maxZoom = parseIntArg(getArgValue('--maxzoom'), DEFAULT_MAX_ZOOM, 'maxzoom');
-  const force = hasFlag('--force');
+export function getBuildOptions(argv: string[] = process.argv): BuildOptions {
+  const sourceDir = getArgValueFromArgv(argv, '--source') ?? resolveDefaultSourceDir();
+  const outputDir = getArgValueFromArgv(argv, '--output') ?? DEFAULT_OUTPUT_DIR;
+  const tempGpkg = getArgValueFromArgv(argv, '--temp') ?? DEFAULT_TMP_GPKG;
+  const normalizedGpkg = getArgValueFromArgv(argv, '--normalized') ?? DEFAULT_NORMALIZED_GPKG;
+  const minZoom = parseIntArg(getArgValueFromArgv(argv, '--minzoom'), DEFAULT_MIN_ZOOM, 'minzoom');
+  const maxZoom = parseIntArg(getArgValueFromArgv(argv, '--maxzoom'), DEFAULT_MAX_ZOOM, 'maxzoom');
+  const force = hasFlagInArgv(argv, '--force');
 
   if (minZoom > maxZoom) {
     throw new Error(`Invalid zoom range: minzoom (${minZoom}) must be <= maxzoom (${maxZoom})`);
@@ -107,7 +94,20 @@ function getBuildOptions(): BuildOptions {
   return { sourceDir, outputDir, tempGpkg, normalizedGpkg, minZoom, maxZoom, force };
 }
 
-function collectSourceFiles(sourceDir: string): string[] {
+function getArgValueFromArgv(argv: string[], flag: string): string | undefined {
+  const index = argv.indexOf(flag);
+  if (index === -1) {
+    return undefined;
+  }
+
+  return argv[index + 1];
+}
+
+function hasFlagInArgv(argv: string[], flag: string): boolean {
+  return argv.includes(flag);
+}
+
+export function collectSourceFiles(sourceDir: string): string[] {
   if (!fs.existsSync(sourceDir)) {
     throw new Error(`Source directory does not exist: ${sourceDir}`);
   }
@@ -140,7 +140,7 @@ function ensureParentDir(filePath: string): void {
   }
 }
 
-function runBuild(options: BuildOptions, sourceFiles: string[]): void {
+export function runBuild(options: BuildOptions, sourceFiles: string[]): void {
   if (fs.existsSync(options.outputDir) && !options.force) {
     throw new Error(
       `Output directory already exists: ${options.outputDir}. Re-run with --force to overwrite.`
@@ -206,7 +206,12 @@ function runBuild(options: BuildOptions, sourceFiles: string[]): void {
   removeIfExists(options.normalizedGpkg);
 }
 
-function main(): void {
+function isExecutedAsScript(): boolean {
+  const entryPoint = process.argv[1];
+  return Boolean(entryPoint && /buildRegionTiles\.(ts|js)$/.test(entryPoint));
+}
+
+export function main(): void {
   assertCommandExists('ogrmerge.py');
   assertCommandExists('ogr2ogr');
 
@@ -218,4 +223,6 @@ function main(): void {
   logger.info(`Region tiles generated in ${options.outputDir}`);
 }
 
-main();
+if (isExecutedAsScript()) {
+  main();
+}
