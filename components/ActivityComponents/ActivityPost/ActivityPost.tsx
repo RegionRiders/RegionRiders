@@ -5,7 +5,7 @@ import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIc
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';
 
-const ActivityStat = ({ value }: { name: string; value: string }) => <Text>{value}</Text>;
+const ActivityStat = ({ value }: { value: string }) => <Text>{value}</Text>;
 
 const ActivityPost = ({
   data,
@@ -58,9 +58,9 @@ const ActivityPost = ({
         </Text>
 
         <SimpleGrid cols={3} spacing={0} display={{ base: 'grid', lg: 'none' }}>
-          <ActivityStat name="Distance" value={data.distance} />
-          <ActivityStat name="Time" value={data.time} />
-          <ActivityStat name="Average" value={data.average} />
+          <ActivityStat value={data.distance} />
+          <ActivityStat value={data.time} />
+          <ActivityStat value={data.average} />
         </SimpleGrid>
       </Stack>
 
@@ -71,9 +71,9 @@ const ActivityPost = ({
         w={{ base: '15vw', lg: 220 }}
         display={{ base: 'none', lg: 'grid' }}
       >
-        <ActivityStat name="Distance" value={data.distance} />
-        <ActivityStat name="Time" value={data.time} />
-        <ActivityStat name="Average" value={data.average} />
+        <ActivityStat value={data.distance} />
+        <ActivityStat value={data.time} />
+        <ActivityStat value={data.average} />
       </SimpleGrid>
     </Flex>
   </Card>
