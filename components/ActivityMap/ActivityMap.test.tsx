@@ -20,6 +20,15 @@ const advanceInitialPersistWindow = () => {
   });
 };
 
+const flushHydrationPromises = async () => {
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+};
+
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
   useGPXData: jest.fn(),
@@ -241,12 +250,7 @@ describe('ActivityMap', () => {
 
     jest.useFakeTimers();
     render(<ActivityMap />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushHydrationPromises();
     expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled();
     advanceInitialPersistWindow();
     jest.useRealTimers();
@@ -330,12 +334,7 @@ describe('ActivityMap', () => {
 
     jest.useFakeTimers();
     render(<ActivityMap />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushHydrationPromises();
     expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
     advanceInitialPersistWindow();
     jest.useRealTimers();
