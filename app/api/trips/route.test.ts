@@ -57,4 +57,22 @@ describe('app/api/trips/route', () => {
       expect.objectContaining({ creationMode: 'manual', title: 'Created trip' })
     );
   });
+
+  it('rejects invalid trip creation payloads', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/trips', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({
+          creationMode: 'manual',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(createTrip).not.toHaveBeenCalled();
+  });
 });

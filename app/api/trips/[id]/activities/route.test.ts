@@ -10,6 +10,10 @@ jest.mock('@/lib/db', () => ({
 }));
 
 describe('app/api/trips/[id]/activities/route', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('attaches activities to a trip', async () => {
     (attachActivitiesToTrip as jest.Mock).mockResolvedValue({ id: 'trip-1' });
 
@@ -29,5 +33,22 @@ describe('app/api/trips/[id]/activities/route', () => {
     expect(attachActivitiesToTrip).toHaveBeenCalledWith('user-1', 'trip-1', [
       '123e4567-e89b-42d3-a456-426614174000',
     ]);
+  });
+
+  it('rejects invalid activity attachment payloads', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/trips/trip-1/activities', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({ activityIds: [] }),
+      }),
+      { params: Promise.resolve({ id: 'trip-1' }) }
+    );
+
+    expect(response.status).toBe(400);
+    expect(attachActivitiesToTrip).not.toHaveBeenCalled();
   });
 });
