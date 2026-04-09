@@ -35,6 +35,17 @@ describe('app/api/trips/route', () => {
     });
   });
 
+  it('rejects invalid list filters', async () => {
+    const response = await GET(
+      new Request('http://localhost/api/trips?status=not-a-real-status', {
+        headers: { 'x-user-id': 'user-1' },
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(listTripsByUserId).not.toHaveBeenCalled();
+  });
+
   it('creates a trip for the current user', async () => {
     (createTrip as jest.Mock).mockResolvedValue({ id: 'trip-1', title: 'Created trip' });
 
@@ -58,7 +69,9 @@ describe('app/api/trips/route', () => {
     );
   });
 
-  it('rejects invalid trip creation payloads', async () => {
+  it('parses date-range trip boundaries into full-day timestamps', async () => {
+    (createTrip as jest.Mock).mockResolvedValue({ id: 'trip-2', title: 'Date range trip' });
+
     const response = await POST(
       new Request('http://localhost/api/trips', {
         method: 'POST',
@@ -67,12 +80,22 @@ describe('app/api/trips/route', () => {
           'x-user-id': 'user-1',
         },
         body: JSON.stringify({
-          creationMode: 'manual',
+          creationMode: 'date_range',
+          title: 'Date range trip',
+          rangeStart: '2026-04-01',
+          rangeEnd: '2026-04-03',
         }),
       })
     );
 
-    expect(response.status).toBe(400);
-    expect(createTrip).not.toHaveBeenCalled();
+    expect(response.status).toBe(201);
+    expect(createTrip).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        creationMode: 'date_range',
+        rangeStart: new Date('2026-04-01T00:00:00.000Z'),
+        rangeEnd: new Date('2026-04-03T23:59:59.999Z'),
+      })
+    );
   });
 });

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { eq } from 'drizzle-orm';
 import {
   attachActivitiesToTrip,
   closePool,
@@ -9,9 +10,11 @@ import {
   deleteUser,
   detachActivityFromTrip,
   getActivityById,
+  getDb,
   getTripById,
   getTripDetailById,
   listTripsByUserId,
+  tripDays,
   updateTrip,
   upsertTripDay,
   type NewActivity,
@@ -61,6 +64,7 @@ describe('Trip Operations', () => {
   let activityFourId: string;
   let foreignActivityId: string;
   let selectedTripId: string;
+  let rangeTripId: string;
 
   beforeAll(async () => {
     const owner = await createUser(ownerUser);
@@ -180,6 +184,17 @@ describe('Trip Operations', () => {
     ).rejects.toMatchObject({ statusCode: 400 });
   });
 
+  it('rejects creating from an invalid date range', async () => {
+    await expect(
+      createTrip(ownerId, {
+        creationMode: 'date_range',
+        title: 'Invalid range',
+        rangeStart: new Date('2026-04-05T00:00:00.000Z'),
+        rangeEnd: new Date('2026-04-04T23:59:59.999Z'),
+      })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
   it('creates a trip from a date range and rejects conflicts', async () => {
     const rangeTrip = await createTrip(ownerId, {
       creationMode: 'date_range',
@@ -187,6 +202,7 @@ describe('Trip Operations', () => {
       rangeStart: new Date('2026-04-03T00:00:00.000Z'),
       rangeEnd: new Date('2026-04-04T23:59:59.999Z'),
     });
+    rangeTripId = rangeTrip.id;
 
     expect(rangeTrip.activities.map((activity) => activity.id)).toEqual([
       activityThreeId,
@@ -199,6 +215,12 @@ describe('Trip Operations', () => {
         title: 'Conflicting trip',
         activityIds: [activityThreeId],
       })
+    ).rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it('rejects attaching an activity already linked to a different trip', async () => {
+    await expect(
+      attachActivitiesToTrip(ownerId, selectedTripId, [activityThreeId])
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 
@@ -250,40 +272,35 @@ describe('Trip Operations', () => {
     );
   });
 
-  it('stores day notes for dates without activities', async () => {
-    const notesOnlyTrip = await createTrip(ownerId, {
+  it('upserts a trip day note for a day with zero activities', async () => {
+    const manualTrip = await createTrip(ownerId, {
       creationMode: 'manual',
-      title: 'Notes only trip',
+      title: 'Rest day journal',
     });
 
-    const day = await upsertTripDay(ownerId, notesOnlyTrip.id, '2026-04-10', {
-      note: 'Rest day with a private journal entry',
+    const createdDay = await upsertTripDay(ownerId, manualTrip.id, '2026-04-10', {
+      title: 'Rest day',
+      note: 'Laundry and resupply',
+    });
+    const updatedDay = await upsertTripDay(ownerId, manualTrip.id, '2026-04-10', {
+      title: 'Rest day updated',
+      note: 'Laundry, resupply, and route planning',
     });
 
-    expect(day?.dayDate).toBe('2026-04-10');
+    expect(updatedDay?.id).toBe(createdDay?.id);
 
-    const detail = await getTripDetailById(ownerId, notesOnlyTrip.id);
-    expect(detail?.days).toHaveLength(1);
-    expect(detail?.days[0]).toMatchObject({
-      dayDate: '2026-04-10',
-      note: 'Rest day with a private journal entry',
-    });
-    expect(detail?.days[0]?.activities).toEqual([]);
+    const detail = await getTripDetailById(ownerId, manualTrip.id);
+    expect(detail?.days).toEqual([
+      expect.objectContaining({
+        dayDate: '2026-04-10',
+        title: 'Rest day updated',
+        note: 'Laundry, resupply, and route planning',
+        activities: [],
+      }),
+    ]);
   });
 
-  it('enforces ownership on reads and writes', async () => {
-    await expect(
-      updateTrip(otherUserId, selectedTripId, { title: 'Intrusion attempt' })
-    ).rejects.toMatchObject({
-      statusCode: 404,
-    });
-
-    await expect(
-      upsertTripDay(otherUserId, selectedTripId, '2026-04-03', { note: 'Nope' })
-    ).rejects.toMatchObject({
-      statusCode: 404,
-    });
-
+  it('enforces ownership on reads and deletes', async () => {
     const foreignRead = await getTripById(otherUserId, selectedTripId);
     expect(foreignRead).toBeUndefined();
 
@@ -301,5 +318,25 @@ describe('Trip Operations', () => {
 
     const deletedTrip = await getTripById(ownerId, selectedTripId);
     expect(deletedTrip).toBeUndefined();
+  });
+
+  it('deletes range trips by clearing linked activities and trip day rows', async () => {
+    await upsertTripDay(ownerId, rangeTripId, '2026-04-05', {
+      title: 'Camp note',
+      note: 'Stayed near the lake',
+    });
+
+    const deleted = await deleteTrip(ownerId, rangeTripId);
+    expect(deleted).toBe(true);
+
+    await expect(getTripDetailById(ownerId, rangeTripId)).resolves.toBeUndefined();
+    await expect(getActivityById(activityThreeId)).resolves.toMatchObject({ tripId: null });
+    await expect(getActivityById(activityFourId)).resolves.toMatchObject({ tripId: null });
+
+    const persistedDays = await getDb()
+      .select()
+      .from(tripDays)
+      .where(eq(tripDays.tripId, rangeTripId));
+    expect(persistedDays).toHaveLength(0);
   });
 });

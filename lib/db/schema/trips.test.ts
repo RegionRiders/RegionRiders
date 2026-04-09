@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  activities,
   NewTrip,
   NewTripDay,
   Trip,
@@ -18,7 +19,10 @@ describe('Trips Table Schema', () => {
     expect(trips.status).toBeDefined();
     expect(trips.startDate).toBeDefined();
     expect(trips.endDate).toBeDefined();
+    expect(trips.startedAt).toBeDefined();
+    expect(trips.completedAt).toBeDefined();
     expect(trips.coverActivityId).toBeDefined();
+    expect(trips.metadata).toBeDefined();
     expect(trips.createdAt).toBeDefined();
     expect(trips.updatedAt).toBeDefined();
   });
@@ -27,9 +31,15 @@ describe('Trips Table Schema', () => {
     expect(tripDays.id).toBeDefined();
     expect(tripDays.tripId).toBeDefined();
     expect(tripDays.dayDate).toBeDefined();
+    expect(tripDays.title).toBeDefined();
+    expect(tripDays.summary).toBeDefined();
     expect(tripDays.note).toBeDefined();
     expect(tripDays.createdAt).toBeDefined();
     expect(tripDays.updatedAt).toBeDefined();
+  });
+
+  it('adds a nullable trip reference to activities', () => {
+    expect(activities.tripId).toBeDefined();
   });
 
   it('infers Trip and NewTrip types', () => {

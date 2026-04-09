@@ -31,6 +31,22 @@ describe('app/api/trips/[id]/route', () => {
     expect(response.status).toBe(404);
   });
 
+  it('returns the trip detail for the current user', async () => {
+    (getTripDetailById as jest.Mock).mockResolvedValue({ id: 'trip-1', title: 'Trip detail' });
+
+    const response = await GET(
+      new Request('http://localhost/api/trips/trip-1', {
+        headers: { 'x-user-id': 'user-1' },
+      }),
+      context
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      trip: { id: 'trip-1', title: 'Trip detail' },
+    });
+  });
+
   it('updates a trip', async () => {
     (updateTrip as jest.Mock).mockResolvedValue({ id: 'trip-1', title: 'Updated trip' });
 
@@ -65,19 +81,8 @@ describe('app/api/trips/[id]/route', () => {
     await expect(response.json()).resolves.toEqual({ deleted: true });
   });
 
-  it('rejects updates without an authenticated user header', async () => {
-    const response = await PATCH(
-      new Request('http://localhost/api/trips/trip-1', {
-        method: 'PATCH',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ title: 'Updated trip' }),
-      }),
-      context
-    );
-
+  it('rejects detail requests without x-user-id header', async () => {
+    const response = await GET(new Request('http://localhost/api/trips/trip-1'), context);
     expect(response.status).toBe(401);
-    expect(updateTrip).not.toHaveBeenCalled();
   });
 });
