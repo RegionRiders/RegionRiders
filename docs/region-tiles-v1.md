@@ -9,6 +9,9 @@ integration, configure the runtime tile source, and measure release gates.
 - Source directory: `~/rr_import_20260325/mobile_geojson_balanced`
 - Output directory: `public/data/regions/tiles/v1`
 - Layer name in tiles: `regions`
+- Current release scope: **tile infrastructure only**
+- Current tile artifacts should be treated as a **draft / interim render** for development and internal validation
+- Final production tiles are expected to be **re-rendered** before public release
 
 ## 1) Validate source data
 
@@ -89,7 +92,7 @@ These thresholds are release gates for v1 local tiles.
   - heatmap
   - lines
   - hover interactions
-- visited regions remain visually distinct from unvisited regions at runtime
+- visited/unvisited runtime styling is explicitly out of scope for this release and handled by follow-up work on server-side region statuses
 
 ## 5) Measurement protocol
 
@@ -119,9 +122,10 @@ Use this protocol for each candidate build.
   - otherwise the command fails and requires an explicit source path
 - Runtime rendering expects vector tile layer `regions` with stable `region_id` values.
 - Runtime rendering currently requests region tiles only through zoom `12` even though the build tooling can pre-generate up to `14`; this is an intentional performance cap for the current shipped overlay profiles.
-- Visited/unvisited styling also requires a runtime region geometry dataset; this branch currently has the analysis/rendering path, but no committed runtime loader or in-repo geometry artifact to feed it.
+- Visited/unvisited styling is not part of the current release scope; the production path intentionally ships tile rendering infrastructure first, with server-side status delivery tracked separately in follow-up work (`#190`).
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.
+- The currently hosted/generated tile set should be treated as a draft render for iteration; expect a clean re-render before production rollout.
 
 ## Hosting and distribution strategy
 
