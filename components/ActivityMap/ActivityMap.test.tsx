@@ -13,6 +13,8 @@ import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 const mockLayersPanel = jest.fn();
 const PERSIST_WAIT_BUFFER_MS = 100;
 const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS + PERSIST_WAIT_BUFFER_MS;
+const waitForInitialPersistWindow = () =>
+  new Promise((resolve) => setTimeout(resolve, INITIAL_PERSIST_WAIT_MS));
 
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
@@ -235,7 +237,7 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
     await waitFor(() => expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, INITIAL_PERSIST_WAIT_MS));
+    await waitForInitialPersistWindow();
 
     expect(window.localStorage.getItem('rr:map-settings:user:user-123')).toBeNull();
     expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
@@ -316,7 +318,7 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
     await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, INITIAL_PERSIST_WAIT_MS));
+    await waitForInitialPersistWindow();
     expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
 
     const button = screen.getByTestId('update-settings');

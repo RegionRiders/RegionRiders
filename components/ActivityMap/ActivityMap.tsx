@@ -228,8 +228,10 @@ export default function ActivityMap() {
     }
 
     const persistSettings = async () => {
-      const persistUserIdToUse =
-        apiPersistUserId ?? (isInitialPersistRun ? hydrationApiPersistUserIdRef.current : null);
+      let persistUserIdToUse = apiPersistUserId;
+      if (!persistUserIdToUse && isInitialPersistRun) {
+        persistUserIdToUse = hydrationApiPersistUserIdRef.current;
+      }
 
       if (persistUserIdToUse) {
         debugLog('Attempting API save', { persistedUserId: persistUserIdToUse, settings });
