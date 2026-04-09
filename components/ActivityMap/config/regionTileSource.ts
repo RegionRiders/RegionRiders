@@ -1,5 +1,4 @@
 import {
-  DEFAULT_REGION_TILE_SOURCE,
   getRegionTileSourceOrigin as getSharedRegionTileSourceOrigin,
   getRegionTileSourceUrl as getSharedRegionTileSourceUrl,
 } from '@/lib/regions/regionTileSource.mjs';
@@ -7,7 +6,7 @@ import {
 export { DEFAULT_REGION_TILE_SOURCE } from '@/lib/regions/regionTileSource.mjs';
 
 export function getRegionTileSourceOrigin(): string | null {
-  return getSharedRegionTileSourceOrigin();
+  return getSharedRegionTileSourceOrigin() ?? null;
 }
 
 /**
