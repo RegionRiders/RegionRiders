@@ -8,12 +8,10 @@ export const HEATMAP_CONFIG: HeatmapConfig = {
   REGION_LINE_THICKNESS: 3,
 } as const;
 
-const DEFAULT_MAP_MAX_ZOOM = process.env.NODE_ENV === 'production' ? 12 : 20;
-
 export const DEFAULT_LEAFLET_CONFIG: LeafletConfig = {
   center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
   zoom: 11,
-  maxZoom: DEFAULT_MAP_MAX_ZOOM,
+  maxZoom: 20,
   minZoom: 3,
   tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
   attribution: '© OpenStreetMap contributors © CARTO',

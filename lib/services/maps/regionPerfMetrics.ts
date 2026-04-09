@@ -30,7 +30,7 @@ export function markFirstRegionLayerAdded(): void {
 }
 
 export function logRegionTileError(error: unknown): void {
-  logger.error(`Region tile error: ${String(error)}`);
+  logger.error('Region tile error:', error);
 }
 
 export function resetRegionPerfMetrics(): void {

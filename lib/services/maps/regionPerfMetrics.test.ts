@@ -55,8 +55,9 @@ describe('regionPerfMetrics', () => {
   });
 
   it('logs tile errors', () => {
-    logRegionTileError({ message: 'boom' });
+    const error = { message: 'boom' };
+    logRegionTileError(error);
 
-    expect(logger.error).toHaveBeenCalledWith('Region tile error: [object Object]');
+    expect(logger.error).toHaveBeenCalledWith('Region tile error:', error);
   });
 });
