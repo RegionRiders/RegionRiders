@@ -78,6 +78,20 @@ function withSettingsApiMock(settingsApiMock: SettingsApiMock) {
         ).toUpperCase();
         appendEvent(`Intercepted fetch ${method} ${url}`);
 
+        if (url.endsWith('/api/auth/session') && method === 'GET') {
+          appendEvent(
+            `Returning 200 for /api/auth/session GET (authenticated=${settingsApiMock.authenticated})`
+          );
+          return new Response(
+            JSON.stringify({
+              success: true,
+              authenticated: settingsApiMock.authenticated,
+              userId: settingsApiMock.authenticated ? AUTH_STORY_USER_ID : null,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
         if (url.endsWith('/api/user/settings') && method === 'GET') {
           if (storyWindow.__storybookSettingsMockState) {
             storyWindow.__storybookSettingsMockState.getSettingsRequests += 1;
