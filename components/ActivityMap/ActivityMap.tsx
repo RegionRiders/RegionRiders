@@ -31,6 +31,7 @@ import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types
 
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
+export const SETTINGS_PERSIST_DEBOUNCE_MS = 250;
 const ACTIVITY_MAP_DEBUG_FLAG = '__RR_ACTIVITY_MAP_DEBUG__';
 const logger = createComponentLogger('ActivityMap');
 
@@ -227,20 +228,20 @@ export default function ActivityMap() {
     }
 
     const persistSettings = async () => {
-      const effectiveApiPersistUserId =
+      const persistUserIdToUse =
         apiPersistUserId ?? (isInitialPersistRun ? hydrationApiPersistUserIdRef.current : null);
 
-      if (effectiveApiPersistUserId) {
-        debugLog('Attempting API save', { persistedUserId: effectiveApiPersistUserId, settings });
+      if (persistUserIdToUse) {
+        debugLog('Attempting API save', { persistedUserId: persistUserIdToUse, settings });
         const persisted = await saveMapSettingsToApi(settings);
         debugLog('API save completed', { persisted });
         if (!persisted) {
-          saveMapSettingsToStorage(settings, effectiveApiPersistUserId);
+          saveMapSettingsToStorage(settings, persistUserIdToUse);
           debugLog('API save failed, wrote settings to local storage fallback');
           showSaveErrorToast();
         } else {
           // Clear local fallback after successful API save to prevent stale data preference
-          clearUserScopedLocalSettings(effectiveApiPersistUserId);
+          clearUserScopedLocalSettings(persistUserIdToUse);
         }
         return;
       }
@@ -259,7 +260,7 @@ export default function ActivityMap() {
 
     saveTimeoutRef.current = setTimeout(() => {
       void persistSettings();
-    }, 250);
+    }, SETTINGS_PERSIST_DEBOUNCE_MS);
 
     return () => {
       if (saveTimeoutRef.current) {

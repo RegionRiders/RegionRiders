@@ -8,12 +8,11 @@ import {
 import { MAP_SETTINGS_STORAGE_VERSION } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 import { useGPXData } from '@/hooks/useGPXData';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
-import ActivityMap from './ActivityMap';
+import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
-const SAVE_DEBOUNCE_MS = 250;
 const PERSIST_WAIT_BUFFER_MS = 100;
-const INITIAL_PERSIST_WAIT_MS = SAVE_DEBOUNCE_MS + PERSIST_WAIT_BUFFER_MS;
+const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS + PERSIST_WAIT_BUFFER_MS;
 
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
