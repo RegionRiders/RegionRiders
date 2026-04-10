@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { logger } from '@/lib/logger';
 
@@ -152,7 +153,7 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
 
   const resolvedPath = path.resolve(trimmedPath);
   const fileSystemRoot = path.parse(resolvedPath).root;
-  const homeDir = path.resolve(require('os').homedir());
+  const homeDir = path.resolve(os.homedir());
 
   const blockedTargets = new Set([
     fileSystemRoot,
