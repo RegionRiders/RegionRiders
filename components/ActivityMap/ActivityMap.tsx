@@ -8,10 +8,10 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
+  isUnauthenticatedMapSettingsResult,
   loadAuthenticatedUserIdFromApi,
   loadMapSettingsFromApi,
   saveMapSettingsToApi,
-  type LoadMapSettingsFromApiSuccessResult,
 } from '@/components/ActivityMap/storage/mapSettingsApi';
 import {
   loadMapSettingsFromStorage,
@@ -125,11 +125,8 @@ export default function ActivityMap() {
       }
 
       const userSettingsFromApi = await loadMapSettingsFromApi();
-      const isSettingsApiUnauthenticated =
-        userSettingsFromApi != null && 'unauthenticated' in userSettingsFromApi;
-      const resolvedUserSettingsFromApi = isSettingsApiUnauthenticated
-        ? null
-        : (userSettingsFromApi as LoadMapSettingsFromApiSuccessResult | null);
+      const isSettingsApiUnauthenticated = isUnauthenticatedMapSettingsResult(userSettingsFromApi);
+      const resolvedUserSettingsFromApi = isSettingsApiUnauthenticated ? null : userSettingsFromApi;
       let authenticatedUserId: string | null = null;
       if (!isSettingsApiUnauthenticated && !resolvedUserSettingsFromApi?.userId) {
         authenticatedUserId = await loadAuthenticatedUserIdFromApi();

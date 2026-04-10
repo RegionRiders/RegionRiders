@@ -24,6 +24,12 @@ export type LoadMapSettingsFromApiResult =
       unauthenticated: true;
     };
 
+export function isUnauthenticatedMapSettingsResult(
+  value: LoadMapSettingsFromApiResult | null
+): value is { unauthenticated: true } {
+  return value != null && 'unauthenticated' in value && value.unauthenticated === true;
+}
+
 function isMapSettingsApiResponse(value: unknown): value is MapSettingsApiResponse {
   if (!value || typeof value !== 'object') {
     return false;

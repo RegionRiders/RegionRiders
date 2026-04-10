@@ -39,6 +39,13 @@ jest.mock('./hooks/map/useLeafletMap', () => ({
 }));
 
 jest.mock('@/components/ActivityMap/storage/mapSettingsApi', () => ({
+  isUnauthenticatedMapSettingsResult: (value: unknown) =>
+    Boolean(
+      value &&
+      typeof value === 'object' &&
+      'unauthenticated' in (value as Record<string, unknown>) &&
+      (value as { unauthenticated?: unknown }).unauthenticated === true
+    ),
   loadAuthenticatedUserIdFromApi: jest.fn(),
   loadMapSettingsFromApi: jest.fn(),
   saveMapSettingsToApi: jest.fn(),
