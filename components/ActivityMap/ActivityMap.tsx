@@ -11,6 +11,7 @@ import {
   loadAuthenticatedUserIdFromApi,
   loadMapSettingsFromApi,
   saveMapSettingsToApi,
+  type LoadMapSettingsFromApiSuccessResult,
 } from '@/components/ActivityMap/storage/mapSettingsApi';
 import {
   loadMapSettingsFromStorage,
@@ -124,8 +125,14 @@ export default function ActivityMap() {
       }
 
       const userSettingsFromApi = await loadMapSettingsFromApi();
+      const isSettingsApiUnauthenticated =
+        userSettingsFromApi != null && 'unauthenticated' in userSettingsFromApi;
+      const resolvedUserSettingsFromApi =
+        userSettingsFromApi != null && 'unauthenticated' in userSettingsFromApi
+          ? null
+          : (userSettingsFromApi as LoadMapSettingsFromApiSuccessResult | null);
       let authenticatedUserId: string | null = null;
-      if (!userSettingsFromApi?.userId) {
+      if (!isSettingsApiUnauthenticated && !resolvedUserSettingsFromApi?.userId) {
         authenticatedUserId = await loadAuthenticatedUserIdFromApi();
       }
       debugLog('Hydration settings API response', userSettingsFromApi);
@@ -134,9 +141,9 @@ export default function ActivityMap() {
         return;
       }
 
-      const persistedUserId = userSettingsFromApi?.userId ?? authenticatedUserId ?? null;
+      const persistedUserId = resolvedUserSettingsFromApi?.userId ?? authenticatedUserId ?? null;
       setPersistedUserId(persistedUserId);
-      setApiPersistUserId(userSettingsFromApi?.userId ?? null);
+      setApiPersistUserId(resolvedUserSettingsFromApi?.userId ?? null);
 
       if (!persistedUserId) {
         hydrationUsedUserScopedLocalSettingsRef.current = false;
@@ -150,10 +157,10 @@ export default function ActivityMap() {
       }
 
       const userScopedLocalSettings = loadPersistedMapSettingsFromStorage(persistedUserId);
-      const apiTimestamp = parseTimestamp(userSettingsFromApi?.updatedAt ?? null);
+      const apiTimestamp = parseTimestamp(resolvedUserSettingsFromApi?.updatedAt ?? null);
       const localTimestamp = parseTimestamp(userScopedLocalSettings?.savedAt ?? null);
       const hasUserScopedLocalSettings = hasSettingsValues(userScopedLocalSettings?.settings);
-      const hasApiSettings = hasSettingsValues(userSettingsFromApi?.settings);
+      const hasApiSettings = hasSettingsValues(resolvedUserSettingsFromApi?.settings);
       const isLocalSettingsNewerThanApi =
         localTimestamp != null && apiTimestamp != null && localTimestamp > apiTimestamp;
       const shouldPreferUserScopedLocalSettings =
@@ -169,7 +176,10 @@ export default function ActivityMap() {
       if (shouldPreferUserScopedLocalSettings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userScopedLocalSettings?.settings ?? {}) });
       } else if (usedApiSettings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userSettingsFromApi?.settings ?? {}) });
+        setSettings({
+          ...DEFAULT_MAP_SETTINGS,
+          ...(resolvedUserSettingsFromApi?.settings ?? {}),
+        });
         // Clear stale local fallback when API settings exist and are preferred
         if (hasUserScopedLocalSettings) {
           clearUserScopedLocalSettings(persistedUserId);

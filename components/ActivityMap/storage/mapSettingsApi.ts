@@ -12,6 +12,18 @@ interface AuthSessionApiResponse {
   userId: string | null;
 }
 
+export type LoadMapSettingsFromApiSuccessResult = {
+  userId: string;
+  settings: Partial<MapSettings> | null;
+  updatedAt: string | null;
+};
+
+export type LoadMapSettingsFromApiResult =
+  | LoadMapSettingsFromApiSuccessResult
+  | {
+      unauthenticated: true;
+    };
+
 function isMapSettingsApiResponse(value: unknown): value is MapSettingsApiResponse {
   if (!value || typeof value !== 'object') {
     return false;
@@ -21,11 +33,7 @@ function isMapSettingsApiResponse(value: unknown): value is MapSettingsApiRespon
   return typeof candidate.userId === 'string' && 'settings' in candidate;
 }
 
-export async function loadMapSettingsFromApi(): Promise<{
-  userId: string;
-  settings: Partial<MapSettings> | null;
-  updatedAt: string | null;
-} | null> {
+export async function loadMapSettingsFromApi(): Promise<LoadMapSettingsFromApiResult | null> {
   try {
     const response = await fetch('/api/user/settings', {
       method: 'GET',
@@ -34,7 +42,7 @@ export async function loadMapSettingsFromApi(): Promise<{
     });
 
     if (response.status === 401) {
-      return null;
+      return { unauthenticated: true };
     }
 
     if (!response.ok) {

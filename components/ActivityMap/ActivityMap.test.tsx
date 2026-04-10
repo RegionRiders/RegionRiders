@@ -315,6 +315,19 @@ describe('ActivityMap', () => {
     expect(mockLoadAuthenticatedUserIdFromApi).not.toHaveBeenCalled();
   });
 
+  it('does not request auth-session when settings API returns unauthenticated', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      unauthenticated: true,
+    });
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    });
+    expect(mockLoadAuthenticatedUserIdFromApi).not.toHaveBeenCalled();
+  });
+
   it('does not treat epoch API updatedAt as missing timestamp', async () => {
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue({
