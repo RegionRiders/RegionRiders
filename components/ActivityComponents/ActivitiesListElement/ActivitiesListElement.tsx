@@ -166,6 +166,7 @@ export function ActivitiesListElement({
     return (
       <div hidden={!tripCreationMode}>
         <Checkbox
+          aria-label={`Select activity ${correspondingActivity.title} for trip`}
           mr={{ base: 5, lg: 'md' }}
           checked={isChecked()}
           onChange={() => {

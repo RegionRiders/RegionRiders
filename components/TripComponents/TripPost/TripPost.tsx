@@ -17,11 +17,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { ActivityTypeIcon } from '@/components/ActivityComponents/ActivityTypeIcon/ActivityTypeIcon';
 import TripDateFormatter from '@/components/TripComponents/TripDateFormatter/TripDateFormatter';
-import {
-  dateNoTime,
-  dateOnlyTime,
-  dayDifference,
-} from '@/components/Utils/DateFormattingFunctions';
+import { dateOnlyTime, dayDifference } from '@/components/Utils/DateFormattingFunctions';
 import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
 
@@ -49,6 +45,11 @@ const TripStat = ({ header, value }: { header: string; value: string }) => (
   </>
 );
 
+const toLocalDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
+
 const ActivitiesListItem = ({
   activity,
   isNewDay,
@@ -63,7 +64,7 @@ const ActivitiesListItem = ({
   <>
     {isNewDay && (
       <Group>
-        <Text fw="bold">{dateNoTime(activity.startDate)}</Text>
+        <Text fw="bold">{toLocalDateKey(activity.startDate)}</Text>
         <Divider orientation="vertical" size="md" />
         <Text fw="bold">
           Day {dayCount}/{days}
@@ -101,10 +102,7 @@ const Activities = ({
   tripStartDate: Date;
   tripEndDate: Date;
 }) => {
-  const isSameDay = (date1: Date, date2: Date) =>
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate();
+  const isSameDay = (date1: Date, date2: Date) => toLocalDateKey(date1) === toLocalDateKey(date2);
 
   const days = dayDifference(tripEndDate, tripStartDate) + 1;
 
@@ -167,12 +165,14 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
       <Group mb="xs" align="flex-start">
         <Card.Section>
           <UnstyledButton
+            aria-label={`Open trip ${data.title}`}
             onClick={() => {
               onSelect(data);
             }}
           >
             <Image
               src="/assets/placeholders/map_image_placeholder.jpg"
+              alt={`Map preview for ${data.title}`}
               h={{ base: 'auto', asideOpenHide: 250 }}
               w={{ base: '100%', asideOpenHide: 'auto' }}
               radius="md"
