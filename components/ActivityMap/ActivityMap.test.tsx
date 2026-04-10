@@ -97,6 +97,12 @@ const mockSaveMapSettingsToApi = saveMapSettingsToApi as jest.MockedFunction<
   typeof saveMapSettingsToApi
 >;
 
+type HydrationSettingsResolver = (value: {
+  userId: string;
+  settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
+  updatedAt: string;
+}) => void;
+
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -124,7 +130,11 @@ describe('ActivityMap', () => {
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
+    try {
+      jest.clearAllTimers();
+    } catch {
+      // clearAllTimers requires fake timers; ignore when real timers are active.
+    }
     jest.useRealTimers();
   });
 
@@ -293,22 +303,12 @@ describe('ActivityMap', () => {
 
   it('does not let in-flight hydration overwrite user edits or clear local fallback', async () => {
     const userId = 'user-hydration-race-123';
-    let resolveSettingsApi:
-      | ((value: {
-          userId: string;
-          settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
-          updatedAt: string;
-        }) => void)
-      | null = null;
+    let resolveSettingsApi: HydrationSettingsResolver | null = null;
 
     mockLoadMapSettingsFromApi.mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveSettingsApi = resolve as (value: {
-            userId: string;
-            settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
-            updatedAt: string;
-          }) => void;
+          resolveSettingsApi = resolve as HydrationSettingsResolver;
         })
     );
 
@@ -333,7 +333,11 @@ describe('ActivityMap', () => {
       expect(resolveSettingsApi).toBeInstanceOf(Function);
     });
 
-    resolveSettingsApi!({
+    if (!resolveSettingsApi) {
+      throw new Error('Expected hydration settings resolver to be set');
+    }
+
+    resolveSettingsApi({
       userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
