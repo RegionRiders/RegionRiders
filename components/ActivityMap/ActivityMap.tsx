@@ -120,7 +120,7 @@ export default function ActivityMap() {
       const anonymousLocalSettings = loadMapSettingsFromStorage();
       debugLog('Hydration started', { anonymousLocalSettings });
 
-      if (isMounted && anonymousLocalSettings) {
+      if (isMounted && anonymousLocalSettings && !hasUserInteractedWithSettingsRef.current) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...anonymousLocalSettings });
       }
 
@@ -167,10 +167,11 @@ export default function ActivityMap() {
       const hydrationUsedUserScopedLocalSettings =
         shouldPreferUserScopedLocalSettings && Boolean(userScopedLocalSettings);
       hydrationUsedUserScopedLocalSettingsRef.current = hydrationUsedUserScopedLocalSettings;
+      const shouldApplyHydrationSettings = !hasUserInteractedWithSettingsRef.current;
 
-      if (shouldPreferUserScopedLocalSettings) {
+      if (shouldPreferUserScopedLocalSettings && shouldApplyHydrationSettings) {
         setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userScopedLocalSettings?.settings ?? {}) });
-      } else if (usedApiSettings) {
+      } else if (usedApiSettings && shouldApplyHydrationSettings) {
         setSettings({
           ...DEFAULT_MAP_SETTINGS,
           ...(resolvedUserSettingsFromApi?.settings ?? {}),
@@ -179,7 +180,7 @@ export default function ActivityMap() {
         if (hasUserScopedLocalSettings) {
           clearUserScopedLocalSettings(persistedUserId);
         }
-      } else {
+      } else if (shouldApplyHydrationSettings) {
         setSettings(DEFAULT_MAP_SETTINGS);
       }
 

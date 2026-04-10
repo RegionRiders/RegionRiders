@@ -286,6 +286,61 @@ describe('ActivityMap', () => {
     expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeNull();
   });
 
+  it('does not let in-flight hydration overwrite user edits or clear local fallback', async () => {
+    const userId = 'user-hydration-race-123';
+    let resolveSettingsApi:
+      | ((value: {
+          userId: string;
+          settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
+          updatedAt: string;
+        }) => void)
+      | null = null;
+
+    mockLoadMapSettingsFromApi.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSettingsApi = resolve as (value: {
+            userId: string;
+            settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
+            updatedAt: string;
+          }) => void;
+        })
+    );
+
+    window.localStorage.setItem(
+      `rr:map-settings:user:${userId}`,
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    resolveSettingsApi?.({
+      userId,
+      settings: {
+        ...DEFAULT_MAP_SETTINGS,
+        showActivities: true,
+      },
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    });
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+    });
+
+    expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeTruthy();
+  });
+
   it('uses auth-session user id for local fallback saves when settings API read fails', async () => {
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
     mockLoadMapSettingsFromApi.mockResolvedValue(null);
