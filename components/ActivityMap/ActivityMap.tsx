@@ -162,8 +162,7 @@ export default function ActivityMap() {
       const shouldPreferUserScopedLocalSettings =
         hasUserScopedLocalSettings &&
         (!hasApiSettings || apiTimestamp === null || isLocalSettingsNewerThanApi);
-      const usedUserScopedStorageSettings =
-        shouldPreferUserScopedLocalSettings || (!hasApiSettings && hasUserScopedLocalSettings);
+      const usedUserScopedStorageSettings = shouldPreferUserScopedLocalSettings;
       const usedApiSettings = hasApiSettings && !shouldPreferUserScopedLocalSettings;
       const hydrationUsedUserScopedLocalSettings =
         shouldPreferUserScopedLocalSettings && Boolean(userScopedLocalSettings);
@@ -180,8 +179,6 @@ export default function ActivityMap() {
         if (hasUserScopedLocalSettings) {
           clearUserScopedLocalSettings(persistedUserId);
         }
-      } else if (hasUserScopedLocalSettings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userScopedLocalSettings?.settings ?? {}) });
       } else {
         setSettings(DEFAULT_MAP_SETTINGS);
       }
