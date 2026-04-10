@@ -1,7 +1,11 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { resolveDefaultSourceDir, validateRegionSource } from './validateRegionSource';
+import {
+  getArgValueFromArgv,
+  resolveDefaultSourceDir,
+  validateRegionSource,
+} from './validateRegionSource';
 
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'validate-region-source-'));
@@ -152,6 +156,21 @@ describe('validateRegionSource', () => {
         process.env.REGION_SOURCE_DIR = originalEnv;
       }
     }
+  });
+
+  it('fails fast when --source is present without a value', () => {
+    expect(() =>
+      getArgValueFromArgv(
+        ['node', 'tools/validateRegionSource.ts', '--source', '--report'],
+        '--source'
+      )
+    ).toThrow('Missing value for flag --source');
+  });
+
+  it('fails fast when --report is present without a value', () => {
+    expect(() =>
+      getArgValueFromArgv(['node', 'tools/validateRegionSource.ts', '--report'], '--report')
+    ).toThrow('Missing value for flag --report');
   });
 
   it('marks numeric region_id values as invalid', () => {

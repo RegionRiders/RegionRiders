@@ -44,12 +44,21 @@ function getDefaultSourceDirCandidates(): string[] {
 }
 
 function getArgValue(flag: string): string | undefined {
-  const index = process.argv.indexOf(flag);
+  return getArgValueFromArgv(process.argv, flag);
+}
+
+export function getArgValueFromArgv(argv: string[], flag: string): string | undefined {
+  const index = argv.indexOf(flag);
   if (index === -1) {
     return undefined;
   }
 
-  return process.argv[index + 1];
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith('-')) {
+    throw new Error(`Missing value for flag ${flag}`);
+  }
+
+  return value;
 }
 
 function addIssue(issues: ValidationIssue[], issue: ValidationIssue): void {
