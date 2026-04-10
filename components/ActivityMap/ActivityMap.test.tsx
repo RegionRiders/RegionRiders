@@ -330,7 +330,7 @@ describe('ActivityMap', () => {
     await userEvent.click(button);
 
     await waitFor(() => {
-      expect(resolveSettingsApi).toEqual(expect.any(Function));
+      expect(resolveSettingsApi).toBeInstanceOf(Function);
     });
 
     const resolveSettingsApiStrict = resolveSettingsApi as Exclude<typeof resolveSettingsApi, null>;
