@@ -60,6 +60,15 @@ function addIssue(issues: ValidationIssue[], issue: ValidationIssue): void {
   issues.push(issue);
 }
 
+function getNormalizedRegionId(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
 function hasAnyCoordinate(value: unknown): boolean {
   if (!Array.isArray(value) || value.length === 0) {
     return false;
@@ -195,19 +204,31 @@ export function validateRegionSource(
       }
 
       const regionIdValue = properties.region_id;
-      if (typeof regionIdValue === 'string' && regionIdValue.length > 0) {
-        const firstSeenIn = seenRegionIds.get(regionIdValue);
+      const normalizedRegionId = getNormalizedRegionId(regionIdValue);
+
+      if (regionIdValue !== undefined && regionIdValue !== null && normalizedRegionId === null) {
+        missingRequiredFields += 1;
+        addIssue(issues, {
+          file: fileName,
+          featureIndex,
+          code: 'invalid_region_id',
+          message: 'region_id must be a non-empty string',
+        });
+      }
+
+      if (normalizedRegionId) {
+        const firstSeenIn = seenRegionIds.get(normalizedRegionId);
         if (firstSeenIn) {
           duplicateRegionIds += 1;
           addIssue(issues, {
             file: fileName,
             featureIndex,
-            regionId: regionIdValue,
+            regionId: normalizedRegionId,
             code: 'duplicate_region_id',
             message: `region_id already seen in ${firstSeenIn}`,
           });
         } else {
-          seenRegionIds.set(regionIdValue, fileName);
+          seenRegionIds.set(normalizedRegionId, fileName);
         }
       }
 
@@ -216,7 +237,7 @@ export function validateRegionSource(
         addIssue(issues, {
           file: fileName,
           featureIndex,
-          regionId: typeof regionIdValue === 'string' ? regionIdValue : undefined,
+          regionId: normalizedRegionId ?? undefined,
           code: 'invalid_geometry',
           message: 'Geometry is null or has empty coordinates',
         });

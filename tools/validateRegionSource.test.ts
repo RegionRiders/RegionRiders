@@ -40,6 +40,35 @@ function createFeatureCollection(regionId: string) {
   };
 }
 
+function createFeatureCollectionWithProperties(properties: Record<string, unknown>) {
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {
+          country_code: 'PL',
+          admin_level: '4',
+          name: 'Pomorskie',
+          ...properties,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [18.0, 54.0],
+              [18.1, 54.0],
+              [18.1, 54.1],
+              [18.0, 54.1],
+              [18.0, 54.0],
+            ],
+          ],
+        },
+      },
+    ],
+  };
+}
+
 describe('validateRegionSource', () => {
   let sourceDir: string;
   let reportPath: string;
@@ -123,5 +152,82 @@ describe('validateRegionSource', () => {
         process.env.REGION_SOURCE_DIR = originalEnv;
       }
     }
+  });
+
+  it('marks numeric region_id values as invalid', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'numeric-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 1234 }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'numeric-id.geojson', code: 'invalid_region_id' }),
+      ])
+    );
+  });
+
+  it('detects duplicate region_id values after normalization', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'a.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 'RR1::PL::POM::001' }))
+    );
+    writeGeoJsonFile(
+      sourceDir,
+      'b.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 'RR1::PL::POM::001 ' }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.duplicateRegionIds).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'b.geojson', code: 'duplicate_region_id' }),
+      ])
+    );
+  });
+
+  it('marks empty region_id values as missing required data', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'empty-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: '   ' }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBeGreaterThan(0);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'empty-id.geojson', code: 'invalid_region_id' }),
+      ])
+    );
+  });
+
+  it('marks missing region_id values as missing required data', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'missing-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: undefined }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'missing-id.geojson', code: 'missing_required_property' }),
+      ])
+    );
   });
 });

@@ -144,6 +144,40 @@ function removeIfExists(targetPath: string): void {
   fs.rmSync(targetPath, { recursive: true, force: true });
 }
 
+function assertSafeDeletionTarget(targetPath: string, label: string): void {
+  const trimmedPath = targetPath.trim();
+  if (trimmedPath.length === 0) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const resolvedPath = path.resolve(trimmedPath);
+  const fileSystemRoot = path.parse(resolvedPath).root;
+  const homeDir = path.resolve(require('os').homedir());
+
+  const blockedTargets = new Set([
+    fileSystemRoot,
+    path.resolve(REPO_ROOT),
+    path.resolve('.'),
+    homeDir,
+  ]);
+
+  if (blockedTargets.has(resolvedPath)) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const relativeToRepoRoot = path.relative(path.resolve(REPO_ROOT), resolvedPath);
+  if (relativeToRepoRoot === '' || relativeToRepoRoot === '.' || relativeToRepoRoot === '..') {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const relativeSegments = relativeToRepoRoot
+    .split(path.sep)
+    .filter((segment) => segment !== '' && segment !== '.');
+  if (!path.isAbsolute(trimmedPath) && relativeSegments.length <= 1) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+}
+
 function ensureParentDir(filePath: string): void {
   const parentDir = path.dirname(filePath);
   if (!fs.existsSync(parentDir)) {
@@ -157,6 +191,10 @@ export function runBuild(options: BuildOptions, sourceFiles: string[]): void {
       `Output directory already exists: ${options.outputDir}. Re-run with --force to overwrite.`
     );
   }
+
+  assertSafeDeletionTarget(options.outputDir, '--output');
+  assertSafeDeletionTarget(options.tempGpkg, '--temp');
+  assertSafeDeletionTarget(options.normalizedGpkg, '--normalized');
 
   removeIfExists(options.outputDir);
   removeIfExists(options.tempGpkg);
