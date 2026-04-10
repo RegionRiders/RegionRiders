@@ -302,4 +302,27 @@ describe('buildRegionTiles', () => {
       fs.rmSync(workspaceDir, { recursive: true, force: true });
     }
   });
+
+  it('rejects absolute deletion targets outside the repo and home scope', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: '/var/log',
+      tempGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1.gpkg'),
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        'Refusing unsafe deletion target for --output: /var/log'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
 });

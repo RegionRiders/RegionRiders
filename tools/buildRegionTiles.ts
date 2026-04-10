@@ -153,22 +153,25 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
 
   const resolvedPath = path.resolve(trimmedPath);
   const fileSystemRoot = path.parse(resolvedPath).root;
+  const repoRoot = path.resolve(REPO_ROOT);
   const homeDir = path.resolve(os.homedir());
 
-  const blockedTargets = new Set([
-    fileSystemRoot,
-    path.resolve(REPO_ROOT),
-    path.resolve('.'),
-    homeDir,
-  ]);
+  const blockedTargets = new Set([fileSystemRoot, repoRoot, path.resolve('.'), homeDir]);
 
   if (blockedTargets.has(resolvedPath)) {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
-  const relativeToRepoRoot = path.relative(path.resolve(REPO_ROOT), resolvedPath);
+  const relativeToRepoRoot = path.relative(repoRoot, resolvedPath);
   if (relativeToRepoRoot === '' || relativeToRepoRoot === '.' || relativeToRepoRoot === '..') {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (path.isAbsolute(trimmedPath)) {
+    const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
+    if (absoluteSegments.length < 3) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
   }
 
   const relativeSegments = relativeToRepoRoot
