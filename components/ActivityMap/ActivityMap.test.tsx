@@ -130,10 +130,8 @@ describe('ActivityMap', () => {
   });
 
   afterEach(() => {
-    try {
+    if (jest.isMockFunction(setTimeout)) {
       jest.clearAllTimers();
-    } catch {
-      // clearAllTimers requires fake timers; ignore when real timers are active.
     }
     jest.useRealTimers();
   });
