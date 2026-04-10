@@ -166,16 +166,16 @@ export default function ActivityMap() {
         shouldPreferUserScopedLocalSettings && Boolean(userScopedLocalSettings);
       hydrationUsedUserScopedLocalSettingsRef.current = hydrationUsedUserScopedLocalSettings;
 
-      if (shouldPreferUserScopedLocalSettings && userScopedLocalSettings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
-      } else if (userSettingsFromApi?.settings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userSettingsFromApi.settings });
+      if (shouldPreferUserScopedLocalSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userScopedLocalSettings?.settings ?? {}) });
+      } else if (usedApiSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userSettingsFromApi?.settings ?? {}) });
         // Clear stale local fallback when API settings exist and are preferred
         if (hasUserScopedLocalSettings) {
           clearUserScopedLocalSettings(persistedUserId);
         }
-      } else if (userScopedLocalSettings?.settings) {
-        setSettings({ ...DEFAULT_MAP_SETTINGS, ...userScopedLocalSettings.settings });
+      } else if (hasUserScopedLocalSettings) {
+        setSettings({ ...DEFAULT_MAP_SETTINGS, ...(userScopedLocalSettings?.settings ?? {}) });
       } else {
         setSettings(DEFAULT_MAP_SETTINGS);
       }
