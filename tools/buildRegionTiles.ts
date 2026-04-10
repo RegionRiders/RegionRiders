@@ -167,6 +167,13 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
+  if (
+    !path.isAbsolute(trimmedPath) &&
+    (trimmedPath === '..' || trimmedPath.startsWith(`..${path.sep}`))
+  ) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
   if (path.isAbsolute(trimmedPath)) {
     const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
     if (absoluteSegments.length < 3) {
