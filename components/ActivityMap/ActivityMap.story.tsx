@@ -1,6 +1,7 @@
 import { ReactElement, useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { createComponentLogger } from '@/lib/logger/client';
 import ActivityMap from './ActivityMap';
 
 type SettingsApiMock = {
@@ -19,6 +20,7 @@ type StorybookSettingsMockState = {
 const AUTH_STORY_USER_ID = 'storybook-user';
 const AUTH_STORY_STORAGE_KEY = `rr:map-settings:user:${AUTH_STORY_USER_ID}`;
 const STORYBOOK_ACTIVITY_MAP_DEBUG_FLAG = '__RR_ACTIVITY_MAP_DEBUG__';
+const logger = createComponentLogger('ActivityMap.story');
 
 function getRequestUrl(input: RequestInfo | URL): string {
   if (typeof input === 'string') {
@@ -53,7 +55,7 @@ function withSettingsApiMock(settingsApiMock: SettingsApiMock) {
           const previousEvents = storyWindow.__storybookSettingsMockState.events;
           storyWindow.__storybookSettingsMockState.events = [...previousEvents.slice(-49), line];
         }
-        console.info(`[ActivityMap.story] ${line}`);
+        logger.info(line);
       };
 
       storyWindow.__storybookSettingsMockState = {
@@ -75,6 +77,20 @@ function withSettingsApiMock(settingsApiMock: SettingsApiMock) {
           (typeof input !== 'string' && !(input instanceof URL) ? input.method : 'GET')
         ).toUpperCase();
         appendEvent(`Intercepted fetch ${method} ${url}`);
+
+        if (url.endsWith('/api/auth/session') && method === 'GET') {
+          appendEvent(
+            `Returning 200 for /api/auth/session GET (authenticated=${settingsApiMock.authenticated})`
+          );
+          return new Response(
+            JSON.stringify({
+              success: true,
+              authenticated: settingsApiMock.authenticated,
+              userId: settingsApiMock.authenticated ? AUTH_STORY_USER_ID : null,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
 
         if (url.endsWith('/api/user/settings') && method === 'GET') {
           if (storyWindow.__storybookSettingsMockState) {
@@ -141,7 +157,7 @@ function withSettingsApiMock(settingsApiMock: SettingsApiMock) {
           window.localStorage.setItem(AUTH_STORY_STORAGE_KEY, originalAuthStorageValue);
         }
 
-        console.info('[ActivityMap.story] Restored original fetch/localStorage/debug flag');
+        logger.info('Restored original fetch/localStorage/debug flag');
       };
     }, []);
 
@@ -181,13 +197,13 @@ export const AuthenticatedUserSaveFailureShowsTopToast: Story = {
   decorators: [withSettingsApiMock({ authenticated: true, saveSucceeds: false })],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    console.info('[ActivityMap.story] Save-failure play function started');
+    logger.info('Save-failure play function started');
     await waitFor(() => {
       const storyWindow = window as Window & {
         __storybookSettingsMockState?: StorybookSettingsMockState;
       };
       const state = storyWindow.__storybookSettingsMockState;
-      console.info('[ActivityMap.story] Waiting for hydration readiness', state);
+      logger.info('Waiting for hydration readiness', state);
       if (!state?.isMockReady || !state.settingsHydrated || state.getSettingsRequests < 1) {
         const failureReasons = [
           !state?.isMockReady ? 'mock not ready' : null,
@@ -208,7 +224,7 @@ export const AuthenticatedUserSaveFailureShowsTopToast: Story = {
         __storybookSettingsMockState?: StorybookSettingsMockState;
       };
       const state = storyWindow.__storybookSettingsMockState;
-      console.info('[ActivityMap.story] Waiting for save attempt', state);
+      logger.info('Waiting for save attempt', state);
       if ((state?.putSettingsRequests ?? 0) < 1) {
         throw new Error(
           `Settings save request (PUT /api/user/settings) was not triggered. Current state: ${JSON.stringify(state)}`
@@ -218,6 +234,6 @@ export const AuthenticatedUserSaveFailureShowsTopToast: Story = {
     await expect(await canvas.findByRole('alert')).toHaveTextContent(
       'Could not save settings to your account. Saved locally instead.'
     );
-    console.info('[ActivityMap.story] Save-failure toast assertion passed');
+    logger.info('Save-failure toast assertion passed');
   },
 };

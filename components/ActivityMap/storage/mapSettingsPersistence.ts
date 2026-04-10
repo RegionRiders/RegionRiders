@@ -11,6 +11,11 @@ interface PersistedMapSettingsV1 {
   settings: MapSettings;
 }
 
+export interface LoadedPersistedMapSettings {
+  settings: Partial<MapSettings>;
+  savedAt: string | null;
+}
+
 export function resolveMapSettingsStorageKey(userId?: string | null): string {
   if (!userId?.trim()) {
     return MAP_SETTINGS_ANON_STORAGE_KEY;
@@ -57,6 +62,12 @@ function validateAndNormalizeSettings(raw: unknown): Partial<MapSettings> | null
 }
 
 export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapSettings> | null {
+  return loadPersistedMapSettingsFromStorage(userId)?.settings ?? null;
+}
+
+export function loadPersistedMapSettingsFromStorage(
+  userId?: string | null
+): LoadedPersistedMapSettings | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -75,12 +86,33 @@ export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapS
     }
 
     if ('version' in parsed && 'settings' in parsed) {
-      // Versioned payload (current or legacy): extract and validate the settings object.
-      return validateAndNormalizeSettings(parsed.settings);
+      if (typeof parsed.version !== 'number' || parsed.version !== MAP_SETTINGS_STORAGE_VERSION) {
+        return null;
+      }
+
+      // Versioned payload: extract and validate the settings object.
+      const settings = validateAndNormalizeSettings(parsed.settings);
+      if (!settings || Object.keys(settings).length === 0) {
+        return null;
+      }
+
+      const savedAt = typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
+      return {
+        settings,
+        savedAt,
+      };
     }
 
-    // Backward-compatible fallback for legacy raw settings payloads (no version wrapper).
-    return validateAndNormalizeSettings(parsed);
+    // Backward-compatible legacy payload support (unversioned settings object).
+    const settings = validateAndNormalizeSettings(parsed);
+    if (!settings || Object.keys(settings).length === 0) {
+      return null;
+    }
+
+    return {
+      settings,
+      savedAt: null,
+    };
   } catch {
     return null;
   }

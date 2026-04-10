@@ -50,6 +50,7 @@ describe('/api/user/settings', () => {
       (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
       (getUserSettingsByUserId as jest.Mock).mockResolvedValue({
         settings: { showActivities: false },
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       });
 
       const response = await GET();
@@ -60,6 +61,7 @@ describe('/api/user/settings', () => {
         success: true,
         userId: 'user-123',
         settings: { showActivities: false },
+        updatedAt: '2026-01-01T00:00:00.000Z',
       });
     });
 
@@ -75,6 +77,7 @@ describe('/api/user/settings', () => {
         success: true,
         userId: 'user-123',
         settings: null,
+        updatedAt: null,
       });
     });
 
@@ -124,6 +127,7 @@ describe('/api/user/settings', () => {
       (getAuthenticatedUserId as jest.Mock).mockResolvedValue('user-123');
       (upsertUserSettings as jest.Mock).mockResolvedValue({
         settings: { showActivities: false },
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       });
       const request = new NextRequest('http://localhost:3000/api/user/settings', {
         settings: { showActivities: false },
@@ -140,6 +144,7 @@ describe('/api/user/settings', () => {
         success: true,
         userId: 'user-123',
         settings: { showActivities: false },
+        updatedAt: '2026-01-01T00:00:00.000Z',
       });
     });
 

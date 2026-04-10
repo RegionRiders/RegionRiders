@@ -23,6 +23,7 @@ export async function GET() {
       success: true,
       userId,
       settings: settings?.settings ?? null,
+      updatedAt: settings?.updatedAt?.toISOString() ?? null,
     });
   } catch (error) {
     return handle500Error(error, 'User Settings API: GET');
@@ -73,6 +74,7 @@ export async function PUT(request: NextRequest) {
       success: true,
       userId,
       settings: upserted.settings,
+      updatedAt: upserted.updatedAt?.toISOString() ?? null,
     });
   } catch (error) {
     return handle500Error(error, 'User Settings API: PUT');
