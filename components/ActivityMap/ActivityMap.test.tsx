@@ -123,6 +123,11 @@ describe('ActivityMap', () => {
     });
   });
 
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
   it('renders without crashing', () => {
     render(<ActivityMap />);
     expect(screen.getByTestId('map-container')).toBeInTheDocument();
@@ -324,7 +329,16 @@ describe('ActivityMap', () => {
     const button = screen.getByTestId('update-settings');
     await userEvent.click(button);
 
-    resolveSettingsApi?.({
+    await waitFor(() => {
+      expect(resolveSettingsApi).not.toBeNull();
+    });
+
+    const resolveSettingsApiStrict = resolveSettingsApi;
+    if (!resolveSettingsApiStrict) {
+      throw new Error('Expected settings API resolver to be captured');
+    }
+
+    resolveSettingsApiStrict({
       userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
