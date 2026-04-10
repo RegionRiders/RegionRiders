@@ -55,7 +55,11 @@ function getRegionFeatureId(feature: RegionTileFeature): string {
   const regionId = feature.properties?.region_id;
 
   if (typeof regionId === 'string' && regionId.trim().length > 0) {
-    return regionId;
+    return regionId.trim();
+  }
+
+  if (typeof regionId === 'number' && Number.isFinite(regionId)) {
+    return String(regionId);
   }
 
   return String(feature.id ?? '');
@@ -81,6 +85,7 @@ export function useRegionRendering(
   useEffect(() => {
     if (!showBorders) {
       previousVisitedIdsRef.current = new Set();
+      onTileError?.('');
       return;
     }
 
@@ -99,6 +104,7 @@ export function useRegionRendering(
 
     if (!vectorGridFactory?.protobuf) {
       logger.error('Leaflet.VectorGrid plugin not available');
+      onTileError?.('Region overlay unavailable');
       return;
     }
 

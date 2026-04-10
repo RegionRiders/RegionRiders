@@ -203,6 +203,10 @@ describe('useRegionRendering', () => {
     expect(getRegionFeatureId({ properties: {}, id: 1234 })).toBe('1234');
   });
 
+  it('uses numeric region_id when provided by VectorGrid feature properties', () => {
+    expect(getRegionFeatureId({ properties: { region_id: 1234 }, id: 'fallback-id' })).toBe('1234');
+  });
+
   it('reports a tile error through the callback', () => {
     mockMap.hasLayer.mockReturnValue(true);
 
@@ -226,6 +230,30 @@ describe('useRegionRendering', () => {
     expect(loadHandler).toBeDefined();
 
     loadHandler?.();
+
+    expect(onTileError).toHaveBeenCalledWith('');
+  });
+
+  it('reports degraded mode when VectorGrid plugin is unavailable', () => {
+    delete (L as any).vectorGrid;
+
+    renderHook(() => useRegionRendering(mockMap, true, visitData, onTileError));
+
+    expect(onTileError).toHaveBeenCalledWith('Region overlay unavailable');
+    expect(addTo).not.toHaveBeenCalled();
+  });
+
+  it('clears a stale tile error when borders are hidden', () => {
+    const { rerender } = renderHook(
+      ({ showBorders }) => useRegionRendering(mockMap, showBorders, visitData, onTileError),
+      {
+        initialProps: { showBorders: true },
+      }
+    );
+
+    onTileError.mockClear();
+
+    rerender({ showBorders: false });
 
     expect(onTileError).toHaveBeenCalledWith('');
   });
