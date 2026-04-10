@@ -127,10 +127,9 @@ export default function ActivityMap() {
       const userSettingsFromApi = await loadMapSettingsFromApi();
       const isSettingsApiUnauthenticated =
         userSettingsFromApi != null && 'unauthenticated' in userSettingsFromApi;
-      const resolvedUserSettingsFromApi =
-        userSettingsFromApi != null && 'unauthenticated' in userSettingsFromApi
-          ? null
-          : (userSettingsFromApi as LoadMapSettingsFromApiSuccessResult | null);
+      const resolvedUserSettingsFromApi = isSettingsApiUnauthenticated
+        ? null
+        : (userSettingsFromApi as LoadMapSettingsFromApiSuccessResult | null);
       let authenticatedUserId: string | null = null;
       if (!isSettingsApiUnauthenticated && !resolvedUserSettingsFromApi?.userId) {
         authenticatedUserId = await loadAuthenticatedUserIdFromApi();
