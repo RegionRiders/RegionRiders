@@ -335,7 +335,7 @@ describe('ActivityMap', () => {
       throw new Error('Expected hydration settings resolver to be set');
     }
 
-    const resolvedSettingsApi = resolveSettingsApi;
+    const resolvedSettingsApi = resolveSettingsApi as HydrationSettingsResolver;
 
     resolvedSettingsApi({
       userId,
