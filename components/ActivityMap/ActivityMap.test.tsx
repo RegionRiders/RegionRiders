@@ -333,12 +333,7 @@ describe('ActivityMap', () => {
       expect(resolveSettingsApi).not.toBeNull();
     });
 
-    const resolveSettingsApiStrict = resolveSettingsApi;
-    if (!resolveSettingsApiStrict) {
-      throw new Error('Expected settings API resolver to be captured');
-    }
-
-    resolveSettingsApiStrict({
+    resolveSettingsApi!({
       userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
