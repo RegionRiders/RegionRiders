@@ -330,10 +330,11 @@ describe('ActivityMap', () => {
     await userEvent.click(button);
 
     await waitFor(() => {
-      expect(resolveSettingsApi).not.toBeNull();
+      expect(resolveSettingsApi).toEqual(expect.any(Function));
     });
 
-    resolveSettingsApi!({
+    const resolveSettingsApiStrict = resolveSettingsApi as Exclude<typeof resolveSettingsApi, null>;
+    resolveSettingsApiStrict({
       userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
