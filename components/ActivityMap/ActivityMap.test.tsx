@@ -333,8 +333,7 @@ describe('ActivityMap', () => {
       expect(resolveSettingsApi).toBeInstanceOf(Function);
     });
 
-    const resolveSettingsApiStrict = resolveSettingsApi as Exclude<typeof resolveSettingsApi, null>;
-    resolveSettingsApiStrict({
+    resolveSettingsApi!({
       userId,
       settings: {
         ...DEFAULT_MAP_SETTINGS,
@@ -343,12 +342,14 @@ describe('ActivityMap', () => {
       updatedAt: '2026-02-01T00:00:00.000Z',
     });
 
+    await flushHydrationPromises();
+
+    expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeTruthy();
+
     await waitFor(() => {
       const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
       expect(latestLayersPanelProps.settings.showActivities).toBe(false);
     });
-
-    expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeTruthy();
   });
 
   it('uses auth-session user id for local fallback saves when settings API read fails', async () => {
