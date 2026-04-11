@@ -5,7 +5,7 @@ import {
 } from './activityThickness';
 
 describe('activityThickness utils', () => {
-  it('normalizes control thickness to a minimum of 1', () => {
+  it('normalizes invalid control thickness values to a minimum of 1', () => {
     expect(normalizeActivityThicknessControl(0)).toBe(1);
     expect(normalizeActivityThicknessControl(-10)).toBe(1);
     expect(normalizeActivityThicknessControl(Number.NaN)).toBe(1);

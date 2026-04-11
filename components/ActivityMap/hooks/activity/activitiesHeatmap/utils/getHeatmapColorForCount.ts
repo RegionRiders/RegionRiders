@@ -5,7 +5,7 @@ import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInte
 
 /**
  * Maps accumulator count to heatmap color with smooth gradients and opacity.
- * Accounts for line thickness to normalize unique activity count.
+ * Accounts for line thickness control value to normalize unique activity count.
  *
  * @param count - Pixel accumulator value
  * @param zoomLevel - Current map zoom level
