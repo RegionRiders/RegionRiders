@@ -25,6 +25,8 @@ export function getHeatmapColorForCount(
   const referenceZoom = 13;
   const zoomScale = zoomLevel <= referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 2;
   const normalizedThickness = normalizeActivityThicknessControl(lineThickness);
+  // Keep normalization aligned with brush footprint growth as thickness control increases.
+  // The accumulator brush spans around the center sample and effective width scales by odd steps.
   const thicknessScale = normalizedThickness * 2 + 1;
 
   const clampedCount = Math.max(0, count);
