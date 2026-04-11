@@ -22,7 +22,7 @@ export function getHeatmapColorForCount(
   // Keep color mapping stable across line thickness and zoom for the same geographic overlap density.
   // Lower zoom compresses many geographic paths into fewer pixels (raising raw pixel counts), so zoom scaling
   // attenuates normalized intensity at low zoom; above the reference zoom we apply the configured 2x boost.
-  const referenceZoom = 13;
+  const referenceZoom = 15;
   const zoomScale = zoomLevel <= referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 2;
   // Keep normalization aligned with the rendered brush footprint (1 -> radius 0 -> width 1).
   const thicknessScale = getActivityLinePixelWidthFromControl(lineThickness);
