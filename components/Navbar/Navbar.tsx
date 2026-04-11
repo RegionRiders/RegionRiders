@@ -14,7 +14,7 @@ import classes from './Navbar.module.css';
 
 export interface NavbarProps {
   user?: User;
-  defaultTab?: 'welcome' | 'map' | 'activities' | 'trips';
+  defaultTab?: 'map' | 'activities' | 'trips';
   onLoginClick?: () => void;
 }
 
@@ -51,8 +51,6 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
 
   const getAsideWidth = (tab: string | null) => {
     switch (tab) {
-      case 'welcome':
-        return { base: 0 };
       case 'map':
         return { base: 0 };
       case 'activities':

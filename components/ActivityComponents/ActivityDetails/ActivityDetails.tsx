@@ -10,7 +10,7 @@ const ActivityDetails = ({
   handleActivityChange,
 }: {
   selectedActivity: Activity | null;
-  handleActivityChange: (trip: Activity | null) => void;
+  handleActivityChange: (activity: Activity | null) => void;
 }) => {
   return (
     <>

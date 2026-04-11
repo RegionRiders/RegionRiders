@@ -21,8 +21,8 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
-import ActivityDetails from '@/components/ActivityComponents/ActivityDetails/ActivityDetails';
 import { ActivityPost } from '@/components/ActivityComponents/ActivityPost/ActivityPost';
+import PostDetails from '@/components/PostDetails/PostDetails';
 import { PostsList } from '@/components/PostsList/PostsList';
 import { PostsLoading } from '@/components/PostsList/PostsLoading';
 import { dateWithTime } from '@/components/Utils/DateFormattingFunctions';
@@ -335,9 +335,12 @@ export function ActivitiesListElement({
 
       <AppShell.Aside>
         <ScrollArea h="100%">
-          <ActivityDetails
-            selectedActivity={selectedActivity}
-            handleActivityChange={handleActivityChange}
+          <PostDetails
+            selectedPost={selectedActivity}
+            postType={selectedActivity === null ? null : 'Activity'}
+            handlePostChange={() => {
+              handleActivityChange(null);
+            }}
           />
         </ScrollArea>
       </AppShell.Aside>
