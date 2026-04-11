@@ -1,0 +1,72 @@
+import L from 'leaflet';
+import { RGBA } from '@/components/ActivityMap/mapTypes';
+import { rgbToHex } from '@/components/ActivityMap/utils/rgbToHex';
+import { GPXTrack } from '@/lib/types';
+
+/**
+ * Attaches hover event handlers to a polyline
+ * Changes color and weight on mouseover/mouseout
+ */
+export function attachActivityHoverEvents(
+  polyline: L.Polyline,
+  baseColor: RGBA,
+  hoverColor: RGBA,
+  baseWeight: number = 2,
+  hoverWeight: number = baseWeight * 2
+): void {
+  polyline.on('mouseover', function (this: L.Polyline) {
+    const color = rgbToHex(hoverColor[0], hoverColor[1], hoverColor[2]);
+    this.setStyle({ color, weight: hoverWeight, opacity: hoverColor[3] });
+    this.bringToFront();
+  });
+
+  polyline.on('mouseout', function (this: L.Polyline) {
+    const color = rgbToHex(baseColor[0], baseColor[1], baseColor[2]);
+    this.setStyle({ color, weight: baseWeight, opacity: baseColor[3] });
+  });
+}
+
+/**
+ * Attaches click event handler to a polyline
+ * Shows popup with track information
+ */
+export function attachActivityClickHandler(
+  polyline: L.Polyline,
+  map: any,
+  trackId: string,
+  track: GPXTrack
+): void {
+  // eslint-disable-next-line prefer-arrow-callback
+  polyline.on('click', function (this: L.Polyline, e: L.LeafletMouseEvent) {
+    const displayName = track.name || trackId || 'Unknown Activity';
+
+    const sanitized = displayName
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    // Prefer global L (set in tests) if available to allow mocking, else use imported L
+    const popupFactory = (globalThis as any).L?.popup ?? L.popup;
+    const popup = popupFactory();
+
+    popup.setLatLng(e.latlng).setContent(
+      `
+        <div style="font-family: sans-serif; min-width: 150px;">
+          <b>${sanitized}</b><br>
+          <small style="color: #666;">Placeholder</small>
+        </div>
+      `
+    );
+
+    try {
+      popup.openOn(map);
+    } catch (err) {
+      // Some test mocks may not behave like a Leaflet map; attempt direct method if available
+      if (typeof (popup as any).openOn === 'function') {
+        (popup as any).openOn(map);
+      }
+    }
+  });
+}
