@@ -36,8 +36,9 @@ export function processTracksChunked(
   let trackIndex = 0;
   let segmentIndex = 0;
   const frameBudgetMs = CHUNK_FRAME_BUDGET_MS;
-  // Keep at least 1px of margin so segments hugging the viewport border are not incorrectly culled.
-  const cullPadding = Math.max(1, getActivityLineRadiusFromControl(lineThickness));
+  // Keep at least 1px of extra margin so segments hugging the viewport border are not incorrectly culled
+  // after integer rounding in drawLineToAccumulator.
+  const cullPadding = Math.max(1, getActivityLineRadiusFromControl(lineThickness) + 1);
 
   const isOutsideViewport = (
     x0: number,

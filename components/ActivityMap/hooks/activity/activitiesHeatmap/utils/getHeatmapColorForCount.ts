@@ -34,7 +34,7 @@ export function getHeatmapColorForCount(
 
   // Ensure we always return RGBA
   if (color.length === 3) {
-    return [...color, 255] as RGBA;
+    return [...color, 1] as RGBA;
   }
 
   return color as RGBA;

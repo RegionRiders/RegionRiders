@@ -152,6 +152,16 @@ describe('getHeatmapColorForCount', () => {
 
       expect(atFirst).toEqual([100, 100, 100, 150]);
     });
+
+    it('should convert RGB colors to RGBA with full alpha', () => {
+      const rgbThresholds: ColorThreshold[] = [
+        { threshold: 0, color: [10, 20, 30] as unknown as RGBA },
+      ];
+
+      const result = getHeatmapColorForCount(5, 10, 1, rgbThresholds);
+
+      expect(result).toEqual([10, 20, 30, 1]);
+    });
   });
 
   describe('edge cases', () => {
