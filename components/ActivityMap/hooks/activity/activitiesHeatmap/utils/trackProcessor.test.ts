@@ -42,7 +42,7 @@ describe('processTracksChunked', () => {
     const latlngToPixel = jest
       .fn()
       .mockReturnValueOnce({ x: 103.4, y: 50 })
-      .mockReturnValueOnce({ x: 103.4, y: 50 });
+      .mockReturnValueOnce({ x: 103.6, y: 51 });
 
     processTracksChunked(
       tracksArray,
