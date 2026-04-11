@@ -71,9 +71,10 @@ export function drawActivitiesAsLines(
 
       logger.info(`Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`);
 
+      const lineWeight = getActivityLinePixelWidthFromControl(refs.lineThickness);
+
       visibleTracks.forEach(([trackId, track]) => {
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
-        const lineWeight = getActivityLinePixelWidthFromControl(refs.lineThickness);
 
         const color = rgbToHex(refs.lineColor[0], refs.lineColor[1], refs.lineColor[2]);
 
