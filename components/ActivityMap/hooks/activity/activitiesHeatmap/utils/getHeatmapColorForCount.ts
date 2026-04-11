@@ -1,5 +1,5 @@
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { getActivityLinePixelWidthFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
+import { normalizeActivityThicknessControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInterpolation';
 
@@ -24,7 +24,8 @@ export function getHeatmapColorForCount(
   // attenuates normalized intensity at low zoom; above the reference zoom we apply the configured 2x boost.
   const referenceZoom = 13;
   const zoomScale = zoomLevel <= referenceZoom ? 2 ** (zoomLevel - referenceZoom) : 2;
-  const thicknessScale = getActivityLinePixelWidthFromControl(lineThickness);
+  const normalizedThickness = normalizeActivityThicknessControl(lineThickness);
+  const thicknessScale = normalizedThickness * 2 + 1;
 
   const clampedCount = Math.max(0, count);
   const uniqueActivities = (clampedCount * zoomScale) / thicknessScale;

@@ -52,11 +52,11 @@ describe('getHeatmapColorForCount', () => {
 
   describe('line thickness normalization', () => {
     it('should normalize by line thickness', () => {
-      // With thickness=1, count=15 and thickness=4, count=105 represent the same normalized density:
-      // 15 / (2*(1-1)+1) = 105 / (2*(4-1)+1) = 15
+      // With thickness=1, count=15 and thickness=4, count=45 represent the same normalized density:
+      // 15 / (2*1+1) = 45 / (2*4+1) = 5
       const thin = getHeatmapColorForCount(15, 10, 1, TEST_THRESHOLDS);
 
-      const thick = getHeatmapColorForCount(105, 10, 4, TEST_THRESHOLDS);
+      const thick = getHeatmapColorForCount(45, 10, 4, TEST_THRESHOLDS);
 
       expect(thin).toEqual(thick);
     });
