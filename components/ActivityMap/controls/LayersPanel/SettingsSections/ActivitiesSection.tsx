@@ -10,6 +10,7 @@ import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/
 import {
   MAX_ACTIVITY_THICKNESS_CONTROL,
   MIN_ACTIVITY_THICKNESS_CONTROL,
+  normalizeActivityThicknessControl,
 } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
@@ -58,7 +59,7 @@ export function ActivitiesSection({
     activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] ??
     activityHeatmapColorSwatches[0] ??
     [];
-  const activityThickness = settings.activityThickness ?? 3;
+  const activityThickness = normalizeActivityThicknessControl(settings.activityThickness ?? 3);
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);

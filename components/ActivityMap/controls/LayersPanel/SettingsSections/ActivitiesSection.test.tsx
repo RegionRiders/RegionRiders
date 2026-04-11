@@ -125,6 +125,16 @@ describe('ActivitiesSection', () => {
       expect(screen.getByText('Line thickness: 3px')).toBeInTheDocument();
     });
 
+    it('should clamp out-of-range line thickness for label and slider value', () => {
+      const settings = { ...defaultSettings, activityThickness: 100 };
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.getByText('Line thickness: 10px')).toBeInTheDocument();
+      expect(screen.getAllByRole('slider')[0]).toHaveAttribute('aria-valuenow', '10');
+    });
+
     it('should render layer transparency slider', () => {
       render(
         <ActivitiesSectionWrapper
