@@ -1,4 +1,5 @@
 import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 
 /**
  * Draws a line segment into the accumulator buffer for heatmap rendering.
@@ -11,7 +12,7 @@ import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTyp
  * @param y0 - Start y coordinate
  * @param x1 - End x coordinate
  * @param y1 - End y coordinate
- * @param thickness - Line thickness diameter in pixels (UI control)
+ * @param thickness - Line thickness control value where 1 -> radius 0 (single pixel)
  */
 export function drawLineToAccumulator(
   accumulator: Float32Array,
@@ -29,20 +30,12 @@ export function drawLineToAccumulator(
     !Number.isFinite(x0) ||
     !Number.isFinite(y0) ||
     !Number.isFinite(x1) ||
-    !Number.isFinite(y1) ||
-    !Number.isFinite(thickness)
+    !Number.isFinite(y1)
   ) {
     return;
   }
 
-  // Normalize and clamp thickness to ensure brushRadius is a finite non-negative integer
-  const normalizedThickness = Math.max(0, thickness);
-
-  // Thickness is interpreted as brush diameter from UI settings.
-  // Derive radius from diameter: radius = floor(diameter / 2)
-  // This ensures the stamped footprint matches the specified diameter:
-  // e.g., thickness=4 -> brushRadius=2 -> loop bounds [-2, +2] -> 5×5 grid with 4px effective diameter
-  const brushRadius = Math.floor(normalizedThickness / 2);
+  const brushRadius = getActivityLineRadiusFromControl(thickness);
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));

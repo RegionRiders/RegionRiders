@@ -2,12 +2,12 @@ import { ColorThreshold, RGBA } from '@/components/ActivityMap/mapTypes';
 import { getHeatmapColorForCount } from './getHeatmapColorForCount';
 
 const TEST_THRESHOLDS: ColorThreshold[] = [
-  { threshold: 1, color: [139, 0, 0, 40] as RGBA }, // dark red, 15% opacity
-  { threshold: 2, color: [220, 20, 20, 80] as RGBA }, // red, 31% opacity
-  { threshold: 10, color: [255, 100, 0, 120] as RGBA }, // orange-red, 47% opacity
-  { threshold: 25, color: [255, 165, 0, 160] as RGBA }, // orange, 63% opacity
-  { threshold: 50, color: [255, 255, 0, 200] as RGBA }, // yellow, 78% opacity
-  { threshold: 150, color: [255, 255, 255, 255] as RGBA }, // white, 100% opacity
+  { threshold: 1, color: [139, 0, 0, 0.15] as RGBA }, // dark red, 15% opacity
+  { threshold: 2, color: [220, 20, 20, 0.31] as RGBA }, // red, 31% opacity
+  { threshold: 10, color: [255, 100, 0, 0.47] as RGBA }, // orange-red, 47% opacity
+  { threshold: 25, color: [255, 165, 0, 0.63] as RGBA }, // orange, 63% opacity
+  { threshold: 50, color: [255, 255, 0, 0.78] as RGBA }, // yellow, 78% opacity
+  { threshold: 150, color: [255, 255, 255, 1] as RGBA }, // white, 100% opacity
 ];
 
 describe('getHeatmapColorForCount', () => {
@@ -17,10 +17,12 @@ describe('getHeatmapColorForCount', () => {
 
       expect(Array.isArray(result)).toBe(true);
       expect(result).toHaveLength(4); // ← Changed from 3 to 4
-      result.forEach((channel) => {
+      result.slice(0, 3).forEach((channel) => {
         expect(channel).toBeGreaterThanOrEqual(0);
         expect(channel).toBeLessThanOrEqual(255);
       });
+      expect(result[3]).toBeGreaterThanOrEqual(0);
+      expect(result[3]).toBeLessThanOrEqual(1);
     });
 
     it('should return darker colors for low counts', () => {
@@ -52,11 +54,11 @@ describe('getHeatmapColorForCount', () => {
 
   describe('line thickness normalization', () => {
     it('should normalize by line thickness', () => {
-      // With thickness=1, count=15 and thickness=4, count=45 represent the same normalized density:
-      // 15 / (2*1+1) = 45 / (2*4+1) = 5
+      // With thickness=1, count=15 and thickness=4, count=105 represent the same normalized density:
+      // 15 / (2*(1-1)+1) = 105 / (2*(4-1)+1) = 15
       const thin = getHeatmapColorForCount(15, 10, 1, TEST_THRESHOLDS);
 
-      const thick = getHeatmapColorForCount(45, 10, 4, TEST_THRESHOLDS);
+      const thick = getHeatmapColorForCount(105, 10, 4, TEST_THRESHOLDS);
 
       expect(thin).toEqual(thick);
     });
@@ -73,10 +75,12 @@ describe('getHeatmapColorForCount', () => {
       const result = getHeatmapColorForCount(100, 10, 10, TEST_THRESHOLDS);
 
       expect(result).toBeDefined();
-      result.forEach((channel) => {
+      result.slice(0, 3).forEach((channel) => {
         expect(channel).toBeGreaterThanOrEqual(0);
         expect(channel).toBeLessThanOrEqual(255);
       });
+      expect(result[3]).toBeGreaterThanOrEqual(0);
+      expect(result[3]).toBeLessThanOrEqual(1);
     });
   });
 
@@ -132,8 +136,8 @@ describe('getHeatmapColorForCount', () => {
   describe('custom thresholds', () => {
     it('should use provided custom thresholds with RGBA', () => {
       const customThresholds: ColorThreshold[] = [
-        { threshold: 0, color: [0, 0, 0, 100] as RGBA },
-        { threshold: 50, color: [255, 255, 255, 200] as RGBA },
+        { threshold: 0, color: [0, 0, 0, 0.4] as RGBA },
+        { threshold: 50, color: [255, 255, 255, 0.8] as RGBA },
       ];
 
       const result = getHeatmapColorForCount(5, 10, 1, customThresholds);
@@ -144,13 +148,23 @@ describe('getHeatmapColorForCount', () => {
 
     it('should respect custom threshold values', () => {
       const customThresholds: ColorThreshold[] = [
-        { threshold: 1, color: [100, 100, 100, 150] as RGBA },
-        { threshold: 10, color: [200, 200, 200, 250] as RGBA },
+        { threshold: 1, color: [100, 100, 100, 0.6] as RGBA },
+        { threshold: 10, color: [200, 200, 200, 1] as RGBA },
       ];
 
       const atFirst = getHeatmapColorForCount(1, 10, 1, customThresholds);
 
-      expect(atFirst).toEqual([100, 100, 100, 150]);
+      expect(atFirst).toEqual([100, 100, 100, 0.6]);
+    });
+
+    it('should convert RGB colors to RGBA with full alpha', () => {
+      const rgbThresholds: ColorThreshold[] = [
+        { threshold: 0, color: [10, 20, 30] as unknown as RGBA },
+      ];
+
+      const result = getHeatmapColorForCount(5, 10, 1, rgbThresholds);
+
+      expect(result).toEqual([10, 20, 30, 1]);
     });
   });
 
@@ -166,9 +180,10 @@ describe('getHeatmapColorForCount', () => {
       const result = getHeatmapColorForCount(10000, 10, 1, TEST_THRESHOLDS);
 
       expect(result).toBeDefined();
-      result.forEach((channel) => {
+      result.slice(0, 3).forEach((channel) => {
         expect(channel).toBeLessThanOrEqual(255);
       });
+      expect(result[3]).toBeLessThanOrEqual(1);
     });
 
     it('should handle fractional counts', () => {
@@ -206,10 +221,12 @@ describe('getHeatmapColorForCount', () => {
       for (let count = 0; count <= 200; count += 10) {
         const result = getHeatmapColorForCount(count, 10, 1, TEST_THRESHOLDS);
 
-        result.forEach((channel) => {
+        result.slice(0, 3).forEach((channel) => {
           expect(channel).toBeGreaterThanOrEqual(0);
           expect(channel).toBeLessThanOrEqual(255);
         });
+        expect(result[3]).toBeGreaterThanOrEqual(0);
+        expect(result[3]).toBeLessThanOrEqual(1);
       }
     });
 

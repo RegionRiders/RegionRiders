@@ -7,6 +7,7 @@ import {
 } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/activityLineEvents';
 import { filterVisibleTracks } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/filterVisibleTracks';
 import { LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { getActivityLinePixelWidthFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { rgbToHex } from '@/components/ActivityMap/utils/rgbToHex';
 import { createComponentLogger } from '@/lib/logger/client';
 import type { GPXPoint, GPXTrack } from '@/lib/types';
@@ -70,6 +71,8 @@ export function drawActivitiesAsLines(
 
       logger.info(`Rendering ${visibleTracks.length}/${tracksArray.length} visible tracks`);
 
+      const lineWeight = getActivityLinePixelWidthFromControl(refs.lineThickness);
+
       visibleTracks.forEach(([trackId, track]) => {
         const latlngs = track.points.map((p: GPXPoint) => [p.lat, p.lon] as [number, number]);
 
@@ -77,7 +80,7 @@ export function drawActivitiesAsLines(
 
         const polyline = L.polyline(latlngs, {
           color,
-          weight: refs.lineThickness || 2,
+          weight: lineWeight,
           opacity: refs.lineColor[3],
           renderer: canvasRenderer,
           interactive: true,
@@ -89,8 +92,8 @@ export function drawActivitiesAsLines(
           polyline,
           refs.lineColor,
           refs.lineHoverColor,
-          refs.lineThickness,
-          refs.lineThickness * 2
+          lineWeight,
+          lineWeight * 2
         );
         attachActivityClickHandler(polyline, map, trackId, track);
 
