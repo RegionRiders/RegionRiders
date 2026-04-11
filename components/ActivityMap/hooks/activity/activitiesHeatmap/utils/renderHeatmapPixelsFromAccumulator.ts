@@ -1,8 +1,8 @@
 import { ACTIVITY_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
-import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
-import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
 import { smoothHeatmapEdges } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/smoothHeatmapEdges';
+import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
 
@@ -28,7 +28,9 @@ export function renderHeatmapPixelsFromAccumulator(
   const maxX = Math.min(canvasWidth - 1, touchedBounds.maxX);
   const maxY = Math.min(canvasHeight - 1, touchedBounds.maxY);
   const thresholdsToUse =
-    colorThresholds && colorThresholds.length > 0 ? colorThresholds : ACTIVITY_HEATMAP_COLOR_THRESHOLDS;
+    colorThresholds && colorThresholds.length > 0
+      ? colorThresholds
+      : ACTIVITY_HEATMAP_COLOR_THRESHOLDS;
   const colorCache = new Map<number, CachedColor>();
 
   for (let y = minY; y <= maxY; y++) {
