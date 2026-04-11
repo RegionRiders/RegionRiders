@@ -1,6 +1,8 @@
 'use client';
 
-import { CloseButton, Flex, Group, Image, Stack, Text } from '@mantine/core';
+import { CloseButton, Flex, Stack, Text } from '@mantine/core';
+import classes from '@/components/ActivityComponents/ActivityDetails/ActivityDetails.module.css';
+import ActivityMap from '@/components/ActivityMap/ActivityMap';
 import { Trip } from '@/types/trip';
 
 const TripDetails = ({
@@ -12,7 +14,7 @@ const TripDetails = ({
 }) => {
   return (
     <>
-      <Group py="md">
+      <Stack py="md">
         <Flex px="md" gap="md">
           <CloseButton size="lg" onClick={() => handleTripChange(null)} />
           <Text fw="bold" size="xl" lineClamp={1}>
@@ -20,14 +22,16 @@ const TripDetails = ({
           </Text>
         </Flex>
 
-        <Image src="/assets/placeholders/map_image_placeholder.jpg" h={350} />
+        <div className={classes.mapSection}>
+          <ActivityMap />
+        </div>
 
         <Stack ml="md" gap={0}>
           <Text ml="md" fw="bold" size="xl">
             {selectedTrip?.title}
           </Text>
         </Stack>
-      </Group>
+      </Stack>
     </>
   );
 };

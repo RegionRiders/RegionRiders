@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { AppShell } from '@mantine/core';
+import { AppShell, ScrollArea } from '@mantine/core';
 import { PostsList } from '@/components/PostsList/PostsList';
 import { PostsLoading } from '@/components/PostsList/PostsLoading';
 import TripDetails from '@/components/TripComponents/TripDetails/TripDetails';
@@ -96,12 +96,14 @@ export function TripsListElement({
       </AppShell.Main>
 
       <AppShell.Aside>
-        <TripDetails
-          selectedTrip={selectedTrip}
-          handleTripChange={(trip: Trip | null) => {
-            handleTripChange(trip);
-          }}
-        />
+        <ScrollArea h="100%">
+          <TripDetails
+            selectedTrip={selectedTrip}
+            handleTripChange={(trip: Trip | null) => {
+              handleTripChange(trip);
+            }}
+          />
+        </ScrollArea>
       </AppShell.Aside>
     </>
   );

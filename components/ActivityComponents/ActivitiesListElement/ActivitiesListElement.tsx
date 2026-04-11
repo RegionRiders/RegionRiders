@@ -334,10 +334,12 @@ export function ActivitiesListElement({
       </AppShell.Main>
 
       <AppShell.Aside>
-        <ActivityDetails
-          selectedActivity={selectedActivity}
-          handleActivityChange={handleActivityChange}
-        />
+        <ScrollArea h="100%">
+          <ActivityDetails
+            selectedActivity={selectedActivity}
+            handleActivityChange={handleActivityChange}
+          />
+        </ScrollArea>
       </AppShell.Aside>
     </>
   );
