@@ -30,8 +30,7 @@ export function drawLineToAccumulator(
     !Number.isFinite(x0) ||
     !Number.isFinite(y0) ||
     !Number.isFinite(x1) ||
-    !Number.isFinite(y1) ||
-    !Number.isFinite(thickness)
+    !Number.isFinite(y1)
   ) {
     return;
   }

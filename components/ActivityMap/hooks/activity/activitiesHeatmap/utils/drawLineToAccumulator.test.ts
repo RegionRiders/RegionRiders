@@ -24,6 +24,19 @@ describe('drawLineToAccumulator', () => {
     expect(accumulator[50 * 100 + 50]).toBeGreaterThan(0);
   });
 
+  it('should fall back to minimum brush radius for non-finite thickness', () => {
+    const width = 100;
+    const height = 100;
+    const accumulator = new Float32Array(width * height);
+
+    drawLineToAccumulator(accumulator, width, height, 50, 50, 50, 50, Number.NaN);
+
+    const centerIndex = 50 * width + 50;
+    expect(accumulator[centerIndex]).toBe(1);
+    const sum = accumulator.reduce((a, b) => a + b, 0);
+    expect(sum).toBe(1);
+  });
+
   it('should not clamp out-of-bounds zero-length line to canvas edge', () => {
     const width = 10;
     const height = 10;

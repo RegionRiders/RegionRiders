@@ -11,7 +11,7 @@ import { getColorFromThresholds } from '@/components/ActivityMap/utils/colorInte
  * @param zoomLevel - Current map zoom level
  * @param lineThickness - Line thickness control value where 1 -> radius 0 (single pixel)
  * @param thresholds - Optional custom color thresholds (defaults to COLOR_THRESHOLDS)
- * @returns RGBA tuple [r, g, b, a] where each value is 0-255
+ * @returns RGBA tuple [r, g, b, a] where r/g/b are 0-255 and a is 0-1
  */
 export function getHeatmapColorForCount(
   count: number,
