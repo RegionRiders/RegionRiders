@@ -23,7 +23,7 @@ export interface UserMenuProps {
  */
 export function UserMenu({ user, onSettingsClick, onLogoutClick }: UserMenuProps) {
   return (
-    <Menu position="bottom" width="target">
+    <Menu position="bottom-end" width="target" withinPortal zIndex={1000}>
       <Menu.Target>
         <UserButton user={user} />
       </Menu.Target>

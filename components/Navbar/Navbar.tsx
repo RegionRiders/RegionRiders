@@ -4,10 +4,10 @@ import React, { ReactElement, useState } from 'react';
 import { AppShell, Tabs, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { ActivitiesListElement } from '@/components/ActivityComponents/ActivitiesListElement/ActivitiesListElement';
+import ActivityMap from '@/components/ActivityMap/ActivityMap';
 import { Logo } from '@/components/Logo/Logo';
 import { StravaLoginButton } from '@/components/StravaLoginButton/StravaLoginButton';
 import { TripsListElement } from '@/components/TripComponents/TripsListElement/TripsListElement';
-import { Welcome } from '@/components/Welcome/Welcome';
 import { User } from '@/types/user';
 import { UserMenu } from './UserMenu';
 import classes from './Navbar.module.css';
@@ -45,14 +45,9 @@ const NavbarTabContent = ({ value, Content }: { value: string; Content: ReactEle
  * @param defaultTab - Initial active tab; defaults to `"welcome"` when `user` is undefined and `"map"` when `user` is present.
  * @returns The AppShell containing the Tabs list, header, aside, and tab panels for the application navigation.
  */
-export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'map' }: NavbarProps) {
+export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
   /** Stores the OAuth authorization code received from Strava */
   const [, setAuthCode] = useState<string | null>(null);
-
-  // When no user is present, force the active tab to 'welcome' regardless of
-  // what defaultTab was passed in, to prevent unauthenticated users from being
-  // seeded into protected panels.
-  const initialTab = user === undefined ? 'welcome' : defaultTab;
 
   const getAsideWidth = (tab: string | null) => {
     switch (tab) {
@@ -76,7 +71,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
     md?: string | number;
     lg?: string | number;
     xl?: string | number;
-  }>(() => getAsideWidth(initialTab));
+  }>(() => getAsideWidth(defaultTab));
 
   const [hideNavbar, setHideNavbar] = useState<boolean>(false);
 
@@ -93,7 +88,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
   };
 
   return (
-    <Tabs defaultValue={initialTab} onChange={(value) => changeContentWidth(value)}>
+    <Tabs defaultValue={defaultTab} onChange={(value) => changeContentWidth(value)}>
       <AppShell
         header={{ height: '4rem' }}
         aside={{
@@ -105,8 +100,7 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
         <AppShell.Header display={hideNavbar ? 'none' : undefined}>
           <Tabs.List h="4rem">
             <Logo />
-            <NavbarTab value="welcome" text="" display="none" />
-            <NavbarTab value="map" text="Map" display={user === undefined ? 'none' : 'flex'} />
+            <NavbarTab value="map" text="Map" />
             <NavbarTab
               value="activities"
               text="Activities"
@@ -120,8 +114,14 @@ export function Navbar({ user, defaultTab = user === undefined ? 'welcome' : 'ma
           </Tabs.List>
         </AppShell.Header>
 
-        <NavbarTabContent value="welcome" Content={<Welcome />} />
-        <NavbarTabContent value="map" Content={<Text m="100">here will be map</Text>} />
+        <NavbarTabContent
+          value="map"
+          Content={
+            <AppShell.Main>
+              <ActivityMap />
+            </AppShell.Main>
+          }
+        />
         <NavbarTabContent
           value="activities"
           Content={
