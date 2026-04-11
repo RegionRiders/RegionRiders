@@ -1,9 +1,15 @@
+export const MIN_ACTIVITY_THICKNESS_CONTROL = 1;
+export const MAX_ACTIVITY_THICKNESS_CONTROL = 10;
+
 export function normalizeActivityThicknessControl(thickness: number): number {
   if (!Number.isFinite(thickness)) {
-    return 1;
+    return MIN_ACTIVITY_THICKNESS_CONTROL;
   }
 
-  return Math.max(1, Math.round(thickness));
+  return Math.min(
+    MAX_ACTIVITY_THICKNESS_CONTROL,
+    Math.max(MIN_ACTIVITY_THICKNESS_CONTROL, Math.round(thickness))
+  );
 }
 
 export function getActivityLineRadiusFromControl(thickness: number): number {
