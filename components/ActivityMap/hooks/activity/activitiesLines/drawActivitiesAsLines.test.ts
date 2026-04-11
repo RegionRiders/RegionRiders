@@ -3,8 +3,8 @@
  */
 
 import L from 'leaflet';
-import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import { attachActivityHoverEvents } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/activityLineEvents';
+import type { RGBA } from '@/components/ActivityMap/mapTypes';
 import type { GPXTrack } from '@/lib/types';
 import type { LinesRefs } from '../activityTypes';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
