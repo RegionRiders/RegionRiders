@@ -114,6 +114,17 @@ describe('ActivitiesSection', () => {
       expect(screen.getByText(/Line thickness:/)).toBeInTheDocument();
     });
 
+    it('should display line thickness as rendered pixel width', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(screen.getByText('Line thickness: 5px')).toBeInTheDocument();
+    });
+
     it('should render layer transparency slider', () => {
       render(
         <ActivitiesSectionWrapper

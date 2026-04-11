@@ -4,6 +4,7 @@
 
 import L from 'leaflet';
 import type { RGBA } from '@/components/ActivityMap/mapTypes';
+import { attachActivityHoverEvents } from '@/components/ActivityMap/hooks/activity/activitiesLines/utils/activityLineEvents';
 import type { GPXTrack } from '@/lib/types';
 import type { LinesRefs } from '../activityTypes';
 import { drawActivitiesAsLines } from './drawActivitiesAsLines';
@@ -164,6 +165,22 @@ describe('drawActivitiesAsLines', () => {
     drawActivitiesAsLines(mockMap, mockTracks, refs);
 
     expect(L.featureGroup).toHaveBeenCalled();
+  });
+
+  it('should derive line and hover weights from shared thickness control', () => {
+    drawActivitiesAsLines(mockMap, mockTracks, refs);
+
+    expect(L.polyline).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ weight: 3 })
+    );
+    expect(attachActivityHoverEvents).toHaveBeenCalledWith(
+      expect.any(Object),
+      refs.lineColor,
+      refs.lineHoverColor,
+      3,
+      6
+    );
   });
 
   it('should handle empty tracks map', () => {

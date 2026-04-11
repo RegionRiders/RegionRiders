@@ -1,5 +1,6 @@
 import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/drawLineToAccumulator';
 import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { GPXTrack } from '@/lib/types';
 
 /**
@@ -36,7 +37,7 @@ export function processTracksChunked(
   let segmentIndex = 0;
   const frameBudgetMs = CHUNK_FRAME_BUDGET_MS;
   // Keep at least 1px of margin so segments hugging the viewport border are not incorrectly culled.
-  const cullPadding = Math.max(1, Math.round(lineThickness));
+  const cullPadding = Math.max(1, getActivityLineRadiusFromControl(lineThickness));
 
   const isOutsideViewport = (
     x0: number,
