@@ -57,6 +57,17 @@ describe('processTracksChunked', () => {
     );
 
     expect(drawLineToAccumulator).toHaveBeenCalledTimes(1);
+    expect(drawLineToAccumulator).toHaveBeenCalledWith(
+      accumulator,
+      100,
+      100,
+      103.4,
+      50,
+      103.6,
+      51,
+      5,
+      touchedBounds
+    );
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 });
