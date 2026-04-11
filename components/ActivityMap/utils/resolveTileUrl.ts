@@ -4,9 +4,15 @@
  */
 export function latLngToTile(lat: number, lng: number, zoom: number): { x: number; y: number } {
   const n = 2 ** zoom;
-  const x = Math.floor(((lng + 180) / 360) * n);
+  const rawX = Math.floor(((lng + 180) / 360) * n);
   const latRad = (lat * Math.PI) / 180;
-  const y = Math.floor(((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n);
+  const rawY = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
+  );
+
+  const x = ((rawX % n) + n) % n;
+  const y = Math.min(Math.max(rawY, 0), n - 1);
+
   return { x, y };
 }
 

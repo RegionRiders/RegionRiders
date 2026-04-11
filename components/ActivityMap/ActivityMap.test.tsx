@@ -1,17 +1,54 @@
+import { act } from '@testing-library/react';
+import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
+import {
+  loadAuthenticatedUserIdFromApi,
+  loadMapSettingsFromApi,
+  saveMapSettingsToApi,
+} from '@/components/ActivityMap/storage/mapSettingsApi';
+import { MAP_SETTINGS_STORAGE_VERSION } from '@/components/ActivityMap/storage/mapSettingsPersistence';
 import { useGPXData } from '@/hooks/useGPXData';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
-import ActivityMap from './ActivityMap';
+import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
+const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS;
+
+const advanceInitialPersistWindow = () => {
+  act(() => {
+    jest.advanceTimersByTime(INITIAL_PERSIST_WAIT_MS);
+  });
+};
+
+const flushHydrationPromises = async () => {
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+};
 
 // Mock the hooks
 jest.mock('../../hooks/useGPXData', () => ({
   useGPXData: jest.fn(),
 }));
 
-jest.mock('./hooks/map/useLeafletMap', () => ({
+jest.mock('@/components/ActivityMap/hooks/map/useLeafletMap', () => ({
   useLeafletMap: jest.fn(),
+}));
+
+jest.mock('@/components/ActivityMap/storage/mapSettingsApi', () => ({
+  isUnauthenticatedMapSettingsResult: (value: unknown) =>
+    Boolean(
+      value &&
+      typeof value === 'object' &&
+      'unauthenticated' in (value as Record<string, unknown>) &&
+      (value as { unauthenticated?: unknown }).unauthenticated === true
+    ),
+  loadAuthenticatedUserIdFromApi: jest.fn(),
+  loadMapSettingsFromApi: jest.fn(),
+  saveMapSettingsToApi: jest.fn(),
 }));
 
 // Mock the child components
@@ -50,11 +87,29 @@ jest.mock('./controls/LayersPanel/LayersPanel', () => ({
 
 const mockUseGPXData = useGPXData as jest.MockedFunction<typeof useGPXData>;
 const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeafletMap>;
+const mockLoadMapSettingsFromApi = loadMapSettingsFromApi as jest.MockedFunction<
+  typeof loadMapSettingsFromApi
+>;
+const mockLoadAuthenticatedUserIdFromApi = loadAuthenticatedUserIdFromApi as jest.MockedFunction<
+  typeof loadAuthenticatedUserIdFromApi
+>;
+const mockSaveMapSettingsToApi = saveMapSettingsToApi as jest.MockedFunction<
+  typeof saveMapSettingsToApi
+>;
+
+type HydrationSettingsResolver = (value: {
+  userId: string;
+  settings: Partial<typeof DEFAULT_MAP_SETTINGS>;
+  updatedAt: string;
+}) => void;
 
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(null);
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+    mockSaveMapSettingsToApi.mockResolvedValue(true);
 
     // Default mock implementations
     mockUseGPXData.mockReturnValue({
@@ -72,6 +127,13 @@ describe('ActivityMap', () => {
       isReady: true,
       error: null,
     });
+  });
+
+  afterEach(() => {
+    if (jest.isMockFunction(setTimeout)) {
+      jest.clearAllTimers();
+    }
+    jest.useRealTimers();
   });
 
   it('renders without crashing', () => {
@@ -140,7 +202,7 @@ describe('ActivityMap', () => {
     window.localStorage.setItem(
       'rr:map-settings:anon',
       JSON.stringify({
-        version: 1,
+        version: MAP_SETTINGS_STORAGE_VERSION,
         savedAt: '2026-01-01T00:00:00.000Z',
         settings: {
           showActivities: false,
@@ -152,32 +214,312 @@ describe('ActivityMap', () => {
 
     render(<ActivityMap />);
 
-    const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
-    expect(latestLayersPanelProps.settings.showActivities).toBe(false);
-    expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
-    expect(latestLayersPanelProps.settings.attribution).toBe(persistedAttribution);
+    return waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+      expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
+      expect(latestLayersPanelProps.settings.attribution).toBe(persistedAttribution);
 
-    const latestUseLeafletMapCall = mockUseLeafletMap.mock.calls.at(-1);
-    expect(latestUseLeafletMapCall?.[1]).toEqual(
-      expect.objectContaining({
-        tileLayerUrl: persistedTileLayerUrl,
-        attribution: persistedAttribution,
-      })
-    );
+      const latestUseLeafletMapCall = mockUseLeafletMap.mock.calls.at(-1);
+      expect(latestUseLeafletMapCall?.[1]).toEqual(
+        expect.objectContaining({
+          tileLayerUrl: persistedTileLayerUrl,
+          attribution: persistedAttribution,
+        })
+      );
+    });
   });
 
-  it('saves settings to user-specific localStorage key when user id is present', async () => {
-    window.localStorage.setItem('rr:user-id', 'user-123');
+  it('prefers newer user-scoped local settings when they are fresher than API settings', async () => {
+    const userId = 'user-local-fresh-123';
+    const persistedTileLayerUrl = 'https://example.com/local/{z}/{x}/{y}';
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(userId);
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId,
+      settings: {
+        ...DEFAULT_MAP_SETTINGS,
+        showActivities: true,
+        tileLayerUrl: 'https://example.com/api/{z}/{x}/{y}',
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      `rr:map-settings:user:${userId}`,
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '2026-02-01T00:00:00.000Z',
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+          tileLayerUrl: persistedTileLayerUrl,
+        },
+      })
+    );
 
     render(<ActivityMap />);
 
     await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+      expect(latestLayersPanelProps.settings.tileLayerUrl).toBe(persistedTileLayerUrl);
+    });
+  });
+
+  it('prefers API settings when API timestamp is equal to or newer than local savedAt', async () => {
+    const userId = 'user-api-fresh-123';
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(userId);
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId,
+      settings: {
+        ...DEFAULT_MAP_SETTINGS,
+        showActivities: true,
+      },
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      `rr:map-settings:user:${userId}`,
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+          tileLayerUrl: 'https://example.com/local/{z}/{x}/{y}',
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(true);
+    });
+
+    expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeNull();
+  });
+
+  it('does not let in-flight hydration overwrite user edits or clear local fallback', async () => {
+    const userId = 'user-hydration-race-123';
+    let resolveSettingsApi: HydrationSettingsResolver | null = null;
+
+    mockLoadMapSettingsFromApi.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSettingsApi = resolve as HydrationSettingsResolver;
+        })
+    );
+
+    window.localStorage.setItem(
+      `rr:map-settings:user:${userId}`,
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '2026-01-01T00:00:00.000Z',
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(resolveSettingsApi).toBeInstanceOf(Function);
+    });
+
+    if (!resolveSettingsApi) {
+      throw new Error('Expected hydration settings resolver to be set');
+    }
+
+    const resolvedSettingsApi = resolveSettingsApi as HydrationSettingsResolver;
+
+    resolvedSettingsApi({
+      userId,
+      settings: {
+        ...DEFAULT_MAP_SETTINGS,
+        showActivities: true,
+      },
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    });
+
+    await flushHydrationPromises();
+
+    expect(window.localStorage.getItem(`rr:map-settings:user:${userId}`)).toBeTruthy();
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(false);
+    });
+  });
+
+  it('uses auth-session user id for local fallback saves when settings API read fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+
+    jest.useFakeTimers();
+    render(<ActivityMap />);
+    await flushHydrationPromises();
+    expect(mockLoadAuthenticatedUserIdFromApi).toHaveBeenCalled();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
+
+    expect(window.localStorage.getItem('rr:map-settings:user:user-123')).toBeNull();
+    expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
       const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
       expect(persisted).toBeTruthy();
+    });
+  });
 
-      const parsed = JSON.parse(persisted as string);
-      expect(parsed.version).toBe(1);
-      expect(parsed.settings.showActivities).toBe(true);
+  it('does not bump user-scoped local savedAt during hydration when settings API read fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue(null);
+
+    const originalSavedAt = '2026-03-01T00:00:00.000Z';
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: originalSavedAt,
+        settings: {
+          ...DEFAULT_MAP_SETTINGS,
+          showActivities: false,
+        },
+      })
+    );
+
+    jest.useFakeTimers();
+    render(<ActivityMap />);
+    await flushHydrationPromises();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
+
+    const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+    expect(persisted).toBeTruthy();
+    const parsed = JSON.parse(persisted as string);
+    expect(parsed.savedAt).toBe(originalSavedAt);
+  });
+
+  it('does not request auth-session when settings API provides user id', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    });
+    expect(mockLoadAuthenticatedUserIdFromApi).not.toHaveBeenCalled();
+  });
+
+  it('does not request auth-session when settings API returns unauthenticated', async () => {
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      unauthenticated: true,
+    });
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    });
+    expect(mockLoadAuthenticatedUserIdFromApi).not.toHaveBeenCalled();
+  });
+
+  it('does not treat epoch API updatedAt as missing timestamp', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '1970-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '1969-12-31T23:59:59.000Z',
+        settings: {
+          showActivities: false,
+        },
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(true);
+    });
+  });
+
+  it('does not prefer empty user-scoped local settings over non-empty API settings', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    window.localStorage.setItem(
+      'rr:map-settings:user:user-123',
+      JSON.stringify({
+        version: MAP_SETTINGS_STORAGE_VERSION,
+        savedAt: '2026-02-01T00:00:00.000Z',
+        settings: {},
+      })
+    );
+
+    render(<ActivityMap />);
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.showActivities).toBe(true);
+    });
+  });
+
+  it('saves settings to authenticated API when user id is present', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    jest.useFakeTimers();
+    render(<ActivityMap />);
+    await flushHydrationPromises();
+    expect(mockLoadMapSettingsFromApi).toHaveBeenCalled();
+    advanceInitialPersistWindow();
+    jest.useRealTimers();
+    expect(mockSaveMapSettingsToApi).not.toHaveBeenCalled();
+
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showActivities: false,
+        })
+      );
     });
   });
 
@@ -193,6 +535,30 @@ describe('ActivityMap', () => {
 
       const parsed = JSON.parse(persisted as string);
       expect(parsed.settings.showActivities).toBe(false);
+    });
+  });
+
+  it('falls back to local storage when authenticated API save fails', async () => {
+    mockLoadAuthenticatedUserIdFromApi.mockResolvedValue('user-123');
+    mockLoadMapSettingsFromApi.mockResolvedValue({
+      userId: 'user-123',
+      settings: {
+        showActivities: true,
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    render(<ActivityMap />);
+    await waitFor(() => expect(mockLoadMapSettingsFromApi).toHaveBeenCalled());
+
+    mockSaveMapSettingsToApi.mockResolvedValue(false);
+    const button = screen.getByTestId('update-settings');
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockSaveMapSettingsToApi).toHaveBeenCalled();
+      const persisted = window.localStorage.getItem('rr:map-settings:user:user-123');
+      expect(persisted).toBeTruthy();
     });
   });
 });

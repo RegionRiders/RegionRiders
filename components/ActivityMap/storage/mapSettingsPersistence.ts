@@ -1,4 +1,5 @@
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { mapSettingsSchema } from '@/lib/validation/schemas';
 
 export const MAP_SETTINGS_STORAGE_KEY_PREFIX = 'rr:map-settings';
 export const MAP_SETTINGS_ANON_STORAGE_KEY = `${MAP_SETTINGS_STORAGE_KEY_PREFIX}:anon`;
@@ -8,6 +9,11 @@ interface PersistedMapSettingsV1 {
   version: number;
   savedAt: string;
   settings: MapSettings;
+}
+
+export interface LoadedPersistedMapSettings {
+  settings: Partial<MapSettings>;
+  savedAt: string | null;
 }
 
 export function resolveMapSettingsStorageKey(userId?: string | null): string {
@@ -22,7 +28,46 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+/**
+ * Validates and normalizes a raw settings object using the Zod schema.
+ * - Strips unknown keys
+ * - Type-checks each optional field (invalid types are removed)
+ * - If cross-field index refinements fail (e.g. index out of bounds), the
+ *   offending index fields are stripped and the remaining data is returned.
+ * This ensures a corrupted/stale localStorage payload can never overwrite
+ * defaults with invalid values (e.g. `lineColorSwatches: null`).
+ */
+function validateAndNormalizeSettings(raw: unknown): Partial<MapSettings> | null {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const schema = mapSettingsSchema;
+
+  // First attempt: parse the whole object (strips unknown keys, type-checks fields).
+  const first = schema.safeParse(raw);
+  if (first.success) {
+    return first.data as Partial<MapSettings>;
+  }
+
+  // If parsing failed, remove the fields that caused errors, then retry.
+  // This handles cases like `lineColorSwatches: null` or out-of-bounds indices.
+  const badPaths = new Set(
+    first.error.issues.map((issue) => issue.path[0]).filter((p) => p != null)
+  );
+  const sanitized = Object.fromEntries(Object.entries(raw).filter(([key]) => !badPaths.has(key)));
+
+  const second = schema.safeParse(sanitized);
+  return second.success ? (second.data as Partial<MapSettings>) : null;
+}
+
 export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapSettings> | null {
+  return loadPersistedMapSettingsFromStorage(userId)?.settings ?? null;
+}
+
+export function loadPersistedMapSettingsFromStorage(
+  userId?: string | null
+): LoadedPersistedMapSettings | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -40,20 +85,34 @@ export function loadMapSettingsFromStorage(userId?: string | null): Partial<MapS
       return null;
     }
 
-    if (
-      'version' in parsed &&
-      'settings' in parsed &&
-      parsed.version === MAP_SETTINGS_STORAGE_VERSION
-    ) {
-      return isObject(parsed.settings) ? (parsed.settings as Partial<MapSettings>) : null;
+    if ('version' in parsed && 'settings' in parsed) {
+      if (typeof parsed.version !== 'number' || parsed.version !== MAP_SETTINGS_STORAGE_VERSION) {
+        return null;
+      }
+
+      // Versioned payload: extract and validate the settings object.
+      const settings = validateAndNormalizeSettings(parsed.settings);
+      if (!settings || Object.keys(settings).length === 0) {
+        return null;
+      }
+
+      const savedAt = typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
+      return {
+        settings,
+        savedAt,
+      };
     }
-    // Handle versioned payload with mismatched version - extract settings if present
-    if ('version' in parsed && 'settings' in parsed && isObject(parsed.settings)) {
-      // Version mismatch: return settings but consider logging/migrating in future
-      return parsed.settings as Partial<MapSettings>;
+
+    // Backward-compatible legacy payload support (unversioned settings object).
+    const settings = validateAndNormalizeSettings(parsed);
+    if (!settings || Object.keys(settings).length === 0) {
+      return null;
     }
-    // Backward-compatible fallback for legacy raw settings payloads (no version wrapper).
-    return parsed as Partial<MapSettings>;
+
+    return {
+      settings,
+      savedAt: null,
+    };
   } catch {
     return null;
   }

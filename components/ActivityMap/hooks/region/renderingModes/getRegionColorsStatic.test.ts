@@ -82,8 +82,8 @@ describe('getRegionColorsStatic', () => {
 
     const result = getRegionColorsStatic(visit);
 
-    expect(result.fillColor).toContain('rgba');
-    expect(result.strokeColor).toContain('rgba');
+    expect(result.fillColor).toBe('rgba(76,107,34,0.2)');
+    expect(result.strokeColor).toBe('rgba(76,107,34,1)');
   });
 
   it('should handle visit with undefined visitCount', () => {

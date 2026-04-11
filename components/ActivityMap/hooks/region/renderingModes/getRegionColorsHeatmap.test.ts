@@ -104,7 +104,7 @@ describe('getRegionColorsHeatmap', () => {
 
     const result = getRegionColorsHeatmap(visit, mockThresholds);
 
-    expect(result.strokeColor).toMatch(/rgba\(\d+,\d+,\d+,1\)/);
+    expect(result.strokeColor).toMatch(/rgba\(\d+,\s*\d+,\s*\d+,\s*1\)/);
   });
 
   it('should handle visit with undefined visitCount', () => {

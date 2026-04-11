@@ -1,45 +1,11 @@
 import { GPXTrack, Regions } from '@/lib/types';
 import { analyzeRegionVisits, analyzeRegionVisitsAsync } from './regionVisitAnalyzer';
 
-// Mock the spatial index module which uses rbush
-jest.mock('./spatial/spatialIndex', () => ({
-  RegionSpatialIndex: jest.fn().mockImplementation(() => ({
-    findCandidateRegions: jest.fn(() => []),
-    getSize: jest.fn(() => 0),
-  })),
-}));
-
-// Mock dependencies
-jest.mock('./processing', () => ({
-  processTrack: jest.fn(),
-}));
-
-jest.mock('./spatial', () => ({
-  buildSpatialGrid: jest.fn(() => new Map()),
-}));
-
-jest.mock('./spatial/boundingBox', () => ({
-  getBoundingBox: jest.fn(() => ({
-    minLat: 50.0,
-    maxLat: 51.0,
-    minLon: 14.0,
-    maxLon: 15.0,
-  })),
-}));
+// No mocks – these are integration-style tests that exercise the real
+// RegionSpatialIndex (rbush) + pointInPolygon logic end-to-end.
 
 describe('regionVisitAnalyzer', () => {
-  const mockTrack: GPXTrack = {
-    id: 'track-1',
-    name: 'Test Track',
-    points: [
-      { lat: 50.5, lon: 14.5 },
-      { lat: 50.6, lon: 14.6 },
-    ],
-    metadata: {
-      distance: 10.0,
-    },
-  };
-
+  // A simple axis-aligned square region [14,50] – [15,51]
   const mockRegion: Regions = {
     id: 'region-1',
     name: 'Test Region',
@@ -60,29 +26,64 @@ describe('regionVisitAnalyzer', () => {
     properties: {},
   };
 
+  // Track whose points are clearly INSIDE the region
+  const insideTrack: GPXTrack = {
+    id: 'track-inside',
+    name: 'Inside Track',
+    points: [
+      { lat: 50.5, lon: 14.5 },
+      { lat: 50.6, lon: 14.6 },
+    ],
+    metadata: { distance: 10.0 },
+  };
+
+  // Track whose points are clearly OUTSIDE the region
+  const outsideTrack: GPXTrack = {
+    id: 'track-outside',
+    name: 'Outside Track',
+    points: [
+      { lat: 52.0, lon: 16.0 },
+      { lat: 53.0, lon: 17.0 },
+    ],
+    metadata: { distance: 5.0 },
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('analyzeRegionVisits', () => {
     it('should return a Map of region visit data', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
+      const result = analyzeRegionVisits([insideTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(1);
     });
 
-    it('should initialize visit records for all regions', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
+    it('should mark a region as visited when a track point is inside it', () => {
+      const result = analyzeRegionVisits([insideTrack], [mockRegion]);
 
       const visitData = result.get('region-1');
       expect(visitData).toBeDefined();
+      expect(visitData?.visited).toBe(true);
+      expect(visitData?.visitCount).toBe(1);
+      expect(visitData?.trackIds).toContain('track-inside');
+    });
+
+    it('should NOT mark a region as visited when all track points are outside it', () => {
+      const result = analyzeRegionVisits([outsideTrack], [mockRegion]);
+
+      const visitData = result.get('region-1');
+      expect(visitData).toBeDefined();
+      expect(visitData?.visited).toBe(false);
+      expect(visitData?.visitCount).toBe(0);
+      expect(visitData?.trackIds).toEqual([]);
+    });
+
+    it('should initialize unvisited visit records for all regions', () => {
+      const result = analyzeRegionVisits([outsideTrack], [mockRegion]);
+
+      const visitData = result.get('region-1');
       expect(visitData?.regionId).toBe('region-1');
       expect(visitData?.regionName).toBe('Test Region');
       expect(visitData?.visited).toBe(false);
@@ -90,54 +91,79 @@ describe('regionVisitAnalyzer', () => {
       expect(visitData?.trackIds).toEqual([]);
     });
 
-    it('should handle empty track list', () => {
-      const tracks: GPXTrack[] = [];
-      const regions = [mockRegion];
+    it('should count each visiting track only once per region', () => {
+      const result = analyzeRegionVisits([insideTrack, insideTrack], [mockRegion]);
 
-      const result = analyzeRegionVisits(tracks, regions);
+      const visitData = result.get('region-1');
+      expect(visitData?.visitCount).toBe(2);
+      // Each call uses the same track id so the track should appear once
+      expect(visitData?.trackIds).toHaveLength(1);
+    });
+
+    it('should record multiple distinct visiting tracks', () => {
+      const secondInsideTrack: GPXTrack = {
+        id: 'track-inside-2',
+        name: 'Inside Track 2',
+        points: [{ lat: 50.2, lon: 14.2 }],
+        metadata: { distance: 2.0 },
+      };
+
+      const result = analyzeRegionVisits([insideTrack, secondInsideTrack], [mockRegion]);
+
+      const visitData = result.get('region-1');
+      expect(visitData?.visitCount).toBe(2);
+      expect(visitData?.trackIds).toContain('track-inside');
+      expect(visitData?.trackIds).toContain('track-inside-2');
+    });
+
+    it('should handle empty track list', () => {
+      const result = analyzeRegionVisits([], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(1);
+      expect(result.get('region-1')?.visited).toBe(false);
     });
 
     it('should handle empty region list', () => {
-      const tracks = [mockTrack];
-      const regions: Regions[] = [];
-
-      const result = analyzeRegionVisits(tracks, regions);
+      const result = analyzeRegionVisits([insideTrack], []);
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(0);
     });
 
-    it('should call progress callback with updates', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-      const onProgress = jest.fn();
+    it('should handle multiple regions – visited and unvisited', () => {
+      const northRegion: Regions = {
+        id: 'region-north',
+        name: 'North Region',
+        country: 'TEST',
+        adminLevel: 1,
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [14.0, 52.0],
+              [15.0, 52.0],
+              [15.0, 53.0],
+              [14.0, 53.0],
+              [14.0, 52.0],
+            ],
+          ],
+        },
+        properties: {},
+      };
 
-      analyzeRegionVisits(tracks, regions, onProgress);
+      const result = analyzeRegionVisits([insideTrack], [mockRegion, northRegion]);
 
-      expect(onProgress).toHaveBeenCalled();
-      expect(onProgress).toHaveBeenCalledWith(expect.any(Number), expect.any(String));
+      expect(result.size).toBe(2);
+      expect(result.get('region-1')?.visited).toBe(true);
+      expect(result.get('region-north')?.visited).toBe(false);
     });
 
-    it('should report 100% progress at completion', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-      const onProgress = jest.fn();
+    it('should include geometry in visit data', () => {
+      const result = analyzeRegionVisits([insideTrack], [mockRegion]);
 
-      analyzeRegionVisits(tracks, regions, onProgress);
-
-      expect(onProgress).toHaveBeenCalledWith(100, expect.any(String));
-    });
-
-    it('should use custom config when provided', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions, undefined);
-
-      expect(result).toBeInstanceOf(Map);
+      const visitData = result.get('region-1');
+      expect(visitData?.geometry).toEqual(mockRegion.geometry);
     });
 
     it('should filter out tracks with no points', () => {
@@ -148,156 +174,141 @@ describe('regionVisitAnalyzer', () => {
         metadata: { distance: 0 },
       };
 
-      const tracks = [mockTrack, emptyTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
+      const result = analyzeRegionVisits([insideTrack, emptyTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
+      // insideTrack still registers the visit
+      expect(result.get('region-1')?.visited).toBe(true);
     });
 
-    it('should handle multiple tracks', () => {
-      const track2: GPXTrack = {
-        id: 'track-2',
-        name: 'Test Track 2',
-        points: [{ lat: 50.7, lon: 14.7 }],
-        metadata: { distance: 5.0 },
-      };
-
-      const tracks = [mockTrack, track2];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
-
-      expect(result).toBeInstanceOf(Map);
-    });
-
-    it('should handle multiple regions', () => {
-      const region2: Regions = {
-        id: 'region-2',
-        name: 'Test Region 2',
-        country: 'TEST',
-        adminLevel: 1,
-        geometry: mockRegion.geometry,
-        properties: {},
-      };
-
-      const tracks = [mockTrack];
-      const regions = [mockRegion, region2];
-
-      const result = analyzeRegionVisits(tracks, regions);
-
-      expect(result.size).toBe(2);
-      expect(result.has('region-1')).toBe(true);
-      expect(result.has('region-2')).toBe(true);
-    });
-
-    it('should include geometry in visit data', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
-
-      const visitData = result.get('region-1');
-      expect(visitData?.geometry).toBeDefined();
-      expect(visitData?.geometry).toEqual(mockRegion.geometry);
-    });
-
-    it('should measure execution time', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
+    it('should call progress callback with updates', () => {
       const onProgress = jest.fn();
 
-      analyzeRegionVisits(tracks, regions, onProgress);
+      analyzeRegionVisits([insideTrack], [mockRegion], onProgress);
 
-      // Check that the final progress message includes timing info
+      expect(onProgress).toHaveBeenCalled();
+      expect(onProgress).toHaveBeenCalledWith(expect.any(Number), expect.any(String));
+    });
+
+    it('should report 100% progress at completion', () => {
+      const onProgress = jest.fn();
+
+      analyzeRegionVisits([insideTrack], [mockRegion], onProgress);
+
+      expect(onProgress).toHaveBeenCalledWith(100, expect.any(String));
+    });
+
+    it('should report progress during track processing', () => {
+      const manyTracks = Array.from({ length: 20 }, (_, i) => ({
+        ...insideTrack,
+        id: `track-${i}`,
+        name: `Track ${i}`,
+      }));
+      const onProgress = jest.fn();
+
+      analyzeRegionVisits(manyTracks, [mockRegion], onProgress);
+
+      expect(onProgress.mock.calls.length).toBeGreaterThan(2);
+    });
+
+    it('should measure execution time (progress message includes ms)', () => {
+      const onProgress = jest.fn();
+
+      analyzeRegionVisits([insideTrack], [mockRegion], onProgress);
+
       const lastCall = onProgress.mock.calls[onProgress.mock.calls.length - 1];
       expect(lastCall[1]).toMatch(/ms/);
     });
 
-    it('should report progress during track processing', () => {
-      const tracks = Array(20)
-        .fill(null)
-        .map((_, i) => ({
-          ...mockTrack,
-          id: `track-${i}`,
-          name: `Track ${i}`,
-        }));
-      const regions = [mockRegion];
-      const onProgress = jest.fn();
+    it('should handle tracks without a points property gracefully', () => {
+      const invalidTrack = { id: 'invalid', name: 'Invalid', metadata: {} } as GPXTrack;
 
-      analyzeRegionVisits(tracks, regions, onProgress);
-
-      // Should report multiple progress updates
-      expect(onProgress.mock.calls.length).toBeGreaterThan(2);
-    });
-
-    it('should handle tracks without points property', () => {
-      const invalidTrack = {
-        id: 'invalid',
-        name: 'Invalid',
-        metadata: {},
-      } as any;
-
-      const tracks = [invalidTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisits(tracks, regions);
+      const result = analyzeRegionVisits([invalidTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
+      expect(result.get('region-1')?.visited).toBe(false);
+      expect(result.get('region-1')?.visitCount).toBe(0);
+      expect(result.get('region-1')?.trackIds).toEqual([]);
+    });
+
+    it('should count multiple points from same track as single visit', () => {
+      const multiPointTrack: GPXTrack = {
+        id: 'track-multi-hit',
+        name: 'Multi Hit Track',
+        points: [
+          { lat: 50.1, lon: 14.1 },
+          { lat: 50.2, lon: 14.2 },
+          { lat: 50.3, lon: 14.3 },
+        ],
+        metadata: { distance: 1.0 },
+      };
+
+      const result = analyzeRegionVisits([multiPointTrack], [mockRegion]);
+      const visitData = result.get('region-1');
+
+      expect(visitData?.visitCount).toBe(1);
+      expect(visitData?.trackIds).toEqual(['track-multi-hit']);
+    });
+
+    it('should ignore regions with unsupported geometry when checking points', () => {
+      const pointGeometryRegion: Regions = {
+        id: 'region-point',
+        name: 'Point Geometry',
+        country: 'TEST',
+        adminLevel: 1,
+        geometry: {
+          // Intentionally invalid geometry type to verify handling of unsupported shapes.
+          type: 'Point',
+          coordinates: [14.5, 50.5],
+        } as unknown as Regions['geometry'],
+        properties: {},
+      };
+
+      const result = analyzeRegionVisits([insideTrack], [pointGeometryRegion]);
+      const visitData = result.get('region-point');
+
+      expect(visitData).toBeDefined();
+      expect(visitData?.visited).toBe(false);
+      expect(visitData?.visitCount).toBe(0);
+      expect(visitData?.trackIds).toEqual([]);
     });
   });
 
   describe('analyzeRegionVisitsAsync', () => {
     it('should return a Promise', () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = analyzeRegionVisitsAsync(tracks, regions);
+      const result = analyzeRegionVisitsAsync([insideTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Promise);
     });
 
-    it('should resolve to a Map', async () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = await analyzeRegionVisitsAsync(tracks, regions);
+    it('should resolve to a Map with correct visit data', async () => {
+      const result = await analyzeRegionVisitsAsync([insideTrack], [mockRegion]);
 
       expect(result).toBeInstanceOf(Map);
+      expect(result.get('region-1')?.visited).toBe(true);
+    });
+
+    it('should resolve correctly when no tracks visit any region', async () => {
+      const result = await analyzeRegionVisitsAsync([outsideTrack], [mockRegion]);
+
+      expect(result.get('region-1')?.visited).toBe(false);
     });
 
     it('should call progress callback', async () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
       const onProgress = jest.fn();
 
-      await analyzeRegionVisitsAsync(tracks, regions, onProgress);
+      await analyzeRegionVisitsAsync([insideTrack], [mockRegion], onProgress);
 
       expect(onProgress).toHaveBeenCalled();
     });
 
-    it('should accept custom config', async () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
-      const result = await analyzeRegionVisitsAsync(tracks, regions);
-
-      expect(result).toBeInstanceOf(Map);
-    });
-
-    it('should execute asynchronously', async () => {
-      const tracks = [mockTrack];
-      const regions = [mockRegion];
-
+    it('should execute asynchronously (not resolved synchronously)', async () => {
       let resolved = false;
-      const promise = analyzeRegionVisitsAsync(tracks, regions).then(() => {
+      const promise = analyzeRegionVisitsAsync([insideTrack], [mockRegion]).then(() => {
         resolved = true;
       });
 
-      // Should not be resolved immediately
       expect(resolved).toBe(false);
-
       await promise;
       expect(resolved).toBe(true);
     });

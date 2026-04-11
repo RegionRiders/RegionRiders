@@ -19,7 +19,7 @@ const lineColorSwatchSchema = z.object({
   normal: rgbaSchema,
   hover: rgbaSchema,
 });
-const mapSettingsSchema = z
+export const mapSettingsSchema = z
   .object({
     activityMode: z.enum(['heatmap', 'lines']).optional(),
     showActivities: z.boolean().optional(),
@@ -32,7 +32,7 @@ const mapSettingsSchema = z
     selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
     regionMode: z.enum(['heatmap', 'static']).optional(),
     showRegions: z.boolean().optional(),
-    regionTransparency: z.number().min(0).max(1).optional(),
+    regionLayerTransparency: z.number().min(0).max(1).optional(),
     regionBorderThickness: z.number().min(0).max(100).optional(),
     regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
     selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),

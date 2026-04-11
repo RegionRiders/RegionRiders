@@ -7,6 +7,8 @@
 import type { Map as LeafletMap } from 'leaflet';
 import {
   ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES,
+  DEFAULT_REGION_STATIC_COLOR_SWATCHES,
   REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
 } from '@/components/ActivityMap/config/mapConfig';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -41,7 +43,8 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.activityThickness,
     settings.activityLayerTransparency ?? 1,
     settings.heatmapDensity,
-    settings.lineColorSwatches[settings.selectedLineSwatchIndex],
+    settings.lineColorSwatches?.[settings.selectedLineSwatchIndex] ??
+      DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0],
     settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex ?? 0] ??
       ACTIVITY_HEATMAP_COLOR_THRESHOLDS
   );
@@ -53,7 +56,8 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.regionMode,
     settings.regionBorderThickness,
     settings.regionLayerTransparency ?? 1,
-    settings.regionStaticColorSwatches[settings.selectedRegionStaticSwatchIndex],
+    settings.regionStaticColorSwatches?.[settings.selectedRegionStaticSwatchIndex] ??
+      DEFAULT_REGION_STATIC_COLOR_SWATCHES[0],
     settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex ?? 0] ??
       REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
   );

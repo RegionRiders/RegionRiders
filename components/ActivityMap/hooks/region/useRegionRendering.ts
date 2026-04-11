@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
-import { REGION_VISIT_HEATMAP_COLOR_THRESHOLDS } from '@/components/ActivityMap/config/mapConfig';
+import {
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/region/utils/calculateWeightForZoom';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
@@ -21,10 +24,7 @@ export function useRegionRendering(
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = 2,
   regionLayerTransparency: number = 1,
-  regionStaticColor: ColorThreshold[] = [
-    { threshold: 0, color: [60, 60, 60, 0] },
-    { threshold: 1, color: [76, 107, 34, 0.2] },
-  ],
+  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
 ) {
   const layerManagerRef = useRef<RegionLayerManager | null>(null);
@@ -85,7 +85,9 @@ export function useRegionRendering(
     const layerCount = layerManagerRef.current.getLayerCount();
     logger.debug(`Synced ${layerCount} region layers (${duration}ms)`);
   }, [
+    map,
     regions,
+    visitData,
     showRegions,
     mode,
     regionBorderThickness,
