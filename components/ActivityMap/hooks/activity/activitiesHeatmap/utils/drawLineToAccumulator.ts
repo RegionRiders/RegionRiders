@@ -24,10 +24,25 @@ export function drawLineToAccumulator(
   thickness: number,
   touchedBounds?: PixelBounds
 ): void {
+  // Guard against non-finite inputs that could cause infinite loops
+  if (
+    !Number.isFinite(x0) ||
+    !Number.isFinite(y0) ||
+    !Number.isFinite(x1) ||
+    !Number.isFinite(y1) ||
+    !Number.isFinite(thickness)
+  ) {
+    return;
+  }
+
+  // Normalize and clamp thickness to ensure brushRadius is a finite non-negative integer
+  const normalizedThickness = Math.max(0, thickness);
+
   // Thickness is interpreted as brush diameter from UI settings.
-  // Subtracting 1 maps diameter 1 -> radius 0, diameter 2 -> radius 1, etc., matching the integer
-  // loop bounds [-radius, +radius] that stamp the circular brush into the accumulator.
-  const brushRadius = Math.max(0, Math.round(thickness - 1));
+  // Derive radius from diameter: radius = floor(diameter / 2)
+  // This ensures the stamped footprint matches the specified diameter:
+  // e.g., thickness=4 -> brushRadius=2 -> loop bounds [-2, +2] -> 5×5 grid with 4px effective diameter
+  const brushRadius = Math.floor(normalizedThickness / 2);
   const dx = x1 - x0;
   const dy = y1 - y0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy));
