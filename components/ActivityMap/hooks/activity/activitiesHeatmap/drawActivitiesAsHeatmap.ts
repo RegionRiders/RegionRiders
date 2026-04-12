@@ -16,6 +16,7 @@ import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../acti
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
+const heatmapWorkerCleanup = new WeakMap<Worker, () => void>();
 
 interface HeatmapAccumulatorWorkerRequest {
   renderId: number;
@@ -42,6 +43,15 @@ type HeatmapAccumulatorWorkerResponse =
   | HeatmapAccumulatorWorkerSuccess
   | HeatmapAccumulatorWorkerError;
 
+function terminateHeatmapWorker(worker: Worker): void {
+  const cleanup = heatmapWorkerCleanup.get(worker);
+  if (cleanup) {
+    cleanup();
+    heatmapWorkerCleanup.delete(worker);
+  }
+  worker.terminate();
+}
+
 function createHeatmapAccumulatorWorker(): Worker | null {
   if (typeof Worker === 'undefined') {
     return null;
@@ -61,12 +71,14 @@ function createHeatmapAccumulatorWorker(): Worker | null {
       URL.revokeObjectURL(url);
       objectUrlRevoked = true;
     };
-    const originalTerminate = worker.terminate.bind(worker);
-    worker.terminate = (): void => {
-      revokeObjectUrl();
-      originalTerminate();
-    };
-    worker.addEventListener('error', revokeObjectUrl, { once: true });
+    worker.addEventListener(
+      'error',
+      () => {
+        revokeObjectUrl();
+      },
+      { once: true }
+    );
+    heatmapWorkerCleanup.set(worker, revokeObjectUrl);
     return worker;
   } catch (error) {
     logger.warn('Failed to create heatmap worker, using main-thread fallback', error);
@@ -345,7 +357,7 @@ function renderHeatmapInternal(
           return;
         }
         workerTerminated = true;
-        computeWorker.terminate();
+        terminateHeatmapWorker(computeWorker);
       };
       let didFallback = false;
       const fallbackToMainThread = (): void => {
@@ -445,7 +457,7 @@ export function drawActivitiesAsHeatmap(
 
   const terminateWorker = (): void => {
     if (computeWorker) {
-      computeWorker.terminate();
+      terminateHeatmapWorker(computeWorker);
       computeWorker = null;
     }
   };
