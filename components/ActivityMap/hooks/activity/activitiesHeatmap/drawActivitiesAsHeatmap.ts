@@ -17,6 +17,10 @@ import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 const workerObjectUrlCleanupRegistry = new WeakMap<Worker, () => void>();
+// Worker accumulation currently regresses end-to-end render time because projection still runs on the main
+// thread and we pay additional transfer/startup overhead. Keep worker code available for future tuning, but
+// default to the main-thread chunked accumulator path for now.
+const ENABLE_HEATMAP_ACCUMULATOR_WORKER = false;
 
 interface HeatmapAccumulatorWorkerRequest {
   renderId: number;
@@ -469,7 +473,7 @@ export function drawActivitiesAsHeatmap(
 
     refs.activeRenderIdRef.current += 1;
     terminateWorker();
-    computeWorker = createHeatmapAccumulatorWorker();
+    computeWorker = ENABLE_HEATMAP_ACCUMULATOR_WORKER ? createHeatmapAccumulatorWorker() : null;
     renderHeatmapInternal(
       map,
       tracks,
