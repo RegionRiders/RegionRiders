@@ -75,7 +75,7 @@ export function processTracksChunked(
 
       if (points && points.length > 0) {
         while (segmentIndex < points.length - 1) {
-          if (segmentIndex === 0 || previousPointPixel === null) {
+          if (previousPointPixel === null) {
             previousPointPixel = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
           }
           const p1 = previousPointPixel;
