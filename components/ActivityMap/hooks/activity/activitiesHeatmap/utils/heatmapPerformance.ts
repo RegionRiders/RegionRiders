@@ -49,7 +49,7 @@ export function buildHeatmapColorLut(
   layerTransparency: number,
   thresholds?: ColorThreshold[]
 ): Uint8ClampedArray {
-  const safeMax = Math.max(0, Math.floor(maxCount));
+  const safeMax = Number.isFinite(maxCount) && maxCount > 0 ? Math.floor(maxCount) : 0;
   const lut = new Uint8ClampedArray((safeMax + 1) * 4);
   lut[0] = 0;
   lut[1] = 0;

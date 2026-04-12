@@ -122,8 +122,12 @@ function finishRender(
     state.maxAccumulatorCount && state.maxAccumulatorCount > 0
       ? state.maxAccumulatorCount
       : getMaxAccumulatorCountInBounds(accumulator, canvasWidth, minX, minY, maxX, maxY);
+  const safeMaxAccumulatorCount =
+    Number.isFinite(maxAccumulatorCount) && maxAccumulatorCount > 0
+      ? Math.floor(maxAccumulatorCount)
+      : 1;
   const lut = buildHeatmapColorLut(
-    maxAccumulatorCount,
+    safeMaxAccumulatorCount,
     currentZoom,
     lineThickness,
     layerTransparency,
@@ -137,7 +141,7 @@ function finishRender(
       if (count === 0) {
         continue;
       }
-      const clampedCount = Math.min(maxAccumulatorCount, Math.max(0, Math.floor(count)));
+      const clampedCount = Math.min(safeMaxAccumulatorCount, Math.max(0, Math.floor(count)));
       const lutIndex = clampedCount * 4;
       const pixelIndex = i * 4;
 
