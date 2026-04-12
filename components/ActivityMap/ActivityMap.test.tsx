@@ -214,8 +214,23 @@ describe('ActivityMap', () => {
       reportError?.('Region overlay unavailable');
     });
 
-    expect(screen.getByText('Region overlay unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Region overlay unavailable');
     expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+  });
+
+  it('announces the region overlay error through a live status region', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
   });
 
   it('clears a prior region overlay error when the overlay recovers', () => {

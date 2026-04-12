@@ -353,7 +353,11 @@ export default function ActivityMap() {
 
       <MapContainerMemo ref={mapContainerRef} />
 
-      {regionTileError ? <div className={styles.errorMessage}>{regionTileError}</div> : null}
+      {regionTileError ? (
+        <div role="status" aria-live="polite" aria-atomic="true" className={styles.errorMessage}>
+          {regionTileError}
+        </div>
+      ) : null}
 
       {isReady && map && (
         <MapOrchestrator

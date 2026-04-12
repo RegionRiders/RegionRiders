@@ -5,9 +5,15 @@ import L from 'leaflet';
 
 import 'leaflet.vectorgrid';
 
+import {
+  REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+} from '@/components/ActivityMap/config/mapConfig';
 import { getRegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ensureMapPane } from '@/components/ActivityMap/hooks/activity/utils/ensureMapPane';
+import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsHeatmap';
+import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsStatic';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import {
@@ -29,27 +35,85 @@ type RegionVectorGridLayer = L.Layer & {
   resetFeatureStyle?: (featureId: string | number) => void;
 };
 
+function serializeColorThresholds(thresholds: ColorThreshold[]): string {
+  return JSON.stringify(thresholds);
+}
+
+function clampOpacity(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(Math.max(value, 0), 1);
+}
+
+function getEffectiveStaticColors(regionStaticColor: ColorThreshold[]): ColorThreshold[] {
+  return regionStaticColor.length > 0 ? regionStaticColor : REGION_VISIT_STATIC_COLOR_THRESHOLDS;
+}
+
+function getEffectiveHeatmapColors(regionHeatmapColor: ColorThreshold[]): ColorThreshold[] {
+  return regionHeatmapColor.length > 0 ? regionHeatmapColor : REGION_VISIT_HEATMAP_COLOR_THRESHOLDS;
+}
+
+function getRegionStyleColors(
+  mode: RegionRenderMode,
+  visit: RegionVisitData | undefined,
+  regionStaticColor: ColorThreshold[],
+  regionHeatmapColor: ColorThreshold[]
+): { fillColor: string; strokeColor: string } {
+  if (mode === 'heatmap') {
+    return getRegionColorsHeatmap(visit, getEffectiveHeatmapColors(regionHeatmapColor));
+  }
+
+  return getRegionColorsStatic(visit, getEffectiveStaticColors(regionStaticColor));
+}
+
 function getUnvisitedRegionStyle(
-  config: ReturnType<typeof getRegionTileProfileConfig>
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = config.style.weight,
+  regionLayerTransparency: number = config.style.opacity,
+  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
 ): L.PathOptions {
+  const { fillColor, strokeColor } = getRegionStyleColors(
+    mode,
+    undefined,
+    regionStaticColor,
+    regionHeatmapColor
+  );
+
   return {
-    color: config.style.color,
-    weight: config.style.weight,
-    fillColor: config.style.fillColor,
-    fillOpacity: config.style.fillOpacity,
-    opacity: config.style.opacity,
+    color: strokeColor,
+    weight: regionBorderThickness,
+    fillColor,
+    fillOpacity: clampOpacity(regionLayerTransparency),
+    opacity: clampOpacity(regionLayerTransparency),
   };
 }
 
 function getVisitedRegionStyle(
-  config: ReturnType<typeof getRegionTileProfileConfig>
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  visit: RegionVisitData,
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = config.style.weight,
+  regionLayerTransparency: number = config.style.opacity,
+  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
 ): L.PathOptions {
+  const { fillColor, strokeColor } = getRegionStyleColors(
+    mode,
+    visit,
+    regionStaticColor,
+    regionHeatmapColor
+  );
+
   return {
-    color: '#dc1414',
-    weight: Math.max(config.style.weight, 1.5),
-    fillColor: '#dc1414',
-    fillOpacity: Math.max(config.style.fillOpacity, 0.12),
-    opacity: 1,
+    color: strokeColor,
+    weight: regionBorderThickness,
+    fillColor,
+    fillOpacity: clampOpacity(regionLayerTransparency),
+    opacity: clampOpacity(regionLayerTransparency),
   };
 }
 
@@ -73,17 +137,27 @@ export function useRegionRendering(
   map: L.Map | null,
   visitData: Map<string, RegionVisitData>,
   showRegions: boolean = true,
-  _mode: RegionRenderMode = 'static',
-  _regionBorderThickness: number = 2,
-  _regionLayerTransparency: number = 1,
-  _regionStaticColor: ColorThreshold[] = [],
-  _regionHeatmapColor: ColorThreshold[] = [],
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = 2,
+  regionLayerTransparency: number = 1,
+  regionStaticColor: ColorThreshold[] = [],
+  regionHeatmapColor: ColorThreshold[] = [],
   onTileError?: (message: string) => void
 ) {
   const regionLayerRef = useRef<RegionVectorGridLayer | null>(null);
   const previousVisitedIdsRef = useRef<Set<string>>(new Set());
   const profile = useMemo(() => selectRegionRenderProfile(), []);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
+  const staticColorSignature = serializeColorThresholds(regionStaticColor);
+  const heatmapColorSignature = serializeColorThresholds(regionHeatmapColor);
+  const effectiveStaticColors = useMemo(
+    () => getEffectiveStaticColors(regionStaticColor),
+    [staticColorSignature]
+  );
+  const effectiveHeatmapColors = useMemo(
+    () => getEffectiveHeatmapColors(regionHeatmapColor),
+    [heatmapColorSignature]
+  );
 
   useEffect(() => {
     if (!showRegions) {
@@ -111,17 +185,6 @@ export function useRegionRendering(
       return;
     }
 
-    const layer = vectorGridFactory.protobuf(config.sourceUrl, {
-      interactive: false,
-      pane: config.paneName,
-      minZoom: config.minZoom,
-      maxZoom: config.maxZoom,
-      getFeatureId: getRegionFeatureId,
-      vectorTileLayerStyles: {
-        [config.layerName]: getUnvisitedRegionStyle(config),
-      },
-    }) as RegionVectorGridLayer;
-
     const handleTileLoad = () => {
       markFirstRegionLayerAdded();
       onTileError?.('');
@@ -132,10 +195,43 @@ export function useRegionRendering(
       onTileError?.('Region overlay unavailable');
     };
 
-    layer.on('load', handleTileLoad);
-    layer.on('tileerror', handleTileError);
-    layer.addTo(map);
-    regionLayerRef.current = layer;
+    let layer: RegionVectorGridLayer | null = null;
+
+    try {
+      layer = vectorGridFactory.protobuf(config.sourceUrl, {
+        interactive: false,
+        pane: config.paneName,
+        minZoom: config.minZoom,
+        maxZoom: config.maxZoom,
+        getFeatureId: getRegionFeatureId,
+        vectorTileLayerStyles: {
+          [config.layerName]: getUnvisitedRegionStyle(
+            config,
+            mode,
+            regionBorderThickness,
+            regionLayerTransparency,
+            effectiveStaticColors,
+            effectiveHeatmapColors
+          ),
+        },
+      }) as RegionVectorGridLayer;
+
+      layer.on('load', handleTileLoad);
+      layer.on('tileerror', handleTileError);
+      layer.addTo(map);
+      regionLayerRef.current = layer;
+    } catch (error) {
+      layer?.off('load', handleTileLoad);
+      layer?.off('tileerror', handleTileError);
+
+      if (layer && map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+
+      logger.error(`Failed to initialize region vector tile layer: ${error}`);
+      onTileError?.('Region overlay unavailable');
+      return;
+    }
 
     logger.info(`Vector tile regions enabled with ${profile} profile`);
 
@@ -153,7 +249,18 @@ export function useRegionRendering(
 
       previousVisitedIdsRef.current = new Set();
     };
-  }, [map, showRegions, config, profile, onTileError]);
+  }, [
+    map,
+    showRegions,
+    config,
+    profile,
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    staticColorSignature,
+    heatmapColorSignature,
+    onTileError,
+  ]);
 
   useEffect(() => {
     if (!showRegions) {
@@ -174,11 +281,24 @@ export function useRegionRendering(
     );
 
     const previousVisitedIds = previousVisitedIdsRef.current;
-    const visitedStyle = getVisitedRegionStyle(config);
-
     nextVisitedIds.forEach((regionId) => {
       if (!previousVisitedIds.has(regionId)) {
-        layer.setFeatureStyle?.(regionId, visitedStyle);
+        const visit = visitData.get(regionId);
+
+        if (visit) {
+          layer.setFeatureStyle?.(
+            regionId,
+            getVisitedRegionStyle(
+              config,
+              visit,
+              mode,
+              regionBorderThickness,
+              regionLayerTransparency,
+              effectiveStaticColors,
+              effectiveHeatmapColors
+            )
+          );
+        }
       }
     });
 
@@ -189,5 +309,15 @@ export function useRegionRendering(
     });
 
     previousVisitedIdsRef.current = nextVisitedIds;
-  }, [config, map, showRegions, visitData]);
+  }, [
+    config,
+    map,
+    mode,
+    showRegions,
+    visitData,
+    regionBorderThickness,
+    regionLayerTransparency,
+    staticColorSignature,
+    heatmapColorSignature,
+  ]);
 }

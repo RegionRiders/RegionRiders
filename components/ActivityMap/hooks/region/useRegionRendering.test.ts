@@ -109,20 +109,27 @@ describe('useRegionRendering', () => {
       expect.objectContaining({
         getFeatureId: getRegionFeatureId,
         vectorTileLayerStyles: {
-          regions: getUnvisitedRegionStyle({
-            sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
-            layerName: 'regions',
-            paneName: 'regionsPane',
-            minZoom: 4,
-            maxZoom: 12,
-            style: {
-              color: '#0A7E43',
-              weight: 1,
-              fillColor: '#0A7E43',
-              fillOpacity: 0.08,
-              opacity: 0.9,
+          regions: getUnvisitedRegionStyle(
+            {
+              sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
+              layerName: 'regions',
+              paneName: 'regionsPane',
+              minZoom: 4,
+              maxZoom: 12,
+              style: {
+                color: '#0A7E43',
+                weight: 1,
+                fillColor: '#0A7E43',
+                fillOpacity: 0.08,
+                opacity: 0.9,
+              },
             },
-          }),
+            'static',
+            2,
+            1,
+            [],
+            []
+          ),
         },
       })
     );
@@ -140,18 +147,78 @@ describe('useRegionRendering', () => {
 
     expect(setFeatureStyle).toHaveBeenCalledWith(
       'RR1::PL::POM::001',
-      getVisitedRegionStyle({
-        sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
-        layerName: 'regions',
-        paneName: 'regionsPane',
-        minZoom: 4,
-        maxZoom: 12,
-        style: {
-          color: '#0A7E43',
-          weight: 1,
-          fillColor: '#0A7E43',
-          fillOpacity: 0.08,
-          opacity: 0.9,
+      getVisitedRegionStyle(
+        {
+          sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
+          layerName: 'regions',
+          paneName: 'regionsPane',
+          minZoom: 4,
+          maxZoom: 12,
+          style: {
+            color: '#0A7E43',
+            weight: 1,
+            fillColor: '#0A7E43',
+            fillOpacity: 0.08,
+            opacity: 0.9,
+          },
+        },
+        { ...visitedRegion, visitCount: 2 },
+        'static',
+        2,
+        1,
+        [],
+        []
+      )
+    );
+  });
+
+  it('uses heatmap mode thresholds for visited style updates', () => {
+    visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 5 }]]);
+    const heatmapThresholds = [
+      { threshold: 0, color: [10, 10, 10, 0] as [number, number, number, number] },
+      { threshold: 1, color: [210, 40, 40, 0.4] as [number, number, number, number] },
+    ];
+
+    renderHook(() =>
+      useRegionRendering(
+        mockMap,
+        visitData,
+        true,
+        'heatmap',
+        5,
+        0.35,
+        [],
+        heatmapThresholds,
+        onTileError
+      )
+    );
+
+    expect(setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      expect.objectContaining({
+        weight: 5,
+        opacity: 0.35,
+        fillOpacity: 0.35,
+        color: 'rgba(210,40,40,1)',
+        fillColor: 'rgba(210,40,40,0.4)',
+      })
+    );
+  });
+
+  it('uses configured border thickness and transparency for the base vector tile style', () => {
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 6, 0.4, [], [], onTileError)
+    );
+
+    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        vectorTileLayerStyles: {
+          regions: expect.objectContaining({
+            weight: 6,
+            opacity: 0.4,
+            fillOpacity: 0.4,
+          }),
         },
       })
     );
@@ -234,6 +301,44 @@ describe('useRegionRendering', () => {
     expect(addTo).not.toHaveBeenCalled();
   });
 
+  it('reports degraded mode when vectorGrid layer creation throws synchronously', () => {
+    (L as any).vectorGrid = {
+      protobuf: jest.fn(() => {
+        throw new Error('factory boom');
+      }),
+    };
+
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
+    );
+
+    expect(onTileError).toHaveBeenCalledWith('Region overlay unavailable');
+  });
+
+  it('reports degraded mode when adding the layer to the map throws synchronously', () => {
+    const throwingLayer = {
+      addTo: jest.fn(() => {
+        throw new Error('add boom');
+      }),
+      on: jest.fn(),
+      off: jest.fn(),
+      setFeatureStyle: jest.fn(),
+      resetFeatureStyle: jest.fn(),
+    };
+
+    (L as any).vectorGrid = {
+      protobuf: jest.fn(() => throwingLayer),
+    };
+
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
+    );
+
+    expect(throwingLayer.off).toHaveBeenCalledWith('load', expect.any(Function));
+    expect(throwingLayer.off).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(onTileError).toHaveBeenCalledWith('Region overlay unavailable');
+  });
+
   it('clears a stale tile error when regions are hidden', () => {
     const { rerender } = renderHook(
       ({ showRegions }) =>
@@ -296,7 +401,7 @@ describe('useRegionRendering', () => {
 
     expect(secondLayer.setFeatureStyle).toHaveBeenCalledWith(
       'RR1::PL::POM::001',
-      expect.objectContaining({ fillColor: '#dc1414' })
+      expect.objectContaining({ fillColor: 'rgba(76,107,34,0.2)' })
     );
   });
 });
