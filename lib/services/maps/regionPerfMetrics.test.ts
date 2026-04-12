@@ -54,6 +54,26 @@ describe('regionPerfMetrics', () => {
     performanceNowSpy.mockRestore();
   });
 
+  it('allows a new first-region-paint measurement after reset', () => {
+    const performanceNowSpy = jest
+      .spyOn(performance, 'now')
+      .mockReturnValueOnce(100)
+      .mockReturnValueOnce(160)
+      .mockReturnValueOnce(300)
+      .mockReturnValueOnce(390);
+
+    markRegionMapReady();
+    markFirstRegionLayerAdded();
+    resetRegionPerfMetrics();
+    markRegionMapReady();
+    markFirstRegionLayerAdded();
+
+    expect(logger.info).toHaveBeenNthCalledWith(1, 'First region layer paint in 60.00ms');
+    expect(logger.info).toHaveBeenNthCalledWith(2, 'First region layer paint in 90.00ms');
+
+    performanceNowSpy.mockRestore();
+  });
+
   it('logs tile errors', () => {
     const error = { message: 'boom' };
     logRegionTileError(error);

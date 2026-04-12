@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 
 import 'leaflet.vectorgrid';
@@ -14,6 +14,7 @@ import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/
 import { ensureMapPane } from '@/components/ActivityMap/hooks/activity/utils/ensureMapPane';
 import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsHeatmap';
 import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsStatic';
+import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/region/utils/calculateWeightForZoom';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import {
@@ -33,6 +34,10 @@ type RegionTileFeature = {
 type RegionVectorGridLayer = L.Layer & {
   setFeatureStyle?: (featureId: string | number, style: L.PathOptions) => void;
   resetFeatureStyle?: (featureId: string | number) => void;
+  redraw?: () => void;
+  options?: {
+    vectorTileLayerStyles?: Record<string, L.PathOptions>;
+  };
 };
 
 function serializeColorThresholds(thresholds: ColorThreshold[]): string {
@@ -68,13 +73,48 @@ function getRegionStyleColors(
   return getRegionColorsStatic(visit, getEffectiveStaticColors(regionStaticColor));
 }
 
+function getRegionStrokeOpacity(
+  currentZoom: number,
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  regionLayerTransparency: number
+): number {
+  if (currentZoom < config.strokeHideBelowZoom) {
+    return 0;
+  }
+
+  if (currentZoom >= config.strokeFadeStartZoom) {
+    return clampOpacity(regionLayerTransparency);
+  }
+
+  const fadeRange = config.strokeFadeStartZoom - config.strokeHideBelowZoom;
+  if (fadeRange <= 0) {
+    return clampOpacity(regionLayerTransparency);
+  }
+
+  const fadeProgress = (currentZoom - config.strokeHideBelowZoom) / fadeRange;
+  return clampOpacity(regionLayerTransparency * fadeProgress);
+}
+
+function getRegionFillOpacity(
+  currentZoom: number,
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  regionLayerTransparency: number
+): number {
+  if (currentZoom < config.strokeFadeStartZoom) {
+    return clampOpacity(Math.max(regionLayerTransparency, config.minimumLowDetailFillOpacity));
+  }
+
+  return clampOpacity(regionLayerTransparency);
+}
+
 function getUnvisitedRegionStyle(
   config: ReturnType<typeof getRegionTileProfileConfig>,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = config.style.weight,
   regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
-  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  currentZoom: number = config.detailCapZoom
 ): L.PathOptions {
   const { fillColor, strokeColor } = getRegionStyleColors(
     mode,
@@ -85,10 +125,10 @@ function getUnvisitedRegionStyle(
 
   return {
     color: strokeColor,
-    weight: regionBorderThickness,
+    weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
     fillColor,
-    fillOpacity: clampOpacity(regionLayerTransparency),
-    opacity: clampOpacity(regionLayerTransparency),
+    fillOpacity: getRegionFillOpacity(currentZoom, config, regionLayerTransparency),
+    opacity: getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency),
   };
 }
 
@@ -99,7 +139,8 @@ function getVisitedRegionStyle(
   regionBorderThickness: number = config.style.weight,
   regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
-  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  currentZoom: number = config.detailCapZoom
 ): L.PathOptions {
   const { fillColor, strokeColor } = getRegionStyleColors(
     mode,
@@ -110,10 +151,10 @@ function getVisitedRegionStyle(
 
   return {
     color: strokeColor,
-    weight: regionBorderThickness,
+    weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
     fillColor,
-    fillOpacity: clampOpacity(regionLayerTransparency),
-    opacity: clampOpacity(regionLayerTransparency),
+    fillOpacity: getRegionFillOpacity(currentZoom, config, regionLayerTransparency),
+    opacity: getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency),
   };
 }
 
@@ -146,7 +187,9 @@ export function useRegionRendering(
 ) {
   const regionLayerRef = useRef<RegionVectorGridLayer | null>(null);
   const previousVisitedIdsRef = useRef<Set<string>>(new Set());
+  const currentZoomRef = useRef<number>(0);
   const profile = useMemo(() => selectRegionRenderProfile(), []);
+  const [renderZoom, setRenderZoom] = useState<number | null>(null);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
   const staticColorSignature = serializeColorThresholds(regionStaticColor);
   const heatmapColorSignature = serializeColorThresholds(regionHeatmapColor);
@@ -169,6 +212,9 @@ export function useRegionRendering(
     if (!map) {
       return;
     }
+
+    currentZoomRef.current = map.getZoom();
+    setRenderZoom(currentZoomRef.current);
 
     ensureMapPane(map, config.paneName, '430');
 
@@ -195,14 +241,47 @@ export function useRegionRendering(
       onTileError?.('Region overlay unavailable');
     };
 
+    const updateLayerStylesForZoom = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
+      const nextBaseStyle = getUnvisitedRegionStyle(
+        config,
+        mode,
+        regionBorderThickness,
+        regionLayerTransparency,
+        effectiveStaticColors,
+        effectiveHeatmapColors,
+        zoom
+      );
+
+      if (layerToUpdate.options) {
+        layerToUpdate.options.vectorTileLayerStyles = {
+          [config.layerName]: nextBaseStyle,
+        };
+      }
+
+      layerToUpdate.redraw?.();
+    };
+
+    const handleZoomEnd = () => {
+      const nextZoom = map.getZoom();
+      currentZoomRef.current = nextZoom;
+
+      if (regionLayerRef.current) {
+        updateLayerStylesForZoom(regionLayerRef.current, nextZoom);
+      }
+
+      setRenderZoom(nextZoom);
+    };
+
     let layer: RegionVectorGridLayer | null = null;
+    const initialZoom = currentZoomRef.current || config.detailCapZoom;
 
     try {
       layer = vectorGridFactory.protobuf(config.sourceUrl, {
         interactive: false,
         pane: config.paneName,
         minZoom: config.minZoom,
-        maxZoom: config.maxZoom,
+        maxZoom: config.displayMaxZoom,
+        maxNativeZoom: config.detailCapZoom,
         getFeatureId: getRegionFeatureId,
         vectorTileLayerStyles: {
           [config.layerName]: getUnvisitedRegionStyle(
@@ -211,7 +290,8 @@ export function useRegionRendering(
             regionBorderThickness,
             regionLayerTransparency,
             effectiveStaticColors,
-            effectiveHeatmapColors
+            effectiveHeatmapColors,
+            initialZoom
           ),
         },
       }) as RegionVectorGridLayer;
@@ -220,6 +300,7 @@ export function useRegionRendering(
       layer.on('tileerror', handleTileError);
       layer.addTo(map);
       regionLayerRef.current = layer;
+      map.on('zoomend', handleZoomEnd);
     } catch (error) {
       layer?.off('load', handleTileLoad);
       layer?.off('tileerror', handleTileError);
@@ -238,6 +319,7 @@ export function useRegionRendering(
     return () => {
       layer.off('load', handleTileLoad);
       layer.off('tileerror', handleTileError);
+      map.off('zoomend', handleZoomEnd);
 
       if (map.hasLayer(layer)) {
         map.removeLayer(layer);
@@ -269,6 +351,7 @@ export function useRegionRendering(
     }
 
     const layer = regionLayerRef.current;
+    const currentZoom = (renderZoom ?? currentZoomRef.current) || config.detailCapZoom;
 
     if (!layer?.setFeatureStyle || !layer?.resetFeatureStyle) {
       return;
@@ -282,23 +365,22 @@ export function useRegionRendering(
 
     const previousVisitedIds = previousVisitedIdsRef.current;
     nextVisitedIds.forEach((regionId) => {
-      if (!previousVisitedIds.has(regionId)) {
-        const visit = visitData.get(regionId);
+      const visit = visitData.get(regionId);
 
-        if (visit) {
-          layer.setFeatureStyle?.(
-            regionId,
-            getVisitedRegionStyle(
-              config,
-              visit,
-              mode,
-              regionBorderThickness,
-              regionLayerTransparency,
-              effectiveStaticColors,
-              effectiveHeatmapColors
-            )
-          );
-        }
+      if (visit) {
+        layer.setFeatureStyle?.(
+          regionId,
+          getVisitedRegionStyle(
+            config,
+            visit,
+            mode,
+            regionBorderThickness,
+            regionLayerTransparency,
+            effectiveStaticColors,
+            effectiveHeatmapColors,
+            currentZoom
+          )
+        );
       }
     });
 
@@ -317,6 +399,7 @@ export function useRegionRendering(
     visitData,
     regionBorderThickness,
     regionLayerTransparency,
+    renderZoom,
     staticColorSignature,
     heatmapColorSignature,
   ]);

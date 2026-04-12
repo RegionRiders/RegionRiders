@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import L from 'leaflet';
 import {
   getRegionFeatureId,
@@ -19,7 +19,11 @@ jest.mock('@/components/ActivityMap/config/regionTileProfiles', () => ({
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 4,
-    maxZoom: 12,
+    detailCapZoom: 12,
+    displayMaxZoom: 18,
+    strokeFadeStartZoom: 7,
+    strokeHideBelowZoom: 5,
+    minimumLowDetailFillOpacity: 0.14,
     style: {
       color: '#0A7E43',
       weight: 1,
@@ -54,8 +58,11 @@ describe('useRegionRendering', () => {
   const addTo = jest.fn();
   const on = jest.fn();
   const off = jest.fn();
+  const redraw = jest.fn();
   const setFeatureStyle = jest.fn();
   const resetFeatureStyle = jest.fn();
+  const mapOn = jest.fn();
+  const mapOff = jest.fn();
   let visitData = new Map<string, any>();
   const onTileError = jest.fn();
 
@@ -63,13 +70,18 @@ describe('useRegionRendering', () => {
     addTo,
     on,
     off,
+    redraw,
     setFeatureStyle,
     resetFeatureStyle,
+    options: {},
   };
 
   const mockMap = {
     hasLayer: jest.fn(() => false),
     removeLayer: jest.fn(),
+    on: mapOn,
+    off: mapOff,
+    getZoom: jest.fn(() => 12),
     getPane: jest.fn(() => null),
     createPane: jest.fn(() => ({ style: { zIndex: '' } })),
   } as any;
@@ -108,6 +120,8 @@ describe('useRegionRendering', () => {
       'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
       expect.objectContaining({
         getFeatureId: getRegionFeatureId,
+        maxZoom: 18,
+        maxNativeZoom: 12,
         vectorTileLayerStyles: {
           regions: getUnvisitedRegionStyle(
             {
@@ -115,7 +129,11 @@ describe('useRegionRendering', () => {
               layerName: 'regions',
               paneName: 'regionsPane',
               minZoom: 4,
-              maxZoom: 12,
+              detailCapZoom: 12,
+              displayMaxZoom: 18,
+              strokeFadeStartZoom: 7,
+              strokeHideBelowZoom: 5,
+              minimumLowDetailFillOpacity: 0.14,
               style: {
                 color: '#0A7E43',
                 weight: 1,
@@ -136,6 +154,7 @@ describe('useRegionRendering', () => {
     expect(addTo).toHaveBeenCalledWith(mockMap);
     expect(on).toHaveBeenCalledWith('load', expect.any(Function));
     expect(on).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(mapOn).toHaveBeenCalledWith('zoomend', expect.any(Function));
   });
 
   it('applies visited style overrides for visited regions', () => {
@@ -153,7 +172,11 @@ describe('useRegionRendering', () => {
           layerName: 'regions',
           paneName: 'regionsPane',
           minZoom: 4,
-          maxZoom: 12,
+          detailCapZoom: 12,
+          displayMaxZoom: 18,
+          strokeFadeStartZoom: 7,
+          strokeHideBelowZoom: 5,
+          minimumLowDetailFillOpacity: 0.14,
           style: {
             color: '#0A7E43',
             weight: 1,
@@ -224,6 +247,29 @@ describe('useRegionRendering', () => {
     );
   });
 
+  it('restyles the existing layer on zoom changes without recreating it', () => {
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 0.4, [], [], onTileError)
+    );
+
+    const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
+    expect(zoomHandler).toEqual(expect.any(Function));
+
+    mockMap.getZoom.mockReturnValue(4);
+    act(() => {
+      zoomHandler?.();
+    });
+
+    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
+    expect(redraw).toHaveBeenCalled();
+    expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(
+      expect.objectContaining({
+        opacity: 0,
+        fillOpacity: 0.4,
+      })
+    );
+  });
+
   it('resets style when a previously visited region is no longer visited', () => {
     const { rerender } = renderHook(
       ({ currentVisitData }) =>
@@ -251,6 +297,7 @@ describe('useRegionRendering', () => {
 
     expect(off).toHaveBeenCalledWith('load', expect.any(Function));
     expect(off).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(mapOff).toHaveBeenCalledWith('zoomend', expect.any(Function));
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
   });
 
@@ -359,25 +406,35 @@ describe('useRegionRendering', () => {
       addTo: jest.fn(),
       on: jest.fn(),
       off: jest.fn(),
+      redraw: jest.fn(),
       setFeatureStyle: jest.fn(),
       resetFeatureStyle: jest.fn(),
+      options: {},
     };
     const secondLayer = {
       addTo: jest.fn(),
       on: jest.fn(),
       off: jest.fn(),
+      redraw: jest.fn(),
       setFeatureStyle: jest.fn(),
       resetFeatureStyle: jest.fn(),
+      options: {},
     };
     const firstMap = {
       hasLayer: jest.fn(() => false),
       removeLayer: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      getZoom: jest.fn(() => 12),
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => ({ style: { zIndex: '' } })),
     } as any;
     const secondMap = {
       hasLayer: jest.fn(() => false),
       removeLayer: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      getZoom: jest.fn(() => 12),
       getPane: jest.fn(() => null),
       createPane: jest.fn(() => ({ style: { zIndex: '' } })),
     } as any;
