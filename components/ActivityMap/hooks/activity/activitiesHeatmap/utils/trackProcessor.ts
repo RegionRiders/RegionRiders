@@ -31,7 +31,11 @@ export function processTracksChunked(
   lineThickness: number,
   shouldAbort: () => boolean,
   touchedBounds: PixelBounds,
-  onComplete: () => void
+  onComplete: () => void,
+  options?: {
+    simplificationTolerancePx?: number;
+    maxAccumulatorCountRef?: { current: number };
+  }
 ): void {
   let trackIndex = 0;
   let segmentIndex = 0;
@@ -39,6 +43,8 @@ export function processTracksChunked(
   // Keep at least 1px of extra margin so segments hugging the viewport border are not incorrectly culled
   // after integer rounding in drawLineToAccumulator.
   const cullPadding = Math.max(1, getActivityLineRadiusFromControl(lineThickness) + 1);
+  const simplificationTolerancePx = Math.max(0, options?.simplificationTolerancePx ?? 0);
+  const simplificationToleranceSq = simplificationTolerancePx * simplificationTolerancePx;
 
   const isOutsideViewport = (
     x0: number,
@@ -73,21 +79,64 @@ export function processTracksChunked(
       const points = track.points;
 
       if (points && points.length > 0) {
+        let lastKeptX: number | null = null;
+        let lastKeptY: number | null = null;
+        let previousX: number | null = null;
+        let previousY: number | null = null;
+        const initialPoint = latlngToPixel(points[0].lat, points[0].lon);
+        previousX = initialPoint.x;
+        previousY = initialPoint.y;
+        lastKeptX = initialPoint.x;
+        lastKeptY = initialPoint.y;
         while (segmentIndex < points.length - 1) {
-          const p1 = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
-          const p2 = latlngToPixel(points[segmentIndex + 1].lat, points[segmentIndex + 1].lon);
-          if (!isOutsideViewport(p1.x, p1.y, p2.x, p2.y, canvasWidth, canvasHeight)) {
+          const nextPoint = latlngToPixel(
+            points[segmentIndex + 1].lat,
+            points[segmentIndex + 1].lon
+          );
+
+          const isLastSegment = segmentIndex + 1 === points.length - 1;
+          let keepSegment = true;
+          if (
+            !isLastSegment &&
+            lastKeptX !== null &&
+            lastKeptY !== null &&
+            simplificationToleranceSq > 0
+          ) {
+            const dx = nextPoint.x - lastKeptX;
+            const dy = nextPoint.y - lastKeptY;
+            keepSegment = dx * dx + dy * dy >= simplificationToleranceSq;
+          }
+
+          if (
+            keepSegment &&
+            previousX !== null &&
+            previousY !== null &&
+            !isOutsideViewport(
+              previousX,
+              previousY,
+              nextPoint.x,
+              nextPoint.y,
+              canvasWidth,
+              canvasHeight
+            )
+          ) {
+            const maxAccumulatorCountRef = options?.maxAccumulatorCountRef;
             drawLineToAccumulator(
               accumulator,
               canvasWidth,
               canvasHeight,
-              p1.x,
-              p1.y,
-              p2.x,
-              p2.y,
+              previousX,
+              previousY,
+              nextPoint.x,
+              nextPoint.y,
               lineThickness,
-              touchedBounds
+              touchedBounds,
+              ...(maxAccumulatorCountRef ? [maxAccumulatorCountRef] : [])
             );
+            lastKeptX = nextPoint.x;
+            lastKeptY = nextPoint.y;
+            previousX = nextPoint.x;
+            previousY = nextPoint.y;
           }
 
           segmentIndex++;

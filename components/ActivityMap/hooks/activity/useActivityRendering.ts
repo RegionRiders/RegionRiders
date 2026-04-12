@@ -34,6 +34,8 @@ export function useActivityRendering(
   const activeRenderIdRef = useRef<number>(0);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
+  const processingWorkerRef = useRef<Worker | null>(null);
+  const previousRenderDurationMsRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!map || !showActivities || tracks.size === 0) {
@@ -49,6 +51,8 @@ export function useActivityRendering(
         currentImageLayerRef,
         currentImageUrlRef,
         activeRenderIdRef,
+        processingWorkerRef,
+        previousRenderDurationMsRef,
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,
