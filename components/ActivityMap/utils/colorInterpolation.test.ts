@@ -1,5 +1,5 @@
 // colorUtils.test.ts
-import type { RGB, RGBA } from '@/components/ActivityMap/types';
+import type { RGB, RGBA } from '@/components/ActivityMap/mapTypes';
 import { getColorFromThresholds, interpolateRgb } from './colorInterpolation';
 
 describe('interpolateRgb', () => {

@@ -14,6 +14,8 @@ const customJestConfig = {
     '^@/lib/(.*)$': '<rootDir>/lib/$1',
     '^@/app/(.*)$': '<rootDir>/app/$1',
     '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@/theme$': '<rootDir>/theme.ts',
+    '^rbush$': '<rootDir>/node_modules/rbush/rbush.js',
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],

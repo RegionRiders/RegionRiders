@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handle500Error, handleApiError } from '@/lib/api';
+import { createUserSession } from '@/lib/auth/session';
 import { findOrCreateUser } from '@/lib/db/operations/users';
 import { validateState } from '@/lib/oauth/state';
 import { exchangeToken } from '@/lib/strava';
@@ -58,9 +59,7 @@ export async function GET(request: NextRequest) {
       isActive: true,
     });
 
-    // TODO: Create session or JWT for authenticated user
-    // TODO: Redirect to dashboard or success page
-    // For now, return success response
+    await createUserSession(user.id);
 
     return NextResponse.json({
       success: true,

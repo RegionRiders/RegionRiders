@@ -1,142 +1,108 @@
-/**
- * @jest-environment node
- */
-
 import { getDb } from '@/lib/db';
 import { GET, HEAD } from './route';
 
+// Mock the database module
 jest.mock('@/lib/db', () => ({
   getDb: jest.fn(),
 }));
 
-const mockExecute = jest.fn();
+const mockGetDb = getDb as jest.MockedFunction<typeof getDb>;
+const originalEnv = { ...process.env };
 
-const setupDb = () => {
-  (getDb as jest.Mock).mockReturnValue({ execute: mockExecute });
-};
-
-const setEnv = (vars: Record<string, string>) => {
-  for (const [k, v] of Object.entries(vars)) {
-    process.env[k] = v;
-  }
-};
-
-const clearEnv = (...keys: string[]) => {
-  for (const k of keys) {
-    delete process.env[k];
-  }
-};
-
-const REQUIRED_ENV = [
-  'POSTGRES_HOST',
-  'POSTGRES_DB',
-  'POSTGRES_USER',
-  'POSTGRES_PASSWORD',
-  'OAUTH_ENCRYPTION_KEY',
-  'OAUTH_ENCRYPTION_SALT',
-  'STRAVA_CLIENT_ID',
-  'STRAVA_CLIENT_SECRET',
-];
-
-const originalEnv = process.env;
-
-let savedEnvSnapshot: Record<string, string | undefined>;
-
-beforeEach(() => {
-  jest.clearAllMocks();
-  // Clone env so each test starts from a clean slate without clobbering pre-existing vars
-  process.env = { ...originalEnv };
-  // Save snapshot of current values for REQUIRED_ENV keys
-  savedEnvSnapshot = Object.fromEntries(REQUIRED_ENV.map((k) => [k, process.env[k]]));
-  setEnv({
-    POSTGRES_HOST: 'localhost',
-    POSTGRES_DB: 'regionriders',
-    POSTGRES_USER: 'user',
-    POSTGRES_PASSWORD: 'pass',
-    OAUTH_ENCRYPTION_KEY: 'key',
-    OAUTH_ENCRYPTION_SALT: 'salt',
-    STRAVA_CLIENT_ID: '123',
-    STRAVA_CLIENT_SECRET: 'secret',
-  });
-  setupDb();
-});
-
-afterEach(() => {
-  // Restore saved values instead of only deleting
-  for (const key of REQUIRED_ENV) {
-    const originalValue = savedEnvSnapshot[key];
-    if (originalValue !== undefined) {
-      process.env[key] = originalValue;
-    } else {
-      delete process.env[key];
-    }
-  }
-});
-
-afterAll(() => {
-  process.env = originalEnv;
-});
-
-describe('GET /api/health', () => {
-  it('returns 200 with healthy status when DB is reachable and all env vars are set', async () => {
-    mockExecute.mockResolvedValue([]);
-
-    const response = await GET();
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.status).toBe('healthy');
-    expect(body.checks.database).toBe('healthy');
-    expect(body.checks.application).toBe('healthy');
+describe('Health API Route', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...originalEnv };
+    // Test environment variables
+    process.env.POSTGRES_HOST = 'localhost';
+    process.env.POSTGRES_DB = 'test_db';
+    process.env.POSTGRES_USER = 'test_user';
+    process.env.POSTGRES_PASSWORD = 'test_password';
+    process.env.OAUTH_ENCRYPTION_KEY = 'test_key';
+    process.env.OAUTH_ENCRYPTION_SALT = 'test_salt';
+    process.env.STRAVA_CLIENT_ID = 'test_id';
+    process.env.STRAVA_CLIENT_SECRET = 'test_secret';
   });
 
-  it('returns 503 with unhealthy status when DB throws', async () => {
-    mockExecute.mockRejectedValue(new Error('DB connection failed'));
-
-    const response = await GET();
-    const body = await response.json();
-
-    expect(response.status).toBe(503);
-    expect(body.status).toBe('unhealthy');
-    expect(body.checks.database).toBe('unhealthy');
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
-  it('returns 503 with unhealthy status when required env vars are missing', async () => {
-    mockExecute.mockResolvedValue([]);
-    clearEnv('STRAVA_CLIENT_ID', 'STRAVA_CLIENT_SECRET');
+  describe('GET /api/health', () => {
+    it('should return healthy status when database is connected', async () => {
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockResolvedValue([{ health_check: 1 }]),
+      } as any);
 
-    const response = await GET();
-    const body = await response.json();
+      const response = await GET();
+      const data = await response.json();
 
-    expect(response.status).toBe(503);
-    expect(body.status).toBe('unhealthy');
-    expect(body.checks.application).toBe('unhealthy');
+      expect(response.status).toBe(200);
+      expect(data.status).toBe('healthy');
+      expect(data.checks.database).toBe('healthy');
+      expect(data.checks.application).toBe('healthy');
+    });
+
+    it('should return unhealthy when database connection fails', async () => {
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockRejectedValue(new Error('Connection failed')),
+      } as any);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(data.status).toBe('unhealthy');
+      expect(data.checks.database).toBe('unhealthy');
+    });
+
+    it('should include timestamp and version', async () => {
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockResolvedValue([]),
+      } as any);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.timestamp).toBeDefined();
+      expect(data.version).toBeDefined();
+      expect(data.environment).toBeDefined();
+    });
+
+    it('should return unhealthy when required env vars are missing', async () => {
+      delete process.env.POSTGRES_HOST;
+
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockResolvedValue([]),
+      } as any);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(data.checks.application).toBe('unhealthy');
+    });
   });
 
-  it('includes timestamp and environment in the response', async () => {
-    mockExecute.mockResolvedValue([]);
+  describe('HEAD /api/health', () => {
+    it('should return 200 when database is connected', async () => {
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockResolvedValue([]),
+      } as any);
 
-    const response = await GET();
-    const body = await response.json();
+      const response = await HEAD();
 
-    expect(body).toHaveProperty('timestamp');
-    expect(body).toHaveProperty('environment');
-    expect(body).toHaveProperty('version');
-  });
-});
+      expect(response.status).toBe(200);
+    });
 
-describe('HEAD /api/health', () => {
-  it('returns 200 when DB is reachable', async () => {
-    mockExecute.mockResolvedValue([]);
+    it('should return 503 when database connection fails', async () => {
+      mockGetDb.mockReturnValue({
+        execute: jest.fn().mockRejectedValue(new Error('Connection failed')),
+      } as any);
 
-    const response = await HEAD();
-    expect(response.status).toBe(200);
-  });
+      const response = await HEAD();
 
-  it('returns 503 when DB throws', async () => {
-    mockExecute.mockRejectedValue(new Error('DB down'));
-
-    const response = await HEAD();
-    expect(response.status).toBe(503);
+      expect(response.status).toBe(503);
+    });
   });
 });

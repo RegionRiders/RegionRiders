@@ -2,7 +2,7 @@
  * Shared color interpolation utilities for regions and activities
  */
 
-import type { RGB, RGBA } from '@/components/ActivityMap/types';
+import type { RGB, RGBA } from '@/components/ActivityMap/mapTypes';
 
 /**
  * Linear interpolation between two colors (RGB or RGBA)

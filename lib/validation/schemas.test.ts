@@ -1,186 +1,448 @@
-import { activitySchemas, paginationSchema, userSchemas } from './schemas';
+import { activitySchemas, paginationSchema, userSchemas, userSettingsSchemas } from './schemas';
 
-describe('userSchemas.create', () => {
-  it('accepts a valid minimal user (email only)', () => {
-    const result = userSchemas.create.safeParse({ email: 'user@example.com' });
-    expect(result.success).toBe(true);
-  });
+describe('validation schemas', () => {
+  describe('userSchemas', () => {
+    describe('create', () => {
+      it('should validate a valid user create input', () => {
+        const validUser = {
+          email: 'test@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+        };
 
-  it('accepts a fully populated user', () => {
-    const result = userSchemas.create.safeParse({
-      stravaId: '12345',
-      email: 'user@example.com',
-      firstName: 'Alice',
-      lastName: 'Smith',
-      profilePicture: 'https://example.com/pic.jpg',
-      isActive: true,
-      metadata: { key: 'value' },
+        const result = userSchemas.create.safeParse(validUser);
+        expect(result.success).toBe(true);
+      });
+
+      it('should validate user with all optional fields', () => {
+        const validUser = {
+          stravaId: '12345',
+          email: 'test@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          profilePicture: 'https://example.com/pic.jpg',
+          isActive: true,
+        };
+
+        const result = userSchemas.create.safeParse(validUser);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject invalid email', () => {
+        const invalidUser = {
+          email: 'not-an-email',
+        };
+
+        const result = userSchemas.create.safeParse(invalidUser);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject empty stravaId', () => {
+        const invalidUser = {
+          stravaId: '',
+          email: 'test@example.com',
+        };
+
+        const result = userSchemas.create.safeParse(invalidUser);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject stravaId exceeding max length', () => {
+        const invalidUser = {
+          stravaId: 'a'.repeat(51),
+          email: 'test@example.com',
+        };
+
+        const result = userSchemas.create.safeParse(invalidUser);
+        expect(result.success).toBe(false);
+      });
+
+      it('should allow null profilePicture', () => {
+        const validUser = {
+          email: 'test@example.com',
+          profilePicture: null,
+        };
+
+        const result = userSchemas.create.safeParse(validUser);
+        expect(result.success).toBe(true);
+      });
+
+      it('should default isActive to true', () => {
+        const user = {
+          email: 'test@example.com',
+        };
+
+        const result = userSchemas.create.safeParse(user);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.isActive).toBe(true);
+        }
+      });
     });
-    expect(result.success).toBe(true);
-  });
 
-  it('rejects invalid email', () => {
-    const result = userSchemas.create.safeParse({ email: 'not-an-email' });
-    expect(result.success).toBe(false);
-  });
+    describe('update', () => {
+      it('should validate a valid user update input', () => {
+        const validUpdate = {
+          firstName: 'Jane',
+          lastName: 'Smith',
+        };
 
-  it('rejects a firstName that is too short', () => {
-    const result = userSchemas.create.safeParse({ email: 'user@example.com', firstName: '' });
-    expect(result.success).toBe(false);
-  });
+        const result = userSchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
+      });
 
-  it('rejects an invalid profilePicture URL', () => {
-    const result = userSchemas.create.safeParse({
-      email: 'user@example.com',
-      profilePicture: 'not-a-url',
+      it('should allow empty update object', () => {
+        const result = userSchemas.update.safeParse({});
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject invalid email in update', () => {
+        const invalidUpdate = {
+          email: 'not-valid',
+        };
+
+        const result = userSchemas.update.safeParse(invalidUpdate);
+        expect(result.success).toBe(false);
+      });
     });
-    expect(result.success).toBe(false);
-  });
 
-  it('accepts null profilePicture', () => {
-    const result = userSchemas.create.safeParse({
-      email: 'user@example.com',
-      profilePicture: null,
+    describe('tokenUpdate', () => {
+      it('should validate valid token update', () => {
+        const validTokenUpdate = {
+          accessToken: 'access123',
+          refreshToken: 'refresh456',
+          tokenExpiresAt: new Date(),
+        };
+
+        const result = userSchemas.tokenUpdate.safeParse(validTokenUpdate);
+        expect(result.success).toBe(true);
+      });
+
+      it('should allow partial token update', () => {
+        const partialUpdate = {
+          accessToken: 'access123',
+        };
+
+        const result = userSchemas.tokenUpdate.safeParse(partialUpdate);
+        expect(result.success).toBe(true);
+      });
+
+      it('should allow empty token update', () => {
+        const result = userSchemas.tokenUpdate.safeParse({});
+        expect(result.success).toBe(true);
+      });
     });
-    expect(result.success).toBe(true);
-  });
-});
-
-describe('userSchemas.update', () => {
-  it('accepts an empty object (all fields optional)', () => {
-    const result = userSchemas.update.safeParse({});
-    expect(result.success).toBe(true);
   });
 
-  it('accepts partial updates', () => {
-    const result = userSchemas.update.safeParse({ firstName: 'Bob' });
-    expect(result.success).toBe(true);
-  });
+  describe('userSettingsSchemas', () => {
+    describe('create', () => {
+      it('should validate settings create input', () => {
+        const validInput = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          settings: {
+            activityLayerTransparency: 0.7,
+            regionLayerTransparency: 0.35,
+            selectedLineSwatchIndex: 3,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+              { normal: [0, 0, 255, 0.5], hover: [100, 100, 255, 0.7] },
+              { normal: [255, 255, 0, 0.5], hover: [255, 255, 100, 0.7] },
+            ],
+            mapTintSwatches: [],
+            activityHeatmapColorSwatches: [],
+            regionStaticColorSwatches: [],
+            regionHeatmapColorSwatches: [],
+          },
+          metadata: { source: 'test' },
+        };
 
-  it('rejects invalid email in update', () => {
-    const result = userSchemas.update.safeParse({ email: 'bad-email' });
-    expect(result.success).toBe(false);
-  });
-});
+        const result = userSettingsSchemas.create.safeParse(validInput);
+        expect(result.success).toBe(true);
+      });
 
-describe('userSchemas.tokenUpdate', () => {
-  it('accepts an empty object', () => {
-    expect(userSchemas.tokenUpdate.safeParse({}).success).toBe(true);
-  });
+      it('should reject transparency values outside 0..1', () => {
+        const invalidInput = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          settings: {
+            activityLayerTransparency: 1.2,
+            regionLayerTransparency: -0.1,
+          },
+        };
 
-  it('accepts valid token fields', () => {
-    const result = userSchemas.tokenUpdate.safeParse({
-      accessToken: 'abc',
-      refreshToken: 'xyz',
-      tokenExpiresAt: new Date(),
+        const result = userSettingsSchemas.create.safeParse(invalidInput);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject invalid userId', () => {
+        const invalidInput = {
+          userId: 'not-a-uuid',
+          settings: {},
+        };
+
+        const result = userSettingsSchemas.create.safeParse(invalidInput);
+        expect(result.success).toBe(false);
+      });
     });
-    expect(result.success).toBe(true);
-  });
-});
 
-describe('activitySchemas.create', () => {
-  const validActivity = {
-    stravaId: '111',
-    userId: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Morning Ride',
-    type: 'ride',
-    startDate: new Date(),
-  };
+    describe('update', () => {
+      it('should allow selectedLineSwatchIndex at the last swatch position', () => {
+        const validUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 1,
+            lineColorSwatches: [
+              { normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] },
+              { normal: [0, 255, 0, 0.5], hover: [100, 255, 100, 0.7] },
+            ],
+          },
+        };
 
-  it('accepts a valid minimal activity', () => {
-    expect(activitySchemas.create.safeParse(validActivity).success).toBe(true);
-  });
+        const result = userSettingsSchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
+      });
 
-  it('rejects missing required fields', () => {
-    const { name: _name, ...withoutName } = validActivity;
-    expect(activitySchemas.create.safeParse(withoutName).success).toBe(false);
-  });
+      it('should reject out-of-bounds selectedLineSwatchIndex', () => {
+        const invalidUpdate = {
+          settings: {
+            selectedLineSwatchIndex: 2,
+            lineColorSwatches: [{ normal: [255, 0, 0, 0.5], hover: [255, 100, 100, 0.7] }],
+          },
+        };
 
-  it('rejects an invalid UUID for userId', () => {
-    expect(
-      activitySchemas.create.safeParse({ ...validActivity, userId: 'not-a-uuid' }).success
-    ).toBe(false);
-  });
-
-  it('rejects negative distance', () => {
-    expect(activitySchemas.create.safeParse({ ...validActivity, distance: -1 }).success).toBe(
-      false
-    );
-  });
-
-  it('rejects startLatitude out of range', () => {
-    expect(activitySchemas.create.safeParse({ ...validActivity, startLatitude: 200 }).success).toBe(
-      false
-    );
-  });
-
-  it('accepts optional fields', () => {
-    const result = activitySchemas.create.safeParse({
-      ...validActivity,
-      distance: 5000,
-      movingTime: 1200,
-      elapsedTime: 1300,
-      totalElevationGain: 50,
-      startLatitude: 52.2,
-      startLongitude: 21.0,
-      averageSpeed: 4.2,
-      maxSpeed: 6.0,
-      averageHeartrate: 140,
-      maxHeartrate: 175,
-      metadata: {},
+        const result = userSettingsSchemas.update.safeParse(invalidUpdate);
+        expect(result.success).toBe(false);
+      });
     });
-    expect(result.success).toBe(true);
-  });
-});
-
-describe('activitySchemas.update', () => {
-  it('accepts an empty object', () => {
-    expect(activitySchemas.update.safeParse({}).success).toBe(true);
   });
 
-  it('rejects name that is too short', () => {
-    expect(activitySchemas.update.safeParse({ name: '' }).success).toBe(false);
-  });
-});
+  describe('activitySchemas', () => {
+    describe('create', () => {
+      it('should validate a valid activity create input', () => {
+        const validActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+        };
 
-describe('activitySchemas.filters', () => {
-  it('accepts an empty filters object', () => {
-    expect(activitySchemas.filters.safeParse({}).success).toBe(true);
-  });
+        const result = activitySchemas.create.safeParse(validActivity);
+        expect(result.success).toBe(true);
+      });
 
-  it('accepts valid filters', () => {
-    const result = activitySchemas.filters.safeParse({
-      userId: '550e8400-e29b-41d4-a716-446655440000',
-      type: 'run',
-      startDateFrom: new Date(),
-      startDateTo: new Date(),
-      minDistance: 0,
-      maxDistance: 100,
+      it('should validate activity with all optional fields', () => {
+        const validActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          distance: 5000,
+          movingTime: 1800,
+          elapsedTime: 2000,
+          totalElevationGain: 100,
+          startDate: new Date(),
+          startLatitude: 52.5,
+          startLongitude: 13.4,
+          averageSpeed: 2.78,
+          maxSpeed: 3.5,
+          averageHeartrate: 145,
+          maxHeartrate: 180,
+          metadata: { weather: 'sunny' },
+        };
+
+        const result = activitySchemas.create.safeParse(validActivity);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject invalid userId (not UUID)', () => {
+        const invalidActivity = {
+          stravaId: 'strava123',
+          userId: 'not-a-uuid',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+        };
+
+        const result = activitySchemas.create.safeParse(invalidActivity);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject negative distance', () => {
+        const invalidActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+          distance: -100,
+        };
+
+        const result = activitySchemas.create.safeParse(invalidActivity);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject latitude out of range', () => {
+        const invalidActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+          startLatitude: 100, // Invalid: > 90
+        };
+
+        const result = activitySchemas.create.safeParse(invalidActivity);
+        expect(result.success).toBe(false);
+      });
+
+      it('should reject longitude out of range', () => {
+        const invalidActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+          startLongitude: 200, // Invalid: > 180
+        };
+
+        const result = activitySchemas.create.safeParse(invalidActivity);
+        expect(result.success).toBe(false);
+      });
+
+      it('should allow null coordinates', () => {
+        const validActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+          startLatitude: null,
+          startLongitude: null,
+        };
+
+        const result = activitySchemas.create.safeParse(validActivity);
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject zero or negative heartrate', () => {
+        const invalidActivity = {
+          stravaId: 'strava123',
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Morning Run',
+          type: 'Run',
+          startDate: new Date(),
+          averageHeartrate: 0,
+        };
+
+        const result = activitySchemas.create.safeParse(invalidActivity);
+        expect(result.success).toBe(false);
+      });
     });
-    expect(result.success).toBe(true);
-  });
-});
 
-describe('paginationSchema', () => {
-  it('uses defaults when nothing is provided', () => {
-    const result = paginationSchema.parse({});
-    expect(result.limit).toBe(50);
-    expect(result.offset).toBe(0);
-    expect(result.activeOnly).toBe(false);
+    describe('update', () => {
+      it('should validate a valid activity update', () => {
+        const validUpdate = {
+          name: 'Evening Run',
+          distance: 10000,
+        };
+
+        const result = activitySchemas.update.safeParse(validUpdate);
+        expect(result.success).toBe(true);
+      });
+
+      it('should allow empty update object', () => {
+        const result = activitySchemas.update.safeParse({});
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe('filters', () => {
+      it('should validate valid filters', () => {
+        const validFilters = {
+          userId: '550e8400-e29b-41d4-a716-446655440000',
+          type: 'Run',
+          startDateFrom: new Date(),
+          startDateTo: new Date(),
+          minDistance: 0,
+          maxDistance: 50000,
+        };
+
+        const result = activitySchemas.filters.safeParse(validFilters);
+        expect(result.success).toBe(true);
+      });
+
+      it('should allow empty filters', () => {
+        const result = activitySchemas.filters.safeParse({});
+        expect(result.success).toBe(true);
+      });
+
+      it('should reject invalid userId in filters', () => {
+        const invalidFilters = {
+          userId: 'not-a-uuid',
+        };
+
+        const result = activitySchemas.filters.safeParse(invalidFilters);
+        expect(result.success).toBe(false);
+      });
+    });
   });
 
-  it('accepts custom values', () => {
-    const result = paginationSchema.parse({ limit: 10, offset: 5, activeOnly: true });
-    expect(result.limit).toBe(10);
-    expect(result.offset).toBe(5);
-    expect(result.activeOnly).toBe(true);
-  });
+  describe('paginationSchema', () => {
+    it('should validate valid pagination params', () => {
+      const validPagination = {
+        limit: 20,
+        offset: 10,
+        activeOnly: true,
+      };
 
-  it('rejects limit greater than 100', () => {
-    expect(paginationSchema.safeParse({ limit: 101 }).success).toBe(false);
-  });
+      const result = paginationSchema.safeParse(validPagination);
+      expect(result.success).toBe(true);
+    });
 
-  it('rejects negative offset', () => {
-    expect(paginationSchema.safeParse({ offset: -1 }).success).toBe(false);
+    it('should use default values when not provided', () => {
+      const result = paginationSchema.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.limit).toBe(50);
+        expect(result.data.offset).toBe(0);
+        expect(result.data.activeOnly).toBe(false);
+      }
+    });
+
+    it('should reject limit less than 1', () => {
+      const invalidPagination = {
+        limit: 0,
+      };
+
+      const result = paginationSchema.safeParse(invalidPagination);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject limit greater than 100', () => {
+      const invalidPagination = {
+        limit: 101,
+      };
+
+      const result = paginationSchema.safeParse(invalidPagination);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject negative offset', () => {
+      const invalidPagination = {
+        offset: -1,
+      };
+
+      const result = paginationSchema.safeParse(invalidPagination);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject non-integer limit', () => {
+      const invalidPagination = {
+        limit: 10.5,
+      };
+
+      const result = paginationSchema.safeParse(invalidPagination);
+      expect(result.success).toBe(false);
+    });
   });
 });

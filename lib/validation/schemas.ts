@@ -5,6 +5,100 @@
 
 import { z } from 'zod';
 
+const rgbaSchema = z.tuple([
+  z.number().min(0).max(255),
+  z.number().min(0).max(255),
+  z.number().min(0).max(255),
+  z.number().min(0).max(1),
+]);
+const colorThresholdSchema = z.object({
+  threshold: z.number(),
+  color: rgbaSchema,
+});
+const lineColorSwatchSchema = z.object({
+  normal: rgbaSchema,
+  hover: rgbaSchema,
+});
+export const mapSettingsSchema = z
+  .object({
+    activityMode: z.enum(['heatmap', 'lines']).optional(),
+    showActivities: z.boolean().optional(),
+    activityLayerTransparency: z.number().min(0).max(1).optional(),
+    activityThickness: z.number().min(0).max(100).optional(),
+    heatmapDensity: z.number().min(0).max(10).optional(),
+    lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
+    selectedLineSwatchIndex: z.number().int().min(0).optional(),
+    activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedActivityHeatmapSwatchIndex: z.number().int().min(0).optional(),
+    regionMode: z.enum(['heatmap', 'static']).optional(),
+    showRegions: z.boolean().optional(),
+    regionLayerTransparency: z.number().min(0).max(1).optional(),
+    regionBorderThickness: z.number().min(0).max(100).optional(),
+    regionStaticColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedRegionStaticSwatchIndex: z.number().int().min(0).optional(),
+    regionHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
+    selectedRegionHeatmapSwatchIndex: z.number().int().min(0).optional(),
+    tileLayerUrl: z.string().optional(),
+    attribution: z.string().optional(),
+    overlayTileLayerUrl: z.string().optional(),
+    overlayAttribution: z.string().optional(),
+    mapSourceMonochrome: z.boolean().optional(),
+    mapOverlayMonochrome: z.boolean().optional(),
+    mapTintSwatches: z.array(rgbaSchema).optional(),
+    selectedMapTintSwatchIndex: z.number().int().min(0).optional(),
+  })
+  .refine(
+    (data) =>
+      data.selectedLineSwatchIndex == null ||
+      data.lineColorSwatches == null ||
+      data.selectedLineSwatchIndex < data.lineColorSwatches.length,
+    {
+      message: 'selectedLineSwatchIndex must be within lineColorSwatches bounds',
+      path: ['selectedLineSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedActivityHeatmapSwatchIndex == null ||
+      data.activityHeatmapColorSwatches == null ||
+      data.selectedActivityHeatmapSwatchIndex < data.activityHeatmapColorSwatches.length,
+    {
+      message:
+        'selectedActivityHeatmapSwatchIndex must be within activityHeatmapColorSwatches bounds',
+      path: ['selectedActivityHeatmapSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedRegionStaticSwatchIndex == null ||
+      data.regionStaticColorSwatches == null ||
+      data.selectedRegionStaticSwatchIndex < data.regionStaticColorSwatches.length,
+    {
+      message: 'selectedRegionStaticSwatchIndex must be within regionStaticColorSwatches bounds',
+      path: ['selectedRegionStaticSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedRegionHeatmapSwatchIndex == null ||
+      data.regionHeatmapColorSwatches == null ||
+      data.selectedRegionHeatmapSwatchIndex < data.regionHeatmapColorSwatches.length,
+    {
+      message: 'selectedRegionHeatmapSwatchIndex must be within regionHeatmapColorSwatches bounds',
+      path: ['selectedRegionHeatmapSwatchIndex'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.selectedMapTintSwatchIndex == null ||
+      data.mapTintSwatches == null ||
+      data.selectedMapTintSwatchIndex < data.mapTintSwatches.length,
+    {
+      message: 'selectedMapTintSwatchIndex must be within mapTintSwatches bounds',
+      path: ['selectedMapTintSwatchIndex'],
+    }
+  );
+
 /**
  * User validation schemas
  */
@@ -16,7 +110,6 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().default(true),
-    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 
   update: z.object({
@@ -25,13 +118,28 @@ export const userSchemas = {
     lastName: z.string().min(1).max(100).optional(),
     profilePicture: z.url().optional().nullable(),
     isActive: z.boolean().optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 
   tokenUpdate: z.object({
     accessToken: z.string().optional(),
     refreshToken: z.string().optional(),
     tokenExpiresAt: z.date().optional(),
+  }),
+};
+
+/**
+ * User settings validation schemas
+ */
+export const userSettingsSchemas = {
+  create: z.object({
+    userId: z.uuid(),
+    settings: mapSettingsSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  }),
+
+  update: z.object({
+    settings: mapSettingsSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 };
 
@@ -100,6 +208,8 @@ export const paginationSchema = z.object({
 export type UserCreateInput = z.infer<typeof userSchemas.create>;
 export type UserUpdateInput = z.infer<typeof userSchemas.update>;
 export type UserTokenUpdateInput = z.infer<typeof userSchemas.tokenUpdate>;
+export type UserSettingsCreateInput = z.infer<typeof userSettingsSchemas.create>;
+export type UserSettingsUpdateInput = z.infer<typeof userSettingsSchemas.update>;
 export type ActivityCreateInput = z.infer<typeof activitySchemas.create>;
 export type ActivityUpdateInput = z.infer<typeof activitySchemas.update>;
 export type ActivityFilters = z.infer<typeof activitySchemas.filters>;
