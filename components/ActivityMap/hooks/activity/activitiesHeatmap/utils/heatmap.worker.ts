@@ -262,6 +262,9 @@ workerSelf.onmessage = (event: MessageEvent<HeatmapWorkerRequest>): void => {
     }
 
     const worldProjected = getWorldProjectedTrack(track, zoom);
+    if (worldProjected.length < 4) {
+      continue;
+    }
     let lastKeptX = (worldProjected[0] - topLeftX) * pixelDensity;
     let lastKeptY = (worldProjected[1] - topLeftY) * pixelDensity;
     let prevX = lastKeptX;

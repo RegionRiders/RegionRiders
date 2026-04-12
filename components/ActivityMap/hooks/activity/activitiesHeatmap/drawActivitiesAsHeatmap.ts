@@ -27,6 +27,13 @@ const logger = createComponentLogger('drawActivitiesAsHeatmap');
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
 const CROPPED_EXPORT_AREA_THRESHOLD = 0.6;
 
+function terminateActiveWorker(refs: HeatmapRefs): void {
+  if (refs.processingWorkerRef?.current) {
+    refs.processingWorkerRef.current.terminate();
+    refs.processingWorkerRef.current = null;
+  }
+}
+
 function getMaxAccumulatorCountInBounds(
   accumulator: Float32Array,
   canvasWidth: number,
@@ -259,10 +266,7 @@ function renderHeatmapInternal(
   if (refs.renderTimeoutRef.current) {
     clearTimeout(refs.renderTimeoutRef.current);
   }
-  if (refs.processingWorkerRef?.current) {
-    refs.processingWorkerRef.current.terminate();
-    refs.processingWorkerRef.current = null;
-  }
+  terminateActiveWorker(refs);
 
   try {
     ensureMapPane(map, 'heatmapPane', '450');
@@ -343,10 +347,7 @@ function renderHeatmapInternal(
 
     const workerSupported = supportsHeatmapWorker() && !!refs.processingWorkerRef;
     if (workerSupported) {
-      if (refs.processingWorkerRef?.current) {
-        refs.processingWorkerRef.current.terminate();
-        refs.processingWorkerRef.current = null;
-      }
+      terminateActiveWorker(refs);
       const { worker, result } = processTracksWithWorker({
         tracks,
         canvasWidth,
@@ -483,10 +484,7 @@ export function drawActivitiesAsHeatmap(
       clearTimeout(zoomChangeTimeout);
     }
 
-    if (refs.processingWorkerRef?.current) {
-      refs.processingWorkerRef.current.terminate();
-      refs.processingWorkerRef.current = null;
-    }
+    terminateActiveWorker(refs);
 
     if (map) {
       map.off('zoomend', handleMapChange);

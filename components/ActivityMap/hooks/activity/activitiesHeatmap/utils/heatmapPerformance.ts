@@ -51,6 +51,10 @@ export function buildHeatmapColorLut(
 ): Uint8ClampedArray {
   const safeMax = Math.max(0, Math.floor(maxCount));
   const lut = new Uint8ClampedArray((safeMax + 1) * 4);
+  lut[0] = 0;
+  lut[1] = 0;
+  lut[2] = 0;
+  lut[3] = 0;
   const alphaScale = Math.max(0, Math.min(1, layerTransparency));
 
   for (let count = 1; count <= safeMax; count++) {

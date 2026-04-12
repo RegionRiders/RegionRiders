@@ -84,17 +84,17 @@ export function processTracksChunked(
         let previousX: number | null = null;
         let previousY: number | null = null;
         while (segmentIndex < points.length - 1) {
-          const currentPoint = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
+          if (previousX === null || previousY === null) {
+            const initialPoint = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
+            previousX = initialPoint.x;
+            previousY = initialPoint.y;
+            lastKeptX = initialPoint.x;
+            lastKeptY = initialPoint.y;
+          }
           const nextPoint = latlngToPixel(
             points[segmentIndex + 1].lat,
             points[segmentIndex + 1].lon
           );
-          if (previousX === null || previousY === null) {
-            previousX = currentPoint.x;
-            previousY = currentPoint.y;
-            lastKeptX = currentPoint.x;
-            lastKeptY = currentPoint.y;
-          }
 
           const isLastSegment = segmentIndex + 1 === points.length - 1;
           let keepSegment = true;
