@@ -258,14 +258,11 @@ function finishRender(
       };
 
       if (typeof (nextLayer as { once?: unknown }).once === 'function') {
-        (nextLayer as { once: (event: string, handler: () => void) => unknown }).once(
-          'load',
-          finalizeLayerSwap
-        );
-        (nextLayer as { once: (event: string, handler: () => void) => unknown }).once(
-          'error',
-          failLayerSwap
-        );
+        const layerWithOnce = nextLayer as {
+          once: (event: string, handler: () => void) => unknown;
+        };
+        layerWithOnce.once('load', finalizeLayerSwap);
+        layerWithOnce.once('error', failLayerSwap);
         return;
       }
 
