@@ -269,18 +269,6 @@ function finishRender(
         return;
       }
 
-      if (typeof (nextLayer as { on?: unknown }).on === 'function') {
-        (nextLayer as { on: (event: string, handler: () => void) => unknown }).on(
-          'load',
-          finalizeLayerSwap
-        );
-        (nextLayer as { on: (event: string, handler: () => void) => unknown }).on(
-          'error',
-          failLayerSwap
-        );
-        return;
-      }
-
       finalizeLayerSwap();
     } catch (error) {
       logger.error(`Error adding image overlay: ${error}`);
