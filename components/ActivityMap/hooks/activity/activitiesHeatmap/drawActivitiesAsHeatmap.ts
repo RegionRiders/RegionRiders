@@ -210,34 +210,78 @@ function finishRender(
         pane: 'heatmapPane',
       }).addTo(map);
 
-      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+      const removeNextLayer = (): void => {
         if (map.hasLayer(nextLayer)) {
           map.removeLayer(nextLayer);
         }
+      };
+
+      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+        removeNextLayer();
         URL.revokeObjectURL(imageUrl);
         return;
       }
 
       const previousLayer = currentImageLayerRef.current;
       const previousUrl = currentImageUrlRef.current;
-      currentImageLayerRef.current = nextLayer;
-      currentImageUrlRef.current = imageUrl;
-      if (previousLayer && map.hasLayer(previousLayer)) {
-        map.removeLayer(previousLayer);
-      }
-      if (previousUrl) {
-        URL.revokeObjectURL(previousUrl);
+
+      const finalizeLayerSwap = (): void => {
+        if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+          removeNextLayer();
+          URL.revokeObjectURL(imageUrl);
+          return;
+        }
+
+        currentImageLayerRef.current = nextLayer;
+        currentImageUrlRef.current = imageUrl;
+        if (previousLayer && map.hasLayer(previousLayer)) {
+          map.removeLayer(previousLayer);
+        }
+        if (previousUrl) {
+          URL.revokeObjectURL(previousUrl);
+        }
+
+        const totalDurationNumber = performance.now() - state.renderStartTime;
+        if (previousRenderDurationMsRef) {
+          previousRenderDurationMsRef.current = totalDurationNumber;
+        }
+        const totalDuration = totalDurationNumber.toFixed(2);
+        const finishDuration = (performance.now() - finishStartTime).toFixed(2);
+        logger.info(
+          `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
+        );
+      };
+
+      const failLayerSwap = (): void => {
+        removeNextLayer();
+        URL.revokeObjectURL(imageUrl);
+      };
+
+      if (typeof (nextLayer as { once?: unknown }).once === 'function') {
+        (nextLayer as { once: (event: string, handler: () => void) => unknown }).once(
+          'load',
+          finalizeLayerSwap
+        );
+        (nextLayer as { once: (event: string, handler: () => void) => unknown }).once(
+          'error',
+          failLayerSwap
+        );
+        return;
       }
 
-      const totalDurationNumber = performance.now() - state.renderStartTime;
-      if (previousRenderDurationMsRef) {
-        previousRenderDurationMsRef.current = totalDurationNumber;
+      if (typeof (nextLayer as { on?: unknown }).on === 'function') {
+        (nextLayer as { on: (event: string, handler: () => void) => unknown }).on(
+          'load',
+          finalizeLayerSwap
+        );
+        (nextLayer as { on: (event: string, handler: () => void) => unknown }).on(
+          'error',
+          failLayerSwap
+        );
+        return;
       }
-      const totalDuration = totalDurationNumber.toFixed(2);
-      const finishDuration = (performance.now() - finishStartTime).toFixed(2);
-      logger.info(
-        `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
-      );
+
+      finalizeLayerSwap();
     } catch (error) {
       logger.error(`Error adding image overlay: ${error}`);
     }
