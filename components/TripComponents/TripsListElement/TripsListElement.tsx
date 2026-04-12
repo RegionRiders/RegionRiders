@@ -8,6 +8,7 @@ import { PostsList } from '@/components/PostsList/PostsList';
 import { PostsLoading } from '@/components/PostsList/PostsLoading';
 import { TripPost } from '@/components/TripComponents/TripPost/TripPost';
 import { mockTrips } from '@/lib/mockData';
+import { Activity } from '@/types/activity';
 import { Trip } from '@/types/trip';
 
 /**
@@ -20,35 +21,36 @@ import { Trip } from '@/types/trip';
  * @returns A React element containing the infinite-scrolling trips list and an aside showing the selected trip's details
  */
 export function TripsListElement({
-  toggleTrip,
-  isTripToggled,
+  togglePost,
+  isPostToggled,
 }: {
-  toggleTrip: () => void;
-  isTripToggled: boolean;
+  togglePost: () => void;
+  isPostToggled: boolean;
 }) {
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [selectedPostData, setSelectedPostData] = useState<Trip | Activity | null>(null);
+  const [selectedPostType, setSelectedPostType] = useState<'Activity' | 'Trip' | null>(null);
 
-  const handleTripChange = (newTrip: Trip | null) => {
-    if (newTrip !== null && selectedTrip === null) {
-      setSelectedTrip(newTrip);
-      toggleTrip();
+  const handlePostSelect = (newPostData: Trip | Activity | null) => {
+    if (newPostData !== null && selectedPostData === null) {
+      setSelectedPostData(newPostData);
+      togglePost();
       return;
     }
 
-    if (newTrip !== null && selectedTrip !== null && isTripToggled) {
-      setSelectedTrip(newTrip);
-      toggleTrip();
+    if (newPostData !== null && selectedPostData !== null && isPostToggled) {
+      setSelectedPostData(newPostData);
+      togglePost();
       return;
     }
 
-    if (newTrip !== null && selectedTrip !== null && !isTripToggled) {
-      setSelectedTrip(newTrip);
+    if (newPostData !== null && selectedPostData !== null && !isPostToggled) {
+      setSelectedPostData(newPostData);
       return;
     }
 
-    if (newTrip === null && selectedTrip !== null) {
-      setSelectedTrip(null);
-      toggleTrip();
+    if (newPostData === null && selectedPostData !== null) {
+      setSelectedPostData(null);
+      togglePost();
     }
   };
 
@@ -86,8 +88,9 @@ export function TripsListElement({
               <TripPost
                 key={trip.id}
                 data={trip}
-                onSelect={(data: Trip) => {
-                  handleTripChange(data);
+                onSelect={(data: Trip | Activity, postType: 'Activity' | 'Trip' | null) => {
+                  handlePostSelect(data);
+                  setSelectedPostType(postType);
                 }}
               />
             ))}
@@ -98,10 +101,11 @@ export function TripsListElement({
       <AppShell.Aside>
         <ScrollArea h="100%">
           <PostDetails
-            selectedPost={selectedTrip}
-            postType={selectedTrip === null ? null : 'Trip'}
+            selectedPost={selectedPostData}
+            postType={selectedPostType}
             handlePostChange={() => {
-              handleTripChange(null);
+              handlePostSelect(null);
+              setSelectedPostType(null);
             }}
           />
         </ScrollArea>

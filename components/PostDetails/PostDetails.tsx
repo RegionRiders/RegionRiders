@@ -27,7 +27,7 @@ const PostDetails = ({
   postType: 'Activity' | 'Trip' | null;
   handlePostChange: (postData: null) => void;
 }) => {
-  const renderDetails = () => {
+  const RenderDetails = () => {
     switch (postType) {
       case 'Activity':
         return <ActivityDetails activity={selectedPost as Activity} />;
@@ -55,7 +55,7 @@ const PostDetails = ({
         </div>
 
         <Stack ml="md" gap={0}>
-          {renderDetails()}
+          <RenderDetails />
         </Stack>
       </Stack>
     </>

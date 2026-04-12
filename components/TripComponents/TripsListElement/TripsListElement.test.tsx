@@ -57,7 +57,7 @@ describe('TripsListElement', () => {
 
   it('calls toggleTrip when a trip is selected for the first time', () => {
     const toggleTrip = jest.fn();
-    render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={false} />);
+    render(<TripsListElement togglePost={toggleTrip} isPostToggled={false} />);
 
     const firstTripTitle = screen.getAllByText(mockTrips[0].title)[0];
     fireEvent.click(firstTripTitle);
@@ -78,7 +78,7 @@ describe('TripsListElement', () => {
 
   it('closes the trip details when the close button in the aside is clicked', () => {
     const toggleTrip = jest.fn();
-    render(<TripsListElement toggleTrip={toggleTrip} isTripToggled={false} />);
+    render(<TripsListElement togglePost={toggleTrip} isPostToggled={false} />);
 
     // Select a trip first
     const firstTitle = screen.getAllByText(mockTrips[0].title)[0];

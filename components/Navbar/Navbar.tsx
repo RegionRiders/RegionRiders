@@ -133,7 +133,7 @@ export function Navbar({ user, defaultTab = 'map' }: NavbarProps) {
         <NavbarTabContent
           value="trips"
           Content={
-            <TripsListElement toggleTrip={toggleAsideDesktop} isTripToggled={desktopAsideOpened} />
+            <TripsListElement togglePost={toggleAsideDesktop} isPostToggled={desktopAsideOpened} />
           }
         />
       </AppShell>

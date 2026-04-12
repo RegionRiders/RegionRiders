@@ -55,11 +55,13 @@ const ActivitiesListItem = ({
   isNewDay,
   dayCount,
   days,
+  onSelect,
 }: {
   activity: Activity;
   isNewDay: boolean;
   dayCount: number;
   days: number;
+  onSelect: (activity: Activity, postType: 'Activity') => void;
 }) => (
   <>
     {isNewDay && (
@@ -76,7 +78,11 @@ const ActivitiesListItem = ({
         <Group w="100%">
           <Group>
             <ActivityTypeIcon type={activity.activityType} size={25} />
-            <Anchor href="https://http.cat/images/404.jpg">
+            <Anchor
+              onClick={() => {
+                onSelect(activity, 'Activity');
+              }}
+            >
               <Text truncate="end" w={170}>
                 {activity.title}
               </Text>
@@ -97,10 +103,12 @@ const Activities = ({
   activities,
   tripStartDate,
   tripEndDate,
+  onSelect,
 }: {
   activities: Activity[];
   tripStartDate: Date;
   tripEndDate: Date;
+  onSelect: (activity: Activity, postType: 'Activity') => void;
 }) => {
   const isSameDay = (date1: Date, date2: Date) => toLocalDateKey(date1) === toLocalDateKey(date2);
 
@@ -130,6 +138,7 @@ const Activities = ({
           isNewDay={isNewDay}
           dayCount={dayCount}
           days={days}
+          onSelect={onSelect}
           key={activity.id}
         />
       );
@@ -153,7 +162,13 @@ const Activities = ({
   );
 };
 
-const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => void }) => (
+const TripPost = ({
+  data,
+  onSelect,
+}: {
+  data: Trip;
+  onSelect: (data: Trip | Activity, postType: 'Activity' | 'Trip' | null) => void;
+}) => (
   <MantineProvider theme={tripsBreakpoints}>
     <Card
       shadow="sm"
@@ -167,7 +182,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
           <UnstyledButton
             aria-label={`Open trip ${data.title}`}
             onClick={() => {
-              onSelect(data);
+              onSelect(data, 'Trip');
             }}
           >
             <Image
@@ -188,7 +203,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
             mb={0}
             lineClamp={2}
             onClick={() => {
-              onSelect(data);
+              onSelect(data, 'Trip');
             }}
           >
             {data.title}
@@ -208,6 +223,7 @@ const TripPost = ({ data, onSelect }: { data: Trip; onSelect: (trip: Trip) => vo
         activities={data.activities}
         tripStartDate={data.startDate}
         tripEndDate={data.endDate}
+        onSelect={onSelect}
       />
     </Card>
   </MantineProvider>
