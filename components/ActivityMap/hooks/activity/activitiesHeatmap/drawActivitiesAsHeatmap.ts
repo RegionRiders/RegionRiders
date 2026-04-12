@@ -53,7 +53,20 @@ function createHeatmapAccumulatorWorker(): Worker | null {
     });
     const url = URL.createObjectURL(blob);
     const worker = new Worker(url);
-    URL.revokeObjectURL(url);
+    let objectUrlRevoked = false;
+    const revokeObjectUrl = (): void => {
+      if (objectUrlRevoked) {
+        return;
+      }
+      URL.revokeObjectURL(url);
+      objectUrlRevoked = true;
+    };
+    const originalTerminate = worker.terminate.bind(worker);
+    worker.terminate = (): void => {
+      revokeObjectUrl();
+      originalTerminate();
+    };
+    worker.addEventListener('error', revokeObjectUrl, { once: true });
     return worker;
   } catch (error) {
     logger.warn('Failed to create heatmap worker, using main-thread fallback', error);
@@ -107,7 +120,13 @@ function renderHeatmapOnMainThread(
     lineThickness,
     shouldAbort,
     touchedBounds,
-    () => onComplete(accumulator, touchedBounds.maxX >= touchedBounds.minX ? touchedBounds : null)
+    () =>
+      onComplete(
+        accumulator,
+        touchedBounds.maxX >= touchedBounds.minX && touchedBounds.maxY >= touchedBounds.minY
+          ? touchedBounds
+          : null
+      )
   );
 }
 
@@ -320,12 +339,21 @@ function renderHeatmapInternal(
     };
 
     if (computeWorker) {
+      let workerTerminated = false;
+      const terminateComputeWorker = (): void => {
+        if (workerTerminated) {
+          return;
+        }
+        workerTerminated = true;
+        computeWorker.terminate();
+      };
       let didFallback = false;
       const fallbackToMainThread = (): void => {
         if (didFallback || shouldAbort()) {
           return;
         }
         didFallback = true;
+        terminateComputeWorker();
         renderHeatmapOnMainThread(
           tracksArray,
           accumulator,
@@ -342,6 +370,7 @@ function renderHeatmapInternal(
       computeWorker.onmessage = (event: MessageEvent<HeatmapAccumulatorWorkerResponse>): void => {
         const message = event.data;
         if (message.renderId !== renderId || shouldAbort()) {
+          terminateComputeWorker();
           return;
         }
 
@@ -351,6 +380,7 @@ function renderHeatmapInternal(
           return;
         }
 
+        terminateComputeWorker();
         onComputed(new Float32Array(message.accumulatorBuffer), message.touchedBounds);
       };
 
@@ -373,6 +403,7 @@ function renderHeatmapInternal(
         return;
       } catch (error) {
         logger.warn('Failed to post message to heatmap worker, using main-thread fallback', error);
+        terminateComputeWorker();
         fallbackToMainThread();
         return;
       }
