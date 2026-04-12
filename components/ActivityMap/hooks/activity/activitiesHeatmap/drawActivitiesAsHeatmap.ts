@@ -25,7 +25,8 @@ import { ensureMapPane } from '../utils/ensureMapPane';
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
-const CROPPED_EXPORT_AREA_THRESHOLD = 0.6;
+// Keep full-viewport overlays to avoid visible pop-out/pop-in during pan updates.
+const CROPPED_EXPORT_AREA_THRESHOLD = 0;
 
 function terminateActiveWorker(refs: HeatmapRefs): void {
   if (refs.processingWorkerRef?.current) {
