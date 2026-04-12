@@ -50,13 +50,20 @@ const PostDetails = ({
           </Text>
         </Flex>
 
-        <div className={classes.mapSection}>
-          <ActivityMap />
-        </div>
-
-        <Stack ml="md" gap={0}>
-          <RenderDetails />
-        </Stack>
+        {selectedPost ? (
+          <>
+            <div className={classes.mapSection}>
+              <ActivityMap />
+            </div>
+            <Stack ml="md" gap={0}>
+              <RenderDetails/>
+            </Stack>
+          </>
+        ) : (
+          <Stack ml="md" gap={0}>
+            <MissingDetails />
+          </Stack>
+        )}
       </Stack>
     </>
   );
