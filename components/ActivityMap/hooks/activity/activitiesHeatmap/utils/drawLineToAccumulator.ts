@@ -68,7 +68,16 @@ export function drawLineToAccumulator(
   let err = deltaX - deltaY;
 
   while (true) {
-    stampBrush(accumulator, width, height, x, y, brushRadius, touchedBounds, maxAccumulatorCountRef);
+    stampBrush(
+      accumulator,
+      width,
+      height,
+      x,
+      y,
+      brushRadius,
+      touchedBounds,
+      maxAccumulatorCountRef
+    );
 
     if (x === roundedX1 && y === roundedY1) {
       break;

@@ -1,9 +1,9 @@
-import { GPXTrack } from '@/lib/types';
 import {
   HeatmapWorkerRequest,
   HeatmapWorkerResponse,
   WorkerTrackPayload,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapWorkerTypes';
+import { GPXTrack } from '@/lib/types';
 
 export interface WorkerProcessorParams {
   tracks: Map<string, GPXTrack>;
@@ -32,9 +32,10 @@ function toWorkerTracks(tracks: Map<string, GPXTrack>): WorkerTrackPayload[] {
   return payload;
 }
 
-export function processTracksWithWorker(
-  params: WorkerProcessorParams
-): { worker: Worker; result: Promise<HeatmapWorkerResponse> } {
+export function processTracksWithWorker(params: WorkerProcessorParams): {
+  worker: Worker;
+  result: Promise<HeatmapWorkerResponse>;
+} {
   const worker = new Worker(new URL('./heatmap.worker.ts', import.meta.url));
 
   const request: HeatmapWorkerRequest = {

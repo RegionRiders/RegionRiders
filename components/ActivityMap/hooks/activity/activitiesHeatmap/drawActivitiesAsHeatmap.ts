@@ -169,7 +169,10 @@ function finishRender(
       exportCtx.putImageData(cropImageData, 0, 0);
       imageSource = exportCanvas;
       const nw = map.unproject(
-        L.point(state.topLeft.x + minX / state.heatmapDensity, state.topLeft.y + minY / state.heatmapDensity),
+        L.point(
+          state.topLeft.x + minX / state.heatmapDensity,
+          state.topLeft.y + minY / state.heatmapDensity
+        ),
         currentZoom
       );
       const se = map.unproject(
@@ -289,12 +292,7 @@ function renderHeatmapInternal(
 
     const { canvas, ctx } = canvasResult;
     let accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(
-      map,
-      topLeft,
-      effectiveDensity,
-      currentZoom
-    );
+    const latlngToPixel = createLatLngToPixelConverter(map, topLeft, effectiveDensity, currentZoom);
     const tracksArray = Array.from(tracks.values());
     const touchedBounds: PixelBounds = {
       minX: canvasWidth,

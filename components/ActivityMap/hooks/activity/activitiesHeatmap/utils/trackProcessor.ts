@@ -85,7 +85,10 @@ export function processTracksChunked(
         let previousY: number | null = null;
         while (segmentIndex < points.length - 1) {
           const currentPoint = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
-          const nextPoint = latlngToPixel(points[segmentIndex + 1].lat, points[segmentIndex + 1].lon);
+          const nextPoint = latlngToPixel(
+            points[segmentIndex + 1].lat,
+            points[segmentIndex + 1].lon
+          );
           if (previousX === null || previousY === null) {
             previousX = currentPoint.x;
             previousY = currentPoint.y;
@@ -95,7 +98,12 @@ export function processTracksChunked(
 
           const isLastSegment = segmentIndex + 1 === points.length - 1;
           let keepSegment = true;
-          if (!isLastSegment && lastKeptX !== null && lastKeptY !== null && simplificationToleranceSq > 0) {
+          if (
+            !isLastSegment &&
+            lastKeptX !== null &&
+            lastKeptY !== null &&
+            simplificationToleranceSq > 0
+          ) {
             const dx = nextPoint.x - lastKeptX;
             const dy = nextPoint.y - lastKeptY;
             keepSegment = dx * dx + dy * dy >= simplificationToleranceSq;
@@ -105,20 +113,42 @@ export function processTracksChunked(
             keepSegment &&
             previousX !== null &&
             previousY !== null &&
-            !isOutsideViewport(previousX, previousY, nextPoint.x, nextPoint.y, canvasWidth, canvasHeight)
-          ) {
-            drawLineToAccumulator(
-              accumulator,
-              canvasWidth,
-              canvasHeight,
+            !isOutsideViewport(
               previousX,
               previousY,
               nextPoint.x,
               nextPoint.y,
-              lineThickness,
-              touchedBounds,
-              options?.maxAccumulatorCountRef
-            );
+              canvasWidth,
+              canvasHeight
+            )
+          ) {
+            const maxAccumulatorCountRef = options?.maxAccumulatorCountRef;
+            if (maxAccumulatorCountRef) {
+              drawLineToAccumulator(
+                accumulator,
+                canvasWidth,
+                canvasHeight,
+                previousX,
+                previousY,
+                nextPoint.x,
+                nextPoint.y,
+                lineThickness,
+                touchedBounds,
+                maxAccumulatorCountRef
+              );
+            } else {
+              drawLineToAccumulator(
+                accumulator,
+                canvasWidth,
+                canvasHeight,
+                previousX,
+                previousY,
+                nextPoint.x,
+                nextPoint.y,
+                lineThickness,
+                touchedBounds
+              );
+            }
             lastKeptX = nextPoint.x;
             lastKeptY = nextPoint.y;
             previousX = nextPoint.x;

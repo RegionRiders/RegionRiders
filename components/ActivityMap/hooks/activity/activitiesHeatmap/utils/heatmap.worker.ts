@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 
-import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import {
   HeatmapWorkerRequest,
   HeatmapWorkerResponse,
   WorkerTrackPayload,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapWorkerTypes';
+import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 
 type BrushOffset = [number, number];
 

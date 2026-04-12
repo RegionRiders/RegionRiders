@@ -1,5 +1,5 @@
-import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 
 export interface AdaptiveHeatmapQuality {
   effectiveDensity: number;
