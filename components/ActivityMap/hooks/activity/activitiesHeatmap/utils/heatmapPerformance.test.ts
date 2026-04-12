@@ -12,11 +12,11 @@ describe('heatmapPerformance', () => {
       expect(quality.simplificationTolerancePx).toBe(0);
     });
 
-    it('reduces quality for high-cost renders', () => {
+    it('keeps density stable and disables smoothing for high-cost renders', () => {
       const quality = getAdaptiveHeatmapQuality(1, 10, 220);
-      expect(quality.effectiveDensity).toBeLessThan(1);
+      expect(quality.effectiveDensity).toBe(1);
       expect(quality.smoothingAllowed).toBe(false);
-      expect(quality.simplificationTolerancePx).toBeGreaterThan(0);
+      expect(quality.simplificationTolerancePx).toBe(0);
     });
   });
 

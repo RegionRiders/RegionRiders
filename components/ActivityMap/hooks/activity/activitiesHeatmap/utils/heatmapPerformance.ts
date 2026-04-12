@@ -12,26 +12,26 @@ const ADAPTIVE_SEVERE_COST_MS = 320;
 
 export function getAdaptiveHeatmapQuality(
   baseDensity: number,
-  zoom: number,
+  _zoom: number,
   previousRenderDurationMs: number | null
 ): AdaptiveHeatmapQuality {
   const safeDensity = Number.isFinite(baseDensity) ? baseDensity : 1;
   const duration = previousRenderDurationMs ?? 0;
-  const zoomTolerance = zoom >= 14 ? 0 : zoom >= 12 ? 0.5 : zoom >= 10 ? 1 : 2;
+  const zoomTolerance = 0;
 
   if (duration >= ADAPTIVE_SEVERE_COST_MS) {
     return {
-      effectiveDensity: Math.max(0.4, safeDensity * 0.7),
+      effectiveDensity: safeDensity,
       smoothingAllowed: false,
-      simplificationTolerancePx: Math.max(zoomTolerance, 1.5),
+      simplificationTolerancePx: zoomTolerance,
     };
   }
 
   if (duration >= ADAPTIVE_HIGH_COST_MS) {
     return {
-      effectiveDensity: Math.max(0.5, safeDensity * 0.85),
+      effectiveDensity: safeDensity,
       smoothingAllowed: false,
-      simplificationTolerancePx: Math.max(zoomTolerance, 1),
+      simplificationTolerancePx: zoomTolerance,
     };
   }
 
