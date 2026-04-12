@@ -56,7 +56,13 @@ function parseIntArg(value: string | undefined, fallback: number, name: string):
     return fallback;
   }
 
-  const parsed = Number.parseInt(value, 10);
+  const trimmedValue = value.trim();
+
+  if (!/^-?\d+$/.test(trimmedValue)) {
+    throw new Error(`Invalid ${name}: ${value}`);
+  }
+
+  const parsed = Number.parseInt(trimmedValue, 10);
   if (!Number.isFinite(parsed)) {
     throw new Error(`Invalid ${name}: ${value}`);
   }
@@ -155,6 +161,7 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
   const fileSystemRoot = path.parse(resolvedPath).root;
   const repoRoot = path.resolve(REPO_ROOT);
   const homeDir = path.resolve(os.homedir());
+  const tempDir = path.resolve(os.tmpdir());
 
   const blockedTargets = new Set([fileSystemRoot, repoRoot, path.resolve('.'), homeDir]);
 
@@ -167,23 +174,31 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
-  if (
-    !path.isAbsolute(trimmedPath) &&
-    (trimmedPath === '..' || trimmedPath.startsWith(`..${path.sep}`))
-  ) {
-    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
-  }
-
   if (path.isAbsolute(trimmedPath)) {
     const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
-    if (absoluteSegments.length < 3) {
+    const isWithinRepo =
+      resolvedPath === repoRoot || resolvedPath.startsWith(`${repoRoot}${path.sep}`);
+    const isWithinTempDir =
+      resolvedPath === tempDir || resolvedPath.startsWith(`${tempDir}${path.sep}`);
+
+    if (absoluteSegments.length < 3 || (!isWithinRepo && !isWithinTempDir)) {
       throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
     }
+    return;
   }
 
   const relativeSegments = relativeToRepoRoot
     .split(path.sep)
     .filter((segment) => segment !== '' && segment !== '.');
+
+  if (
+    trimmedPath === '..' ||
+    trimmedPath.startsWith(`..${path.sep}`) ||
+    relativeSegments.some((segment) => segment === '..')
+  ) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
   if (!path.isAbsolute(trimmedPath) && relativeSegments.length <= 1) {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }

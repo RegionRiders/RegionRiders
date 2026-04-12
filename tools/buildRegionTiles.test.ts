@@ -110,6 +110,44 @@ describe('buildRegionTiles', () => {
     }
   });
 
+  it('rejects partially numeric zoom values instead of truncating them', () => {
+    const sourceDir = createTempDir();
+
+    try {
+      expect(() =>
+        getBuildOptions([
+          'node',
+          'tools/buildRegionTiles.ts',
+          '--source',
+          sourceDir,
+          '--maxzoom',
+          '12abc',
+        ])
+      ).toThrow('Invalid maxzoom: 12abc');
+    } finally {
+      fs.rmSync(sourceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects decimal zoom values', () => {
+    const sourceDir = createTempDir();
+
+    try {
+      expect(() =>
+        getBuildOptions([
+          'node',
+          'tools/buildRegionTiles.ts',
+          '--source',
+          sourceDir,
+          '--minzoom',
+          '4.5',
+        ])
+      ).toThrow('Invalid minzoom: 4.5');
+    } finally {
+      fs.rmSync(sourceDir, { recursive: true, force: true });
+    }
+  });
+
   it('fails fast when a flag is present without a value', () => {
     const sourceDir = createTempDir();
 
@@ -342,6 +380,29 @@ describe('buildRegionTiles', () => {
     try {
       expect(() => runBuild(options, sourceFiles)).toThrow(
         'Refusing unsafe deletion target for --output: ../../tmp/tiles'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects nested relative traversal targets before cleanup', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: 'foo/../../tmp/tiles',
+      tempGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1.gpkg'),
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        'Refusing unsafe deletion target for --output: foo/../../tmp/tiles'
       );
       expect(execFileSync).not.toHaveBeenCalled();
     } finally {
