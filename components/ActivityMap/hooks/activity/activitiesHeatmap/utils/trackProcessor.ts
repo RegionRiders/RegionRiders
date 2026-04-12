@@ -123,32 +123,18 @@ export function processTracksChunked(
             )
           ) {
             const maxAccumulatorCountRef = options?.maxAccumulatorCountRef;
-            if (maxAccumulatorCountRef) {
-              drawLineToAccumulator(
-                accumulator,
-                canvasWidth,
-                canvasHeight,
-                previousX,
-                previousY,
-                nextPoint.x,
-                nextPoint.y,
-                lineThickness,
-                touchedBounds,
-                maxAccumulatorCountRef
-              );
-            } else {
-              drawLineToAccumulator(
-                accumulator,
-                canvasWidth,
-                canvasHeight,
-                previousX,
-                previousY,
-                nextPoint.x,
-                nextPoint.y,
-                lineThickness,
-                touchedBounds
-              );
-            }
+            drawLineToAccumulator(
+              accumulator,
+              canvasWidth,
+              canvasHeight,
+              previousX,
+              previousY,
+              nextPoint.x,
+              nextPoint.y,
+              lineThickness,
+              touchedBounds,
+              ...(maxAccumulatorCountRef ? [maxAccumulatorCountRef] : [])
+            );
             lastKeptX = nextPoint.x;
             lastKeptY = nextPoint.y;
             previousX = nextPoint.x;
