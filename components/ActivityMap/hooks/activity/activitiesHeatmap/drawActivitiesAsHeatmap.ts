@@ -16,7 +16,7 @@ import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../acti
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
-const heatmapWorkerCleanup = new WeakMap<Worker, () => void>();
+const workerObjectUrlCleanupRegistry = new WeakMap<Worker, () => void>();
 
 interface HeatmapAccumulatorWorkerRequest {
   renderId: number;
@@ -44,10 +44,10 @@ type HeatmapAccumulatorWorkerResponse =
   | HeatmapAccumulatorWorkerError;
 
 function terminateHeatmapWorker(worker: Worker): void {
-  const cleanup = heatmapWorkerCleanup.get(worker);
+  const cleanup = workerObjectUrlCleanupRegistry.get(worker);
   if (cleanup) {
     cleanup();
-    heatmapWorkerCleanup.delete(worker);
+    workerObjectUrlCleanupRegistry.delete(worker);
   }
   worker.terminate();
 }
@@ -78,7 +78,7 @@ function createHeatmapAccumulatorWorker(): Worker | null {
       },
       { once: true }
     );
-    heatmapWorkerCleanup.set(worker, revokeObjectUrl);
+    workerObjectUrlCleanupRegistry.set(worker, revokeObjectUrl);
     return worker;
   } catch (error) {
     logger.warn('Failed to create heatmap worker, using main-thread fallback', error);
