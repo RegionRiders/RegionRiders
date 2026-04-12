@@ -21,7 +21,11 @@ export function getApiBaseUrl(): string {
  * @returns Complete URL
  */
 export function getApiUrl(path: string): string {
+  if (/^\/\//.test(path) || /^\/{3,}/.test(path) || /^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(path)) {
+    throw new Error(`getApiUrl: path must not be absolute or protocol-relative: "${path}"`);
+  }
   const baseUrl = getApiBaseUrl();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return new URL(cleanPath, normalizedBaseUrl).toString();
 }

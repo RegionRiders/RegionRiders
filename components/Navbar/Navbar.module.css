@@ -1,0 +1,8 @@
+/* push user section to far right */
+.userSection {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    margin-right: 2px;
+    flex-shrink: 0;
+}

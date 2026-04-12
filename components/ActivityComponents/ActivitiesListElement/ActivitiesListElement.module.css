@@ -1,0 +1,6 @@
+.tripCreationSection {
+    position: fixed;
+    z-index: 199;
+    width: 100%;
+    background-color: var(--mantine-color-body);
+}

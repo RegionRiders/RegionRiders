@@ -1,0 +1,62 @@
+/* Full-screen overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Card styling (Mantine override moved here) */
+.card {
+    position: relative;
+    text-align: center;
+    padding: 32px;
+    background: var(--mantine-color-body);
+    border: 1px solid var(--mantine-color-default-border);
+    box-shadow: var(--mantine-shadow-md);
+    border-radius: var(--mantine-radius-md);
+}
+
+/* Stack replacement */
+.stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Mantine <Title> override */
+.title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--mantine-color-text);
+}
+
+/* Mantine "dimmed" text implemented manually */
+.dimmedText {
+    color: var(--mantine-color-dimmed);
+    font-size: 14px;
+}
+
+/* Close button */
+.closeButton {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #555;
+}
+
+.closeButton:hover {
+    color: #000;
+}

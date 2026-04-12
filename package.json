@@ -37,6 +37,7 @@
     "@deck.gl/layers": "^9.2.11",
     "@deck.gl/react": "^9.2.11",
     "@mantine/core": "^8.3.7",
+    "@mantine/form": "^8.3.13",
     "@mantine/hooks": "^8.3.7",
     "@next/bundle-analyzer": "^16.2.2",
     "@tabler/icons-react": "^3.41.1",
@@ -52,6 +53,7 @@
     "rbush": "^4.0.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-infinite-scroll-component": "^6.1.1",
     "sonic-boom": "^4.2.0",
     "strava-v3": "^2.2.1",
     "tsx": "^4.7.0"
@@ -64,6 +66,7 @@
     "@storybook/addon-themes": "^10.3.4",
     "@storybook/nextjs": "^10.3.4",
     "@storybook/react": "^10.3.4",
+    "@svgr/webpack": "^8.1.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -95,7 +98,8 @@
     "ts-jest": "^29.4.9",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.58.0",
-    "undici": "^7.24.0"
+    "undici": "^7.24.0",
+    "webpack": "^5.94.0"
   },
   "packageManager": "yarn@4.10.3"
 }

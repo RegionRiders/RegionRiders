@@ -1,4 +1,4 @@
-'use client';
+import { Navbar } from '@/components/Navbar/Navbar';
 
 import dynamic from 'next/dynamic';
 import Image from 'next/image';

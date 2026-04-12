@@ -1,0 +1,15 @@
+/* remove all spacing from logo button */
+.logoButton {
+    padding: 2px;
+    margin: 2px;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+/* ensure image has no spacing */
+.logoImage {
+    padding: 0;
+    margin: 0;
+    display: block;
+}

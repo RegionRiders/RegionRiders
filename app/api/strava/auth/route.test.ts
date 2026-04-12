@@ -1,7 +1,6 @@
 /**
- * @jest-environment <rootDir>/jest-environment-node-with-polyfills.cjs
+ * @jest-environment node
  */
-
 import { NextResponse } from 'next/server';
 import { handle500Error } from '@/lib/api';
 import { generateState, storeState } from '@/lib/oauth/state';
@@ -13,7 +12,8 @@ jest.mock('@/lib/api');
 jest.mock('@/lib/oauth/state');
 
 describe('GET /api/strava/auth', () => {
-  const mockUrl = 'https://strava.com/oauth/authorize?client_id=123';
+  const mockUrl =
+    'https://www.strava.com/oauth/authorize?client_id=123&scope=read%2Cactivity%3Aread_all';
 
   beforeEach(() => {
     jest.clearAllMocks();
