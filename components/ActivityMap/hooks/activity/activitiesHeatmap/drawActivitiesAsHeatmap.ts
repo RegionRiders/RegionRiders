@@ -6,9 +6,16 @@ import { createLatLngToPixelConverter } from '@/components/ActivityMap/hooks/act
 import { createCanvasContext } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasSetup';
 import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation';
 import { logDimensionError } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/dimensionLogging';
-import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
+import {
+  buildHeatmapColorLut,
+  getAdaptiveHeatmapQuality,
+} from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapPerformance';
 import { smoothHeatmapEdges } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/smoothHeatmapEdges';
 import { processTracksChunked } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/trackProcessor';
+import {
+  processTracksWithWorker,
+  supportsHeatmapWorker,
+} from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/workerProcessor';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
@@ -18,6 +25,28 @@ import { ensureMapPane } from '../utils/ensureMapPane';
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
+const CROPPED_EXPORT_AREA_THRESHOLD = 0.6;
+
+function getMaxAccumulatorCountInBounds(
+  accumulator: Float32Array,
+  canvasWidth: number,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
+): number {
+  let maxCount = 0;
+  for (let y = minY; y <= maxY; y++) {
+    const rowStart = y * canvasWidth;
+    for (let x = minX; x <= maxX; x++) {
+      const value = accumulator[rowStart + x];
+      if (value > maxCount) {
+        maxCount = value;
+      }
+    }
+  }
+  return Math.floor(maxCount);
+}
 
 /**
  * Renders accumulator data as image and adds to map
@@ -32,7 +61,9 @@ function finishRender(
   map: L.Map,
   lineThickness: number = 2,
   layerTransparency: number = 1,
-  colorThresholds?: ColorThreshold[]
+  colorThresholds?: ColorThreshold[],
+  smoothingEnabled: boolean = true,
+  previousRenderDurationMsRef?: RefObject<number | null>
 ): void {
   if (shouldAbort()) {
     return;
@@ -80,6 +111,18 @@ function finishRender(
   const maxX = touchedBounds ? Math.min(canvasWidth - 1, touchedBounds.maxX) : canvasWidth - 1;
   const maxY = touchedBounds ? Math.min(canvasHeight - 1, touchedBounds.maxY) : canvasHeight - 1;
 
+  const maxAccumulatorCount =
+    state.maxAccumulatorCount && state.maxAccumulatorCount > 0
+      ? state.maxAccumulatorCount
+      : getMaxAccumulatorCountInBounds(accumulator, canvasWidth, minX, minY, maxX, maxY);
+  const lut = buildHeatmapColorLut(
+    maxAccumulatorCount,
+    currentZoom,
+    lineThickness,
+    layerTransparency,
+    colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+  );
+
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       const i = y * canvasWidth + x;
@@ -87,31 +130,58 @@ function finishRender(
       if (count === 0) {
         continue;
       }
-
-      const [r, g, b, a] = getHeatmapColorForCount(
-        count,
-        currentZoom,
-        lineThickness,
-        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-      );
+      const clampedCount = Math.min(maxAccumulatorCount, Math.max(0, Math.floor(count)));
+      const lutIndex = clampedCount * 4;
       const pixelIndex = i * 4;
 
-      data[pixelIndex] = r;
-      data[pixelIndex + 1] = g;
-      data[pixelIndex + 2] = b;
-      data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+      data[pixelIndex] = lut[lutIndex];
+      data[pixelIndex + 1] = lut[lutIndex + 1];
+      data[pixelIndex + 2] = lut[lutIndex + 2];
+      data[pixelIndex + 3] = lut[lutIndex + 3];
     }
   }
 
   const touchedArea = (maxX - minX + 1) * (maxY - minY + 1);
   const totalArea = canvasWidth * canvasHeight;
-  const smoothingAllowed = touchedArea / totalArea <= SMOOTHING_ADAPTIVE_THRESHOLD;
+  const smoothingAllowed =
+    smoothingEnabled && touchedArea / totalArea <= SMOOTHING_ADAPTIVE_THRESHOLD;
   if (touchedBounds && smoothingAllowed) {
     smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight, touchedBounds);
   }
 
   ctx.putImageData(imageData, 0, 0);
-  const imageSource = state.canvas;
+  let imageSource = state.canvas;
+  let targetBounds = bounds;
+  const shouldUseCroppedExport =
+    touchedBounds !== null &&
+    touchedArea / totalArea <= CROPPED_EXPORT_AREA_THRESHOLD &&
+    typeof map.unproject === 'function';
+
+  if (shouldUseCroppedExport) {
+    const cropWidth = maxX - minX + 1;
+    const cropHeight = maxY - minY + 1;
+    const cropImageData = ctx.getImageData(minX, minY, cropWidth, cropHeight);
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = cropWidth;
+    exportCanvas.height = cropHeight;
+    const exportCtx = exportCanvas.getContext('2d');
+    if (exportCtx) {
+      exportCtx.putImageData(cropImageData, 0, 0);
+      imageSource = exportCanvas;
+      const nw = map.unproject(
+        L.point(state.topLeft.x + minX / state.heatmapDensity, state.topLeft.y + minY / state.heatmapDensity),
+        currentZoom
+      );
+      const se = map.unproject(
+        L.point(
+          state.topLeft.x + (maxX + 1) / state.heatmapDensity,
+          state.topLeft.y + (maxY + 1) / state.heatmapDensity
+        ),
+        currentZoom
+      );
+      targetBounds = L.latLngBounds(nw, se);
+    }
+  }
 
   imageSource.toBlob((blob) => {
     if (!blob || shouldAbort() || activeRenderIdRef.current !== renderId) {
@@ -119,7 +189,7 @@ function finishRender(
     }
     try {
       const imageUrl = URL.createObjectURL(blob);
-      const nextLayer = L.imageOverlay(imageUrl, bounds, {
+      const nextLayer = L.imageOverlay(imageUrl, targetBounds, {
         pane: 'heatmapPane',
       }).addTo(map);
 
@@ -142,7 +212,11 @@ function finishRender(
         URL.revokeObjectURL(previousUrl);
       }
 
-      const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
+      const totalDurationNumber = performance.now() - state.renderStartTime;
+      if (previousRenderDurationMsRef) {
+        previousRenderDurationMsRef.current = totalDurationNumber;
+      }
+      const totalDuration = totalDurationNumber.toFixed(2);
       const finishDuration = (performance.now() - finishStartTime).toFixed(2);
       logger.info(
         `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
@@ -170,11 +244,21 @@ function renderHeatmapInternal(
 
   const renderStartTime = performance.now();
   const currentZoom = map.getZoom();
+  const adaptiveQuality = getAdaptiveHeatmapQuality(
+    refs.heatmapDensity,
+    currentZoom,
+    refs.previousRenderDurationMsRef?.current ?? null
+  );
+  const effectiveDensity = adaptiveQuality.effectiveDensity;
   // This render becomes the currently active generation; abort is now driven by render id changes.
   refs.renderAbortRef.current = false;
 
   if (refs.renderTimeoutRef.current) {
     clearTimeout(refs.renderTimeoutRef.current);
+  }
+  if (refs.processingWorkerRef?.current) {
+    refs.processingWorkerRef.current.terminate();
+    refs.processingWorkerRef.current = null;
   }
 
   try {
@@ -183,8 +267,8 @@ function renderHeatmapInternal(
     const topLeft = map.project(bounds.getNorthWest(), map.getZoom());
     const bottomRight = map.project(bounds.getSouthEast(), map.getZoom());
 
-    const canvasWidth = Math.max(1, Math.round((bottomRight.x - topLeft.x) * refs.heatmapDensity));
-    const canvasHeight = Math.max(1, Math.round((bottomRight.y - topLeft.y) * refs.heatmapDensity));
+    const canvasWidth = Math.max(1, Math.round((bottomRight.x - topLeft.x) * effectiveDensity));
+    const canvasHeight = Math.max(1, Math.round((bottomRight.y - topLeft.y) * effectiveDensity));
 
     const dimensions: CanvasDimensions = {
       canvasWidth,
@@ -204,11 +288,11 @@ function renderHeatmapInternal(
     }
 
     const { canvas, ctx } = canvasResult;
-    const accumulator = new Float32Array(canvasWidth * canvasHeight);
+    let accumulator = new Float32Array(canvasWidth * canvasHeight);
     const latlngToPixel = createLatLngToPixelConverter(
       map,
       topLeft,
-      refs.heatmapDensity,
+      effectiveDensity,
       currentZoom
     );
     const tracksArray = Array.from(tracks.values());
@@ -218,6 +302,7 @@ function renderHeatmapInternal(
       maxX: -1,
       maxY: -1,
     };
+    const maxAccumulatorCountRef = { current: 0 };
 
     const shouldAbort = (): boolean =>
       refs.renderAbortRef.current || refs.activeRenderIdRef.current !== renderId;
@@ -231,9 +316,98 @@ function renderHeatmapInternal(
       canvasHeight,
       topLeft,
       currentZoom,
+      heatmapDensity: effectiveDensity,
       renderStartTime,
       touchedBounds: null,
+      maxAccumulatorCount: 0,
     };
+
+    const completeRender = (): void =>
+      finishRender(
+        {
+          ...renderState,
+          accumulator,
+          touchedBounds: touchedBounds.maxX >= touchedBounds.minX ? touchedBounds : null,
+          maxAccumulatorCount: Math.floor(maxAccumulatorCountRef.current),
+        },
+        refs.currentImageLayerRef,
+        refs.currentImageUrlRef,
+        refs.activeRenderIdRef,
+        renderId,
+        shouldAbort,
+        map,
+        lineThickness,
+        refs.layerTransparency,
+        refs.heatmapColorThresholds,
+        adaptiveQuality.smoothingAllowed,
+        refs.previousRenderDurationMsRef
+      );
+
+    const workerSupported = supportsHeatmapWorker() && !!refs.processingWorkerRef;
+    if (workerSupported) {
+      if (refs.processingWorkerRef?.current) {
+        refs.processingWorkerRef.current.terminate();
+        refs.processingWorkerRef.current = null;
+      }
+      const { worker, result } = processTracksWithWorker({
+        tracks,
+        canvasWidth,
+        canvasHeight,
+        topLeftX: topLeft.x,
+        topLeftY: topLeft.y,
+        zoom: currentZoom,
+        pixelDensity: effectiveDensity,
+        lineThickness,
+        simplificationTolerancePx: adaptiveQuality.simplificationTolerancePx,
+      });
+      if (refs.processingWorkerRef) {
+        refs.processingWorkerRef.current = worker;
+      }
+      result
+        .then((workerResult) => {
+          if (refs.processingWorkerRef?.current === worker) {
+            refs.processingWorkerRef.current = null;
+          }
+          if (shouldAbort()) {
+            worker.terminate();
+            return;
+          }
+          accumulator = new Float32Array(workerResult.accumulator);
+          touchedBounds.minX = workerResult.touchedBounds.minX;
+          touchedBounds.minY = workerResult.touchedBounds.minY;
+          touchedBounds.maxX = workerResult.touchedBounds.maxX;
+          touchedBounds.maxY = workerResult.touchedBounds.maxY;
+          maxAccumulatorCountRef.current = workerResult.maxAccumulatorCount;
+          worker.terminate();
+          completeRender();
+        })
+        .catch((error) => {
+          if (refs.processingWorkerRef?.current === worker) {
+            refs.processingWorkerRef.current = null;
+          }
+          worker.terminate();
+          if (shouldAbort()) {
+            return;
+          }
+          logger.warn(`Worker heatmap processing failed, falling back to main thread: ${error}`);
+          processTracksChunked(
+            tracksArray,
+            accumulator,
+            canvasWidth,
+            canvasHeight,
+            latlngToPixel,
+            lineThickness,
+            shouldAbort,
+            touchedBounds,
+            completeRender,
+            {
+              simplificationTolerancePx: adaptiveQuality.simplificationTolerancePx,
+              maxAccumulatorCountRef,
+            }
+          );
+        });
+      return;
+    }
 
     processTracksChunked(
       tracksArray,
@@ -244,22 +418,11 @@ function renderHeatmapInternal(
       lineThickness,
       shouldAbort,
       touchedBounds,
-      () =>
-        finishRender(
-          {
-            ...renderState,
-            touchedBounds: touchedBounds.maxX >= touchedBounds.minX ? touchedBounds : null,
-          },
-          refs.currentImageLayerRef,
-          refs.currentImageUrlRef,
-          refs.activeRenderIdRef,
-          renderId,
-          shouldAbort,
-          map,
-          lineThickness,
-          refs.layerTransparency,
-          refs.heatmapColorThresholds
-        )
+      completeRender,
+      {
+        simplificationTolerancePx: adaptiveQuality.simplificationTolerancePx,
+        maxAccumulatorCountRef,
+      }
     );
   } catch (error) {
     logger.error(`Error rendering heatmap: ${error}`);
@@ -320,6 +483,11 @@ export function drawActivitiesAsHeatmap(
 
     if (zoomChangeTimeout) {
       clearTimeout(zoomChangeTimeout);
+    }
+
+    if (refs.processingWorkerRef?.current) {
+      refs.processingWorkerRef.current.terminate();
+      refs.processingWorkerRef.current = null;
     }
 
     if (map) {

@@ -25,8 +25,10 @@ export interface RenderState {
   canvasHeight: number;
   topLeft: L.Point;
   currentZoom: number;
+  heatmapDensity: number;
   renderStartTime: number;
   touchedBounds: PixelBounds | null;
+  maxAccumulatorCount?: number;
 }
 
 // Shared render refs
@@ -40,6 +42,8 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
   currentImageUrlRef: RefObject<string | null>;
   activeRenderIdRef: RefObject<number>;
+  processingWorkerRef?: RefObject<Worker | null>;
+  previousRenderDurationMsRef?: RefObject<number | null>;
   heatmapDensity: number;
   lineThickness: number;
   layerTransparency: number;

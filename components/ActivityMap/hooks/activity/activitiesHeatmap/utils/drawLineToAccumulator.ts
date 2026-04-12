@@ -23,7 +23,8 @@ export function drawLineToAccumulator(
   x1: number,
   y1: number,
   thickness: number,
-  touchedBounds?: PixelBounds
+  touchedBounds?: PixelBounds,
+  maxAccumulatorCountRef?: { current: number }
 ): void {
   // Guard against non-finite inputs that could cause infinite loops
   if (
@@ -45,7 +46,16 @@ export function drawLineToAccumulator(
   const roundedY1 = Math.round(y1);
 
   if (steps === 0) {
-    stampBrush(accumulator, width, height, roundedX0, roundedY0, brushRadius, touchedBounds);
+    stampBrush(
+      accumulator,
+      width,
+      height,
+      roundedX0,
+      roundedY0,
+      brushRadius,
+      touchedBounds,
+      maxAccumulatorCountRef
+    );
     return;
   }
 
@@ -58,7 +68,7 @@ export function drawLineToAccumulator(
   let err = deltaX - deltaY;
 
   while (true) {
-    stampBrush(accumulator, width, height, x, y, brushRadius, touchedBounds);
+    stampBrush(accumulator, width, height, x, y, brushRadius, touchedBounds, maxAccumulatorCountRef);
 
     if (x === roundedX1 && y === roundedY1) {
       break;
@@ -123,7 +133,8 @@ function stampBrush(
   x: number,
   y: number,
   brushRadius: number,
-  touchedBounds?: PixelBounds
+  touchedBounds?: PixelBounds,
+  maxAccumulatorCountRef?: { current: number }
 ): void {
   const offsets = getBrushOffsets(brushRadius);
   for (let i = 0; i < offsets.length; i++) {
@@ -131,7 +142,12 @@ function stampBrush(
     const px = x + offsetX;
     const py = y + offsetY;
     if (px >= 0 && px < width && py >= 0 && py < height) {
-      accumulator[py * width + px]++;
+      const idx = py * width + px;
+      const nextCount = accumulator[idx] + 1;
+      accumulator[idx] = nextCount;
+      if (maxAccumulatorCountRef && nextCount > maxAccumulatorCountRef.current) {
+        maxAccumulatorCountRef.current = nextCount;
+      }
       if (touchedBounds) {
         if (px < touchedBounds.minX) {
           touchedBounds.minX = px;
