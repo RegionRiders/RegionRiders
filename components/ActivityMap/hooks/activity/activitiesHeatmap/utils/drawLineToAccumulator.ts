@@ -43,9 +43,10 @@ export function drawLineToAccumulator(
   const roundedY0 = Math.round(y0);
   const roundedX1 = Math.round(x1);
   const roundedY1 = Math.round(y1);
+  const brushOffsets = getBrushOffsets(brushRadius);
 
   if (steps === 0) {
-    stampBrush(accumulator, width, height, roundedX0, roundedY0, brushRadius, touchedBounds);
+    stampBrush(accumulator, width, height, roundedX0, roundedY0, brushOffsets, touchedBounds);
     return;
   }
 
@@ -58,7 +59,7 @@ export function drawLineToAccumulator(
   let err = deltaX - deltaY;
 
   while (true) {
-    stampBrush(accumulator, width, height, x, y, brushRadius, touchedBounds);
+    stampBrush(accumulator, width, height, x, y, brushOffsets, touchedBounds);
 
     if (x === roundedX1 && y === roundedY1) {
       break;
@@ -122,12 +123,11 @@ function stampBrush(
   height: number,
   x: number,
   y: number,
-  brushRadius: number,
+  brushOffsets: BrushOffset[],
   touchedBounds?: PixelBounds
 ): void {
-  const offsets = getBrushOffsets(brushRadius);
-  for (let i = 0; i < offsets.length; i++) {
-    const [offsetX, offsetY] = offsets[i];
+  for (let i = 0; i < brushOffsets.length; i++) {
+    const [offsetX, offsetY] = brushOffsets[i];
     const px = x + offsetX;
     const py = y + offsetY;
     if (px >= 0 && px < width && py >= 0 && py < height) {

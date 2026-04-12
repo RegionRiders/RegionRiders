@@ -35,6 +35,7 @@ export function processTracksChunked(
 ): void {
   let trackIndex = 0;
   let segmentIndex = 0;
+  let previousPointPixel: { x: number; y: number } | null = null;
   const frameBudgetMs = CHUNK_FRAME_BUDGET_MS;
   // Keep at least 1px of extra margin so segments hugging the viewport border are not incorrectly culled
   // after integer rounding in drawLineToAccumulator.
@@ -74,7 +75,10 @@ export function processTracksChunked(
 
       if (points && points.length > 0) {
         while (segmentIndex < points.length - 1) {
-          const p1 = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
+          if (segmentIndex === 0 || previousPointPixel === null) {
+            previousPointPixel = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
+          }
+          const p1 = previousPointPixel;
           const p2 = latlngToPixel(points[segmentIndex + 1].lat, points[segmentIndex + 1].lon);
           if (!isOutsideViewport(p1.x, p1.y, p2.x, p2.y, canvasWidth, canvasHeight)) {
             drawLineToAccumulator(
@@ -90,6 +94,7 @@ export function processTracksChunked(
             );
           }
 
+          previousPointPixel = p2;
           segmentIndex++;
           // Check elapsed frame budget every N segments to avoid expensive timer reads per segment.
           if (
@@ -104,6 +109,7 @@ export function processTracksChunked(
 
       trackIndex++;
       segmentIndex = 0;
+      previousPointPixel = null;
       processedTracks++;
       if (processedTracks >= TRACKS_PER_CHUNK) {
         requestAnimationFrame(processChunk);
