@@ -7,6 +7,11 @@ import {
 } from '@/components/ActivityMap/config/mapConfig';
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
+import {
+  MAX_ACTIVITY_THICKNESS_CONTROL,
+  MIN_ACTIVITY_THICKNESS_CONTROL,
+  normalizeActivityThicknessControl,
+} from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { ColorSwatchButton } from '@/components/controls/ColorSwatchButton/ColorSwatchButton';
 import { ColorSchemeSwatchesGrid } from './utils/ColorSchemeSwatchesGrid';
 import {
@@ -54,6 +59,7 @@ export function ActivitiesSection({
     activityHeatmapColorSwatches[selectedActivityHeatmapSwatchIndex] ??
     activityHeatmapColorSwatches[0] ??
     [];
+  const activityThickness = normalizeActivityThicknessControl(settings.activityThickness ?? 3);
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
@@ -149,13 +155,13 @@ export function ActivitiesSection({
           </div>
 
           <div>
-            <Text size="sm"> Line thickness: {settings.activityThickness ?? 3}px</Text>
+            <Text size="sm"> Line thickness: {activityThickness}px</Text>
             <Slider
               w="100%"
-              min={1}
-              max={10}
+              min={MIN_ACTIVITY_THICKNESS_CONTROL}
+              max={MAX_ACTIVITY_THICKNESS_CONTROL}
               step={1}
-              value={settings.activityThickness ?? 3}
+              value={activityThickness}
               onChange={(value) => onSettingChange('activityThickness', value)}
             />
           </div>

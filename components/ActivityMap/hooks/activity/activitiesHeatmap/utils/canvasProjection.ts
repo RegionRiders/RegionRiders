@@ -13,10 +13,11 @@ import { PixelPoint } from '@/components/ActivityMap/hooks/activity/activityType
 export function createLatLngToPixelConverter(
   map: L.Map,
   topLeft: L.Point,
-  pixelDensity: number
+  pixelDensity: number,
+  zoom: number
 ): (lat: number, lon: number) => PixelPoint {
   return (lat: number, lon: number): PixelPoint => {
-    const point = map.project({ lat, lng: lon }, map.getZoom());
+    const point = map.project({ lat, lng: lon }, zoom);
     return {
       x: (point.x - topLeft.x) * pixelDensity,
       y: (point.y - topLeft.y) * pixelDensity,

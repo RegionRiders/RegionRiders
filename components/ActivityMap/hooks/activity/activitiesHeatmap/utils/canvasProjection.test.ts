@@ -21,7 +21,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       expect(typeof converter).toBe('function');
     });
@@ -30,7 +31,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       const result = converter(50, 14);
 
@@ -45,7 +47,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       converter(50.5, 14.5);
 
@@ -57,18 +60,20 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       converter(50, 14);
 
-      expect(mockMap.getZoom).toHaveBeenCalled();
+      expect(mockMap.getZoom).not.toHaveBeenCalled();
     });
 
     it('should apply pixel density scaling', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       const result = converter(50, 14);
 
@@ -81,7 +86,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
 
       // Mock map.project returns { x: 5010, y: 1410 }
@@ -99,7 +105,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       const result1 = converter(51, 15);
       const result2 = converter(49, 13);
@@ -112,7 +119,8 @@ describe('canvasProjection', () => {
       const converter = createLatLngToPixelConverter(
         mockMap as any,
         mockTopLeft as any,
-        pixelDensity
+        pixelDensity,
+        10
       );
       const result = converter(-50, -14);
 
@@ -127,7 +135,12 @@ describe('canvasProjection', () => {
         getZoom: jest.fn(() => 10),
       };
 
-      const converter = createLatLngToPixelConverter(customMockMap as any, mockTopLeft as any, 2);
+      const converter = createLatLngToPixelConverter(
+        customMockMap as any,
+        mockTopLeft as any,
+        2,
+        10
+      );
       const result = converter(50, 14);
 
       // x = (5010 - 5000) * 2 = 20

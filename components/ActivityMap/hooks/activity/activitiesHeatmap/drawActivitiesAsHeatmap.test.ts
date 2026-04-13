@@ -47,8 +47,10 @@ describe('drawActivitiesAsHeatmap', () => {
   let mockMap: any;
   let mockTracks: Map<string, GPXTrack>;
   let currentImageLayerRef: { current: any };
+  let currentImageUrlRef: { current: string | null };
   let renderAbortRef: { current: boolean };
   let renderTimeoutRef: { current: NodeJS.Timeout | null };
+  let activeRenderIdRef: { current: number };
   let refs: HeatmapRefs;
 
   beforeEach(() => {
@@ -86,13 +88,17 @@ describe('drawActivitiesAsHeatmap', () => {
     ]);
 
     currentImageLayerRef = { current: null };
+    currentImageUrlRef = { current: null };
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
+    activeRenderIdRef = { current: 0 };
 
     refs = {
       currentImageLayerRef,
+      currentImageUrlRef,
       renderAbortRef,
       renderTimeoutRef,
+      activeRenderIdRef,
       heatmapDensity: 2,
       lineThickness: 3,
       layerTransparency: 1,
