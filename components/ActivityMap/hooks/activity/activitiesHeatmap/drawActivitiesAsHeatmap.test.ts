@@ -51,6 +51,10 @@ describe('drawActivitiesAsHeatmap', () => {
   let renderAbortRef: { current: boolean };
   let renderTimeoutRef: { current: NodeJS.Timeout | null };
   let activeRenderIdRef: { current: number };
+  let lastRenderSignatureRef: { current: string | null };
+  let projectedTrackCacheRef: { current: Map<string, any> };
+  let heatmapCanvasRef: { current: HTMLCanvasElement | null };
+  let heatmapContextRef: { current: CanvasRenderingContext2D | null };
   let refs: HeatmapRefs;
 
   beforeEach(() => {
@@ -92,6 +96,10 @@ describe('drawActivitiesAsHeatmap', () => {
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
     activeRenderIdRef = { current: 0 };
+    lastRenderSignatureRef = { current: null };
+    projectedTrackCacheRef = { current: new Map() };
+    heatmapCanvasRef = { current: null };
+    heatmapContextRef = { current: null };
 
     refs = {
       currentImageLayerRef,
@@ -99,6 +107,10 @@ describe('drawActivitiesAsHeatmap', () => {
       renderAbortRef,
       renderTimeoutRef,
       activeRenderIdRef,
+      lastRenderSignatureRef,
+      projectedTrackCacheRef,
+      heatmapCanvasRef,
+      heatmapContextRef,
       heatmapDensity: 2,
       lineThickness: 3,
       layerTransparency: 1,
@@ -228,6 +240,24 @@ describe('drawActivitiesAsHeatmap', () => {
 
       expect(jest.getTimerCount()).toBeGreaterThan(0);
 
+      jest.useRealTimers();
+    });
+
+    it('should skip re-render when signature is unchanged and layer already exists', () => {
+      jest.useFakeTimers();
+
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
+      const moveHandler = mockMap.on.mock.calls.find((call: any[]) => call[0] === 'moveend')[1];
+      (refs.currentImageLayerRef as any).current = {
+        setBounds: jest.fn(),
+        setUrl: jest.fn(),
+      };
+
+      const ensureMapPaneCallCount = (ensureMapPane as jest.Mock).mock.calls.length;
+      moveHandler();
+      jest.runOnlyPendingTimers();
+
+      expect((ensureMapPane as jest.Mock).mock.calls.length).toBe(ensureMapPaneCallCount);
       jest.useRealTimers();
     });
   });

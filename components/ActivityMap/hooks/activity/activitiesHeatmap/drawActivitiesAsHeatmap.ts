@@ -115,6 +115,22 @@ function buildRenderSignature(
   refs: HeatmapRefs
 ): string {
   const bounds = map.getBounds();
+  const north =
+    typeof (bounds as L.LatLngBounds).getNorth === 'function'
+      ? (bounds as L.LatLngBounds).getNorth()
+      : bounds.getNorthWest().lat;
+  const south =
+    typeof (bounds as L.LatLngBounds).getSouth === 'function'
+      ? (bounds as L.LatLngBounds).getSouth()
+      : bounds.getSouthEast().lat;
+  const west =
+    typeof (bounds as L.LatLngBounds).getWest === 'function'
+      ? (bounds as L.LatLngBounds).getWest()
+      : bounds.getNorthWest().lng;
+  const east =
+    typeof (bounds as L.LatLngBounds).getEast === 'function'
+      ? (bounds as L.LatLngBounds).getEast()
+      : bounds.getSouthEast().lng;
   const thresholdSignature = (refs.heatmapColorThresholds ?? [])
     .map(({ threshold, color }) => `${threshold}:${color.join(',')}`)
     .join('|');
@@ -127,10 +143,10 @@ function buildRenderSignature(
     refs.heatmapDensity,
     refs.lineThickness,
     refs.layerTransparency,
-    bounds.getNorth().toFixed(SIGNATURE_DECIMALS),
-    bounds.getSouth().toFixed(SIGNATURE_DECIMALS),
-    bounds.getWest().toFixed(SIGNATURE_DECIMALS),
-    bounds.getEast().toFixed(SIGNATURE_DECIMALS),
+    north.toFixed(SIGNATURE_DECIMALS),
+    south.toFixed(SIGNATURE_DECIMALS),
+    west.toFixed(SIGNATURE_DECIMALS),
+    east.toFixed(SIGNATURE_DECIMALS),
     thresholdSignature,
     trackSignature,
   ].join('~');
@@ -242,13 +258,16 @@ function finishRender(
   ctx.putImageData(imageData, 0, 0);
   const imageSource = state.canvas;
   try {
+    const imageUrl = imageSource.toDataURL('image/png');
     if (currentImageLayerRef.current) {
       currentImageLayerRef.current.setBounds(bounds);
+      currentImageLayerRef.current.setUrl(imageUrl);
     } else {
-      currentImageLayerRef.current = L.imageOverlay(imageSource, bounds, {
+      currentImageLayerRef.current = L.imageOverlay(imageUrl, bounds, {
         pane: 'heatmapPane',
       }).addTo(map);
     }
+    currentImageUrlRef.current = null;
 
     if (shouldAbort() || activeRenderIdRef.current !== renderId) {
       return;
@@ -399,7 +418,7 @@ export function drawActivitiesAsHeatmap(
   let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const renderHeatmap = (): void => {
-    if (!map) {
+    if (!map || typeof map.getBounds !== 'function') {
       return;
     }
     const renderSignature = buildRenderSignature(map, tracks, refs);
