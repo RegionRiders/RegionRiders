@@ -54,6 +54,7 @@ function finishRender(
 
   const imageData = ctx.createImageData(canvasWidth, canvasHeight);
   const data = imageData.data;
+  // Keep this cache per-render so it can never go stale across zoom/thickness/threshold changes.
   const colorCache = new Map<number, readonly [number, number, number, number]>();
 
   for (let i = 0; i < accumulator.length; i++) {
