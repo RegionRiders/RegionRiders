@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 
 import 'leaflet.vectorgrid';
@@ -172,6 +172,14 @@ function getRegionFeatureId(feature: RegionTileFeature): string {
   return String(feature.id ?? '');
 }
 
+function getVisitedRegionIds(visitData: Map<string, RegionVisitData>): Set<string> {
+  return new Set(
+    Array.from(visitData.entries())
+      .filter(([, data]) => data.visited || data.visitCount > 0)
+      .map(([regionId]) => regionId)
+  );
+}
+
 export { getRegionFeatureId, getUnvisitedRegionStyle, getVisitedRegionStyle };
 
 export function useRegionRendering(
@@ -189,7 +197,6 @@ export function useRegionRendering(
   const previousVisitedIdsRef = useRef<Set<string>>(new Set());
   const currentZoomRef = useRef<number>(0);
   const profile = useMemo(() => selectRegionRenderProfile(), []);
-  const [renderZoom, setRenderZoom] = useState<number | null>(null);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
   const staticColorSignature = serializeColorThresholds(regionStaticColor);
   const heatmapColorSignature = serializeColorThresholds(regionHeatmapColor);
@@ -201,6 +208,64 @@ export function useRegionRendering(
     () => getEffectiveHeatmapColors(regionHeatmapColor),
     [heatmapColorSignature]
   );
+
+  const applyVisitedRegionStyles = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
+    if (!layerToUpdate.setFeatureStyle || !layerToUpdate.resetFeatureStyle) {
+      return;
+    }
+
+    const nextVisitedIds = getVisitedRegionIds(visitData);
+    const previousVisitedIds = previousVisitedIdsRef.current;
+
+    nextVisitedIds.forEach((regionId) => {
+      const visit = visitData.get(regionId);
+
+      if (visit) {
+        layerToUpdate.setFeatureStyle?.(
+          regionId,
+          getVisitedRegionStyle(
+            config,
+            visit,
+            mode,
+            regionBorderThickness,
+            regionLayerTransparency,
+            effectiveStaticColors,
+            effectiveHeatmapColors,
+            zoom
+          )
+        );
+      }
+    });
+
+    previousVisitedIds.forEach((regionId) => {
+      if (!nextVisitedIds.has(regionId)) {
+        layerToUpdate.resetFeatureStyle?.(regionId);
+      }
+    });
+
+    previousVisitedIdsRef.current = nextVisitedIds;
+  };
+
+  const applyLayerStyles = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
+    const nextBaseStyle = getUnvisitedRegionStyle(
+      config,
+      mode,
+      regionBorderThickness,
+      regionLayerTransparency,
+      effectiveStaticColors,
+      effectiveHeatmapColors,
+      zoom
+    );
+
+    if (layerToUpdate.options) {
+      layerToUpdate.options.vectorTileLayerStyles = {
+        [config.layerName]: nextBaseStyle,
+      };
+    }
+
+    layerToUpdate.redraw?.();
+    applyVisitedRegionStyles(layerToUpdate, zoom);
+  };
 
   useEffect(() => {
     if (!showRegions) {
@@ -214,7 +279,6 @@ export function useRegionRendering(
     }
 
     currentZoomRef.current = map.getZoom();
-    setRenderZoom(currentZoomRef.current);
 
     ensureMapPane(map, config.paneName, '430');
 
@@ -241,35 +305,13 @@ export function useRegionRendering(
       onTileError?.('Region overlay unavailable');
     };
 
-    const updateLayerStylesForZoom = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
-      const nextBaseStyle = getUnvisitedRegionStyle(
-        config,
-        mode,
-        regionBorderThickness,
-        regionLayerTransparency,
-        effectiveStaticColors,
-        effectiveHeatmapColors,
-        zoom
-      );
-
-      if (layerToUpdate.options) {
-        layerToUpdate.options.vectorTileLayerStyles = {
-          [config.layerName]: nextBaseStyle,
-        };
-      }
-
-      layerToUpdate.redraw?.();
-    };
-
     const handleZoomEnd = () => {
       const nextZoom = map.getZoom();
       currentZoomRef.current = nextZoom;
 
       if (regionLayerRef.current) {
-        updateLayerStylesForZoom(regionLayerRef.current, nextZoom);
+        applyLayerStyles(regionLayerRef.current, nextZoom);
       }
-
-      setRenderZoom(nextZoom);
     };
 
     let layer: RegionVectorGridLayer | null = null;
@@ -351,46 +393,13 @@ export function useRegionRendering(
     }
 
     const layer = regionLayerRef.current;
-    const currentZoom = (renderZoom ?? currentZoomRef.current) || config.detailCapZoom;
+    const currentZoom = currentZoomRef.current || config.detailCapZoom;
 
-    if (!layer?.setFeatureStyle || !layer?.resetFeatureStyle) {
+    if (!layer) {
       return;
     }
 
-    const nextVisitedIds = new Set(
-      Array.from(visitData.entries())
-        .filter(([, data]) => data.visited || data.visitCount > 0)
-        .map(([regionId]) => regionId)
-    );
-
-    const previousVisitedIds = previousVisitedIdsRef.current;
-    nextVisitedIds.forEach((regionId) => {
-      const visit = visitData.get(regionId);
-
-      if (visit) {
-        layer.setFeatureStyle?.(
-          regionId,
-          getVisitedRegionStyle(
-            config,
-            visit,
-            mode,
-            regionBorderThickness,
-            regionLayerTransparency,
-            effectiveStaticColors,
-            effectiveHeatmapColors,
-            currentZoom
-          )
-        );
-      }
-    });
-
-    previousVisitedIds.forEach((regionId) => {
-      if (!nextVisitedIds.has(regionId)) {
-        layer.resetFeatureStyle?.(regionId);
-      }
-    });
-
-    previousVisitedIdsRef.current = nextVisitedIds;
+    applyLayerStyles(layer, currentZoom);
   }, [
     config,
     map,
@@ -399,7 +408,6 @@ export function useRegionRendering(
     visitData,
     regionBorderThickness,
     regionLayerTransparency,
-    renderZoom,
     staticColorSignature,
     heatmapColorSignature,
   ]);

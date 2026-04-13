@@ -270,6 +270,58 @@ describe('useRegionRendering', () => {
     );
   });
 
+  it('reapplies visited overrides on zoom changes through the live layer path', () => {
+    visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 2 }]]);
+
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
+    );
+
+    const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
+    expect(zoomHandler).toEqual(expect.any(Function));
+
+    redraw.mockClear();
+    setFeatureStyle.mockClear();
+    mockMap.getZoom.mockReturnValue(4);
+
+    act(() => {
+      zoomHandler?.();
+    });
+
+    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
+    expect(redraw).toHaveBeenCalledTimes(1);
+    expect(setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      getVisitedRegionStyle(
+        {
+          sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
+          layerName: 'regions',
+          paneName: 'regionsPane',
+          minZoom: 4,
+          detailCapZoom: 12,
+          displayMaxZoom: 18,
+          strokeFadeStartZoom: 7,
+          strokeHideBelowZoom: 5,
+          minimumLowDetailFillOpacity: 0.14,
+          style: {
+            color: '#0A7E43',
+            weight: 1,
+            fillColor: '#0A7E43',
+            fillOpacity: 0.08,
+            opacity: 0.9,
+          },
+        },
+        { ...visitedRegion, visitCount: 2 },
+        'static',
+        2,
+        1,
+        [],
+        [],
+        4
+      )
+    );
+  });
+
   it('resets style when a previously visited region is no longer visited', () => {
     const { rerender } = renderHook(
       ({ currentVisitData }) =>
