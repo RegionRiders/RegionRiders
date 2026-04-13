@@ -190,4 +190,36 @@ describe('MapOrchestrator', () => {
     expect(firstVisitData).toBeInstanceOf(Map);
     expect(secondVisitData).toBe(firstVisitData);
   });
+
+  it('keeps the placeholder visit data empty even when tracks change', () => {
+    const firstTracks = new Map<string, any>([['track-1', { id: 'track-1' }]]);
+    const secondTracks = new Map<string, any>([['track-2', { id: 'track-2' }]]);
+
+    const { rerender } = render(
+      <MapOrchestrator
+        map={mockMap}
+        tracks={firstTracks}
+        settings={defaultSettings}
+        onRegionTileError={onRegionTileError}
+      />
+    );
+
+    const firstVisitData = mockUseRegionRendering.mock.calls[0]?.[1];
+
+    rerender(
+      <MapOrchestrator
+        map={mockMap}
+        tracks={secondTracks}
+        settings={defaultSettings}
+        onRegionTileError={onRegionTileError}
+      />
+    );
+
+    const secondVisitData = mockUseRegionRendering.mock.calls[1]?.[1];
+
+    expect(firstVisitData).toBeInstanceOf(Map);
+    expect(firstVisitData?.size).toBe(0);
+    expect(secondVisitData).toBe(firstVisitData);
+    expect(secondVisitData?.size).toBe(0);
+  });
 });
