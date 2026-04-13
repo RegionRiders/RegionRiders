@@ -23,6 +23,7 @@ import { ensureMapPane } from '../utils/ensureMapPane';
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
+const MAX_COLOR_LUT_SIZE = 65536;
 
 const SIGNATURE_DECIMALS = 6;
 
@@ -92,8 +93,9 @@ function buildColorLut(
   layerTransparency: number,
   colorThresholds?: ColorThreshold[]
 ): Uint8ClampedArray {
-  const lut = new Uint8ClampedArray((maxCount + 1) * 4);
-  for (let count = 1; count <= maxCount; count++) {
+  const cappedMaxCount = Math.min(maxCount, MAX_COLOR_LUT_SIZE - 1);
+  const lut = new Uint8ClampedArray((cappedMaxCount + 1) * 4);
+  for (let count = 1; count <= cappedMaxCount; count++) {
     const [r, g, b, a] = getHeatmapColorForCount(
       count,
       currentZoom,
@@ -240,7 +242,7 @@ function finishRender(
         continue;
       }
 
-      const lutIndex = count * 4;
+      const lutIndex = Math.min(count, MAX_COLOR_LUT_SIZE - 1) * 4;
       const pixelIndex = i * 4;
 
       data[pixelIndex] = colorLut[lutIndex];
@@ -258,31 +260,41 @@ function finishRender(
   }
 
   ctx.putImageData(imageData, 0, 0);
-  const imageSource = state.canvas;
-  try {
-    const imageUrl = imageSource.toDataURL('image/png');
-    if (currentImageLayerRef.current) {
-      currentImageLayerRef.current.setBounds(bounds);
-      currentImageLayerRef.current.setUrl(imageUrl);
-    } else {
-      currentImageLayerRef.current = L.imageOverlay(imageUrl, bounds, {
-        pane: 'heatmapPane',
-      }).addTo(map);
-    }
-    currentImageUrlRef.current = imageUrl;
-
-    if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+  state.canvas.toBlob((blob) => {
+    if (!blob || shouldAbort() || activeRenderIdRef.current !== renderId) {
       return;
     }
 
-    const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
-    const finishDuration = (performance.now() - finishStartTime).toFixed(2);
-    logger.info(
-      `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
-    );
-  } catch (error) {
-    logger.error(`Error adding image overlay: ${error}`);
-  }
+    try {
+      const nextUrl = URL.createObjectURL(blob);
+      const previousUrl = currentImageUrlRef.current;
+
+      if (currentImageLayerRef.current) {
+        currentImageLayerRef.current.setBounds(bounds);
+        currentImageLayerRef.current.setUrl(nextUrl);
+      } else {
+        currentImageLayerRef.current = L.imageOverlay(nextUrl, bounds, {
+          pane: 'heatmapPane',
+        }).addTo(map);
+      }
+      currentImageUrlRef.current = nextUrl;
+      if (previousUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(previousUrl);
+      }
+
+      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+        return;
+      }
+
+      const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
+      const finishDuration = (performance.now() - finishStartTime).toFixed(2);
+      logger.info(
+        `Heatmap rendered at zoom ${currentZoom} (finish: ${finishDuration}ms, total: ${totalDuration}ms)`
+      );
+    } catch (error) {
+      logger.error(`Error adding image overlay: ${error}`);
+    }
+  });
 }
 
 /**
