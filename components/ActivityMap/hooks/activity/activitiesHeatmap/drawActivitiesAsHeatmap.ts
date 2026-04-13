@@ -54,6 +54,7 @@ function finishRender(
 
   const imageData = ctx.createImageData(canvasWidth, canvasHeight);
   const data = imageData.data;
+  const colorCache = new Map<number, readonly [number, number, number, number]>();
 
   for (let i = 0; i < accumulator.length; i++) {
     const count = accumulator[i];
@@ -61,18 +62,23 @@ function finishRender(
       continue;
     }
 
-    const [r, g, b, a] = getHeatmapColorForCount(
-      count,
-      currentZoom,
-      lineThickness,
-      colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-    );
+    let color = colorCache.get(count);
+    if (!color) {
+      const [r, g, b, a] = getHeatmapColorForCount(
+        count,
+        currentZoom,
+        lineThickness,
+        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+      );
+      color = [r, g, b, a] as const;
+      colorCache.set(count, color);
+    }
     const pixelIndex = i * 4;
 
-    data[pixelIndex] = r;
-    data[pixelIndex + 1] = g;
-    data[pixelIndex + 2] = b;
-    data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+    data[pixelIndex] = color[0];
+    data[pixelIndex + 1] = color[1];
+    data[pixelIndex + 2] = color[2];
+    data[pixelIndex + 3] = Math.round(color[3] * layerTransparency * 255);
   }
 
   ctx.putImageData(imageData, 0, 0);
