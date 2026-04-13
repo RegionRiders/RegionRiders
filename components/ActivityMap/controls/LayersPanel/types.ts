@@ -18,8 +18,8 @@ export interface MapSettings {
   heatmapDensity: number;
   lineColorSwatches: LineColorSwatch[];
   selectedLineSwatchIndex: number;
-  activityHeatmapColorSwatches?: ColorThreshold[][];
-  selectedActivityHeatmapSwatchIndex?: number;
+  activityHeatmapColorSwatches: ColorThreshold[][];
+  selectedActivityHeatmapSwatchIndex: number;
 
   // Region settings
   regionMode: RegionRenderMode;

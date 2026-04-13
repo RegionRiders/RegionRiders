@@ -29,6 +29,7 @@ import 'leaflet/dist/leaflet.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
+import { GradientColorPickerButton } from '@/components/GradientColorPicker/GradientColorPickerButton';
 
 const MapContainerMemo = memo(MapContainer);
 const SAVE_ERROR_TOAST_DURATION_MS = 6000;
@@ -340,6 +341,21 @@ export default function ActivityMap() {
       <div className={styles.wrapper}>
         <div className={styles.controls}>
           <LayersPanel settings={settings} onSettingChange={updateSetting} map={map} />
+          <GradientColorPickerButton
+            value={
+              settings.activityHeatmapColorSwatches[settings.selectedActivityHeatmapSwatchIndex]
+            }
+            onChange={(thresholds) => {
+              setSettings((prev) => ({
+                ...prev,
+                activityHeatmapColorSwatches: prev.activityHeatmapColorSwatches.map(
+                  (swatch, index) =>
+                    index === prev.selectedActivityHeatmapSwatchIndex ? thresholds : swatch
+                ),
+              }));
+            }}
+            buttonLabel="gradient"
+          />
         </div>
       </div>
 
