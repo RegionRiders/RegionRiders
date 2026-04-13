@@ -12,6 +12,7 @@ import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
+const mockMapOrchestrator = jest.fn();
 const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS;
 
 const advanceInitialPersistWindow = () => {
@@ -62,6 +63,7 @@ jest.mock('./MapContainer', () => ({
 jest.mock('./MapOrchestrator', () => ({
   __esModule: true,
   default: function MockMapOrchestrator(props: { onRegionTileError?: (message: string) => void }) {
+    mockMapOrchestrator(props);
     if (props.onRegionTileError) {
       (globalThis as any).__mockOnRegionTileError = props.onRegionTileError;
     }
@@ -83,6 +85,27 @@ jest.mock('./controls/LayersPanel/LayersPanel', () => ({
           type="button"
         >
           Update settings
+        </button>
+        <button
+          data-testid="update-region-transparency"
+          onClick={() => props.onSettingChange('regionLayerTransparency', 0.35)}
+          type="button"
+        >
+          Update region transparency
+        </button>
+        <button
+          data-testid="update-region-border-thickness"
+          onClick={() => props.onSettingChange('regionBorderThickness', 5)}
+          type="button"
+        >
+          Update region border thickness
+        </button>
+        <button
+          data-testid="update-region-mode"
+          onClick={() => props.onSettingChange('regionMode', 'heatmap')}
+          type="button"
+        >
+          Update region mode
         </button>
       </div>
     );
@@ -266,6 +289,38 @@ describe('ActivityMap', () => {
     });
 
     expect(screen.getAllByText('Region overlay unavailable')).toHaveLength(1);
+  });
+
+  it('keeps the map shell and overlay status intact while region settings change', async () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    await userEvent.click(screen.getByTestId('update-region-transparency'));
+    await userEvent.click(screen.getByTestId('update-region-border-thickness'));
+    await userEvent.click(screen.getByTestId('update-region-mode'));
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.regionLayerTransparency).toBe(0.35);
+      expect(latestLayersPanelProps.settings.regionBorderThickness).toBe(5);
+      expect(latestLayersPanelProps.settings.regionMode).toBe('heatmap');
+
+      const latestMapOrchestratorProps = mockMapOrchestrator.mock.calls.at(-1)?.[0];
+      expect(latestMapOrchestratorProps.settings.regionLayerTransparency).toBe(0.35);
+      expect(latestMapOrchestratorProps.settings.regionBorderThickness).toBe(5);
+      expect(latestMapOrchestratorProps.settings.regionMode).toBe('heatmap');
+    });
+
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Region overlay unavailable');
   });
 
   it('loads saved settings from anonymous localStorage key', () => {

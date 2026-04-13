@@ -88,6 +88,37 @@ Missing-tile behavior:
 - keep the `tileerror` banner reserved for true transport/runtime failures such as host unavailability or fetch
   rejection
 
+## 3a) Phase 2 review-fix validation loop
+
+Run this checklist after the Phase 1 smoke checks when validating the current `PR #161` review-fix branch.
+
+1. Exercise normal zoom interactions with the region overlay visible:
+    - zoom `4 -> 12 -> 18`
+    - confirm the overlay stays visibly present through the full zoom interactions path
+    - confirm the overlay does not appear to tear down and reappear mid-gesture or immediately after zoom settles
+2. Validate no-`blank-gap` style updates with the current live layer:
+    - change region transparency repeatedly
+    - change region border thickness
+    - switch region mode between static and heatmap
+    - confirm each settings change restyles the existing overlay in place instead of showing a blank-gap before the
+      updated style appears
+3. Validate the current placeholder fill semantics:
+    - keep the current placeholder `visitData` boundary empty
+    - move the region transparency slider between low and high values
+    - confirm the placeholder base fill remains visible and scales with transparency even though backend
+      visited-status delivery is still deferred
+4. Validate non-fatal overlay error handling during the same pass:
+    - if a real transport/runtime failure occurs, confirm the non-fatal overlay status is shown
+    - confirm the basemap, activity layers, and map shell remain usable while the status is present
+
+Phase 2 out-of-scope reminders:
+
+- Large-area low-zoom overload and LoD redesign remain deferred to issue `#196`
+- Country-to-country border-detail inconsistency in the current draft source tiles remains a data-quality concern, not
+  a Phase 2 runtime acceptance item
+- Seam/grid mitigation remains out of scope for this validation pass
+- Backend visited-status delivery remains deferred; this branch only validates the placeholder styling path
+
 ## 4) KPI acceptance thresholds
 
 These thresholds are release gates for v1 local tiles.
@@ -101,6 +132,10 @@ These thresholds are release gates for v1 local tiles.
 - zoom-cap behavior:
     - zoom 12 remains the effective detail ceiling for region geometry
     - zoom > 12 keeps the overlay visible through overscaled rendering rather than hiding it
+- phase 2 review-fix behavior:
+    - zoom interactions keep the current overlay visibly present
+    - style-only changes to transparency, border thickness, and mode do not create a blank-gap transition
+    - the placeholder base fill stays visible and settings-controlled while visited-status remains deferred
 - low-LoD coherence:
     - zoomed-out browsing should minimize obvious border cracks even when detail is reduced
 - tile payload size (compressed transfer):
@@ -148,6 +183,10 @@ Use this protocol for each candidate build.
   rendering above zoom `12` should stay visible without requesting extra geometric fidelity.
 - Visited/unvisited styling is not part of the current release scope; the production path intentionally ships tile
   rendering infrastructure first, with server-side status delivery tracked separately in follow-up work (`#188`).
+- Phase 2 validation is limited to zoom stability, in-place restyling, and placeholder fill/transparency behavior on
+  the current client-side path.
+- Validation should not treat issue `#196`, seam/grid mitigation, or source tile-detail inconsistency as regressions in
+  this runbook unless the scope of the branch changes explicitly.
 - Region overlay failures are non-fatal: the overlay can be disabled while the basemap and activity layers remain
   available.
 - The runbook intentionally excludes legacy GeoJSON runtime fallback.

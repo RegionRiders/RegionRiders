@@ -304,11 +304,19 @@ describe('useRegionRendering', () => {
     expect(redraw).toHaveBeenCalledTimes(1);
     expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(
       expect.objectContaining({
+        color: 'rgba(12,12,12,1)',
+        fillColor: 'rgba(12,12,12,0.18)',
         weight: 5,
         opacity: 0.35,
         fillOpacity: 0.35,
       })
     );
+    expect(
+      Math.max(
+        mockLayer.options.vectorTileLayerStyles?.regions?.opacity ?? 0,
+        mockLayer.options.vectorTileLayerStyles?.regions?.fillOpacity ?? 0
+      )
+    ).toBeGreaterThan(0);
     expect(setFeatureStyle).toHaveBeenCalledWith(
       'RR1::PL::POM::001',
       expect.objectContaining({
@@ -343,6 +351,12 @@ describe('useRegionRendering', () => {
         fillOpacity: 0.4,
       })
     );
+    expect(
+      Math.max(
+        mockLayer.options.vectorTileLayerStyles?.regions?.opacity ?? 0,
+        mockLayer.options.vectorTileLayerStyles?.regions?.fillOpacity ?? 0
+      )
+    ).toBeGreaterThan(0);
   });
 
   it('keeps a visible low-zoom fill when the stroke is intentionally hidden', () => {

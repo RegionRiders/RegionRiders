@@ -224,6 +224,55 @@ describe('MapOrchestrator', () => {
     expect(secondVisitData?.size).toBe(0);
   });
 
+  it('forwards updated region settings while keeping the placeholder visit data empty', () => {
+    const { rerender } = render(
+      <MapOrchestrator
+        map={mockMap}
+        tracks={mockTracks}
+        settings={defaultSettings}
+        onRegionTileError={onRegionTileError}
+      />
+    );
+
+    const firstVisitData = mockUseRegionRendering.mock.calls[0]?.[1];
+    const updatedSettings: MapSettings = {
+      ...defaultSettings,
+      regionMode: 'static',
+      regionBorderThickness: 5,
+      regionLayerTransparency: 0.35,
+    };
+
+    rerender(
+      <MapOrchestrator
+        map={mockMap}
+        tracks={mockTracks}
+        settings={updatedSettings}
+        onRegionTileError={onRegionTileError}
+      />
+    );
+
+    const latestRegionRenderingCall = mockUseRegionRendering.mock.calls.at(-1);
+    const secondVisitData = latestRegionRenderingCall?.[1];
+
+    expect(firstVisitData).toBeInstanceOf(Map);
+    expect(firstVisitData?.size).toBe(0);
+    expect(secondVisitData).toBe(firstVisitData);
+    expect(secondVisitData?.size).toBe(0);
+    expect(latestRegionRenderingCall).toEqual([
+      mockMap,
+      firstVisitData,
+      updatedSettings.showRegions,
+      updatedSettings.regionMode,
+      updatedSettings.regionBorderThickness,
+      updatedSettings.regionLayerTransparency,
+      updatedSettings.regionStaticColorSwatches?.[updatedSettings.selectedRegionStaticSwatchIndex],
+      updatedSettings.regionHeatmapColorSwatches?.[
+        updatedSettings.selectedRegionHeatmapSwatchIndex ?? 0
+      ],
+      onRegionTileError,
+    ]);
+  });
+
   it('falls back to the default placeholder region swatch when custom swatches are absent', () => {
     const settingsWithoutRegionSwatches = {
       ...defaultSettings,
