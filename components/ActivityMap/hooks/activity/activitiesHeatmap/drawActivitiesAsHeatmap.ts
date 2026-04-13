@@ -242,8 +242,22 @@ function finishRender(
         continue;
       }
 
-      const lutIndex = Math.min(count, MAX_COLOR_LUT_SIZE - 1) * 4;
       const pixelIndex = i * 4;
+      if (count >= MAX_COLOR_LUT_SIZE) {
+        const [r, g, b, a] = getHeatmapColorForCount(
+          count,
+          currentZoom,
+          lineThickness,
+          colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+        );
+        data[pixelIndex] = r;
+        data[pixelIndex + 1] = g;
+        data[pixelIndex + 2] = b;
+        data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+        continue;
+      }
+
+      const lutIndex = count * 4;
 
       data[pixelIndex] = colorLut[lutIndex];
       data[pixelIndex + 1] = colorLut[lutIndex + 1];
