@@ -18,6 +18,35 @@ import { ensureMapPane } from '../utils/ensureMapPane';
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
+const MAP_CHANGE_DEBOUNCE_MS = 32;
+const SIGNATURE_COORD_PRECISION = 4;
+
+function buildThresholdSignature(thresholds?: ColorThreshold[]): string {
+  if (!thresholds || thresholds.length === 0) {
+    return 'default';
+  }
+
+  return thresholds
+    .map(
+      (threshold) =>
+        `${threshold.threshold}:${threshold.color[0]},${threshold.color[1]},${threshold.color[2]},${threshold.color[3] ?? 1}`
+    )
+    .join('|');
+}
+
+function buildTrackSignature(tracks: Map<string, GPXTrack>): string {
+  let signature = `${tracks.size}`;
+  tracks.forEach((track, trackId) => {
+    signature += `|${trackId}:${track.points?.length ?? 0}`;
+  });
+  return signature;
+}
+
+function buildViewportSignature(bounds: L.LatLngBounds): string {
+  const northWest = bounds.getNorthWest();
+  const southEast = bounds.getSouthEast();
+  return `${northWest.lat.toFixed(SIGNATURE_COORD_PRECISION)},${northWest.lng.toFixed(SIGNATURE_COORD_PRECISION)}:${southEast.lat.toFixed(SIGNATURE_COORD_PRECISION)},${southEast.lng.toFixed(SIGNATURE_COORD_PRECISION)}`;
+}
 
 /**
  * Renders accumulator data as image and adds to map
@@ -79,6 +108,7 @@ function finishRender(
   const minY = touchedBounds ? Math.max(0, touchedBounds.minY) : 0;
   const maxX = touchedBounds ? Math.min(canvasWidth - 1, touchedBounds.maxX) : canvasWidth - 1;
   const maxY = touchedBounds ? Math.min(canvasHeight - 1, touchedBounds.maxY) : canvasHeight - 1;
+  const colorCache = new Map<number, [number, number, number, number]>();
 
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
@@ -88,18 +118,24 @@ function finishRender(
         continue;
       }
 
-      const [r, g, b, a] = getHeatmapColorForCount(
-        count,
-        currentZoom,
-        lineThickness,
-        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-      );
+      let cachedColor = colorCache.get(count);
+      if (!cachedColor) {
+        const [r, g, b, a] = getHeatmapColorForCount(
+          count,
+          currentZoom,
+          lineThickness,
+          colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+        );
+        cachedColor = [r, g, b, Math.round(a * 255)];
+        colorCache.set(count, cachedColor);
+      }
+
       const pixelIndex = i * 4;
 
-      data[pixelIndex] = r;
-      data[pixelIndex + 1] = g;
-      data[pixelIndex + 2] = b;
-      data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+      data[pixelIndex] = cachedColor[0];
+      data[pixelIndex + 1] = cachedColor[1];
+      data[pixelIndex + 2] = cachedColor[2];
+      data[pixelIndex + 3] = cachedColor[3];
     }
   }
 
@@ -121,6 +157,7 @@ function finishRender(
       const imageUrl = URL.createObjectURL(blob);
       const nextLayer = L.imageOverlay(imageUrl, bounds, {
         pane: 'heatmapPane',
+        opacity: layerTransparency,
       }).addTo(map);
 
       if (shouldAbort() || activeRenderIdRef.current !== renderId) {
@@ -287,6 +324,19 @@ export function drawActivitiesAsHeatmap(
     if (!map) {
       return;
     }
+    const bounds = map.getBounds();
+    const renderSignature = [
+      map.getZoom(),
+      buildViewportSignature(bounds),
+      refs.heatmapDensity,
+      refs.lineThickness,
+      buildThresholdSignature(refs.heatmapColorThresholds),
+      buildTrackSignature(tracks),
+    ].join('|');
+    if (refs.currentImageLayerRef.current && refs.lastRenderSignatureRef.current === renderSignature) {
+      return;
+    }
+    refs.lastRenderSignatureRef.current = renderSignature;
     refs.activeRenderIdRef.current += 1;
     renderHeatmapInternal(map, tracks, refs, refs.lineThickness, refs.activeRenderIdRef.current);
   };
@@ -298,7 +348,7 @@ export function drawActivitiesAsHeatmap(
 
     zoomChangeTimeout = setTimeout(() => {
       renderHeatmap();
-    }, 0);
+    }, MAP_CHANGE_DEBOUNCE_MS);
   };
 
   if (map) {
@@ -313,6 +363,7 @@ export function drawActivitiesAsHeatmap(
     logger.info('Cleanup');
     renderAbortRef.current = true;
     refs.activeRenderIdRef.current += 1;
+    refs.lastRenderSignatureRef.current = null;
 
     if (renderTimeoutRef.current) {
       clearTimeout(renderTimeoutRef.current);

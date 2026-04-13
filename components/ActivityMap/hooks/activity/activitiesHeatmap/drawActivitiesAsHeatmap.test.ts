@@ -51,6 +51,7 @@ describe('drawActivitiesAsHeatmap', () => {
   let renderAbortRef: { current: boolean };
   let renderTimeoutRef: { current: NodeJS.Timeout | null };
   let activeRenderIdRef: { current: number };
+  let lastRenderSignatureRef: { current: string | null };
   let refs: HeatmapRefs;
 
   beforeEach(() => {
@@ -92,6 +93,7 @@ describe('drawActivitiesAsHeatmap', () => {
     renderAbortRef = { current: false };
     renderTimeoutRef = { current: null };
     activeRenderIdRef = { current: 0 };
+    lastRenderSignatureRef = { current: null };
 
     refs = {
       currentImageLayerRef,
@@ -99,6 +101,7 @@ describe('drawActivitiesAsHeatmap', () => {
       renderAbortRef,
       renderTimeoutRef,
       activeRenderIdRef,
+      lastRenderSignatureRef,
       heatmapDensity: 2,
       lineThickness: 3,
       layerTransparency: 1,
@@ -228,6 +231,20 @@ describe('drawActivitiesAsHeatmap', () => {
 
       expect(jest.getTimerCount()).toBeGreaterThan(0);
 
+      jest.useRealTimers();
+    });
+
+    it('should skip redraw when render signature is unchanged', () => {
+      jest.useFakeTimers();
+
+      drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
+      expect(ensureMapPane).toHaveBeenCalledTimes(1);
+
+      const moveHandler = mockMap.on.mock.calls.find((call: any[]) => call[0] === 'moveend')[1];
+      moveHandler();
+      jest.advanceTimersByTime(50);
+
+      expect(ensureMapPane).toHaveBeenCalledTimes(1);
       jest.useRealTimers();
     });
   });

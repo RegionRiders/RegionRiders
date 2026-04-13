@@ -56,6 +56,7 @@ describe('useActivityRendering', () => {
         currentImageLayerRef: expect.any(Object),
         currentImageUrlRef: expect.any(Object),
         activeRenderIdRef: expect.any(Object),
+        lastRenderSignatureRef: expect.any(Object),
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
         layerTransparency: 1,
@@ -173,5 +174,35 @@ describe('useActivityRendering', () => {
       multipleTracks,
       expect.any(Object)
     );
+  });
+
+  it('should not restart heatmap draw when only transparency changes', () => {
+    const mockCleanup = jest.fn();
+    const mockSetOpacity = jest.fn();
+    (drawActivitiesAsHeatmap as jest.Mock).mockImplementation((_, __, refs) => {
+      refs.currentImageLayerRef.current = { setOpacity: mockSetOpacity };
+      return mockCleanup;
+    });
+
+    const { rerender } = renderHook(
+      ({ transparency }) =>
+        useActivityRendering(
+          mockMap,
+          mockTracks,
+          true,
+          'heatmap',
+          3,
+          transparency
+        ),
+      {
+        initialProps: { transparency: 1 },
+      }
+    );
+
+    expect(drawActivitiesAsHeatmap).toHaveBeenCalledTimes(1);
+    rerender({ transparency: 0.5 });
+
+    expect(drawActivitiesAsHeatmap).toHaveBeenCalledTimes(1);
+    expect(mockSetOpacity).toHaveBeenCalledWith(0.5);
   });
 });

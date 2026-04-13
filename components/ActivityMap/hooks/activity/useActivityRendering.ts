@@ -32,8 +32,11 @@ export function useActivityRendering(
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const currentImageUrlRef = useRef<string | null>(null);
   const activeRenderIdRef = useRef<number>(0);
+  const lastRenderSignatureRef = useRef<string | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
+  const effectiveLayerTransparency =
+    mode === 'heatmap' ? 1 : activityLayerTransparency;
 
   useEffect(() => {
     if (!map || !showActivities || tracks.size === 0) {
@@ -49,11 +52,12 @@ export function useActivityRendering(
         currentImageLayerRef,
         currentImageUrlRef,
         activeRenderIdRef,
+        lastRenderSignatureRef,
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,
         lineThickness: activityThickness,
-        layerTransparency: activityLayerTransparency,
+        layerTransparency: effectiveLayerTransparency,
         heatmapColorThresholds,
       };
       return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
@@ -66,7 +70,7 @@ export function useActivityRendering(
       lineThickness: activityThickness,
       lineColor: activityLineColor.normal,
       lineHoverColor: activityLineColor.hover,
-      layerTransparency: activityLayerTransparency,
+      layerTransparency: effectiveLayerTransparency,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [
@@ -75,9 +79,17 @@ export function useActivityRendering(
     showActivities,
     mode,
     activityThickness,
-    activityLayerTransparency,
+    effectiveLayerTransparency,
     heatmapDensity,
     activityLineColor,
     heatmapColorThresholds,
   ]);
+
+  useEffect(() => {
+    if (mode !== 'heatmap') {
+      return;
+    }
+
+    currentImageLayerRef.current?.setOpacity(activityLayerTransparency);
+  }, [mode, activityLayerTransparency]);
 }
