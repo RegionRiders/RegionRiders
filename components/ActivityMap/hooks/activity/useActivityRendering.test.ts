@@ -179,4 +179,41 @@ describe('useActivityRendering', () => {
       { preserveLayerOnCleanup: true }
     );
   });
+
+  it('should update heatmap overlay opacity without restarting heatmap rendering', () => {
+    const mockCleanup = jest.fn();
+    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
+    const setOpacity = jest.fn();
+    const lineColorSwatch = {
+      normal: [255, 0, 0, 0.5] as [number, number, number, number],
+      hover: [255, 100, 100, 0.7] as [number, number, number, number],
+    };
+
+    const { rerender } = renderHook(
+      ({ transparency }) =>
+        useActivityRendering(
+          mockMap,
+          mockTracks,
+          true,
+          'heatmap',
+          3,
+          transparency,
+          2,
+          lineColorSwatch
+        ),
+      {
+        initialProps: {
+          transparency: 1,
+        },
+      }
+    );
+
+    const refs = (drawActivitiesAsHeatmap as jest.Mock).mock.calls[0][2];
+    refs.currentImageLayerRef.current = { setOpacity };
+
+    rerender({ transparency: 0.4 });
+
+    expect(setOpacity).toHaveBeenCalledWith(0.4);
+    expect(drawActivitiesAsHeatmap).toHaveBeenCalledTimes(1);
+  });
 });

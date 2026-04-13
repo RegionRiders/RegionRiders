@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit } from '@tabler/icons-react';
 import { Accordion, Button, Group, Notification, Slider, Stack, Switch, Text } from '@mantine/core';
 import {
@@ -60,6 +60,11 @@ export function ActivitiesSection({
     activityHeatmapColorSwatches[0] ??
     [];
   const activityThickness = normalizeActivityThicknessControl(settings.activityThickness ?? 3);
+  const [activityThicknessDraft, setActivityThicknessDraft] = useState(activityThickness);
+
+  useEffect(() => {
+    setActivityThicknessDraft(activityThickness);
+  }, [activityThickness]);
 
   const showClipboardErrorToast = (message: string) => {
     setClipboardError(message);
@@ -155,14 +160,21 @@ export function ActivitiesSection({
           </div>
 
           <div>
-            <Text size="sm"> Line thickness: {activityThickness}px</Text>
+            <Text size="sm"> Line thickness: {activityThicknessDraft}px</Text>
             <Slider
               w="100%"
               min={MIN_ACTIVITY_THICKNESS_CONTROL}
               max={MAX_ACTIVITY_THICKNESS_CONTROL}
               step={1}
-              value={activityThickness}
-              onChange={(value) => onSettingChange('activityThickness', value)}
+              value={activityThicknessDraft}
+              onChange={setActivityThicknessDraft}
+              onChangeEnd={(value) => {
+                const normalizedValue = normalizeActivityThicknessControl(value);
+                setActivityThicknessDraft(normalizedValue);
+                if (normalizedValue !== activityThickness) {
+                  onSettingChange('activityThickness', normalizedValue);
+                }
+              }}
             />
           </div>
 

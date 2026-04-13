@@ -91,7 +91,6 @@ function buildColorLut(
   maxCount: number,
   currentZoom: number,
   lineThickness: number,
-  layerTransparency: number,
   colorThresholds?: ColorThreshold[]
 ): Uint8ClampedArray {
   const cappedMaxCount = Math.min(maxCount, MAX_COLOR_LUT_SIZE - 1);
@@ -107,7 +106,7 @@ function buildColorLut(
     lut[lutIndex] = r;
     lut[lutIndex + 1] = g;
     lut[lutIndex + 2] = b;
-    lut[lutIndex + 3] = Math.round(a * layerTransparency * 255);
+    lut[lutIndex + 3] = Math.round(a * 255);
   }
   return lut;
 }
@@ -145,7 +144,6 @@ function buildRenderSignature(
     map.getZoom(),
     refs.heatmapDensity,
     refs.lineThickness,
-    refs.layerTransparency,
     north.toFixed(SIGNATURE_DECIMALS),
     south.toFixed(SIGNATURE_DECIMALS),
     west.toFixed(SIGNATURE_DECIMALS),
@@ -227,13 +225,7 @@ function finishRender(
       }
     }
   }
-  const colorLut = buildColorLut(
-    maxCount,
-    currentZoom,
-    lineThickness,
-    layerTransparency,
-    colorThresholds
-  );
+  const colorLut = buildColorLut(maxCount, currentZoom, lineThickness, colorThresholds);
 
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
@@ -254,7 +246,7 @@ function finishRender(
         data[pixelIndex] = r;
         data[pixelIndex + 1] = g;
         data[pixelIndex + 2] = b;
-        data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+        data[pixelIndex + 3] = Math.round(a * 255);
         continue;
       }
 
@@ -284,9 +276,13 @@ function finishRender(
       const nextUrl = URL.createObjectURL(blob);
       const previousLayer = currentImageLayerRef.current;
       const previousUrl = currentImageUrlRef.current;
+      const targetOpacity =
+        previousLayer && typeof previousLayer.options.opacity === 'number'
+          ? previousLayer.options.opacity
+          : layerTransparency;
       const nextLayer = L.imageOverlay(nextUrl, bounds, {
         pane: 'heatmapPane',
-        opacity: previousLayer ? 0 : 1,
+        opacity: previousLayer ? 0 : targetOpacity,
       }).addTo(map);
 
       const commitSwap = (): void => {
@@ -311,7 +307,7 @@ function finishRender(
         currentImageUrlRef.current = nextUrl;
         nextLayer.setBounds(bounds);
         if (previousLayer) {
-          nextLayer.setOpacity(1);
+          nextLayer.setOpacity(targetOpacity);
         }
       };
 

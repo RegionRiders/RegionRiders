@@ -42,13 +42,18 @@ export function useActivityRendering(
   const heatmapContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
+  const lineModeTransparency = mode === 'lines' ? activityLayerTransparency : 1;
+  const resetHeatmapOverlayRefs = useCallback((): void => {
+    currentImageLayerRef.current = null;
+    if (currentImageUrlRef.current?.startsWith('blob:')) {
+      URL.revokeObjectURL(currentImageUrlRef.current);
+    }
+    currentImageUrlRef.current = null;
+    lastRenderSignatureRef.current = null;
+  }, []);
   const clearHeatmapOverlay = useCallback((): void => {
     if (!map) {
-      currentImageLayerRef.current = null;
-      if (currentImageUrlRef.current?.startsWith('blob:')) {
-        URL.revokeObjectURL(currentImageUrlRef.current);
-      }
-      currentImageUrlRef.current = null;
+      resetHeatmapOverlayRefs();
       return;
     }
 
@@ -59,13 +64,8 @@ export function useActivityRendering(
         logger.warn('Failed to remove heatmap layer', error);
       }
     }
-    currentImageLayerRef.current = null;
-    if (currentImageUrlRef.current?.startsWith('blob:')) {
-      URL.revokeObjectURL(currentImageUrlRef.current);
-    }
-    currentImageUrlRef.current = null;
-    lastRenderSignatureRef.current = null;
-  }, [map]);
+    resetHeatmapOverlayRefs();
+  }, [map, resetHeatmapOverlayRefs]);
 
   useEffect(() => {
     if (!map || !showActivities || tracks.size === 0) {
@@ -106,7 +106,7 @@ export function useActivityRendering(
       lineThickness: activityThickness,
       lineColor: activityLineColor.normal,
       lineHoverColor: activityLineColor.hover,
-      layerTransparency: activityLayerTransparency,
+      layerTransparency: lineModeTransparency,
     };
     return drawActivitiesAsLines(map, tracks, linesRefs);
   }, [
@@ -115,12 +115,21 @@ export function useActivityRendering(
     showActivities,
     mode,
     activityThickness,
-    activityLayerTransparency,
+    lineModeTransparency,
     heatmapDensity,
     activityLineColor,
     heatmapColorThresholds,
     clearHeatmapOverlay,
   ]);
+
+  useEffect(() => {
+    if (!map || !showActivities || mode !== 'heatmap') {
+      return;
+    }
+    if (currentImageLayerRef.current) {
+      currentImageLayerRef.current.setOpacity(activityLayerTransparency);
+    }
+  }, [activityLayerTransparency, map, mode, showActivities]);
 
   useEffect(() => {
     return () => {
