@@ -36,7 +36,7 @@
   "dependencies": {
     "@deck.gl/layers": "^9.2.11",
     "@deck.gl/react": "^9.2.11",
-    "@mantine/core": "^8.3.7",
+    "@mantine/core": "^9.0.1",
     "@mantine/hooks": "^8.3.7",
     "@next/bundle-analyzer": "^16.2.2",
     "@tabler/icons-react": "^3.41.1",
