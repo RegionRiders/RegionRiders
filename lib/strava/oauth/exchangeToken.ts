@@ -1,5 +1,5 @@
 import { stravaLogger } from '@/lib/logger';
-import { getStravaClient } from '../config';
+import { getStravaOAuthClient } from '../config';
 
 export interface StravaTokenResponse {
   access_token: string;
@@ -17,7 +17,7 @@ export interface StravaTokenResponse {
  * @returns Token response with access_token, refresh_token, expires_at, and athlete info
  */
 export async function exchangeToken(code: string): Promise<StravaTokenResponse> {
-  const strava = getStravaClient();
+  const strava = getStravaOAuthClient();
 
   stravaLogger.debug({ codeLength: code.length }, 'Exchanging authorization code for tokens');
 

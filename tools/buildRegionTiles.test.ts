@@ -84,9 +84,21 @@ describe('buildRegionTiles', () => {
   });
 
   it('requires an explicit source when argv and REGION_SOURCE_DIR are absent', () => {
-    expect(() => getBuildOptions(['node', 'tools/buildRegionTiles.ts'])).toThrow(
-      'No source directory configured. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
-    );
+    const originalRegionSourceDir = process.env.REGION_SOURCE_DIR;
+
+    delete process.env.REGION_SOURCE_DIR;
+
+    try {
+      expect(() => getBuildOptions(['node', 'tools/buildRegionTiles.ts'])).toThrow(
+        'No source directory configured. Pass --source <dir> or set REGION_SOURCE_DIR to a GeoJSON dataset directory.'
+      );
+    } finally {
+      if (originalRegionSourceDir === undefined) {
+        delete process.env.REGION_SOURCE_DIR;
+      } else {
+        process.env.REGION_SOURCE_DIR = originalRegionSourceDir;
+      }
+    }
   });
 
   it('rejects an inverted zoom range', () => {
@@ -449,6 +461,52 @@ describe('buildRegionTiles', () => {
     try {
       expect(() => runBuild(options, sourceFiles)).toThrow(
         'Refusing unsafe deletion target for --temp: lib/db/config.ts'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects deleting the tile root instead of a versioned output directory', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: path.join(process.cwd(), 'public', 'data', 'regions', 'tiles'),
+      tempGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1.gpkg'),
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        `Refusing unsafe deletion target for --output: ${options.outputDir}`
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects temp file names outside the allowed tile scratch prefix', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: path.join(workspaceDir, 'tiles', 'v1'),
+      tempGpkg: path.join(workspaceDir, 'tiles', 'regions.gpkg'),
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        `Refusing unsafe deletion target for --temp: ${options.tempGpkg}`
       );
       expect(execFileSync).not.toHaveBeenCalled();
     } finally {

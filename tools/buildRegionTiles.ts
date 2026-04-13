@@ -26,6 +26,8 @@ const DEFAULT_NORMALIZED_GPKG = path.join(
 const DEFAULT_MIN_ZOOM = 3;
 const DEFAULT_MAX_ZOOM = 14;
 const TILE_WORK_ROOT = path.dirname(DEFAULT_OUTPUT_DIR);
+const TILE_OUTPUT_DIR_PATTERN = /^v\d+(?:[\w.-]*)?$/;
+const TILE_TEMP_FILE_PATTERN = /^\.tmp_regions_[\w.-]+\.gpkg$/;
 
 function isPathWithinScope(resolvedPath: string, scopeRoot: string): boolean {
   return resolvedPath === scopeRoot || resolvedPath.startsWith(`${scopeRoot}${path.sep}`);
@@ -157,6 +159,22 @@ function removeIfExists(targetPath: string): void {
   fs.rmSync(targetPath, { recursive: true, force: true });
 }
 
+function assertExistingTargetType(targetPath: string, label: string): void {
+  if (!fs.existsSync(targetPath)) {
+    return;
+  }
+
+  const stats = fs.statSync(targetPath);
+
+  if (label === '--output' && !stats.isDirectory()) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label !== '--output' && stats.isDirectory()) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+}
+
 function assertSafeDeletionTarget(targetPath: string, label: string): void {
   const trimmedPath = targetPath.trim();
   if (trimmedPath.length === 0) {
@@ -183,6 +201,7 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
 
   const isWithinTileWorkRoot = isPathWithinScope(resolvedPath, tileWorkRoot);
   const isWithinTempDir = isPathWithinScope(resolvedPath, tempDir);
+  const baseName = path.basename(resolvedPath);
 
   if (path.isAbsolute(trimmedPath)) {
     const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
@@ -198,33 +217,50 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
     if (label !== '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
       throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
     }
+  } else {
+    const relativeSegments = relativeToRepoRoot
+      .split(path.sep)
+      .filter((segment) => segment !== '' && segment !== '.');
 
+    if (
+      trimmedPath === '..' ||
+      trimmedPath.startsWith(`..${path.sep}`) ||
+      relativeSegments.some((segment) => segment === '..')
+    ) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (relativeSegments.length <= 1) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+  }
+
+  if (!isWithinTileWorkRoot && !isWithinTempDir) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label === '--output') {
+    if (!TILE_OUTPUT_DIR_PATTERN.test(baseName)) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (isWithinTileWorkRoot && path.dirname(resolvedPath) !== tileWorkRoot) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    assertExistingTargetType(resolvedPath, label);
     return;
   }
 
-  const relativeSegments = relativeToRepoRoot
-    .split(path.sep)
-    .filter((segment) => segment !== '' && segment !== '.');
-
-  if (
-    trimmedPath === '..' ||
-    trimmedPath.startsWith(`..${path.sep}`) ||
-    relativeSegments.some((segment) => segment === '..')
-  ) {
+  if (!TILE_TEMP_FILE_PATTERN.test(baseName)) {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
-  if (!path.isAbsolute(trimmedPath) && relativeSegments.length <= 1) {
+  if (isWithinTileWorkRoot && path.dirname(resolvedPath) !== tileWorkRoot) {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
-  if (label === '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
-    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
-  }
-
-  if (label !== '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
-    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
-  }
+  assertExistingTargetType(resolvedPath, label);
 }
 
 function ensureParentDir(filePath: string): void {
