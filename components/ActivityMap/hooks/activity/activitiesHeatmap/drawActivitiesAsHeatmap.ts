@@ -24,6 +24,7 @@ const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
 const MAX_COLOR_LUT_SIZE = 65536;
+const MAP_CHANGE_DEBOUNCE_MS = 75;
 
 const SIGNATURE_DECIMALS = 6;
 
@@ -281,28 +282,43 @@ function finishRender(
 
     try {
       const nextUrl = URL.createObjectURL(blob);
+      const previousLayer = currentImageLayerRef.current;
       const previousUrl = currentImageUrlRef.current;
+      const nextLayer = L.imageOverlay(nextUrl, bounds, {
+        pane: 'heatmapPane',
+        opacity: previousLayer ? 0 : 1,
+      }).addTo(map);
 
-      if (currentImageLayerRef.current) {
-        currentImageLayerRef.current.setUrl(nextUrl);
-        if (typeof (currentImageLayerRef.current as L.ImageOverlay).once === 'function') {
-          (currentImageLayerRef.current as L.ImageOverlay).once('load', () => {
-            if (shouldAbort() || activeRenderIdRef.current !== renderId) {
-              return;
-            }
-            currentImageLayerRef.current?.setBounds(bounds);
-          });
-        } else {
-          currentImageLayerRef.current.setBounds(bounds);
+      const commitSwap = (): void => {
+        if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+          if (map.hasLayer(nextLayer)) {
+            map.removeLayer(nextLayer);
+          }
+          if (nextUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(nextUrl);
+          }
+          return;
         }
+
+        if (previousLayer && map.hasLayer(previousLayer)) {
+          map.removeLayer(previousLayer);
+        }
+        if (previousUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(previousUrl);
+        }
+
+        currentImageLayerRef.current = nextLayer;
+        currentImageUrlRef.current = nextUrl;
+        nextLayer.setBounds(bounds);
+        if (previousLayer) {
+          nextLayer.setOpacity(1);
+        }
+      };
+
+      if (previousLayer && typeof (nextLayer as L.ImageOverlay).once === 'function') {
+        (nextLayer as L.ImageOverlay).once('load', commitSwap);
       } else {
-        currentImageLayerRef.current = L.imageOverlay(nextUrl, bounds, {
-          pane: 'heatmapPane',
-        }).addTo(map);
-      }
-      currentImageUrlRef.current = nextUrl;
-      if (previousUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(previousUrl);
+        commitSwap();
       }
 
       if (shouldAbort() || activeRenderIdRef.current !== renderId) {
@@ -448,11 +464,13 @@ function renderHeatmapInternal(
 export function drawActivitiesAsHeatmap(
   map: L.Map | null,
   tracks: Map<string, GPXTrack>,
-  refs: HeatmapRefs
+  refs: HeatmapRefs,
+  options?: {
+    preserveLayerOnCleanup?: boolean;
+  }
 ): () => void {
   const { currentImageLayerRef, currentImageUrlRef, renderAbortRef, renderTimeoutRef } = refs;
-
-  let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
+  const preserveLayerOnCleanup = options?.preserveLayerOnCleanup === true;
 
   const renderHeatmap = (): void => {
     if (!map || typeof map.getBounds !== 'function') {
@@ -471,13 +489,14 @@ export function drawActivitiesAsHeatmap(
   };
 
   const handleMapChange = (): void => {
-    if (zoomChangeTimeout) {
-      clearTimeout(zoomChangeTimeout);
+    if (renderTimeoutRef.current) {
+      clearTimeout(renderTimeoutRef.current);
     }
 
-    zoomChangeTimeout = setTimeout(() => {
+    renderTimeoutRef.current = setTimeout(() => {
       renderHeatmap();
-    }, 0);
+      renderTimeoutRef.current = null;
+    }, MAP_CHANGE_DEBOUNCE_MS);
   };
 
   if (map) {
@@ -497,27 +516,25 @@ export function drawActivitiesAsHeatmap(
       clearTimeout(renderTimeoutRef.current);
     }
 
-    if (zoomChangeTimeout) {
-      clearTimeout(zoomChangeTimeout);
-    }
-
     if (map) {
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
 
-      if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
-        try {
-          map.removeLayer(currentImageLayerRef.current);
-        } catch (e) {
-          logger.warn('Failed to remove image layer during cleanup', e);
+      if (!preserveLayerOnCleanup) {
+        if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
+          try {
+            map.removeLayer(currentImageLayerRef.current);
+          } catch (e) {
+            logger.warn('Failed to remove image layer during cleanup', e);
+          }
         }
-      }
-      currentImageLayerRef.current = null;
-      if (currentImageUrlRef.current) {
-        if (currentImageUrlRef.current.startsWith('blob:')) {
-          URL.revokeObjectURL(currentImageUrlRef.current);
+        currentImageLayerRef.current = null;
+        if (currentImageUrlRef.current) {
+          if (currentImageUrlRef.current.startsWith('blob:')) {
+            URL.revokeObjectURL(currentImageUrlRef.current);
+          }
+          currentImageUrlRef.current = null;
         }
-        currentImageUrlRef.current = null;
       }
     }
   };

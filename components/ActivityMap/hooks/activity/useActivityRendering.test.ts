@@ -32,7 +32,10 @@ describe('useActivityRendering', () => {
     jest.clearAllMocks();
 
     // Create mock map
-    mockMap = {} as L.Map;
+    mockMap = {
+      hasLayer: jest.fn(() => false),
+      removeLayer: jest.fn(),
+    } as unknown as L.Map;
 
     // Create mock tracks
     mockTracks = new Map<string, GPXTrack>();
@@ -59,7 +62,8 @@ describe('useActivityRendering', () => {
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
         layerTransparency: 1,
-      })
+      }),
+      { preserveLayerOnCleanup: true }
     );
   });
 
@@ -171,7 +175,8 @@ describe('useActivityRendering', () => {
     expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
       mockMap,
       multipleTracks,
-      expect.any(Object)
+      expect.any(Object),
+      { preserveLayerOnCleanup: true }
     );
   });
 });

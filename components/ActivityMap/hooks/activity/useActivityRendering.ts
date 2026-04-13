@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import {
   ActivityRenderMode,
@@ -42,9 +42,34 @@ export function useActivityRendering(
   const heatmapContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
+  const clearHeatmapOverlay = useCallback((): void => {
+    if (!map) {
+      currentImageLayerRef.current = null;
+      if (currentImageUrlRef.current?.startsWith('blob:')) {
+        URL.revokeObjectURL(currentImageUrlRef.current);
+      }
+      currentImageUrlRef.current = null;
+      return;
+    }
+
+    if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
+      try {
+        map.removeLayer(currentImageLayerRef.current);
+      } catch (error) {
+        logger.warn('Failed to remove heatmap layer', error);
+      }
+    }
+    currentImageLayerRef.current = null;
+    if (currentImageUrlRef.current?.startsWith('blob:')) {
+      URL.revokeObjectURL(currentImageUrlRef.current);
+    }
+    currentImageUrlRef.current = null;
+    lastRenderSignatureRef.current = null;
+  }, [map]);
 
   useEffect(() => {
     if (!map || !showActivities || tracks.size === 0) {
+      clearHeatmapOverlay();
       logger.debug('Skipping render: map not ready or no tracks');
       return;
     }
@@ -68,9 +93,12 @@ export function useActivityRendering(
         layerTransparency: activityLayerTransparency,
         heatmapColorThresholds,
       };
-      return drawActivitiesAsHeatmap(map, tracks, heatmapRefs);
+      return drawActivitiesAsHeatmap(map, tracks, heatmapRefs, {
+        preserveLayerOnCleanup: true,
+      });
     }
 
+    clearHeatmapOverlay();
     // DEFAULT: Draw as lines
     const linesRefs: LinesRefs = {
       renderAbortRef,
@@ -91,5 +119,12 @@ export function useActivityRendering(
     heatmapDensity,
     activityLineColor,
     heatmapColorThresholds,
+    clearHeatmapOverlay,
   ]);
+
+  useEffect(() => {
+    return () => {
+      clearHeatmapOverlay();
+    };
+  }, [clearHeatmapOverlay]);
 }

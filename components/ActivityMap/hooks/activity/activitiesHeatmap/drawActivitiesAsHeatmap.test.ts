@@ -181,6 +181,23 @@ describe('drawActivitiesAsHeatmap', () => {
 
       expect(() => cleanup()).not.toThrow();
     });
+
+    it('should preserve existing layer on cleanup when configured', () => {
+      const existingLayer = { mock: 'existing' };
+      currentImageLayerRef.current = existingLayer;
+      currentImageUrlRef.current = 'blob:preserve';
+      mockMap.hasLayer.mockReturnValue(true);
+
+      const cleanup = drawActivitiesAsHeatmap(mockMap, mockTracks, refs, {
+        preserveLayerOnCleanup: true,
+      });
+
+      cleanup();
+
+      expect(mockMap.removeLayer).not.toHaveBeenCalledWith(existingLayer);
+      expect(currentImageLayerRef.current).toBe(existingLayer);
+      expect(currentImageUrlRef.current).toBe('blob:preserve');
+    });
   });
 
   describe('Input validation', () => {
