@@ -41,6 +41,7 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageUrlRef: RefObject<string | null>;
   activeRenderIdRef: RefObject<number>;
   heatmapDensity: number;
+  edgeSmoothingEnabled: boolean;
   lineThickness: number;
   layerTransparency: number;
   heatmapColorThresholds?: ColorThreshold[];

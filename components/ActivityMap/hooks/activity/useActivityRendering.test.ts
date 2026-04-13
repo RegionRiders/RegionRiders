@@ -59,6 +59,7 @@ describe('useActivityRendering', () => {
         renderAbortRef: expect.any(Object),
         renderTimeoutRef: expect.any(Object),
         layerTransparency: 1,
+        edgeSmoothingEnabled: false,
       })
     );
   });

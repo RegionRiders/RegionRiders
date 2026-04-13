@@ -43,6 +43,7 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.activityThickness,
     settings.activityLayerTransparency ?? 1,
     settings.heatmapDensity,
+    settings.activityHeatmapEdgeSmoothing ?? false,
     settings.lineColorSwatches?.[settings.selectedLineSwatchIndex] ??
       DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0],
     settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex ?? 0] ??

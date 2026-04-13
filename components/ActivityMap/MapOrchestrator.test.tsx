@@ -105,6 +105,7 @@ describe('MapOrchestrator', () => {
       defaultSettings.activityThickness,
       defaultSettings.activityLayerTransparency ?? 1,
       defaultSettings.heatmapDensity,
+      defaultSettings.activityHeatmapEdgeSmoothing ?? false,
       defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex],
       defaultSettings.activityHeatmapColorSwatches?.[
         defaultSettings.selectedActivityHeatmapSwatchIndex ?? 0
@@ -148,6 +149,7 @@ describe('MapOrchestrator', () => {
       customSettings.activityThickness,
       customSettings.activityLayerTransparency ?? 1,
       customSettings.heatmapDensity,
+      customSettings.activityHeatmapEdgeSmoothing ?? false,
       customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex],
       customSettings.activityHeatmapColorSwatches?.[
         customSettings.selectedActivityHeatmapSwatchIndex ?? 0

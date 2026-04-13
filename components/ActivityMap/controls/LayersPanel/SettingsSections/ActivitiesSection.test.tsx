@@ -201,6 +201,17 @@ describe('ActivitiesSection', () => {
       expect(screen.getByText(/Heatmap pixel density:/)).toBeInTheDocument();
     });
 
+    it('should show heatmap edge smoothing toggle in heatmap mode', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      expect(screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' })).toBeInTheDocument();
+    });
+
     it('should not show heatmap density slider in lines mode', () => {
       const settings = { ...defaultSettings, activityMode: 'lines' as const };
       render(
@@ -208,6 +219,29 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
+    });
+
+    it('should not show heatmap edge smoothing toggle in lines mode', () => {
+      const settings = { ...defaultSettings, activityMode: 'lines' as const };
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(
+        screen.queryByRole('switch', { name: 'Toggle heatmap edge smoothing' })
+      ).not.toBeInTheDocument();
+    });
+
+    it('should call onSettingChange when heatmap edge smoothing toggle changes', () => {
+      render(
+        <ActivitiesSectionWrapper
+          settings={defaultSettings}
+          onSettingChange={mockOnSettingChange}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' }));
+      expect(mockOnSettingChange).toHaveBeenCalledWith('activityHeatmapEdgeSmoothing', true);
     });
 
     it('should show heatmap color scheme section in heatmap mode', () => {

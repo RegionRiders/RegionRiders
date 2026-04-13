@@ -194,6 +194,19 @@ export function ActivitiesSection({
             </div>
           )}
 
+          {settings.activityMode === 'heatmap' && (
+            <Group justify="space-between">
+              <Text size="sm">Heatmap edge smoothing</Text>
+              <Switch
+                checked={settings.activityHeatmapEdgeSmoothing ?? false}
+                onChange={(e) =>
+                  onSettingChange('activityHeatmapEdgeSmoothing', e.currentTarget.checked)
+                }
+                aria-label="Toggle heatmap edge smoothing"
+              />
+            </Group>
+          )}
+
           {settings.activityMode === 'lines' && (
             <ColorSchemeSwatchesGrid
               mode="static"

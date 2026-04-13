@@ -32,7 +32,8 @@ function finishRender(
   map: L.Map,
   lineThickness: number = 2,
   layerTransparency: number = 1,
-  colorThresholds?: ColorThreshold[]
+  colorThresholds?: ColorThreshold[],
+  edgeSmoothingEnabled: boolean = false
 ): void {
   if (shouldAbort()) {
     return;
@@ -79,6 +80,9 @@ function finishRender(
   const minY = touchedBounds ? Math.max(0, touchedBounds.minY) : 0;
   const maxX = touchedBounds ? Math.min(canvasWidth - 1, touchedBounds.maxX) : canvasWidth - 1;
   const maxY = touchedBounds ? Math.min(canvasHeight - 1, touchedBounds.maxY) : canvasHeight - 1;
+  const colorMappingCache = new Map<number, [number, number, number, number]>();
+  const effectiveColorThresholds =
+    colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined;
 
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
@@ -88,25 +92,38 @@ function finishRender(
         continue;
       }
 
-      const [r, g, b, a] = getHeatmapColorForCount(
-        count,
-        currentZoom,
-        lineThickness,
-        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-      );
+      const cachedColor = colorMappingCache.get(count);
+      const [r, g, b, alphaByte] = cachedColor
+        ? cachedColor
+        : (() => {
+            const [nextR, nextG, nextB, nextA] = getHeatmapColorForCount(
+              count,
+              currentZoom,
+              lineThickness,
+              effectiveColorThresholds
+            );
+            const mappedColor: [number, number, number, number] = [
+              nextR,
+              nextG,
+              nextB,
+              Math.round(nextA * layerTransparency * 255),
+            ];
+            colorMappingCache.set(count, mappedColor);
+            return mappedColor;
+          })();
       const pixelIndex = i * 4;
 
       data[pixelIndex] = r;
       data[pixelIndex + 1] = g;
       data[pixelIndex + 2] = b;
-      data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+      data[pixelIndex + 3] = alphaByte;
     }
   }
 
   const touchedArea = (maxX - minX + 1) * (maxY - minY + 1);
   const totalArea = canvasWidth * canvasHeight;
   const smoothingAllowed = touchedArea / totalArea <= SMOOTHING_ADAPTIVE_THRESHOLD;
-  if (touchedBounds && smoothingAllowed) {
+  if (edgeSmoothingEnabled && touchedBounds && smoothingAllowed) {
     smoothHeatmapEdges(data, accumulator, canvasWidth, canvasHeight, touchedBounds);
   }
 
@@ -255,11 +272,12 @@ function renderHeatmapInternal(
           refs.activeRenderIdRef,
           renderId,
           shouldAbort,
-          map,
-          lineThickness,
-          refs.layerTransparency,
-          refs.heatmapColorThresholds
-        )
+            map,
+            lineThickness,
+            refs.layerTransparency,
+            refs.heatmapColorThresholds,
+            refs.edgeSmoothingEnabled
+          )
     );
   } catch (error) {
     logger.error(`Error rendering heatmap: ${error}`);

@@ -23,6 +23,7 @@ export function useActivityRendering(
   activityThickness: number = 3,
   activityLayerTransparency: number = 1,
   heatmapDensity: number = 2,
+  activityHeatmapEdgeSmoothing: boolean = false,
   activityLineColor: LineColorSwatch = {
     normal: [255, 0, 0, 0.5],
     hover: [255, 100, 100, 0.7],
@@ -52,6 +53,7 @@ export function useActivityRendering(
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,
+        edgeSmoothingEnabled: activityHeatmapEdgeSmoothing,
         lineThickness: activityThickness,
         layerTransparency: activityLayerTransparency,
         heatmapColorThresholds,
@@ -77,6 +79,7 @@ export function useActivityRendering(
     activityThickness,
     activityLayerTransparency,
     heatmapDensity,
+    activityHeatmapEdgeSmoothing,
     activityLineColor,
     heatmapColorThresholds,
   ]);

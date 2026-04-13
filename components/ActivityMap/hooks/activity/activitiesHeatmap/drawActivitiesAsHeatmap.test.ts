@@ -100,6 +100,7 @@ describe('drawActivitiesAsHeatmap', () => {
       renderTimeoutRef,
       activeRenderIdRef,
       heatmapDensity: 2,
+      edgeSmoothingEnabled: false,
       lineThickness: 3,
       layerTransparency: 1,
     } as HeatmapRefs;
