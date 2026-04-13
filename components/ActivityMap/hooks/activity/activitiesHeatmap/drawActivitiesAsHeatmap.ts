@@ -203,7 +203,9 @@ function finishRender(
       imageLayerRef.current = null;
     }
     if (imageUrlRef.current) {
-      URL.revokeObjectURL(imageUrlRef.current);
+      if (imageUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
       imageUrlRef.current = null;
     }
   }
@@ -267,7 +269,7 @@ function finishRender(
         pane: 'heatmapPane',
       }).addTo(map);
     }
-    currentImageUrlRef.current = null;
+    currentImageUrlRef.current = imageUrl;
 
     if (shouldAbort() || activeRenderIdRef.current !== renderId) {
       return;
@@ -476,7 +478,9 @@ export function drawActivitiesAsHeatmap(
         }
       }
       if (currentImageUrlRef.current) {
-        URL.revokeObjectURL(currentImageUrlRef.current);
+        if (currentImageUrlRef.current.startsWith('blob:')) {
+          URL.revokeObjectURL(currentImageUrlRef.current);
+        }
         currentImageUrlRef.current = null;
       }
     }
