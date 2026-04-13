@@ -39,17 +39,25 @@ describe('processTracksChunked', () => {
       maxY: -Infinity,
     };
     const onComplete = jest.fn();
-    const latlngToPixel = jest
-      .fn()
-      .mockReturnValueOnce({ x: 103.4, y: 50 })
-      .mockReturnValueOnce({ x: 103.6, y: 51 });
+    const projectedTracks = new Map([
+      [
+        'track-1',
+        [
+          { x: 103.4, y: 50 },
+          { x: 103.6, y: 51 },
+        ],
+      ],
+    ]);
 
     processTracksChunked(
       tracksArray,
       accumulator,
       100,
       100,
-      latlngToPixel,
+      projectedTracks,
+      0,
+      0,
+      1,
       5,
       () => false,
       touchedBounds,

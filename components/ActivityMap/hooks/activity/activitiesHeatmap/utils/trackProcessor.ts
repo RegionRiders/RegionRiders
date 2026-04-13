@@ -1,5 +1,5 @@
 import { drawLineToAccumulator } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/drawLineToAccumulator';
-import { PixelBounds } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import { PixelBounds, PixelPoint } from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { GPXTrack } from '@/lib/types';
 
@@ -27,7 +27,10 @@ export function processTracksChunked(
   accumulator: Float32Array,
   canvasWidth: number,
   canvasHeight: number,
-  latlngToPixel: (lat: number, lon: number) => { x: number; y: number },
+  projectedTracks: Map<string, PixelPoint[]>,
+  topLeftX: number,
+  topLeftY: number,
+  heatmapDensity: number,
   lineThickness: number,
   shouldAbort: () => boolean,
   touchedBounds: PixelBounds,
@@ -70,27 +73,34 @@ export function processTracksChunked(
     let processedTracks = 0;
     while (trackIndex < tracksArray.length) {
       const track = tracksArray[trackIndex];
-      const points = track.points;
+      const projectedPoints = projectedTracks.get(track.id);
+      const pointCount = projectedPoints?.length ?? 0;
 
-      if (points && points.length > 0) {
-        while (segmentIndex < points.length - 1) {
-          const p1 = latlngToPixel(points[segmentIndex].lat, points[segmentIndex].lon);
-          const p2 = latlngToPixel(points[segmentIndex + 1].lat, points[segmentIndex + 1].lon);
-          if (!isOutsideViewport(p1.x, p1.y, p2.x, p2.y, canvasWidth, canvasHeight)) {
+      if (projectedPoints && pointCount > 1) {
+        let previousX = (projectedPoints[segmentIndex].x - topLeftX) * heatmapDensity;
+        let previousY = (projectedPoints[segmentIndex].y - topLeftY) * heatmapDensity;
+
+        while (segmentIndex < pointCount - 1) {
+          const nextProjected = projectedPoints[segmentIndex + 1];
+          const nextX = (nextProjected.x - topLeftX) * heatmapDensity;
+          const nextY = (nextProjected.y - topLeftY) * heatmapDensity;
+          if (!isOutsideViewport(previousX, previousY, nextX, nextY, canvasWidth, canvasHeight)) {
             drawLineToAccumulator(
               accumulator,
               canvasWidth,
               canvasHeight,
-              p1.x,
-              p1.y,
-              p2.x,
-              p2.y,
+              previousX,
+              previousY,
+              nextX,
+              nextY,
               lineThickness,
               touchedBounds
             );
           }
 
           segmentIndex++;
+          previousX = nextX;
+          previousY = nextY;
           // Check elapsed frame budget every N segments to avoid expensive timer reads per segment.
           if (
             segmentIndex % SEGMENT_CHECK_INTERVAL === 0 &&

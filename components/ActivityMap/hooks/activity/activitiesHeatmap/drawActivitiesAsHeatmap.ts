@@ -2,8 +2,6 @@
 
 import type { RefObject } from 'react';
 import L from 'leaflet';
-import { createLatLngToPixelConverter } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasProjection';
-import { createCanvasContext } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasSetup';
 import { validateCanvasDimensions } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/canvasValidation';
 import { logDimensionError } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/dimensionLogging';
 import { getHeatmapColorForCount } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/getHeatmapColorForCount';
@@ -12,12 +10,148 @@ import { processTracksChunked } from '@/components/ActivityMap/hooks/activity/ac
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
-import { CanvasDimensions, HeatmapRefs, PixelBounds, RenderState } from '../activityTypes';
+import {
+  CanvasDimensions,
+  HeatmapRefs,
+  PixelBounds,
+  PixelPoint,
+  ProjectedTrackCacheEntry,
+  RenderState,
+} from '../activityTypes';
 import { ensureMapPane } from '../utils/ensureMapPane';
 
 const logger = createComponentLogger('drawActivitiesAsHeatmap');
 // Skip smoothing when touched area exceeds half the canvas to avoid expensive full-frame post-processing.
 const SMOOTHING_ADAPTIVE_THRESHOLD = 0.5;
+const MAX_COLOR_LUT_SIZE = 65536;
+const MAP_CHANGE_DEBOUNCE_MS = 75;
+
+const SIGNATURE_DECIMALS = 6;
+
+function getTrackShapeSignature(track: GPXTrack): string {
+  const points = track.points ?? [];
+  if (points.length === 0) {
+    return '0';
+  }
+  const first = points[0];
+  const last = points[points.length - 1];
+  return `${points.length}:${first.lat},${first.lon}:${last.lat},${last.lon}`;
+}
+
+function getOrCreateRenderSurface(
+  refs: HeatmapRefs,
+  width: number,
+  height: number
+): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
+  let canvas = refs.heatmapCanvasRef.current;
+  let ctx = refs.heatmapContextRef.current;
+  const needsResize = !canvas || !ctx || canvas.width !== width || canvas.height !== height;
+
+  if (needsResize) {
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      refs.heatmapCanvasRef.current = canvas;
+    }
+    canvas.width = width;
+    canvas.height = height;
+    ctx = canvas.getContext('2d');
+    refs.heatmapContextRef.current = ctx;
+  }
+
+  if (!canvas || !ctx) {
+    logger.error('Failed to get canvas context');
+    return null;
+  }
+
+  return { canvas, ctx };
+}
+
+function getOrCreateProjectedPoints(
+  map: L.Map,
+  track: GPXTrack,
+  zoom: number,
+  projectedTrackCacheRef: RefObject<Map<string, ProjectedTrackCacheEntry>>
+): PixelPoint[] {
+  const trackShapeSignature = getTrackShapeSignature(track);
+  const cache = projectedTrackCacheRef.current;
+  const cached = cache.get(track.id);
+  if (cached && cached.zoom === zoom && cached.trackShapeSignature === trackShapeSignature) {
+    return cached.projectedPoints;
+  }
+
+  const projectedPoints = (track.points ?? []).map((point) => {
+    const projected = map.project({ lat: point.lat, lng: point.lon }, zoom);
+    return { x: projected.x, y: projected.y };
+  });
+  cache.set(track.id, { zoom, trackShapeSignature, projectedPoints });
+  return projectedPoints;
+}
+
+function buildColorLut(
+  maxCount: number,
+  currentZoom: number,
+  lineThickness: number,
+  colorThresholds?: ColorThreshold[]
+): Uint8ClampedArray {
+  const cappedMaxCount = Math.min(maxCount, MAX_COLOR_LUT_SIZE - 1);
+  const lut = new Uint8ClampedArray((cappedMaxCount + 1) * 4);
+  for (let count = 1; count <= cappedMaxCount; count++) {
+    const [r, g, b, a] = getHeatmapColorForCount(
+      count,
+      currentZoom,
+      lineThickness,
+      colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+    );
+    const lutIndex = count * 4;
+    lut[lutIndex] = r;
+    lut[lutIndex + 1] = g;
+    lut[lutIndex + 2] = b;
+    lut[lutIndex + 3] = Math.round(a * 255);
+  }
+  return lut;
+}
+
+function buildRenderSignature(
+  map: L.Map,
+  tracks: Map<string, GPXTrack>,
+  refs: HeatmapRefs
+): string {
+  const bounds = map.getBounds();
+  const north =
+    typeof (bounds as L.LatLngBounds).getNorth === 'function'
+      ? (bounds as L.LatLngBounds).getNorth()
+      : bounds.getNorthWest().lat;
+  const south =
+    typeof (bounds as L.LatLngBounds).getSouth === 'function'
+      ? (bounds as L.LatLngBounds).getSouth()
+      : bounds.getSouthEast().lat;
+  const west =
+    typeof (bounds as L.LatLngBounds).getWest === 'function'
+      ? (bounds as L.LatLngBounds).getWest()
+      : bounds.getNorthWest().lng;
+  const east =
+    typeof (bounds as L.LatLngBounds).getEast === 'function'
+      ? (bounds as L.LatLngBounds).getEast()
+      : bounds.getSouthEast().lng;
+  const thresholdSignature = (refs.heatmapColorThresholds ?? [])
+    .map(({ threshold, color }) => `${threshold}:${color.join(',')}`)
+    .join('|');
+  const trackSignature = Array.from(tracks.values())
+    .map((track) => `${track.id}:${getTrackShapeSignature(track)}`)
+    .join('|');
+
+  return [
+    map.getZoom(),
+    refs.heatmapDensity,
+    refs.lineThickness,
+    north.toFixed(SIGNATURE_DECIMALS),
+    south.toFixed(SIGNATURE_DECIMALS),
+    west.toFixed(SIGNATURE_DECIMALS),
+    east.toFixed(SIGNATURE_DECIMALS),
+    thresholdSignature,
+    trackSignature,
+  ].join('~');
+}
 
 /**
  * Renders accumulator data as image and adds to map
@@ -70,7 +204,9 @@ function finishRender(
       imageLayerRef.current = null;
     }
     if (imageUrlRef.current) {
-      URL.revokeObjectURL(imageUrlRef.current);
+      if (imageUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
       imageUrlRef.current = null;
     }
   }
@@ -80,26 +216,46 @@ function finishRender(
   const maxX = touchedBounds ? Math.min(canvasWidth - 1, touchedBounds.maxX) : canvasWidth - 1;
   const maxY = touchedBounds ? Math.min(canvasHeight - 1, touchedBounds.maxY) : canvasHeight - 1;
 
+  let maxCount = 0;
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const count = Math.floor(accumulator[y * canvasWidth + x]);
+      if (count > maxCount) {
+        maxCount = count;
+      }
+    }
+  }
+  const colorLut = buildColorLut(maxCount, currentZoom, lineThickness, colorThresholds);
+
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       const i = y * canvasWidth + x;
-      const count = accumulator[i];
+      const count = Math.floor(accumulator[i]);
       if (count === 0) {
         continue;
       }
 
-      const [r, g, b, a] = getHeatmapColorForCount(
-        count,
-        currentZoom,
-        lineThickness,
-        colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
-      );
       const pixelIndex = i * 4;
+      if (count >= MAX_COLOR_LUT_SIZE) {
+        const [r, g, b, a] = getHeatmapColorForCount(
+          count,
+          currentZoom,
+          lineThickness,
+          colorThresholds && colorThresholds.length > 0 ? colorThresholds : undefined
+        );
+        data[pixelIndex] = r;
+        data[pixelIndex + 1] = g;
+        data[pixelIndex + 2] = b;
+        data[pixelIndex + 3] = Math.round(a * 255);
+        continue;
+      }
 
-      data[pixelIndex] = r;
-      data[pixelIndex + 1] = g;
-      data[pixelIndex + 2] = b;
-      data[pixelIndex + 3] = Math.round(a * layerTransparency * 255);
+      const lutIndex = count * 4;
+
+      data[pixelIndex] = colorLut[lutIndex];
+      data[pixelIndex + 1] = colorLut[lutIndex + 1];
+      data[pixelIndex + 2] = colorLut[lutIndex + 2];
+      data[pixelIndex + 3] = colorLut[lutIndex + 3];
     }
   }
 
@@ -111,35 +267,58 @@ function finishRender(
   }
 
   ctx.putImageData(imageData, 0, 0);
-  const imageSource = state.canvas;
-
-  imageSource.toBlob((blob) => {
+  state.canvas.toBlob((blob) => {
     if (!blob || shouldAbort() || activeRenderIdRef.current !== renderId) {
       return;
     }
+
     try {
-      const imageUrl = URL.createObjectURL(blob);
-      const nextLayer = L.imageOverlay(imageUrl, bounds, {
-        pane: 'heatmapPane',
-      }).addTo(map);
-
-      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
-        if (map.hasLayer(nextLayer)) {
-          map.removeLayer(nextLayer);
-        }
-        URL.revokeObjectURL(imageUrl);
-        return;
-      }
-
+      const nextUrl = URL.createObjectURL(blob);
       const previousLayer = currentImageLayerRef.current;
       const previousUrl = currentImageUrlRef.current;
-      currentImageLayerRef.current = nextLayer;
-      currentImageUrlRef.current = imageUrl;
-      if (previousLayer && map.hasLayer(previousLayer)) {
-        map.removeLayer(previousLayer);
+      const targetOpacity =
+        previousLayer && typeof previousLayer.options.opacity === 'number'
+          ? previousLayer.options.opacity
+          : layerTransparency;
+      const nextLayer = L.imageOverlay(nextUrl, bounds, {
+        pane: 'heatmapPane',
+        opacity: previousLayer ? 0 : targetOpacity,
+      }).addTo(map);
+
+      const commitSwap = (): void => {
+        if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+          if (map.hasLayer(nextLayer)) {
+            map.removeLayer(nextLayer);
+          }
+          if (nextUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(nextUrl);
+          }
+          return;
+        }
+
+        if (previousLayer && map.hasLayer(previousLayer)) {
+          map.removeLayer(previousLayer);
+        }
+        if (previousUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(previousUrl);
+        }
+
+        currentImageLayerRef.current = nextLayer;
+        currentImageUrlRef.current = nextUrl;
+        nextLayer.setBounds(bounds);
+        if (previousLayer) {
+          nextLayer.setOpacity(targetOpacity);
+        }
+      };
+
+      if (previousLayer && typeof (nextLayer as L.ImageOverlay).once === 'function') {
+        (nextLayer as L.ImageOverlay).once('load', commitSwap);
+      } else {
+        commitSwap();
       }
-      if (previousUrl) {
-        URL.revokeObjectURL(previousUrl);
+
+      if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+        return;
       }
 
       const totalDuration = (performance.now() - state.renderStartTime).toFixed(2);
@@ -198,20 +377,21 @@ function renderHeatmapInternal(
       return;
     }
 
-    const canvasResult = createCanvasContext(canvasWidth, canvasHeight, logger);
+    const canvasResult = getOrCreateRenderSurface(refs, canvasWidth, canvasHeight);
     if (!canvasResult) {
       return;
     }
 
     const { canvas, ctx } = canvasResult;
     const accumulator = new Float32Array(canvasWidth * canvasHeight);
-    const latlngToPixel = createLatLngToPixelConverter(
-      map,
-      topLeft,
-      refs.heatmapDensity,
-      currentZoom
-    );
     const tracksArray = Array.from(tracks.values());
+    const projectedTracks = new Map<string, PixelPoint[]>();
+    for (const track of tracksArray) {
+      projectedTracks.set(
+        track.id,
+        getOrCreateProjectedPoints(map, track, currentZoom, refs.projectedTrackCacheRef)
+      );
+    }
     const touchedBounds: PixelBounds = {
       minX: canvasWidth,
       minY: canvasHeight,
@@ -240,7 +420,10 @@ function renderHeatmapInternal(
       accumulator,
       canvasWidth,
       canvasHeight,
-      latlngToPixel,
+      projectedTracks,
+      topLeft.x,
+      topLeft.y,
+      refs.heatmapDensity,
       lineThickness,
       shouldAbort,
       touchedBounds,
@@ -277,28 +460,39 @@ function renderHeatmapInternal(
 export function drawActivitiesAsHeatmap(
   map: L.Map | null,
   tracks: Map<string, GPXTrack>,
-  refs: HeatmapRefs
+  refs: HeatmapRefs,
+  options?: {
+    preserveLayerOnCleanup?: boolean;
+  }
 ): () => void {
   const { currentImageLayerRef, currentImageUrlRef, renderAbortRef, renderTimeoutRef } = refs;
-
-  let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
+  const preserveLayerOnCleanup = options?.preserveLayerOnCleanup === true;
 
   const renderHeatmap = (): void => {
-    if (!map) {
+    if (!map || typeof map.getBounds !== 'function') {
       return;
     }
+    const renderSignature = buildRenderSignature(map, tracks, refs);
+    if (
+      refs.lastRenderSignatureRef.current === renderSignature &&
+      refs.currentImageLayerRef.current !== null
+    ) {
+      return;
+    }
+    refs.lastRenderSignatureRef.current = renderSignature;
     refs.activeRenderIdRef.current += 1;
     renderHeatmapInternal(map, tracks, refs, refs.lineThickness, refs.activeRenderIdRef.current);
   };
 
   const handleMapChange = (): void => {
-    if (zoomChangeTimeout) {
-      clearTimeout(zoomChangeTimeout);
+    if (renderTimeoutRef.current) {
+      clearTimeout(renderTimeoutRef.current);
     }
 
-    zoomChangeTimeout = setTimeout(() => {
+    renderTimeoutRef.current = setTimeout(() => {
       renderHeatmap();
-    }, 0);
+      renderTimeoutRef.current = null;
+    }, MAP_CHANGE_DEBOUNCE_MS);
   };
 
   if (map) {
@@ -318,24 +512,25 @@ export function drawActivitiesAsHeatmap(
       clearTimeout(renderTimeoutRef.current);
     }
 
-    if (zoomChangeTimeout) {
-      clearTimeout(zoomChangeTimeout);
-    }
-
     if (map) {
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
 
-      if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
-        try {
-          map.removeLayer(currentImageLayerRef.current);
-        } catch (e) {
-          logger.warn('Failed to remove image layer during cleanup', e);
+      if (!preserveLayerOnCleanup) {
+        if (currentImageLayerRef.current && map.hasLayer(currentImageLayerRef.current)) {
+          try {
+            map.removeLayer(currentImageLayerRef.current);
+          } catch (e) {
+            logger.warn('Failed to remove image layer during cleanup', e);
+          }
         }
-      }
-      if (currentImageUrlRef.current) {
-        URL.revokeObjectURL(currentImageUrlRef.current);
-        currentImageUrlRef.current = null;
+        currentImageLayerRef.current = null;
+        if (currentImageUrlRef.current) {
+          if (currentImageUrlRef.current.startsWith('blob:')) {
+            URL.revokeObjectURL(currentImageUrlRef.current);
+          }
+          currentImageUrlRef.current = null;
+        }
       }
     }
   };
