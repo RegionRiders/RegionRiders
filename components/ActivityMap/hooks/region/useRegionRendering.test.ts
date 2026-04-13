@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import L from 'leaflet';
+import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import {
   getRegionFeatureId,
   getUnvisitedRegionStyle,
@@ -249,13 +250,30 @@ describe('useRegionRendering', () => {
 
   it('restyles the live layer for style-only setting changes without recreating it', () => {
     visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 5 }]]);
-    const updatedHeatmapThresholds = [
+    const updatedHeatmapThresholds: ColorThreshold[] = [
       { threshold: 0, color: [12, 12, 12, 0.18] as [number, number, number, number] },
       { threshold: 1, color: [210, 40, 40, 0.4] as [number, number, number, number] },
     ];
+    type StyleOnlyProps = {
+      currentMode: 'static' | 'heatmap';
+      currentBorderThickness: number;
+      currentTransparency: number;
+      currentHeatmapThresholds: ColorThreshold[];
+    };
+    const initialProps: StyleOnlyProps = {
+      currentMode: 'static',
+      currentBorderThickness: 2,
+      currentTransparency: 1,
+      currentHeatmapThresholds: [],
+    };
 
-    const { rerender } = renderHook(
-      ({ currentMode, currentBorderThickness, currentTransparency, currentHeatmapThresholds }) =>
+    const { rerender } = renderHook<void, StyleOnlyProps>(
+      ({
+        currentMode,
+        currentBorderThickness,
+        currentTransparency,
+        currentHeatmapThresholds,
+      }: StyleOnlyProps) =>
         useRegionRendering(
           mockMap,
           visitData,
@@ -268,12 +286,7 @@ describe('useRegionRendering', () => {
           onTileError
         ),
       {
-        initialProps: {
-          currentMode: 'static' as const,
-          currentBorderThickness: 2,
-          currentTransparency: 1,
-          currentHeatmapThresholds: [],
-        },
+        initialProps,
       }
     );
 

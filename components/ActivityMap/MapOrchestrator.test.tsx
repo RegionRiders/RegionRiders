@@ -225,10 +225,10 @@ describe('MapOrchestrator', () => {
   });
 
   it('falls back to the default placeholder region swatch when custom swatches are absent', () => {
-    const settingsWithoutRegionSwatches: MapSettings = {
+    const settingsWithoutRegionSwatches = {
       ...defaultSettings,
       regionStaticColorSwatches: undefined,
-    };
+    } as unknown as MapSettings;
 
     render(
       <MapOrchestrator
