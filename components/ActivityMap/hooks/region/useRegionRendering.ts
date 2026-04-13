@@ -244,17 +244,42 @@ export function useRegionRendering(
     () => getEffectiveHeatmapColors(regionHeatmapColor),
     [heatmapColorSignature]
   );
+  const styleSettingsRef = useRef({
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    effectiveStaticColors,
+    effectiveHeatmapColors,
+  });
+  const visitDataRef = useRef(visitData);
+
+  styleSettingsRef.current = {
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    effectiveStaticColors,
+    effectiveHeatmapColors,
+  };
+  visitDataRef.current = visitData;
 
   const applyVisitedRegionStyles = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
     if (!layerToUpdate.setFeatureStyle || !layerToUpdate.resetFeatureStyle) {
       return;
     }
 
-    const nextVisitedIds = getVisitedRegionIds(visitData);
+    const {
+      mode: currentMode,
+      regionBorderThickness: currentBorderThickness,
+      regionLayerTransparency: currentLayerTransparency,
+      effectiveStaticColors: currentStaticColors,
+      effectiveHeatmapColors: currentHeatmapColors,
+    } = styleSettingsRef.current;
+    const currentVisitData = visitDataRef.current;
+    const nextVisitedIds = getVisitedRegionIds(currentVisitData);
     const previousVisitedIds = previousVisitedIdsRef.current;
 
     nextVisitedIds.forEach((regionId) => {
-      const visit = visitData.get(regionId);
+      const visit = currentVisitData.get(regionId);
 
       if (visit) {
         layerToUpdate.setFeatureStyle?.(
@@ -262,11 +287,11 @@ export function useRegionRendering(
           getVisitedRegionStyle(
             config,
             visit,
-            mode,
-            regionBorderThickness,
-            regionLayerTransparency,
-            effectiveStaticColors,
-            effectiveHeatmapColors,
+            currentMode,
+            currentBorderThickness,
+            currentLayerTransparency,
+            currentStaticColors,
+            currentHeatmapColors,
             zoom
           )
         );
@@ -283,13 +308,20 @@ export function useRegionRendering(
   };
 
   const applyLayerStyles = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
+    const {
+      mode: currentMode,
+      regionBorderThickness: currentBorderThickness,
+      regionLayerTransparency: currentLayerTransparency,
+      effectiveStaticColors: currentStaticColors,
+      effectiveHeatmapColors: currentHeatmapColors,
+    } = styleSettingsRef.current;
     const nextBaseStyle = getUnvisitedRegionStyle(
       config,
-      mode,
-      regionBorderThickness,
-      regionLayerTransparency,
-      effectiveStaticColors,
-      effectiveHeatmapColors,
+      currentMode,
+      currentBorderThickness,
+      currentLayerTransparency,
+      currentStaticColors,
+      currentHeatmapColors,
       zoom
     );
 
@@ -414,11 +446,6 @@ export function useRegionRendering(
     showRegions,
     config,
     profile,
-    mode,
-    regionBorderThickness,
-    regionLayerTransparency,
-    staticColorSignature,
-    heatmapColorSignature,
     onTileError,
   ]);
 

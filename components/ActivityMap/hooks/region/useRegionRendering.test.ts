@@ -247,6 +247,67 @@ describe('useRegionRendering', () => {
     );
   });
 
+  it('restyles the live layer for style-only setting changes without recreating it', () => {
+    visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 5 }]]);
+    const updatedHeatmapThresholds = [
+      { threshold: 0, color: [12, 12, 12, 0.18] as [number, number, number, number] },
+      { threshold: 1, color: [210, 40, 40, 0.4] as [number, number, number, number] },
+    ];
+
+    const { rerender } = renderHook(
+      ({ currentMode, currentBorderThickness, currentTransparency, currentHeatmapThresholds }) =>
+        useRegionRendering(
+          mockMap,
+          visitData,
+          true,
+          currentMode,
+          currentBorderThickness,
+          currentTransparency,
+          [],
+          currentHeatmapThresholds,
+          onTileError
+        ),
+      {
+        initialProps: {
+          currentMode: 'static' as const,
+          currentBorderThickness: 2,
+          currentTransparency: 1,
+          currentHeatmapThresholds: [],
+        },
+      }
+    );
+
+    redraw.mockClear();
+    setFeatureStyle.mockClear();
+
+    rerender({
+      currentMode: 'heatmap' as const,
+      currentBorderThickness: 5,
+      currentTransparency: 0.35,
+      currentHeatmapThresholds: updatedHeatmapThresholds,
+    });
+
+    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
+    expect(redraw).toHaveBeenCalledTimes(1);
+    expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(
+      expect.objectContaining({
+        weight: 5,
+        opacity: 0.35,
+        fillOpacity: 0.35,
+      })
+    );
+    expect(setFeatureStyle).toHaveBeenCalledWith(
+      'RR1::PL::POM::001',
+      expect.objectContaining({
+        weight: 5,
+        opacity: 0.35,
+        fillOpacity: 0.35,
+        color: 'rgba(210,40,40,1)',
+        fillColor: 'rgba(210,40,40,0.4)',
+      })
+    );
+  });
+
   it('restyles the existing layer on zoom changes without recreating it', () => {
     renderHook(() =>
       useRegionRendering(mockMap, visitData, true, 'static', 2, 0.4, [], [], onTileError)
