@@ -73,6 +73,38 @@ function getRegionStyleColors(
   return getRegionColorsStatic(visit, getEffectiveStaticColors(regionStaticColor));
 }
 
+function getColorAlpha(color: string): number | null {
+  const rgbaMatch = color.match(
+    /^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*([0-9]*\.?[0-9]+)\s*)?\)$/i
+  );
+
+  if (!rgbaMatch) {
+    return null;
+  }
+
+  if (rgbaMatch[1] === undefined) {
+    return 1;
+  }
+
+  const alpha = Number(rgbaMatch[1]);
+
+  return Number.isFinite(alpha) ? alpha : null;
+}
+
+function getVisibleFillColor(
+  fillColor: string,
+  strokeOpacity: number,
+  config: ReturnType<typeof getRegionTileProfileConfig>
+): string {
+  const fillAlpha = getColorAlpha(fillColor);
+
+  if (strokeOpacity > 0 || fillAlpha === null || fillAlpha > 0) {
+    return fillColor;
+  }
+
+  return config.style.fillColor;
+}
+
 function getRegionStrokeOpacity(
   currentZoom: number,
   config: ReturnType<typeof getRegionTileProfileConfig>,
@@ -122,13 +154,15 @@ function getUnvisitedRegionStyle(
     regionStaticColor,
     regionHeatmapColor
   );
+  const opacity = getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency);
+  const fillOpacity = getRegionFillOpacity(currentZoom, config, regionLayerTransparency);
 
   return {
     color: strokeColor,
     weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
-    fillColor,
-    fillOpacity: getRegionFillOpacity(currentZoom, config, regionLayerTransparency),
-    opacity: getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency),
+    fillColor: getVisibleFillColor(fillColor, opacity, config),
+    fillOpacity,
+    opacity,
   };
 }
 
@@ -148,13 +182,15 @@ function getVisitedRegionStyle(
     regionStaticColor,
     regionHeatmapColor
   );
+  const opacity = getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency);
+  const fillOpacity = getRegionFillOpacity(currentZoom, config, regionLayerTransparency);
 
   return {
     color: strokeColor,
     weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
-    fillColor,
-    fillOpacity: getRegionFillOpacity(currentZoom, config, regionLayerTransparency),
-    opacity: getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency),
+    fillColor: getVisibleFillColor(fillColor, opacity, config),
+    fillOpacity,
+    opacity,
   };
 }
 

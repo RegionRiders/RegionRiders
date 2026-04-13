@@ -264,8 +264,46 @@ describe('useRegionRendering', () => {
     expect(redraw).toHaveBeenCalled();
     expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(
       expect.objectContaining({
+        fillColor: '#0A7E43',
         opacity: 0,
         fillOpacity: 0.4,
+      })
+    );
+  });
+
+  it('keeps a visible low-zoom fill when the stroke is intentionally hidden', () => {
+    expect(
+      getUnvisitedRegionStyle(
+        {
+          sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
+          layerName: 'regions',
+          paneName: 'regionsPane',
+          minZoom: 4,
+          detailCapZoom: 12,
+          displayMaxZoom: 18,
+          strokeFadeStartZoom: 7,
+          strokeHideBelowZoom: 5,
+          minimumLowDetailFillOpacity: 0.14,
+          style: {
+            color: '#0A7E43',
+            weight: 1,
+            fillColor: '#0A7E43',
+            fillOpacity: 0.08,
+            opacity: 0.9,
+          },
+        },
+        'static',
+        2,
+        0.2,
+        [],
+        [],
+        4
+      )
+    ).toEqual(
+      expect.objectContaining({
+        fillColor: '#0A7E43',
+        opacity: 0,
+        fillOpacity: 0.2,
       })
     );
   });
