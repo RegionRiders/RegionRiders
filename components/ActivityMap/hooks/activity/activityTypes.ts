@@ -40,6 +40,10 @@ export interface HeatmapRefs extends RenderRefs {
   currentImageLayerRef: RefObject<L.ImageOverlay | null>;
   currentImageUrlRef: RefObject<string | null>;
   activeRenderIdRef: RefObject<number>;
+  lastRenderSignatureRef: RefObject<string | null>;
+  projectedTrackCacheRef: RefObject<Map<string, ProjectedTrackCacheEntry>>;
+  heatmapCanvasRef: RefObject<HTMLCanvasElement | null>;
+  heatmapContextRef: RefObject<CanvasRenderingContext2D | null>;
   heatmapDensity: number;
   lineThickness: number;
   layerTransparency: number;
@@ -57,4 +61,10 @@ export interface LinesRefs extends RenderRefs {
 export interface PixelPoint {
   x: number;
   y: number;
+}
+
+export interface ProjectedTrackCacheEntry {
+  zoom: number;
+  trackShapeSignature: string;
+  projectedPoints: PixelPoint[];
 }

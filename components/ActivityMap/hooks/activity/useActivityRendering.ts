@@ -8,7 +8,11 @@ import {
 } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { drawActivitiesAsHeatmap } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/drawActivitiesAsHeatmap';
 import { drawActivitiesAsLines } from '@/components/ActivityMap/hooks/activity/activitiesLines/drawActivitiesAsLines';
-import type { HeatmapRefs, LinesRefs } from '@/components/ActivityMap/hooks/activity/activityTypes';
+import type {
+  HeatmapRefs,
+  LinesRefs,
+  ProjectedTrackCacheEntry,
+} from '@/components/ActivityMap/hooks/activity/activityTypes';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
@@ -32,6 +36,10 @@ export function useActivityRendering(
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);
   const currentImageUrlRef = useRef<string | null>(null);
   const activeRenderIdRef = useRef<number>(0);
+  const lastRenderSignatureRef = useRef<string | null>(null);
+  const projectedTrackCacheRef = useRef<Map<string, ProjectedTrackCacheEntry>>(new Map());
+  const heatmapCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const heatmapContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const renderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderAbortRef = useRef<boolean>(false);
 
@@ -49,6 +57,10 @@ export function useActivityRendering(
         currentImageLayerRef,
         currentImageUrlRef,
         activeRenderIdRef,
+        lastRenderSignatureRef,
+        projectedTrackCacheRef,
+        heatmapCanvasRef,
+        heatmapContextRef,
         renderAbortRef,
         renderTimeoutRef,
         heatmapDensity,
