@@ -70,58 +70,58 @@ export const DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES: ColorThreshold[][] = [
 
 export const DEFAULT_REGION_STATIC_COLOR_SWATCHES: ColorThreshold[][] = [
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [76, 107, 34, 0.2] },
   ],
   [
-    { threshold: 0, color: [70, 70, 70, 0] },
+    { threshold: 0, color: [70, 70, 70, 0.08] },
     { threshold: 1, color: [25, 102, 66, 0.2] },
   ],
   [
-    { threshold: 0, color: [80, 80, 80, 0] },
+    { threshold: 0, color: [80, 80, 80, 0.08] },
     { threshold: 1, color: [38, 88, 140, 0.2] },
   ],
   [
-    { threshold: 0, color: [90, 90, 90, 0] },
+    { threshold: 0, color: [90, 90, 90, 0.08] },
     { threshold: 1, color: [124, 73, 31, 0.2] },
   ],
   [
-    { threshold: 0, color: [100, 100, 100, 0] },
+    { threshold: 0, color: [100, 100, 100, 0.08] },
     { threshold: 1, color: [110, 51, 121, 0.2] },
   ],
 ];
 
 export const DEFAULT_REGION_HEATMAP_COLOR_SWATCHES: ColorThreshold[][] = [
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [220, 20, 20, 0.1] },
     { threshold: 5, color: [255, 165, 0, 0.1] },
     { threshold: 10, color: [255, 255, 0, 0.1] },
     { threshold: 25, color: [255, 255, 255, 0.1] },
   ],
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [20, 120, 220, 0.1] },
     { threshold: 5, color: [70, 170, 255, 0.1] },
     { threshold: 10, color: [150, 220, 255, 0.1] },
     { threshold: 25, color: [235, 250, 255, 0.1] },
   ],
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [40, 150, 60, 0.1] },
     { threshold: 5, color: [120, 200, 60, 0.1] },
     { threshold: 10, color: [190, 230, 80, 0.1] },
     { threshold: 25, color: [245, 255, 220, 0.1] },
   ],
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [150, 60, 200, 0.1] },
     { threshold: 5, color: [190, 100, 235, 0.1] },
     { threshold: 10, color: [220, 150, 250, 0.1] },
     { threshold: 25, color: [245, 225, 255, 0.1] },
   ],
   [
-    { threshold: 0, color: [60, 60, 60, 0] },
+    { threshold: 0, color: [60, 60, 60, 0.08] },
     { threshold: 1, color: [220, 90, 40, 0.1] },
     { threshold: 5, color: [240, 150, 70, 0.1] },
     { threshold: 10, color: [255, 200, 120, 0.1] },

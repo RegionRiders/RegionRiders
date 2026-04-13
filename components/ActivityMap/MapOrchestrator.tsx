@@ -39,7 +39,7 @@ export default function MapOrchestrator({
   onRegionTileError,
 }: MapOrchestratorProps) {
   // Region visit status delivery is intentionally deferred to the server-side follow-up plan.
-  // Until that API exists, the VectorGrid path renders boundaries/styling infrastructure only.
+  // Until that API exists, the VectorGrid path stays on a styling-only placeholder fill model.
   const visitData = useMemo<Map<string, RegionVisitData>>(() => new Map(), []);
 
   useActivityRendering(

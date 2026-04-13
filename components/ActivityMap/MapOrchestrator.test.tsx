@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import {
   ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+  DEFAULT_REGION_STATIC_COLOR_SWATCHES,
   REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
 } from '@/components/ActivityMap/config/mapConfig';
 import type { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -42,7 +43,7 @@ describe('MapOrchestrator', () => {
     regionLayerTransparency: 1,
     regionStaticColorSwatches: [
       [
-        { threshold: 0, color: [60, 60, 60, 0] },
+        { threshold: 0, color: [60, 60, 60, 0.08] },
         { threshold: 1, color: [76, 107, 34, 0.2] },
       ],
     ],
@@ -221,5 +222,36 @@ describe('MapOrchestrator', () => {
     expect(firstVisitData?.size).toBe(0);
     expect(secondVisitData).toBe(firstVisitData);
     expect(secondVisitData?.size).toBe(0);
+  });
+
+  it('falls back to the default placeholder region swatch when custom swatches are absent', () => {
+    const settingsWithoutRegionSwatches: MapSettings = {
+      ...defaultSettings,
+      regionStaticColorSwatches: undefined,
+    };
+
+    render(
+      <MapOrchestrator
+        map={mockMap}
+        tracks={mockTracks}
+        settings={settingsWithoutRegionSwatches}
+        onRegionTileError={onRegionTileError}
+      />
+    );
+
+    expect(mockUseRegionRendering).toHaveBeenCalledWith(
+      mockMap,
+      expect.any(Map),
+      settingsWithoutRegionSwatches.showRegions,
+      settingsWithoutRegionSwatches.regionMode,
+      settingsWithoutRegionSwatches.regionBorderThickness,
+      settingsWithoutRegionSwatches.regionLayerTransparency ?? 1,
+      DEFAULT_REGION_STATIC_COLOR_SWATCHES[0],
+      settingsWithoutRegionSwatches.regionHeatmapColorSwatches?.[
+        settingsWithoutRegionSwatches.selectedRegionHeatmapSwatchIndex ?? 0
+      ],
+      onRegionTileError
+    );
+    expect(DEFAULT_REGION_STATIC_COLOR_SWATCHES[0]?.[0]?.color[3]).toBeGreaterThan(0);
   });
 });
