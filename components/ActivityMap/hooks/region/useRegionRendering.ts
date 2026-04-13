@@ -176,6 +176,7 @@ function getUnvisitedRegionStyle(
   return {
     color: strokeColor,
     weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
+    fill: true,
     fillColor: getVisibleFillColor(fillColor, opacity, config),
     fillOpacity,
     opacity,
@@ -204,6 +205,7 @@ function getVisitedRegionStyle(
   return {
     color: strokeColor,
     weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
+    fill: true,
     fillColor: getVisibleFillColor(fillColor, opacity, config),
     fillOpacity,
     opacity,

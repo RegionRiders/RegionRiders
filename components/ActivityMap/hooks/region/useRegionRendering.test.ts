@@ -191,6 +191,7 @@ describe('useRegionRendering', () => {
         12
       )
     );
+    expect(baseStyleResolver?.()).toEqual(expect.objectContaining({ fill: true }));
     expect(addTo).toHaveBeenCalledWith(mockMap);
     expect(on).toHaveBeenCalledWith('load', expect.any(Function));
     expect(on).toHaveBeenCalledWith('tileerror', expect.any(Function));
@@ -233,6 +234,32 @@ describe('useRegionRendering', () => {
         []
       )
     );
+    expect(getVisitedRegionStyle(
+      {
+        sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
+        layerName: 'regions',
+        paneName: 'regionsPane',
+        minZoom: 4,
+        detailCapZoom: 12,
+        displayMaxZoom: 18,
+        strokeFadeStartZoom: 7,
+        strokeHideBelowZoom: 5,
+        minimumLowDetailFillOpacity: 0.14,
+        style: {
+          color: '#0A7E43',
+          weight: 1,
+          fillColor: '#0A7E43',
+          fillOpacity: 0.08,
+          opacity: 0.9,
+        },
+      },
+      { ...visitedRegion, visitCount: 2 },
+      'static',
+      2,
+      1,
+      [],
+      []
+    )).toEqual(expect.objectContaining({ fill: true }));
   });
 
   it('uses heatmap mode thresholds for visited style updates', () => {
@@ -278,6 +305,7 @@ describe('useRegionRendering', () => {
 
     expect(baseStyleResolver?.()).toEqual(
       expect.objectContaining({
+        fill: true,
         weight: 6,
         opacity: 0.4,
         fillOpacity: 0.4,
@@ -345,6 +373,7 @@ describe('useRegionRendering', () => {
       mockLayer._vectorTiles['12:2211:1344'],
       expect.objectContaining({
         color: 'rgba(12,12,12,1)',
+        fill: true,
         fillColor: 'rgba(12,12,12,0.18)',
         weight: 5,
         opacity: 0.35,
@@ -358,6 +387,7 @@ describe('useRegionRendering', () => {
     expect(updatedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
         color: 'rgba(12,12,12,1)',
+        fill: true,
         fillColor: 'rgba(12,12,12,0.18)',
         weight: 5,
         opacity: 0.35,
@@ -403,6 +433,7 @@ describe('useRegionRendering', () => {
       { id: 'visited-feature' },
       mockLayer._vectorTiles['12:2211:1344'],
       expect.objectContaining({
+        fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
         opacity: 0,
         fillOpacity: 0.4,
@@ -413,6 +444,7 @@ describe('useRegionRendering', () => {
       | undefined;
     expect(zoomedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
+        fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
         opacity: 0,
         fillOpacity: 0.4,
@@ -461,6 +493,7 @@ describe('useRegionRendering', () => {
       )
     ).toEqual(
       expect.objectContaining({
+        fill: true,
         fillColor: '#0A7E43',
         opacity: 0,
         fillOpacity: 0.2,
@@ -498,6 +531,7 @@ describe('useRegionRendering', () => {
       )
     ).toEqual(
       expect.objectContaining({
+        fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
         fillOpacity: 0.35,
       })

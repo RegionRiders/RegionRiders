@@ -224,7 +224,7 @@ describe('MapOrchestrator', () => {
     expect(secondVisitData?.size).toBe(0);
   });
 
-  it('forwards updated region settings and edited placeholder swatches while keeping the visit data empty', () => {
+  it('forwards the static-mode full-alpha unvisited swatch workflow while keeping the visit data empty', () => {
     const { rerender } = render(
       <MapOrchestrator
         map={mockMap}
@@ -260,11 +260,14 @@ describe('MapOrchestrator', () => {
 
     const latestRegionRenderingCall = mockUseRegionRendering.mock.calls.at(-1);
     const secondVisitData = latestRegionRenderingCall?.[1];
+    const forwardedStaticThresholds = latestRegionRenderingCall?.[6];
 
     expect(firstVisitData).toBeInstanceOf(Map);
     expect(firstVisitData?.size).toBe(0);
     expect(secondVisitData).toBe(firstVisitData);
     expect(secondVisitData?.size).toBe(0);
+    expect(updatedSettings.regionMode).toBe('static');
+    expect(forwardedStaticThresholds?.find((threshold) => threshold.threshold === 0)?.color[3]).toBe(1);
     expect(latestRegionRenderingCall).toEqual([
       mockMap,
       firstVisitData,
