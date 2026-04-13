@@ -35,8 +35,24 @@ type RegionVectorGridLayer = L.Layer & {
   setFeatureStyle?: (featureId: string | number, style: L.PathOptions) => void;
   resetFeatureStyle?: (featureId: string | number) => void;
   redraw?: () => void;
+  _updateStyles?: (feature: unknown, renderer: unknown, style: L.PathOptions) => void;
+  _vectorTiles?: Record<
+    string,
+    {
+      _features?: Record<
+        string,
+        {
+          layerName?: string;
+          feature: unknown;
+        }
+      >;
+    }
+  >;
   options?: {
-    vectorTileLayerStyles?: Record<string, L.PathOptions>;
+    vectorTileLayerStyles?: Record<
+      string,
+      L.PathOptions | ((properties?: Record<string, unknown>, tileZoom?: number) => L.PathOptions)
+    >;
   };
 };
 
@@ -308,30 +324,52 @@ export function useRegionRendering(
   };
 
   const applyLayerStyles = (layerToUpdate: RegionVectorGridLayer, zoom: number) => {
-    const {
-      mode: currentMode,
-      regionBorderThickness: currentBorderThickness,
-      regionLayerTransparency: currentLayerTransparency,
-      effectiveStaticColors: currentStaticColors,
-      effectiveHeatmapColors: currentHeatmapColors,
-    } = styleSettingsRef.current;
-    const nextBaseStyle = getUnvisitedRegionStyle(
-      config,
-      currentMode,
-      currentBorderThickness,
-      currentLayerTransparency,
-      currentStaticColors,
-      currentHeatmapColors,
-      zoom
-    );
+    const getBaseStyleForZoom = (targetZoom: number) => {
+      const {
+        mode: currentMode,
+        regionBorderThickness: currentBorderThickness,
+        regionLayerTransparency: currentLayerTransparency,
+        effectiveStaticColors: currentStaticColors,
+        effectiveHeatmapColors: currentHeatmapColors,
+      } = styleSettingsRef.current;
+
+      return getUnvisitedRegionStyle(
+        config,
+        currentMode,
+        currentBorderThickness,
+        currentLayerTransparency,
+        currentStaticColors,
+        currentHeatmapColors,
+        targetZoom
+      );
+    };
+    const nextBaseStyle = getBaseStyleForZoom(zoom);
 
     if (layerToUpdate.options) {
       layerToUpdate.options.vectorTileLayerStyles = {
-        [config.layerName]: nextBaseStyle,
+        ...(layerToUpdate.options.vectorTileLayerStyles ?? {}),
+        [config.layerName]: () =>
+          getBaseStyleForZoom(currentZoomRef.current || config.detailCapZoom),
       };
     }
 
-    layerToUpdate.redraw?.();
+    const renderedTiles = layerToUpdate._vectorTiles;
+    const updateStyles = layerToUpdate._updateStyles;
+
+    if (renderedTiles && updateStyles) {
+      Object.values(renderedTiles).forEach((tile) => {
+        Object.values(tile._features ?? {}).forEach((entry) => {
+          if (entry.layerName !== config.layerName) {
+            return;
+          }
+
+          updateStyles(entry.feature, tile, nextBaseStyle);
+        });
+      });
+    } else {
+      layerToUpdate.redraw?.();
+    }
+
     applyVisitedRegionStyles(layerToUpdate, zoom);
   };
 
@@ -364,6 +402,10 @@ export function useRegionRendering(
     }
 
     const handleTileLoad = () => {
+      if (regionLayerRef.current) {
+        applyLayerStyles(regionLayerRef.current, currentZoomRef.current || map.getZoom());
+      }
+
       markFirstRegionLayerAdded();
       onTileError?.('');
     };
@@ -392,17 +434,20 @@ export function useRegionRendering(
         minZoom: config.minZoom,
         maxZoom: config.displayMaxZoom,
         maxNativeZoom: config.detailCapZoom,
+        updateWhenZooming: false,
+        keepBuffer: 4,
         getFeatureId: getRegionFeatureId,
         vectorTileLayerStyles: {
-          [config.layerName]: getUnvisitedRegionStyle(
-            config,
-            mode,
-            regionBorderThickness,
-            regionLayerTransparency,
-            effectiveStaticColors,
-            effectiveHeatmapColors,
-            initialZoom
-          ),
+          [config.layerName]: () =>
+            getUnvisitedRegionStyle(
+              config,
+              styleSettingsRef.current.mode,
+              styleSettingsRef.current.regionBorderThickness,
+              styleSettingsRef.current.regionLayerTransparency,
+              styleSettingsRef.current.effectiveStaticColors,
+              styleSettingsRef.current.effectiveHeatmapColors,
+              currentZoomRef.current || initialZoom
+            ),
         },
       }) as RegionVectorGridLayer;
 

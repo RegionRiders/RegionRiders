@@ -43,7 +43,7 @@ describe('MapOrchestrator', () => {
     regionLayerTransparency: 1,
     regionStaticColorSwatches: [
       [
-        { threshold: 0, color: [60, 60, 60, 0.08] },
+        { threshold: 0, color: [60, 60, 60, 0.18] },
         { threshold: 1, color: [76, 107, 34, 0.2] },
       ],
     ],
@@ -224,7 +224,7 @@ describe('MapOrchestrator', () => {
     expect(secondVisitData?.size).toBe(0);
   });
 
-  it('forwards updated region settings while keeping the placeholder visit data empty', () => {
+  it('forwards updated region settings and edited placeholder swatches while keeping the visit data empty', () => {
     const { rerender } = render(
       <MapOrchestrator
         map={mockMap}
@@ -235,11 +235,18 @@ describe('MapOrchestrator', () => {
     );
 
     const firstVisitData = mockUseRegionRendering.mock.calls[0]?.[1];
+    const editedStaticSwatches = [
+      [
+        { threshold: 0, color: [18, 18, 18, 1] as [number, number, number, number] },
+        { threshold: 1, color: [76, 107, 34, 0.3] as [number, number, number, number] },
+      ],
+    ];
     const updatedSettings: MapSettings = {
       ...defaultSettings,
       regionMode: 'static',
       regionBorderThickness: 5,
       regionLayerTransparency: 0.35,
+      regionStaticColorSwatches: editedStaticSwatches,
     };
 
     rerender(
@@ -265,7 +272,7 @@ describe('MapOrchestrator', () => {
       updatedSettings.regionMode,
       updatedSettings.regionBorderThickness,
       updatedSettings.regionLayerTransparency,
-      updatedSettings.regionStaticColorSwatches?.[updatedSettings.selectedRegionStaticSwatchIndex],
+      editedStaticSwatches[0],
       updatedSettings.regionHeatmapColorSwatches?.[
         updatedSettings.selectedRegionHeatmapSwatchIndex ?? 0
       ],

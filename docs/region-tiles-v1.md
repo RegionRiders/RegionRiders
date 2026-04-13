@@ -104,9 +104,10 @@ Run this checklist after the Phase 1 smoke checks when validating the current `P
       updated style appears
 3. Validate the current placeholder fill semantics:
     - keep the current placeholder `visitData` boundary empty
+    - switch to static mode and edit the unvisited swatch alpha to a clearly visible value, including the full-alpha case
     - move the region transparency slider between low and high values
-    - confirm the placeholder base fill remains visible and scales with transparency even though backend
-      visited-status delivery is still deferred
+    - confirm the placeholder base fill remains materially visible and scales with both the edited unvisited alpha and
+      the transparency slider even though backend visited-status delivery is still deferred
 4. Validate non-fatal overlay error handling during the same pass:
     - if a real transport/runtime failure occurs, confirm the non-fatal overlay status is shown
     - confirm the basemap, activity layers, and map shell remain usable while the status is present
@@ -135,7 +136,8 @@ These thresholds are release gates for v1 local tiles.
 - phase 2 review-fix behavior:
     - zoom interactions keep the current overlay visibly present
     - style-only changes to transparency, border thickness, and mode do not create a blank-gap transition
-    - the placeholder base fill stays visible and settings-controlled while visited-status remains deferred
+    - the placeholder base fill stays visibly present and responds to edited unvisited alpha plus the transparency
+      slider while visited-status remains deferred
 - low-LoD coherence:
     - zoomed-out browsing should minimize obvious border cracks even when detail is reduced
 - tile payload size (compressed transfer):

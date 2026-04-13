@@ -70,23 +70,23 @@ export const DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES: ColorThreshold[][] = [
 
 export const DEFAULT_REGION_STATIC_COLOR_SWATCHES: ColorThreshold[][] = [
   [
-    { threshold: 0, color: [60, 60, 60, 0.08] },
+    { threshold: 0, color: [60, 60, 60, 0.18] },
     { threshold: 1, color: [76, 107, 34, 0.2] },
   ],
   [
-    { threshold: 0, color: [70, 70, 70, 0.08] },
+    { threshold: 0, color: [70, 70, 70, 0.18] },
     { threshold: 1, color: [25, 102, 66, 0.2] },
   ],
   [
-    { threshold: 0, color: [80, 80, 80, 0.08] },
+    { threshold: 0, color: [80, 80, 80, 0.18] },
     { threshold: 1, color: [38, 88, 140, 0.2] },
   ],
   [
-    { threshold: 0, color: [90, 90, 90, 0.08] },
+    { threshold: 0, color: [90, 90, 90, 0.18] },
     { threshold: 1, color: [124, 73, 31, 0.2] },
   ],
   [
-    { threshold: 0, color: [100, 100, 100, 0.08] },
+    { threshold: 0, color: [100, 100, 100, 0.18] },
     { threshold: 1, color: [110, 51, 121, 0.2] },
   ],
 ];
