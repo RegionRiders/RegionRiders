@@ -284,8 +284,17 @@ function finishRender(
       const previousUrl = currentImageUrlRef.current;
 
       if (currentImageLayerRef.current) {
-        currentImageLayerRef.current.setBounds(bounds);
         currentImageLayerRef.current.setUrl(nextUrl);
+        if (typeof (currentImageLayerRef.current as L.ImageOverlay).once === 'function') {
+          (currentImageLayerRef.current as L.ImageOverlay).once('load', () => {
+            if (shouldAbort() || activeRenderIdRef.current !== renderId) {
+              return;
+            }
+            currentImageLayerRef.current?.setBounds(bounds);
+          });
+        } else {
+          currentImageLayerRef.current.setBounds(bounds);
+        }
       } else {
         currentImageLayerRef.current = L.imageOverlay(nextUrl, bounds, {
           pane: 'heatmapPane',
@@ -503,6 +512,7 @@ export function drawActivitiesAsHeatmap(
           logger.warn('Failed to remove image layer during cleanup', e);
         }
       }
+      currentImageLayerRef.current = null;
       if (currentImageUrlRef.current) {
         if (currentImageUrlRef.current.startsWith('blob:')) {
           URL.revokeObjectURL(currentImageUrlRef.current);

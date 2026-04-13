@@ -167,6 +167,7 @@ describe('drawActivitiesAsHeatmap', () => {
       cleanup();
 
       expect(mockMap.removeLayer).toHaveBeenCalledWith(existingLayer);
+      expect(currentImageLayerRef.current).toBeNull();
     });
 
     it('should handle cleanup when removeLayer throws', () => {
