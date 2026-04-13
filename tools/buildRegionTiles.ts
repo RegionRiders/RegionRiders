@@ -25,6 +25,12 @@ const DEFAULT_NORMALIZED_GPKG = path.join(
 );
 const DEFAULT_MIN_ZOOM = 3;
 const DEFAULT_MAX_ZOOM = 14;
+const TILE_WORK_ROOT = path.dirname(DEFAULT_OUTPUT_DIR);
+
+function isPathWithinScope(resolvedPath: string, scopeRoot: string): boolean {
+  return resolvedPath === scopeRoot || resolvedPath.startsWith(`${scopeRoot}${path.sep}`);
+}
+
 function getDefaultSourceDirCandidates(): string[] {
   return [process.env.REGION_SOURCE_DIR].filter((value): value is string => Boolean(value));
 }
@@ -162,6 +168,7 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
   const repoRoot = path.resolve(REPO_ROOT);
   const homeDir = path.resolve(os.homedir());
   const tempDir = path.resolve(os.tmpdir());
+  const tileWorkRoot = path.resolve(TILE_WORK_ROOT);
 
   const blockedTargets = new Set([fileSystemRoot, repoRoot, path.resolve('.'), homeDir]);
 
@@ -174,16 +181,24 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 
+  const isWithinTileWorkRoot = isPathWithinScope(resolvedPath, tileWorkRoot);
+  const isWithinTempDir = isPathWithinScope(resolvedPath, tempDir);
+
   if (path.isAbsolute(trimmedPath)) {
     const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
-    const isWithinRepo =
-      resolvedPath === repoRoot || resolvedPath.startsWith(`${repoRoot}${path.sep}`);
-    const isWithinTempDir =
-      resolvedPath === tempDir || resolvedPath.startsWith(`${tempDir}${path.sep}`);
 
-    if (absoluteSegments.length < 3 || (!isWithinRepo && !isWithinTempDir)) {
+    if (absoluteSegments.length < 3) {
       throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
     }
+
+    if (label === '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (label !== '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
     return;
   }
 
@@ -200,6 +215,14 @@ function assertSafeDeletionTarget(targetPath: string, label: string): void {
   }
 
   if (!path.isAbsolute(trimmedPath) && relativeSegments.length <= 1) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label === '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label !== '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
     throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
   }
 }

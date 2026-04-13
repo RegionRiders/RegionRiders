@@ -409,4 +409,50 @@ describe('buildRegionTiles', () => {
       fs.rmSync(workspaceDir, { recursive: true, force: true });
     }
   });
+
+  it('rejects repo paths outside the tile work root for output cleanup', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: 'components/ActivityMap',
+      tempGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1.gpkg'),
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        'Refusing unsafe deletion target for --output: components/ActivityMap'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects repo file paths outside tile work roots for temp cleanup', () => {
+    const workspaceDir = createTempDir();
+    const sourceFiles = [path.join(workspaceDir, 'a.geojson')];
+    const options: BuildOptions = {
+      sourceDir: workspaceDir,
+      outputDir: path.join(workspaceDir, 'tiles', 'v1'),
+      tempGpkg: 'lib/db/config.ts',
+      normalizedGpkg: path.join(workspaceDir, 'tiles', '.tmp_regions_v1_normalized.gpkg'),
+      minZoom: 3,
+      maxZoom: 12,
+      force: true,
+    };
+
+    try {
+      expect(() => runBuild(options, sourceFiles)).toThrow(
+        'Refusing unsafe deletion target for --temp: lib/db/config.ts'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+  });
 });
