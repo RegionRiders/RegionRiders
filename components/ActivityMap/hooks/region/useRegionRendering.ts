@@ -155,43 +155,15 @@ function getRegionFillOpacity(
   return clampOpacity(regionLayerTransparency);
 }
 
-function getUnvisitedRegionStyle(
+function getRegionPathStyle(
   config: ReturnType<typeof getRegionTileProfileConfig>,
-  mode: RegionRenderMode = 'static',
-  regionBorderThickness: number = config.style.weight,
-  regionLayerTransparency: number = config.style.opacity,
-  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
-  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
-  currentZoom: number = config.detailCapZoom
-): L.PathOptions {
-  const { fillColor, strokeColor } = getRegionStyleColors(
-    mode,
-    undefined,
-    regionStaticColor,
-    regionHeatmapColor
-  );
-  const opacity = getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency);
-  const fillOpacity = getRegionFillOpacity(currentZoom, config, regionLayerTransparency);
-
-  return {
-    color: strokeColor,
-    weight: calculateWeightForZoom(currentZoom, regionBorderThickness),
-    fill: true,
-    fillColor: getVisibleFillColor(fillColor, opacity, config),
-    fillOpacity,
-    opacity,
-  };
-}
-
-function getVisitedRegionStyle(
-  config: ReturnType<typeof getRegionTileProfileConfig>,
-  visit: RegionVisitData,
-  mode: RegionRenderMode = 'static',
-  regionBorderThickness: number = config.style.weight,
-  regionLayerTransparency: number = config.style.opacity,
-  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
-  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
-  currentZoom: number = config.detailCapZoom
+  visit: RegionVisitData | undefined,
+  mode: RegionRenderMode,
+  regionBorderThickness: number,
+  regionLayerTransparency: number,
+  regionStaticColor: ColorThreshold[],
+  regionHeatmapColor: ColorThreshold[],
+  currentZoom: number
 ): L.PathOptions {
   const { fillColor, strokeColor } = getRegionStyleColors(
     mode,
@@ -210,6 +182,49 @@ function getVisitedRegionStyle(
     fillOpacity,
     opacity,
   };
+}
+
+function getUnvisitedRegionStyle(
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = config.style.weight,
+  regionLayerTransparency: number = config.style.opacity,
+  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  currentZoom: number = config.detailCapZoom
+): L.PathOptions {
+  return getRegionPathStyle(
+    config,
+    undefined,
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    regionStaticColor,
+    regionHeatmapColor,
+    currentZoom
+  );
+}
+
+function getVisitedRegionStyle(
+  config: ReturnType<typeof getRegionTileProfileConfig>,
+  visit: RegionVisitData,
+  mode: RegionRenderMode = 'static',
+  regionBorderThickness: number = config.style.weight,
+  regionLayerTransparency: number = config.style.opacity,
+  regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
+  regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+  currentZoom: number = config.detailCapZoom
+): L.PathOptions {
+  return getRegionPathStyle(
+    config,
+    visit,
+    mode,
+    regionBorderThickness,
+    regionLayerTransparency,
+    regionStaticColor,
+    regionHeatmapColor,
+    currentZoom
+  );
 }
 
 function getRegionFeatureId(feature: RegionTileFeature): string {
