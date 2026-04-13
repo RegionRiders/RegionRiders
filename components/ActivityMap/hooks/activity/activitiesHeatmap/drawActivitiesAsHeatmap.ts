@@ -272,12 +272,12 @@ function renderHeatmapInternal(
           refs.activeRenderIdRef,
           renderId,
           shouldAbort,
-            map,
-            lineThickness,
-            refs.layerTransparency,
-            refs.heatmapColorThresholds,
-            refs.edgeSmoothingEnabled
-          )
+          map,
+          lineThickness,
+          refs.layerTransparency,
+          refs.heatmapColorThresholds,
+          refs.edgeSmoothingEnabled
+        )
     );
   } catch (error) {
     logger.error(`Error rendering heatmap: ${error}`);

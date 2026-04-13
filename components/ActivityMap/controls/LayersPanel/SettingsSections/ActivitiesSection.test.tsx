@@ -209,7 +209,9 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      expect(screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('switch', { name: 'Toggle heatmap edge smoothing' })
+      ).toBeInTheDocument();
     });
 
     it('should not show heatmap density slider in lines mode', () => {
