@@ -9874,7 +9874,7 @@ __metadata:
     rbush: "npm:^4.0.1"
     react: "npm:19.2.4"
     react-dom: "npm:19.2.4"
-    sonic-boom: "npm:^4.2.0"
+    sonic-boom: "npm:^5.0.0"
     storybook: "npm:^10.3.4"
     strava-v3: "npm:^4.0.1"
     stylelint: "npm:^16.25.0"
@@ -12379,12 +12379,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sonic-boom@npm:^4.0.1, sonic-boom@npm:^4.2.0":
+"sonic-boom@npm:^4.0.1":
   version: 4.2.1
   resolution: "sonic-boom@npm:4.2.1"
   dependencies:
     atomic-sleep: "npm:^1.0.0"
   checksum: 10c0/f374e9c3dfe194d706d8ef8aed4e28bc10638f9952fd19bcbddf2cef05d53334ad9e9dca3e01e24e88dd88fb278c6b8c5b2ae5002494b289c4914aaea3d9eae9
+  languageName: node
+  linkType: hard
+
+"sonic-boom@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "sonic-boom@npm:5.0.0"
+  dependencies:
+    atomic-sleep: "npm:^1.0.0"
+  checksum: 10c0/fc64defe2eaab9fa2cafdb1fc792aefd74d30eba3e0f85b629c4bc6f565956c690252b70a8f974ddbb6485046fe38a6e46091a10bf6102b770b62f2c6b881e67
   languageName: node
   linkType: hard
 
