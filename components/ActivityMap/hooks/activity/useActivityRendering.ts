@@ -14,6 +14,10 @@ import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
 const logger = createComponentLogger('useActivityRendering');
+const DEFAULT_ACTIVITY_LINE_SWATCH: LineColorSwatch = {
+  normal: [255, 0, 0, 0.5],
+  hover: [255, 100, 100, 0.7],
+};
 
 export function useActivityRendering(
   map: L.Map | null,
@@ -23,10 +27,7 @@ export function useActivityRendering(
   activityThickness: number = 3,
   activityLayerTransparency: number = 1,
   heatmapDensity: number = 2,
-  activityLineColor: LineColorSwatch = {
-    normal: [255, 0, 0, 0.5],
-    hover: [255, 100, 100, 0.7],
-  },
+  activityLineColor: LineColorSwatch = DEFAULT_ACTIVITY_LINE_SWATCH,
   heatmapColorThresholds?: ColorThreshold[]
 ) {
   const currentImageLayerRef = useRef<L.ImageOverlay | null>(null);

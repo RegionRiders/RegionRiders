@@ -238,6 +238,15 @@ describe('drawActivitiesAsHeatmap', () => {
       jest.useFakeTimers();
 
       drawActivitiesAsHeatmap(mockMap, mockTracks, refs);
+      refs.currentImageLayerRef.current = { mock: 'existing-layer' };
+      refs.lastRenderSignatureRef.current = [
+        mockMap.getZoom(),
+        '50.0000,14.0000:49.0000,15.0000',
+        refs.heatmapDensity,
+        refs.lineThickness,
+        'default',
+        '1|track-1:2',
+      ].join('|');
       expect(ensureMapPane).toHaveBeenCalledTimes(1);
 
       const moveHandler = mockMap.on.mock.calls.find((call: any[]) => call[0] === 'moveend')[1];

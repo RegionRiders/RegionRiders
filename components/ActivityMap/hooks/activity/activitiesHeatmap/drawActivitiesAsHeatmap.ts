@@ -321,7 +321,7 @@ export function drawActivitiesAsHeatmap(
   let zoomChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const renderHeatmap = (): void => {
-    if (!map) {
+    if (!map || !map.getBounds || !map.getZoom) {
       return;
     }
     const bounds = map.getBounds();
