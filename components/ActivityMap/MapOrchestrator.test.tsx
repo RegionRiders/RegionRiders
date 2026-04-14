@@ -267,7 +267,9 @@ describe('MapOrchestrator', () => {
     expect(secondVisitData).toBe(firstVisitData);
     expect(secondVisitData?.size).toBe(0);
     expect(updatedSettings.regionMode).toBe('static');
-    expect(forwardedStaticThresholds?.find((threshold) => threshold.threshold === 0)?.color[3]).toBe(1);
+    expect(
+      forwardedStaticThresholds?.find((threshold) => threshold.threshold === 0)?.color[3]
+    ).toBe(1);
     expect(latestRegionRenderingCall).toEqual([
       mockMap,
       firstVisitData,

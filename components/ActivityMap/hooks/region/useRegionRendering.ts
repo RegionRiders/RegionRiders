@@ -503,13 +503,7 @@ export function useRegionRendering(
 
       previousVisitedIdsRef.current = new Set();
     };
-  }, [
-    map,
-    showRegions,
-    config,
-    profile,
-    onTileError,
-  ]);
+  }, [map, showRegions, config, profile, onTileError]);
 
   useEffect(() => {
     if (!showRegions) {

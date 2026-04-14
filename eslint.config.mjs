@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint';
 export default defineConfig(
   tseslint.configs.recommended,
   ...mantine,
-  { ignores: ['**/*.{mjs,cjs,js,d.ts,d.mts}', '.next'] },
+  {
+    ignores: [
+      '**/*.{mjs,cjs,js,d.ts,d.mts}',
+      '.next',
+      'coverage/**',
+      'public/data/regions/tiles/**',
+    ],
+  },
   {
     files: ['**/*.{story.tsx,ts}'],
   },

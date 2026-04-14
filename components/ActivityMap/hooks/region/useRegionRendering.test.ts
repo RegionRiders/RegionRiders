@@ -182,15 +182,7 @@ describe('useRegionRendering', () => {
     );
     const baseStyleResolver = getBaseStyleResolver();
     expect(baseStyleResolver?.()).toEqual(
-      getUnvisitedRegionStyle(
-        mockRegionTileConfig,
-        'static',
-        2,
-        1,
-        [],
-        [],
-        12
-      )
+      getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, 1, [], [], 12)
     );
     expect(baseStyleResolver?.()).toEqual(expect.objectContaining({ fill: true }));
     expect(addTo).toHaveBeenCalledWith(mockMap);
@@ -218,15 +210,17 @@ describe('useRegionRendering', () => {
         []
       )
     );
-    expect(getVisitedRegionStyle(
-      mockRegionTileConfig,
-      { ...visitedRegion, visitCount: 2 },
-      'static',
-      2,
-      1,
-      [],
-      []
-    )).toEqual(expect.objectContaining({ fill: true }));
+    expect(
+      getVisitedRegionStyle(
+        mockRegionTileConfig,
+        { ...visitedRegion, visitCount: 2 },
+        'static',
+        2,
+        1,
+        [],
+        []
+      )
+    ).toEqual(expect.objectContaining({ fill: true }));
   });
 
   it('uses heatmap mode thresholds for visited style updates', () => {
@@ -451,17 +445,7 @@ describe('useRegionRendering', () => {
   });
 
   it('keeps the default placeholder base fill visible and transparency-scaled', () => {
-    expect(
-      getUnvisitedRegionStyle(
-        mockRegionTileConfig,
-        'static',
-        2,
-        0.35,
-        [],
-        [],
-        12
-      )
-    ).toEqual(
+    expect(getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, 0.35, [], [], 12)).toEqual(
       expect.objectContaining({
         fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
