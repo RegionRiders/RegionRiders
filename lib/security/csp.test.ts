@@ -1,9 +1,9 @@
 import {
   TEST_REGION_TILE_ORIGIN,
-  TEST_TEMPLATED_REGION_TILE_ORIGIN,
-  TEST_TEMPLATED_REGION_TILE_URL,
   TEST_REGION_TILE_URL,
   TEST_RELATIVE_REGION_TILE_URL,
+  TEST_TEMPLATED_REGION_TILE_ORIGIN,
+  TEST_TEMPLATED_REGION_TILE_URL,
 } from '@/test-utils/regionTileSource';
 import { createRegionTileEnvTestHarness } from '@/test-utils/withRegionTileEnv';
 
