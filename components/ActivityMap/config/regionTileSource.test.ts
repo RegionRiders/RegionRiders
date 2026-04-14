@@ -1,5 +1,7 @@
 import {
   TEST_REGION_TILE_ORIGIN,
+  TEST_TEMPLATED_REGION_TILE_ORIGIN,
+  TEST_TEMPLATED_REGION_TILE_URL,
   TEST_REGION_TILE_URL,
   TEST_REGION_TILE_URL_WITH_TRAILING_SLASH,
   TEST_RELATIVE_REGION_TILE_URL,
@@ -52,6 +54,12 @@ describe('regionTileSource', () => {
     process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_REGION_TILE_URL;
 
     expect(getRegionTileSourceOrigin()).toBe(TEST_REGION_TILE_ORIGIN);
+  });
+
+  it('maps templated tile hosts to a CSP-compatible wildcard origin', () => {
+    process.env.NEXT_PUBLIC_REGION_TILE_URL = TEST_TEMPLATED_REGION_TILE_URL;
+
+    expect(getRegionTileSourceOrigin()).toBe(TEST_TEMPLATED_REGION_TILE_ORIGIN);
   });
 
   it('returns null origin for an invalid tile source URL', () => {
