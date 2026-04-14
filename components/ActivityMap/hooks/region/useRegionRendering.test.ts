@@ -61,14 +61,18 @@ function createMockVectorTiles() {
   return {
     [renderedTileKey]: {
       _features: {
-        'RR1::PL::POM::001': {
-          layerName: 'regions',
-          feature: { id: 'visited-feature' },
-        },
-        'RR1::PL::POM::002': {
-          layerName: 'regions',
-          feature: { id: 'unvisited-feature' },
-        },
+        'RR1::PL::POM::001': [
+          {
+            layerName: 'regions',
+            feature: { id: 'visited-feature' },
+          },
+        ],
+        'RR1::PL::POM::002': [
+          {
+            layerName: 'regions',
+            feature: { id: 'unvisited-feature' },
+          },
+        ],
       },
     },
   };

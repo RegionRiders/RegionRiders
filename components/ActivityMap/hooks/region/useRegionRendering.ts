@@ -41,10 +41,14 @@ type RegionVectorGridLayer = L.Layer & {
     {
       _features?: Record<
         string,
-        {
-          layerName?: string;
-          feature: unknown;
-        }
+        | {
+            layerName?: string;
+            feature: unknown;
+          }
+        | Array<{
+            layerName?: string;
+            feature: unknown;
+          }>
       >;
     }
   >;
@@ -375,12 +379,16 @@ export function useRegionRendering(
 
     if (renderedTiles && updateStyles) {
       Object.values(renderedTiles).forEach((tile) => {
-        Object.values(tile._features ?? {}).forEach((entry) => {
-          if (entry.layerName !== config.layerName) {
-            return;
-          }
+        Object.values(tile._features ?? {}).forEach((bucket) => {
+          const entries = Array.isArray(bucket) ? bucket : [bucket];
 
-          updateStyles(entry.feature, tile, nextBaseStyle);
+          entries.forEach((entry) => {
+            if (entry.layerName !== config.layerName) {
+              return;
+            }
+
+            updateStyles(entry.feature, tile, nextBaseStyle);
+          });
         });
       });
     } else {
