@@ -60,6 +60,12 @@ type RegionVectorGridLayer = L.Layer & {
   };
 };
 
+type RegionTileEvent = {
+  coords?: {
+    z?: number;
+  };
+};
+
 function serializeColorThresholds(thresholds: ColorThreshold[]): string {
   return JSON.stringify(thresholds);
 }
@@ -127,36 +133,41 @@ function getVisibleFillColor(
 
 function getRegionStrokeOpacity(
   currentZoom: number,
-  config: ReturnType<typeof getRegionTileProfileConfig>,
-  regionLayerTransparency: number
+  config: ReturnType<typeof getRegionTileProfileConfig>
 ): number {
+  const settledOpacity = clampOpacity(config.style.opacity);
+
   if (currentZoom < config.strokeHideBelowZoom) {
     return 0;
   }
 
   if (currentZoom >= config.strokeFadeStartZoom) {
-    return clampOpacity(regionLayerTransparency);
+    return settledOpacity;
   }
 
   const fadeRange = config.strokeFadeStartZoom - config.strokeHideBelowZoom;
   if (fadeRange <= 0) {
-    return clampOpacity(regionLayerTransparency);
+    return settledOpacity;
   }
 
   const fadeProgress = (currentZoom - config.strokeHideBelowZoom) / fadeRange;
-  return clampOpacity(regionLayerTransparency * fadeProgress);
+  return clampOpacity(settledOpacity * fadeProgress);
 }
 
 function getRegionFillOpacity(
   currentZoom: number,
   config: ReturnType<typeof getRegionTileProfileConfig>,
-  regionLayerTransparency: number
+  fillColor: string
 ): number {
-  if (currentZoom < config.strokeFadeStartZoom) {
-    return clampOpacity(Math.max(regionLayerTransparency, config.minimumLowDetailFillOpacity));
+  if (getColorAlpha(fillColor) !== 0) {
+    return 1;
   }
 
-  return clampOpacity(regionLayerTransparency);
+  if (currentZoom < config.strokeFadeStartZoom) {
+    return clampOpacity(Math.max(config.style.fillOpacity, config.minimumLowDetailFillOpacity));
+  }
+
+  return clampOpacity(config.style.fillOpacity);
 }
 
 function getRegionPathStyle(
@@ -175,8 +186,8 @@ function getRegionPathStyle(
     regionStaticColor,
     regionHeatmapColor
   );
-  const opacity = getRegionStrokeOpacity(currentZoom, config, regionLayerTransparency);
-  const fillOpacity = getRegionFillOpacity(currentZoom, config, regionLayerTransparency);
+  const opacity = getRegionStrokeOpacity(currentZoom, config);
+  const fillOpacity = getRegionFillOpacity(currentZoom, config, fillColor);
 
   return {
     color: strokeColor,
@@ -253,6 +264,26 @@ function getVisitedRegionIds(visitData: Map<string, RegionVisitData>): Set<strin
   );
 }
 
+function syncRegionPaneOpacity(
+  map: L.Map,
+  paneName: string,
+  regionLayerTransparency: number
+): void {
+  const pane = map.getPane?.(paneName);
+
+  if (pane) {
+    pane.style.opacity = String(clampOpacity(regionLayerTransparency));
+  }
+}
+
+function clearRegionPaneOpacity(map: L.Map | null, paneName: string): void {
+  const pane = map?.getPane?.(paneName);
+
+  if (pane) {
+    pane.style.opacity = '';
+  }
+}
+
 export { getRegionFeatureId, getUnvisitedRegionStyle, getVisitedRegionStyle };
 
 export function useRegionRendering(
@@ -269,6 +300,10 @@ export function useRegionRendering(
   const regionLayerRef = useRef<RegionVectorGridLayer | null>(null);
   const previousVisitedIdsRef = useRef<Set<string>>(new Set());
   const currentZoomRef = useRef<number>(0);
+  const committedStyleZoomRef = useRef<number>(0);
+  const pendingStyleZoomRef = useRef<number | null>(null);
+  const pendingTileZoomRef = useRef<number | null>(null);
+  const pendingTileReadyRef = useRef<boolean>(false);
   const profile = useMemo(() => selectRegionRenderProfile(), []);
   const config = useMemo(() => getRegionTileProfileConfig(profile), [profile]);
   const staticColorSignature = serializeColorThresholds(regionStaticColor);
@@ -370,7 +405,7 @@ export function useRegionRendering(
       layerToUpdate.options.vectorTileLayerStyles = {
         ...(layerToUpdate.options.vectorTileLayerStyles ?? {}),
         [config.layerName]: () =>
-          getBaseStyleForZoom(currentZoomRef.current || config.detailCapZoom),
+          getBaseStyleForZoom(committedStyleZoomRef.current || config.detailCapZoom),
       };
     }
 
@@ -401,6 +436,7 @@ export function useRegionRendering(
   useEffect(() => {
     if (!showRegions) {
       previousVisitedIdsRef.current = new Set();
+      clearRegionPaneOpacity(map, config.paneName);
       onTileError?.('');
       return;
     }
@@ -410,8 +446,13 @@ export function useRegionRendering(
     }
 
     currentZoomRef.current = map.getZoom();
+    committedStyleZoomRef.current = currentZoomRef.current;
+    pendingStyleZoomRef.current = null;
+    pendingTileZoomRef.current = null;
+    pendingTileReadyRef.current = false;
 
     ensureMapPane(map, config.paneName, '430');
+    syncRegionPaneOpacity(map, config.paneName, regionLayerTransparency);
 
     if (regionLayerRef.current && map.hasLayer(regionLayerRef.current)) {
       map.removeLayer(regionLayerRef.current);
@@ -422,17 +463,40 @@ export function useRegionRendering(
 
     if (!vectorGridFactory?.protobuf) {
       logger.error('Leaflet.VectorGrid plugin not available');
+      clearRegionPaneOpacity(map, config.paneName);
       onTileError?.('Region overlay unavailable');
       return;
     }
 
     const handleTileLoad = () => {
       if (regionLayerRef.current) {
-        applyLayerStyles(regionLayerRef.current, currentZoomRef.current || map.getZoom());
+        if (pendingStyleZoomRef.current !== null && pendingTileReadyRef.current) {
+          committedStyleZoomRef.current = pendingStyleZoomRef.current;
+          pendingStyleZoomRef.current = null;
+          pendingTileZoomRef.current = null;
+          pendingTileReadyRef.current = false;
+        }
+
+        applyLayerStyles(
+          regionLayerRef.current,
+          committedStyleZoomRef.current || currentZoomRef.current || map.getZoom()
+        );
       }
 
       markFirstRegionLayerAdded();
       onTileError?.('');
+    };
+
+    const handlePerTileLoad = (event: RegionTileEvent) => {
+      if (
+        pendingStyleZoomRef.current === null ||
+        pendingTileZoomRef.current === null ||
+        event.coords?.z !== pendingTileZoomRef.current
+      ) {
+        return;
+      }
+
+      pendingTileReadyRef.current = true;
     };
 
     const handleTileError = (event: unknown) => {
@@ -443,10 +507,9 @@ export function useRegionRendering(
     const handleZoomEnd = () => {
       const nextZoom = map.getZoom();
       currentZoomRef.current = nextZoom;
-
-      if (regionLayerRef.current) {
-        applyLayerStyles(regionLayerRef.current, nextZoom);
-      }
+      pendingStyleZoomRef.current = nextZoom;
+      pendingTileZoomRef.current = Math.min(nextZoom, config.detailCapZoom);
+      pendingTileReadyRef.current = false;
     };
 
     let layer: RegionVectorGridLayer | null = null;
@@ -471,18 +534,20 @@ export function useRegionRendering(
               styleSettingsRef.current.regionLayerTransparency,
               styleSettingsRef.current.effectiveStaticColors,
               styleSettingsRef.current.effectiveHeatmapColors,
-              currentZoomRef.current || initialZoom
+              committedStyleZoomRef.current || initialZoom
             ),
         },
       }) as RegionVectorGridLayer;
 
       layer.on('load', handleTileLoad);
+      layer.on('tileload', handlePerTileLoad);
       layer.on('tileerror', handleTileError);
       layer.addTo(map);
       regionLayerRef.current = layer;
       map.on('zoomend', handleZoomEnd);
     } catch (error) {
       layer?.off('load', handleTileLoad);
+      layer?.off('tileload', handlePerTileLoad);
       layer?.off('tileerror', handleTileError);
 
       if (layer && map.hasLayer(layer)) {
@@ -490,6 +555,7 @@ export function useRegionRendering(
       }
 
       logger.error(`Failed to initialize region vector tile layer: ${error}`);
+      clearRegionPaneOpacity(map, config.paneName);
       onTileError?.('Region overlay unavailable');
       return;
     }
@@ -498,6 +564,7 @@ export function useRegionRendering(
 
     return () => {
       layer.off('load', handleTileLoad);
+      layer.off('tileload', handlePerTileLoad);
       layer.off('tileerror', handleTileError);
       map.off('zoomend', handleZoomEnd);
 
@@ -509,18 +576,29 @@ export function useRegionRendering(
         regionLayerRef.current = null;
       }
 
+      pendingStyleZoomRef.current = null;
+      pendingTileZoomRef.current = null;
+      pendingTileReadyRef.current = false;
       previousVisitedIdsRef.current = new Set();
+      clearRegionPaneOpacity(map, config.paneName);
     };
   }, [map, showRegions, config, profile, onTileError]);
 
   useEffect(() => {
     if (!showRegions) {
       previousVisitedIdsRef.current = new Set();
+      clearRegionPaneOpacity(map, config.paneName);
       return;
     }
 
+    if (map) {
+      ensureMapPane(map, config.paneName, '430');
+      syncRegionPaneOpacity(map, config.paneName, regionLayerTransparency);
+    }
+
     const layer = regionLayerRef.current;
-    const currentZoom = currentZoomRef.current || config.detailCapZoom;
+    const currentZoom =
+      committedStyleZoomRef.current || currentZoomRef.current || config.detailCapZoom;
 
     if (!layer) {
       return;

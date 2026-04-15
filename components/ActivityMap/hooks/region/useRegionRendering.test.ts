@@ -8,6 +8,7 @@ import {
   getVisitedRegionStyle,
   useRegionRendering,
 } from './useRegionRendering';
+import { calculateWeightForZoom } from './utils/calculateWeightForZoom';
 
 jest.mock('leaflet.vectorgrid', () => ({}));
 
@@ -114,6 +115,7 @@ describe('useRegionRendering', () => {
   const resetFeatureStyle = jest.fn();
   const mapOn = jest.fn();
   const mapOff = jest.fn();
+  let paneRegistry: Record<string, { style: { zIndex: string; opacity: string } }> = {};
   let visitData = new Map<string, RegionVisitData>();
   const onTileError = jest.fn();
 
@@ -135,12 +137,17 @@ describe('useRegionRendering', () => {
     on: mapOn,
     off: mapOff,
     getZoom: jest.fn(() => 12),
-    getPane: jest.fn(() => null),
-    createPane: jest.fn(() => ({ style: { zIndex: '' } })),
+    getPane: jest.fn((paneName: string) => paneRegistry[paneName] ?? null),
+    createPane: jest.fn((paneName: string) => {
+      const pane = { style: { zIndex: '', opacity: '' } };
+      paneRegistry[paneName] = pane;
+      return pane;
+    }),
   } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    paneRegistry = {};
     visitData = new Map();
     mockLayer.options = {};
     mockLayer._vectorTiles = createMockVectorTiles();
@@ -191,6 +198,7 @@ describe('useRegionRendering', () => {
     expect(baseStyleResolver?.()).toEqual(expect.objectContaining({ fill: true }));
     expect(addTo).toHaveBeenCalledWith(mockMap);
     expect(on).toHaveBeenCalledWith('load', expect.any(Function));
+    expect(on).toHaveBeenCalledWith('tileload', expect.any(Function));
     expect(on).toHaveBeenCalledWith('tileerror', expect.any(Function));
     expect(mapOn).toHaveBeenCalledWith('zoomend', expect.any(Function));
   });
@@ -252,15 +260,16 @@ describe('useRegionRendering', () => {
       'RR1::PL::POM::001',
       expect.objectContaining({
         weight: 5,
-        opacity: 0.35,
-        fillOpacity: 0.35,
+        opacity: 0.9,
+        fillOpacity: 1,
         color: 'rgba(210,40,40,1)',
         fillColor: 'rgba(210,40,40,0.4)',
       })
     );
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('0.35');
   });
 
-  it('uses configured border thickness and transparency for the base vector tile style', () => {
+  it('uses configured border thickness while applying transparency through the regions pane', () => {
     renderHook(() =>
       useRegionRendering(mockMap, visitData, true, 'static', 6, 0.4, [], [], onTileError)
     );
@@ -271,10 +280,11 @@ describe('useRegionRendering', () => {
       expect.objectContaining({
         fill: true,
         weight: 6,
-        opacity: 0.4,
-        fillOpacity: 0.4,
+        opacity: 0.9,
+        fillOpacity: 1,
       })
     );
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('0.4');
   });
 
   it('restyles the live layer for style-only setting changes without recreating it', () => {
@@ -340,8 +350,8 @@ describe('useRegionRendering', () => {
         fill: true,
         fillColor: 'rgba(12,12,12,0.18)',
         weight: 5,
-        opacity: 0.35,
-        fillOpacity: 0.35,
+        opacity: 0.9,
+        fillOpacity: 1,
       })
     );
     expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(expect.any(Function));
@@ -354,8 +364,8 @@ describe('useRegionRendering', () => {
         fill: true,
         fillColor: 'rgba(12,12,12,0.18)',
         weight: 5,
-        opacity: 0.35,
-        fillOpacity: 0.35,
+        opacity: 0.9,
+        fillOpacity: 1,
       })
     );
     expect(
@@ -368,58 +378,84 @@ describe('useRegionRendering', () => {
       'RR1::PL::POM::001',
       expect.objectContaining({
         weight: 5,
-        opacity: 0.35,
-        fillOpacity: 0.35,
+        opacity: 0.9,
+        fillOpacity: 1,
         color: 'rgba(210,40,40,1)',
         fillColor: 'rgba(210,40,40,0.4)',
       })
     );
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('0.35');
   });
 
-  it('restyles the existing layer on zoom changes without recreating it', () => {
+  it('keeps the previous settled weight until the next zoom becomes tile-ready', () => {
+    mockMap.getZoom.mockReturnValue(4);
+
     renderHook(() =>
-      useRegionRendering(mockMap, visitData, true, 'static', 2, 0.4, [], [], onTileError)
+      useRegionRendering(mockMap, visitData, true, 'static', 6, 0.4, [], [], onTileError)
     );
 
     const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
+    const tileLoadHandler = on.mock.calls.find(([eventName]) => eventName === 'tileload')?.[1];
+    const loadHandler = on.mock.calls.find(([eventName]) => eventName === 'load')?.[1];
     expect(zoomHandler).toEqual(expect.any(Function));
+    expect(tileLoadHandler).toEqual(expect.any(Function));
+    expect(loadHandler).toEqual(expect.any(Function));
 
     redraw.mockClear();
     updateStyles.mockClear();
-    mockMap.getZoom.mockReturnValue(4);
+    mockMap.getZoom.mockReturnValue(12);
     act(() => {
       zoomHandler?.();
     });
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
     expect(redraw).not.toHaveBeenCalled();
-    expect(updateStyles).toHaveBeenCalledWith(
-      { id: 'visited-feature' },
-      mockLayer._vectorTiles[renderedTileKey],
-      expect.objectContaining({
-        fill: true,
-        fillColor: 'rgba(60,60,60,0.18)',
-        opacity: 0,
-        fillOpacity: 0.4,
-      })
-    );
+    expect(updateStyles).not.toHaveBeenCalled();
+
     const zoomedBaseStyleResolver = mockLayer.options.vectorTileLayerStyles?.regions as
       | (() => ReturnType<typeof getUnvisitedRegionStyle>)
       | undefined;
     expect(zoomedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
         fill: true,
-        fillColor: 'rgba(60,60,60,0.18)',
-        opacity: 0,
-        fillOpacity: 0.4,
+        weight: calculateWeightForZoom(4, 6),
       })
     );
-    expect(
-      Math.max(
-        zoomedBaseStyleResolver?.()?.opacity ?? 0,
-        zoomedBaseStyleResolver?.()?.fillOpacity ?? 0
-      )
-    ).toBeGreaterThan(0);
+
+    act(() => {
+      loadHandler?.();
+    });
+
+    expect(updateStyles).toHaveBeenCalledWith(
+      { id: 'visited-feature' },
+      mockLayer._vectorTiles[renderedTileKey],
+      expect.objectContaining({
+        fill: true,
+        weight: calculateWeightForZoom(4, 6),
+      })
+    );
+
+    updateStyles.mockClear();
+
+    act(() => {
+      tileLoadHandler?.({ coords: { z: 12 } });
+      loadHandler?.();
+    });
+
+    expect(updateStyles).toHaveBeenCalledWith(
+      { id: 'visited-feature' },
+      mockLayer._vectorTiles[renderedTileKey],
+      expect.objectContaining({
+        fill: true,
+        weight: calculateWeightForZoom(12, 6),
+      })
+    );
+    expect(zoomedBaseStyleResolver?.()).toEqual(
+      expect.objectContaining({
+        fill: true,
+        weight: calculateWeightForZoom(12, 6),
+      })
+    );
   });
 
   it('keeps a visible low-zoom fill when the stroke is intentionally hidden', () => {
@@ -443,7 +479,7 @@ describe('useRegionRendering', () => {
         fill: true,
         fillColor: '#0A7E43',
         opacity: 0,
-        fillOpacity: 0.2,
+        fillOpacity: 0.14,
       })
     );
   });
@@ -453,20 +489,25 @@ describe('useRegionRendering', () => {
       expect.objectContaining({
         fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
-        fillOpacity: 0.35,
+        fillOpacity: 1,
       })
     );
   });
 
-  it('reapplies visited overrides on zoom changes through the live layer path', () => {
+  it('reapplies visited overrides after the zoom handoff load commits the new style zoom', () => {
     visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 2 }]]);
+    mockMap.getZoom.mockReturnValue(12);
 
     renderHook(() =>
       useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
     );
 
     const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
+    const tileLoadHandler = on.mock.calls.find(([eventName]) => eventName === 'tileload')?.[1];
+    const loadHandler = on.mock.calls.find(([eventName]) => eventName === 'load')?.[1];
     expect(zoomHandler).toEqual(expect.any(Function));
+    expect(tileLoadHandler).toEqual(expect.any(Function));
+    expect(loadHandler).toEqual(expect.any(Function));
 
     redraw.mockClear();
     setFeatureStyle.mockClear();
@@ -478,6 +519,13 @@ describe('useRegionRendering', () => {
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
     expect(redraw).not.toHaveBeenCalled();
+    expect(setFeatureStyle).not.toHaveBeenCalled();
+
+    act(() => {
+      tileLoadHandler?.({ coords: { z: 4 } });
+      loadHandler?.();
+    });
+
     expect(setFeatureStyle).toHaveBeenCalledWith(
       'RR1::PL::POM::001',
       getVisitedRegionStyle(
@@ -513,15 +561,17 @@ describe('useRegionRendering', () => {
     mockMap.hasLayer.mockReturnValue(true);
 
     const { unmount } = renderHook(() =>
-      useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 0.4, [], [], onTileError)
     );
 
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('0.4');
     unmount();
 
     expect(off).toHaveBeenCalledWith('load', expect.any(Function));
     expect(off).toHaveBeenCalledWith('tileerror', expect.any(Function));
     expect(mapOff).toHaveBeenCalledWith('zoomend', expect.any(Function));
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('');
   });
 
   it('prefers feature.properties.region_id for VectorGrid identity', () => {
@@ -612,16 +662,18 @@ describe('useRegionRendering', () => {
   it('clears a stale tile error when regions are hidden', () => {
     const { rerender } = renderHook(
       ({ showRegions }) =>
-        useRegionRendering(mockMap, visitData, showRegions, 'static', 2, 1, [], [], onTileError),
+        useRegionRendering(mockMap, visitData, showRegions, 'static', 2, 0.4, [], [], onTileError),
       {
         initialProps: { showRegions: true },
       }
     );
 
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('0.4');
     onTileError.mockClear();
     rerender({ showRegions: false });
 
     expect(onTileError).toHaveBeenCalledWith('');
+    expect(paneRegistry.regionsPane?.style.opacity).toBe('');
   });
 
   it('reapplies visited styles when the map instance changes', () => {

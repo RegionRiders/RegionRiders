@@ -116,6 +116,8 @@ export function useLeafletMap(
         zoom: config.zoom,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
+        // Prevent GridLayer cross-fades from briefly stacking old/new vector tiles.
+        fadeAnimation: false,
       });
 
       if (config.tileLayerUrl) {
