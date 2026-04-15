@@ -175,7 +175,6 @@ function getRegionPathStyle(
   visit: RegionVisitData | undefined,
   mode: RegionRenderMode,
   regionBorderThickness: number,
-  regionLayerTransparency: number,
   regionStaticColor: ColorThreshold[],
   regionHeatmapColor: ColorThreshold[],
   currentZoom: number
@@ -203,7 +202,7 @@ function getUnvisitedRegionStyle(
   config: ReturnType<typeof getRegionTileProfileConfig>,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = config.style.weight,
-  regionLayerTransparency: number = config.style.opacity,
+  _regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom
@@ -213,7 +212,6 @@ function getUnvisitedRegionStyle(
     undefined,
     mode,
     regionBorderThickness,
-    regionLayerTransparency,
     regionStaticColor,
     regionHeatmapColor,
     currentZoom
@@ -225,7 +223,7 @@ function getVisitedRegionStyle(
   visit: RegionVisitData,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = config.style.weight,
-  regionLayerTransparency: number = config.style.opacity,
+  _regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom
@@ -235,7 +233,6 @@ function getVisitedRegionStyle(
     visit,
     mode,
     regionBorderThickness,
-    regionLayerTransparency,
     regionStaticColor,
     regionHeatmapColor,
     currentZoom
