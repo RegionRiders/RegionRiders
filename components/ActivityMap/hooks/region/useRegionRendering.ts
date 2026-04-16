@@ -23,11 +23,14 @@ import {
   serializeColorThresholds,
 } from '@/components/ActivityMap/hooks/region/utils/regionStyleHelpers';
 import {
+  commitPendingZoom,
   clearPendingZoomState,
-  getDisplayZoomForLiveUpdate,
-  getResolvedStyleZoom,
+  getVisibleStyleZoom,
+  markPendingTileReady,
+  preparePendingCommit,
   RegionZoomAnimationEvent,
   RegionZoomState,
+  syncVisibleZoom,
 } from '@/components/ActivityMap/hooks/region/utils/regionZoomState';
 import {
   clearRegionPaneOpacity,
@@ -66,8 +69,8 @@ export function useRegionRendering(
   const zoomStateRef = useRef<RegionZoomState>({
     currentZoom: 0,
     committedStyleZoom: 0,
-    displayStyleZoom: 0,
-    pendingStyleZoom: null,
+    visibleStyleZoom: 0,
+    pendingCommitZoom: null,
     pendingTileZoom: null,
     pendingTileReady: false,
   });
@@ -127,7 +130,8 @@ export function useRegionRendering(
   };
 
   const applyLayerStyles = (layer: RegionVectorGridLayer, zoom: number) => {
-    const baseStyle = getBaseRegionStyle(config, styleSettingsRef.current, zoom);
+    const visibleZoom = getVisibleStyleZoom(zoomStateRef.current, zoom);
+    const baseStyle = getBaseRegionStyle(config, styleSettingsRef.current, visibleZoom);
 
     if (layer.options) {
       layer.options.vectorTileLayerStyles = {
@@ -136,13 +140,13 @@ export function useRegionRendering(
           getBaseRegionStyle(
             config,
             styleSettingsRef.current,
-            getResolvedStyleZoom(config, zoomStateRef.current)
+            getVisibleStyleZoom(zoomStateRef.current, visibleZoom)
           ),
       };
     }
 
     updateRenderedTileStyles(layer, config.layerName, baseStyle);
-    applyVisitedRegionStyles(layer, zoom);
+    applyVisitedRegionStyles(layer, visibleZoom);
   };
 
   useEffect(() => {
@@ -160,7 +164,7 @@ export function useRegionRendering(
     const zoomState = zoomStateRef.current;
     zoomState.currentZoom = map.getZoom();
     zoomState.committedStyleZoom = zoomState.currentZoom;
-    zoomState.displayStyleZoom = zoomState.currentZoom;
+    zoomState.visibleStyleZoom = zoomState.currentZoom;
     clearPendingZoomState(zoomState);
 
     ensureMapPane(map, config.paneName, '430');
@@ -188,29 +192,17 @@ export function useRegionRendering(
         return;
       }
 
-      if (nextZoomState.pendingStyleZoom !== null && nextZoomState.pendingTileReady) {
-        nextZoomState.committedStyleZoom = nextZoomState.pendingStyleZoom;
-        nextZoomState.displayStyleZoom = nextZoomState.pendingStyleZoom;
-        clearPendingZoomState(nextZoomState);
-      }
-
-      applyLayerStyles(regionLayerRef.current, getResolvedStyleZoom(config, nextZoomState));
+      commitPendingZoom(nextZoomState);
+      applyLayerStyles(
+        regionLayerRef.current,
+        getVisibleStyleZoom(nextZoomState, nextZoomState.currentZoom || config.detailCapZoom)
+      );
       markFirstRegionLayerAdded();
       onTileError?.('');
     };
 
     const handlePerTileLoad = (event: RegionTileEvent) => {
-      const nextZoomState = zoomStateRef.current;
-
-      if (
-        nextZoomState.pendingStyleZoom === null ||
-        nextZoomState.pendingTileZoom === null ||
-        event.coords?.z !== nextZoomState.pendingTileZoom
-      ) {
-        return;
-      }
-
-      nextZoomState.pendingTileReady = true;
+      markPendingTileReady(zoomStateRef.current, event.coords?.z);
     };
 
     const handleTileError = (event: unknown) => {
@@ -221,27 +213,12 @@ export function useRegionRendering(
     const handleZoomEnd = () => {
       const nextZoomState = zoomStateRef.current;
       const nextZoom = map.getZoom();
-      const settledZoom =
-        nextZoomState.committedStyleZoom || nextZoomState.currentZoom || nextZoom;
+      syncVisibleZoom(nextZoomState, nextZoom);
+      preparePendingCommit(nextZoom, nextZoomState, config.detailCapZoom);
 
-      nextZoomState.currentZoom = nextZoom;
-
-      if (nextZoom < settledZoom) {
-        nextZoomState.committedStyleZoom = nextZoom;
-        nextZoomState.displayStyleZoom = nextZoom;
-        clearPendingZoomState(nextZoomState);
-
-        if (regionLayerRef.current) {
-          applyLayerStyles(regionLayerRef.current, nextZoom);
-        }
-
-        return;
+      if (regionLayerRef.current) {
+        applyLayerStyles(regionLayerRef.current, nextZoom);
       }
-
-      nextZoomState.pendingStyleZoom = nextZoom;
-      nextZoomState.pendingTileZoom = Math.min(nextZoom, config.detailCapZoom);
-      nextZoomState.pendingTileReady = false;
-      nextZoomState.displayStyleZoom = settledZoom;
     };
 
     const handleZoom = () => {
@@ -250,11 +227,8 @@ export function useRegionRendering(
       }
 
       const liveZoom = map.getZoom();
-      const nextZoomState = zoomStateRef.current;
-      const displayZoom = getDisplayZoomForLiveUpdate(liveZoom, nextZoomState);
-
-      nextZoomState.displayStyleZoom = displayZoom;
-      applyLayerStyles(regionLayerRef.current, displayZoom);
+      syncVisibleZoom(zoomStateRef.current, liveZoom);
+      applyLayerStyles(regionLayerRef.current, liveZoom);
     };
 
     const handleZoomAnim = (event: RegionZoomAnimationEvent) => {
@@ -262,11 +236,8 @@ export function useRegionRendering(
         return;
       }
 
-      const nextZoomState = zoomStateRef.current;
-      const displayZoom = getDisplayZoomForLiveUpdate(event.zoom, nextZoomState);
-
-      nextZoomState.displayStyleZoom = displayZoom;
-      applyLayerStyles(regionLayerRef.current, displayZoom);
+      syncVisibleZoom(zoomStateRef.current, event.zoom);
+      applyLayerStyles(regionLayerRef.current, event.zoom);
     };
 
     let layer: RegionVectorGridLayer | null = null;
@@ -291,7 +262,7 @@ export function useRegionRendering(
               config.style.opacity,
               styleSettingsRef.current.effectiveStaticColors,
               styleSettingsRef.current.effectiveHeatmapColors,
-              zoomStateRef.current.displayStyleZoom ||
+              zoomStateRef.current.visibleStyleZoom ||
                 zoomStateRef.current.committedStyleZoom ||
                 initialZoom
             ),
@@ -339,7 +310,7 @@ export function useRegionRendering(
         regionLayerRef.current = null;
       }
 
-      zoomStateRef.current.displayStyleZoom = 0;
+      zoomStateRef.current.visibleStyleZoom = 0;
       clearPendingZoomState(zoomStateRef.current);
       previousVisitedIdsRef.current = new Set();
       clearRegionPaneOpacity(map, config.paneName);
@@ -362,7 +333,10 @@ export function useRegionRendering(
       return;
     }
 
-    applyLayerStyles(regionLayerRef.current, getResolvedStyleZoom(config, zoomStateRef.current));
+    applyLayerStyles(
+      regionLayerRef.current,
+      getVisibleStyleZoom(zoomStateRef.current, config.detailCapZoom)
+    );
   }, [
     config,
     heatmapColorSignature,

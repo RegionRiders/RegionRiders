@@ -200,6 +200,8 @@ describe('useRegionRendering', () => {
     expect(on).toHaveBeenCalledWith('load', expect.any(Function));
     expect(on).toHaveBeenCalledWith('tileload', expect.any(Function));
     expect(on).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(mapOn).toHaveBeenCalledWith('zoom', expect.any(Function));
+    expect(mapOn).toHaveBeenCalledWith('zoomanim', expect.any(Function));
     expect(mapOn).toHaveBeenCalledWith('zoomend', expect.any(Function));
   });
 
@@ -387,16 +389,18 @@ describe('useRegionRendering', () => {
     expect(paneRegistry.regionsPane?.style.opacity).toBe('0.35');
   });
 
-  it('keeps the previous settled weight until the next zoom becomes tile-ready', () => {
+  it('shows the target weight before the next zoom becomes tile-ready and keeps it through commit', () => {
     mockMap.getZoom.mockReturnValue(4);
 
     renderHook(() =>
       useRegionRendering(mockMap, visitData, true, 'static', 6, 0.4, [], [], onTileError)
     );
 
+    const liveZoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoom')?.[1];
     const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
     const tileLoadHandler = on.mock.calls.find(([eventName]) => eventName === 'tileload')?.[1];
     const loadHandler = on.mock.calls.find(([eventName]) => eventName === 'load')?.[1];
+    expect(liveZoomHandler).toEqual(expect.any(Function));
     expect(zoomHandler).toEqual(expect.any(Function));
     expect(tileLoadHandler).toEqual(expect.any(Function));
     expect(loadHandler).toEqual(expect.any(Function));
@@ -405,12 +409,19 @@ describe('useRegionRendering', () => {
     updateStyles.mockClear();
     mockMap.getZoom.mockReturnValue(12);
     act(() => {
-      zoomHandler?.();
+      liveZoomHandler?.();
     });
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
     expect(redraw).not.toHaveBeenCalled();
-    expect(updateStyles).not.toHaveBeenCalled();
+    expect(updateStyles).toHaveBeenCalledWith(
+      { id: 'visited-feature' },
+      mockLayer._vectorTiles[renderedTileKey],
+      expect.objectContaining({
+        fill: true,
+        weight: calculateWeightForZoom(12, 6),
+      })
+    );
 
     const zoomedBaseStyleResolver = mockLayer.options.vectorTileLayerStyles?.regions as
       | (() => ReturnType<typeof getUnvisitedRegionStyle>)
@@ -418,9 +429,11 @@ describe('useRegionRendering', () => {
     expect(zoomedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
         fill: true,
-        weight: calculateWeightForZoom(4, 6),
+        weight: calculateWeightForZoom(12, 6),
       })
     );
+
+    updateStyles.mockClear();
 
     act(() => {
       loadHandler?.();
@@ -431,13 +444,14 @@ describe('useRegionRendering', () => {
       mockLayer._vectorTiles[renderedTileKey],
       expect.objectContaining({
         fill: true,
-        weight: calculateWeightForZoom(4, 6),
+        weight: calculateWeightForZoom(12, 6),
       })
     );
 
     updateStyles.mockClear();
 
     act(() => {
+      zoomHandler?.();
       tileLoadHandler?.({ coords: { z: 12 } });
       loadHandler?.();
     });
@@ -564,6 +578,8 @@ describe('useRegionRendering', () => {
 
     expect(off).toHaveBeenCalledWith('load', expect.any(Function));
     expect(off).toHaveBeenCalledWith('tileerror', expect.any(Function));
+    expect(mapOff).toHaveBeenCalledWith('zoom', expect.any(Function));
+    expect(mapOff).toHaveBeenCalledWith('zoomanim', expect.any(Function));
     expect(mapOff).toHaveBeenCalledWith('zoomend', expect.any(Function));
     expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLayer);
     expect(paneRegistry.regionsPane?.style.opacity).toBe('');
