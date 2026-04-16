@@ -494,7 +494,7 @@ describe('useRegionRendering', () => {
     );
   });
 
-  it('reapplies visited overrides after the zoom handoff load commits the new style zoom', () => {
+  it('reapplies visited overrides immediately when zooming out to a lower settled weight', () => {
     visitData = new Map([['RR1::PL::POM::001', { ...visitedRegion, visitCount: 2 }]]);
     mockMap.getZoom.mockReturnValue(12);
 
@@ -519,13 +519,6 @@ describe('useRegionRendering', () => {
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
     expect(redraw).not.toHaveBeenCalled();
-    expect(setFeatureStyle).not.toHaveBeenCalled();
-
-    act(() => {
-      tileLoadHandler?.({ coords: { z: 4 } });
-      loadHandler?.();
-    });
-
     expect(setFeatureStyle).toHaveBeenCalledWith(
       'RR1::PL::POM::001',
       getVisitedRegionStyle(
@@ -539,6 +532,8 @@ describe('useRegionRendering', () => {
         4
       )
     );
+    expect(tileLoadHandler).toEqual(expect.any(Function));
+    expect(loadHandler).toEqual(expect.any(Function));
   });
 
   it('resets style when a previously visited region is no longer visited', () => {
