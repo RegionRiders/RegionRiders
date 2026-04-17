@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 /**
  * MapOrchestrator - Coordinates rendering of activities and regions on the map
  * Manages the lifecycle of map layers based on settings and data
@@ -13,15 +14,15 @@ import {
 } from '@/components/ActivityMap/config/mapConfig';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
-import { useRegionAnalysis } from '@/components/ActivityMap/hooks/region/useRegionAnalysis';
-import { useRegionLoading } from '@/components/ActivityMap/hooks/region/useRegionLoading';
 import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useRegionRendering';
 import { GPXTrack } from '@/lib/types';
+import type { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 interface MapOrchestratorProps {
   map: LeafletMap | null;
   tracks: Map<string, GPXTrack>;
   settings: MapSettings;
+  onRegionTileError?: (message: string) => void;
 }
 
 /**
@@ -31,9 +32,15 @@ interface MapOrchestratorProps {
  * @param settings - Map display settings
  * @returns null (renders through side effects on the map)
  */
-export default function MapOrchestrator({ map, tracks, settings }: MapOrchestratorProps) {
-  const { regions } = useRegionLoading(map);
-  const { visitData } = useRegionAnalysis(tracks, regions);
+export default function MapOrchestrator({
+  map,
+  tracks,
+  settings,
+  onRegionTileError,
+}: MapOrchestratorProps) {
+  // Region visit status delivery is intentionally deferred to the server-side follow-up plan.
+  // Until that API exists, the VectorGrid path stays on a styling-only placeholder fill model.
+  const visitData = useMemo<Map<string, RegionVisitData>>(() => new Map(), []);
 
   useActivityRendering(
     map,
@@ -50,7 +57,6 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
   );
   useRegionRendering(
     map,
-    regions,
     visitData,
     settings.showRegions,
     settings.regionMode,
@@ -59,7 +65,8 @@ export default function MapOrchestrator({ map, tracks, settings }: MapOrchestrat
     settings.regionStaticColorSwatches?.[settings.selectedRegionStaticSwatchIndex] ??
       DEFAULT_REGION_STATIC_COLOR_SWATCHES[0],
     settings.regionHeatmapColorSwatches?.[settings.selectedRegionHeatmapSwatchIndex ?? 0] ??
-      REGION_VISIT_HEATMAP_COLOR_THRESHOLDS
+      REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
+    onRegionTileError
   );
 
   return null;

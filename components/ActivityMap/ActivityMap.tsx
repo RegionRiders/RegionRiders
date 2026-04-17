@@ -4,7 +4,7 @@
  * ActivityMap - Main map component for displaying GPX tracks and regions
  * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
  */
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
 import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
 import {
@@ -67,6 +67,7 @@ export default function ActivityMap() {
   const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+  const [regionTileError, setRegionTileError] = useState<string | null>(null);
   const isDebugEnabled =
     typeof window !== 'undefined' &&
     (
@@ -113,6 +114,13 @@ export default function ActivityMap() {
       // Ignore storage errors
     }
   };
+
+  const handleRegionTileError = useCallback((message: string) => {
+    const nextMessage = message || null;
+    setRegionTileError((currentMessage) =>
+      currentMessage === nextMessage ? currentMessage : nextMessage
+    );
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -345,7 +353,20 @@ export default function ActivityMap() {
 
       <MapContainerMemo ref={mapContainerRef} />
 
-      {isReady && map && <MapOrchestrator map={map} tracks={memoizedTracks} settings={settings} />}
+      {regionTileError ? (
+        <div role="status" aria-live="polite" aria-atomic="true" className={styles.errorMessage}>
+          {regionTileError}
+        </div>
+      ) : null}
+
+      {isReady && map && (
+        <MapOrchestrator
+          map={map}
+          tracks={memoizedTracks}
+          settings={settings}
+          onRegionTileError={handleRegionTileError}
+        />
+      )}
     </div>
   );
 }

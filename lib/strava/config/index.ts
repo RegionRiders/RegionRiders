@@ -1,2 +1,2 @@
-export { getStravaClient } from './client';
-export { validateStravaEnv } from './validateEnv';
+export { getStravaClient, getStravaOAuthClient } from './client';
+export { validateStravaEnv, validateStravaOAuthEnv } from './validateEnv';

@@ -5,6 +5,15 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
+  roots: [
+    '<rootDir>/app',
+    '<rootDir>/components',
+    '<rootDir>/lib',
+    '<rootDir>/hooks',
+    '<rootDir>/test-utils',
+    '<rootDir>/tools',
+    '<rootDir>/types',
+  ],
   setupFiles: ['<rootDir>/jest.polyfills.cjs', '<rootDir>/test-utils/setup-env.ts'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   globalTeardown: '<rootDir>/jest.teardown.cjs',
@@ -22,6 +31,7 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/.next/',
+    '<rootDir>/public/data/regions/tiles/',
     // Skip integration tests that require database when DB_TEST_SKIP env is set
     ...(process.env.DB_TEST_SKIP === 'true'
       ? [
@@ -32,6 +42,8 @@ const customJestConfig = {
         ]
       : []),
   ],
+  modulePathIgnorePatterns: ['<rootDir>/public/data/regions/tiles/'],
+  watchPathIgnorePatterns: ['<rootDir>/public/data/regions/tiles/'],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },
@@ -39,6 +51,7 @@ const customJestConfig = {
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',
     'lib/**/*.{js,jsx,ts,tsx}',
+    'tools/**/*.{js,jsx,ts,tsx}',
     '!**/*.test.{js,jsx,ts,tsx}',
     '!**/*.spec.{js,jsx,ts,tsx}',
     '!**/*.story.{js,jsx,ts,tsx}',

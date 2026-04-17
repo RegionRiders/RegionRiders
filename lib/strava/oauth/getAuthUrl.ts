@@ -1,5 +1,5 @@
 import { stravaLogger } from '@/lib/logger';
-import { getStravaClient } from '../config';
+import { getStravaOAuthClient } from '../config/client';
 
 /**
  * Generates the Strava OAuth authorization URL with CSRF protection
@@ -11,7 +11,7 @@ export async function getAuthorizationUrl(
   scope = 'read,activity:read_all',
   state?: string
 ): Promise<string> {
-  const strava = getStravaClient();
+  const strava = getStravaOAuthClient();
 
   stravaLogger.debug({ scope, hasState: !!state }, 'Generating Strava OAuth authorization URL');
 

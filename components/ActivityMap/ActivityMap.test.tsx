@@ -12,6 +12,7 @@ import { render, screen, userEvent, waitFor } from '@/test-utils';
 import ActivityMap, { SETTINGS_PERSIST_DEBOUNCE_MS } from './ActivityMap';
 
 const mockLayersPanel = jest.fn();
+const mockMapOrchestrator = jest.fn();
 const INITIAL_PERSIST_WAIT_MS = SETTINGS_PERSIST_DEBOUNCE_MS;
 
 const advanceInitialPersistWindow = () => {
@@ -61,7 +62,12 @@ jest.mock('./MapContainer', () => ({
 
 jest.mock('./MapOrchestrator', () => ({
   __esModule: true,
-  default: function MockMapOrchestrator() {
+  default: function MockMapOrchestrator(props: { onRegionTileError?: (message: string) => void }) {
+    mockMapOrchestrator(props);
+    if (props.onRegionTileError) {
+      (globalThis as any).__mockOnRegionTileError = props.onRegionTileError;
+    }
+
     return <div data-testid="map-orchestrator">Map Orchestrator</div>;
   },
 }));
@@ -79,6 +85,27 @@ jest.mock('./controls/LayersPanel/LayersPanel', () => ({
           type="button"
         >
           Update settings
+        </button>
+        <button
+          data-testid="update-region-transparency"
+          onClick={() => props.onSettingChange('regionLayerTransparency', 0.35)}
+          type="button"
+        >
+          Update region transparency
+        </button>
+        <button
+          data-testid="update-region-border-thickness"
+          onClick={() => props.onSettingChange('regionBorderThickness', 5)}
+          type="button"
+        >
+          Update region border thickness
+        </button>
+        <button
+          data-testid="update-region-mode"
+          onClick={() => props.onSettingChange('regionMode', 'heatmap')}
+          type="button"
+        >
+          Update region mode
         </button>
       </div>
     );
@@ -106,6 +133,7 @@ type HydrationSettingsResolver = (value: {
 describe('ActivityMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete (globalThis as any).__mockOnRegionTileError;
     window.localStorage.clear();
     mockLoadAuthenticatedUserIdFromApi.mockResolvedValue(null);
     mockLoadMapSettingsFromApi.mockResolvedValue(null);
@@ -129,7 +157,8 @@ describe('ActivityMap', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await flushHydrationPromises();
     if (jest.isMockFunction(setTimeout)) {
       jest.clearAllTimers();
     }
@@ -195,6 +224,105 @@ describe('ActivityMap', () => {
     expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
   });
 
+  it('shows a non-fatal region overlay error message', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    expect(reportError).toBeDefined();
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Region overlay unavailable');
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+  });
+
+  it('announces the region overlay error through a live status region', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
+  });
+
+  it('clears a prior region overlay error when the overlay recovers', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getByText('Region overlay unavailable')).toBeInTheDocument();
+
+    act(() => {
+      reportError?.('');
+    });
+
+    expect(screen.queryByText('Region overlay unavailable')).not.toBeInTheDocument();
+  });
+
+  it('keeps a single visible overlay error when the same message is reported repeatedly', () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+      reportError?.('Region overlay unavailable');
+    });
+
+    expect(screen.getAllByText('Region overlay unavailable')).toHaveLength(1);
+  });
+
+  it('keeps the map shell and overlay status intact while region settings change', async () => {
+    render(<ActivityMap />);
+
+    const reportError = (globalThis as any).__mockOnRegionTileError as
+      | ((message: string) => void)
+      | undefined;
+
+    act(() => {
+      reportError?.('Region overlay unavailable');
+    });
+
+    await userEvent.click(screen.getByTestId('update-region-transparency'));
+    await userEvent.click(screen.getByTestId('update-region-border-thickness'));
+    await userEvent.click(screen.getByTestId('update-region-mode'));
+
+    await waitFor(() => {
+      const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
+      expect(latestLayersPanelProps.settings.regionLayerTransparency).toBe(0.35);
+      expect(latestLayersPanelProps.settings.regionBorderThickness).toBe(5);
+      expect(latestLayersPanelProps.settings.regionMode).toBe('heatmap');
+
+      const latestMapOrchestratorProps = mockMapOrchestrator.mock.calls.at(-1)?.[0];
+      expect(latestMapOrchestratorProps.settings.regionLayerTransparency).toBe(0.35);
+      expect(latestMapOrchestratorProps.settings.regionBorderThickness).toBe(5);
+      expect(latestMapOrchestratorProps.settings.regionMode).toBe('heatmap');
+    });
+
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
+    expect(screen.getByTestId('map-orchestrator')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Region overlay unavailable');
+  });
+
   it('loads saved settings from anonymous localStorage key', () => {
     const persistedTileLayerUrl =
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -257,6 +385,7 @@ describe('ActivityMap', () => {
     );
 
     render(<ActivityMap />);
+    await flushHydrationPromises();
 
     await waitFor(() => {
       const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];
@@ -290,6 +419,7 @@ describe('ActivityMap', () => {
     );
 
     render(<ActivityMap />);
+    await flushHydrationPromises();
 
     await waitFor(() => {
       const latestLayersPanelProps = mockLayersPanel.mock.calls.at(-1)?.[0];

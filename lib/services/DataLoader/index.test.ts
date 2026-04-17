@@ -1,10 +1,7 @@
 import { GPXLoader } from './gpxLoader';
 import { DataLoader } from './index';
-import { RegionLoader } from './RegionLoader';
 
-// Mock the loaders
 jest.mock('./gpxLoader');
-jest.mock('./RegionLoader');
 
 describe('DataLoader', () => {
   beforeEach(() => {
@@ -16,9 +13,6 @@ describe('DataLoader', () => {
       cachedTracks: 0,
       loadingTracks: 0,
     });
-
-    (RegionLoader.loadRegions as jest.Mock).mockResolvedValue([]);
-    (RegionLoader.clearCache as jest.Mock).mockImplementation(() => {});
   });
 
   describe('loadGPXTracks', () => {
@@ -70,75 +64,11 @@ describe('DataLoader', () => {
     });
   });
 
-  describe('loadRegions', () => {
-    it('should load regions using RegionLoader without filters', async () => {
-      await DataLoader.loadRegions();
-
-      expect(RegionLoader.loadRegions).toHaveBeenCalledWith(undefined, undefined);
-    });
-
-    it('should load regions with bounds filter', async () => {
-      const bounds = {
-        north: 51.0,
-        south: 50.0,
-        east: 15.0,
-        west: 14.0,
-      };
-
-      await DataLoader.loadRegions(bounds);
-
-      expect(RegionLoader.loadRegions).toHaveBeenCalledWith(bounds, undefined);
-    });
-
-    it('should load regions with countries filter', async () => {
-      const countries = ['PL', 'DE'];
-
-      await DataLoader.loadRegions(undefined, countries);
-
-      expect(RegionLoader.loadRegions).toHaveBeenCalledWith(undefined, countries);
-    });
-
-    it('should load regions with both bounds and countries filters', async () => {
-      const bounds = {
-        north: 51.0,
-        south: 50.0,
-        east: 15.0,
-        west: 14.0,
-      };
-      const countries = ['PL'];
-
-      await DataLoader.loadRegions(bounds, countries);
-
-      expect(RegionLoader.loadRegions).toHaveBeenCalledWith(bounds, countries);
-    });
-
-    it('should return an array of regions', async () => {
-      const mockRegions = [
-        {
-          id: 'region1',
-          name: 'Region 1',
-          country: 'PL',
-          adminLevel: 4,
-          geometry: {} as any,
-          properties: {},
-        },
-      ];
-
-      (RegionLoader.loadRegions as jest.Mock).mockResolvedValue(mockRegions);
-
-      const result = await DataLoader.loadRegions();
-
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBe(1);
-    });
-  });
-
   describe('clearCache', () => {
-    it('should clear both GPX and Region caches', () => {
+    it('should clear GPX cache', () => {
       DataLoader.clearCache();
 
       expect(GPXLoader.clearCache).toHaveBeenCalled();
-      expect(RegionLoader.clearCache).toHaveBeenCalled();
     });
   });
 
