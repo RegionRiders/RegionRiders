@@ -39,6 +39,20 @@ type RegionRenderedFeatureEntry = {
 
 type RegionRenderedFeatureBuckets = Record<string, RegionRenderedFeatureEntry[]>;
 
+class RegionVectorTileHttpError extends Error {
+  status: number;
+  tileUrl: string;
+
+  constructor(status: number, statusText: string, tileUrl: string) {
+    super(
+      `Region tile request failed with HTTP ${status}${statusText ? ` ${statusText}` : ''}: ${tileUrl}`
+    );
+    this.name = 'RegionVectorTileHttpError';
+    this.status = status;
+    this.tileUrl = tileUrl;
+  }
+}
+
 type RegionTileRenderer = {
   _features?: RegionRenderedFeatureBuckets;
   _addPath: (featureLayer: {
@@ -252,7 +266,7 @@ function fastFetchVectorTile(
   return fetch(tileUrl, layer.options?.fetchOptions)
     .then((response) => {
       if (!response.ok) {
-        return { layers: {} } as RegionVectorTilePayload;
+        throw new RegionVectorTileHttpError(response.status, response.statusText, tileUrl);
       }
 
       return response.arrayBuffer().then((buffer) => new VectorTile(new Pbf(buffer)));
@@ -360,7 +374,13 @@ export function optimizeRegionVectorGridLayer(
     optimizableLayer._getVectorTilePromise.bind(optimizableLayer);
   const originalCreateTile = optimizableLayer.createTile.bind(optimizableLayer);
   optimizableLayer._getVectorTilePromise = (coords: RegionTileCoords) =>
-    fastFetchVectorTile(optimizableLayer, coords).catch(() => originalGetVectorTilePromise(coords));
+    fastFetchVectorTile(optimizableLayer, coords).catch((error) => {
+      if (error instanceof RegionVectorTileHttpError) {
+        throw error;
+      }
+
+      return originalGetVectorTilePromise(coords);
+    });
 
   optimizableLayer.createTile = function createTile(
     coords: RegionTileCoords,

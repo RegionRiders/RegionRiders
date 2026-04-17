@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import {
   createRegionVectorGridLayer,
+  optimizeRegionVectorGridLayer,
   renderVectorTileIntoRenderer,
 } from './regionVectorGridRuntime';
 
@@ -84,6 +85,9 @@ describe('createRegionVectorGridLayer', () => {
 
 describe('renderVectorTileIntoRenderer', () => {
   it('stores every rendered fragment under the same feature id bucket', () => {
+    const tileSize = {
+      divideBy: jest.fn(() => new L.Point(1, 1)),
+    } as unknown as L.Point;
     const firstFeatureLayer = {
       render: jest.fn(),
     };
@@ -102,7 +106,7 @@ describe('renderVectorTileIntoRenderer', () => {
     const layer = {
       _createLayer: createLayer,
       _map: null,
-      getTileSize: jest.fn(() => L.point(256, 256)),
+      getTileSize: () => tileSize,
       options: {
         getFeatureId: (feature: { properties: { id: string } }) => feature.properties.id,
         vectorTileLayerStyles: {
@@ -118,10 +122,7 @@ describe('renderVectorTileIntoRenderer', () => {
         layers: {
           regions: {
             extent: 4096,
-            features: [
-              { properties: { id: 'region-1' } },
-              { properties: { id: 'region-1' } },
-            ],
+            features: [{ properties: { id: 'region-1' } }, { properties: { id: 'region-1' } }],
           },
         },
       } as any,
@@ -141,5 +142,56 @@ describe('renderVectorTileIntoRenderer', () => {
       ],
     });
     expect(renderer._addPath).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('optimizeRegionVectorGridLayer', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('propagates non-OK tile responses instead of falling back to an empty tile', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+    }) as any;
+
+    const originalGetVectorTilePromise = jest.fn().mockResolvedValue({ layers: {} });
+    const renderer = {
+      _addPath: jest.fn(),
+      addTo: jest.fn(),
+      getContainer: jest.fn(() => document.createElement('canvas')),
+    };
+    const layer = optimizeRegionVectorGridLayer({
+      __rrOptimized: false,
+      _url: 'https://tiles.example.com/{z}/{x}/{y}.pbf',
+      _map: {
+        options: {
+          crs: {
+            infinite: true,
+          },
+        },
+      },
+      _getSubdomain: jest.fn(() => 'a'),
+      _getVectorTilePromise: originalGetVectorTilePromise,
+      _createLayer: jest.fn(),
+      getTileSize: jest.fn(() => new L.Point(256, 256)),
+      createTile: jest.fn(),
+      options: {
+        rendererFactory: jest.fn(() => renderer),
+      },
+    } as any) as any;
+
+    const done = jest.fn();
+    layer?.createTile?.({ x: 1, y: 2, z: 3 } as any, done);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(originalGetVectorTilePromise).not.toHaveBeenCalled();
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(done.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect(String(done.mock.calls[0]?.[0])).toContain('HTTP 503');
   });
 });
