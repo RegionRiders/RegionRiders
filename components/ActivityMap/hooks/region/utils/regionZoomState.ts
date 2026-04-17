@@ -17,10 +17,7 @@ export function clearPendingZoomState(zoomState: RegionZoomState): void {
   zoomState.pendingTileReady = false;
 }
 
-export function getVisibleStyleZoom(
-  zoomState: RegionZoomState,
-  fallbackZoom: number
-): number {
+export function getVisibleStyleZoom(zoomState: RegionZoomState, fallbackZoom: number): number {
   return (
     zoomState.visibleStyleZoom ||
     zoomState.committedStyleZoom ||
@@ -29,10 +26,7 @@ export function getVisibleStyleZoom(
   );
 }
 
-export function syncVisibleZoom(
-  zoomState: RegionZoomState,
-  nextZoom: number
-): void {
+export function syncVisibleZoom(zoomState: RegionZoomState, nextZoom: number): void {
   zoomState.currentZoom = nextZoom;
   zoomState.visibleStyleZoom = nextZoom;
 }

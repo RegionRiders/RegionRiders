@@ -1,5 +1,4 @@
 import L from 'leaflet';
-
 import { createRegionVectorGridLayer } from './regionVectorGridRuntime';
 
 jest.mock('leaflet.vectorgrid', () => ({}));

@@ -1,18 +1,20 @@
 import L from 'leaflet';
-
 import {
   getBaseRegionStyle,
   getRegionPathStyle,
   RegionStyleSettings,
   RegionTileConfig,
 } from '@/components/ActivityMap/hooks/region/utils/regionStyleHelpers';
-import { getVisibleStyleZoom, RegionZoomState } from '@/components/ActivityMap/hooks/region/utils/regionZoomState';
 import {
   syncCoveredRegionTiles,
   syncRenderedRegionPanePaths,
   updateRenderedTileStyles,
 } from '@/components/ActivityMap/hooks/region/utils/regionVectorGridHelpers';
 import { RegionVectorGridLayer } from '@/components/ActivityMap/hooks/region/utils/regionVectorGridRuntime';
+import {
+  getVisibleStyleZoom,
+  RegionZoomState,
+} from '@/components/ActivityMap/hooks/region/utils/regionZoomState';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 function getVisitedRegionIds(visitData: Map<string, RegionVisitData>): Set<string> {

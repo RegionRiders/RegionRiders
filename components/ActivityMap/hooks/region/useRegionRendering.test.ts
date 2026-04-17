@@ -106,11 +106,7 @@ function seedPaneWithRegionPath(pane: HTMLElement, strokeWidth: string = '2') {
   `;
 }
 
-function createTileContainer(
-  zIndex: string,
-  tileCount: number,
-  tileTag: 'svg' | 'canvas' = 'svg'
-) {
+function createTileContainer(zIndex: string, tileCount: number, tileTag: 'svg' | 'canvas' = 'svg') {
   const container = document.createElement('div');
   container.className = 'leaflet-tile-container';
   container.style.zIndex = zIndex;
@@ -626,7 +622,9 @@ describe('useRegionRendering', () => {
     pane.appendChild(staleContainer);
     pane.appendChild(freshContainer);
 
-    const [staleLeftTile, staleRightTile] = Array.from(staleContainer.children) as HTMLCanvasElement[];
+    const [staleLeftTile, staleRightTile] = Array.from(
+      staleContainer.children
+    ) as HTMLCanvasElement[];
     const [freshTile] = Array.from(freshContainer.children) as HTMLCanvasElement[];
 
     mockTileBounds(staleLeftTile);

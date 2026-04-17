@@ -1,5 +1,4 @@
 import L from 'leaflet';
-
 import { RegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
 import { RegionTileFeature } from '@/components/ActivityMap/hooks/region/utils/regionStyleHelpers';
 
@@ -132,7 +131,10 @@ type RegionVectorGridOptimizableLayer = RegionVectorGridLayer & {
   _overriddenStyles?: Record<string, unknown>;
   _getSubdomain?: (coords: RegionTileCoords) => string;
   _getVectorTilePromise?: (coords: RegionTileCoords) => Promise<RegionVectorTilePayload>;
-  _createLayer?: (feature: RegionVectorTileFeature, pxPerExtent: L.Point) => {
+  _createLayer?: (
+    feature: RegionVectorTileFeature,
+    pxPerExtent: L.Point
+  ) => {
     render: (renderer: unknown, style: L.PathOptions) => void;
     makeInteractive?: () => void;
     addEventParent?: (parent: unknown) => void;
@@ -289,8 +291,7 @@ function renderVectorTileIntoRenderer(
         const overriddenStyle =
           featureId !== undefined ? layer._overriddenStyles?.[String(featureId)] : undefined;
         if (overriddenStyle) {
-          featureStyle =
-            (overriddenStyle as Record<string, unknown>)[layerName] ?? overriddenStyle;
+          featureStyle = (overriddenStyle as Record<string, unknown>)[layerName] ?? overriddenStyle;
         }
       }
 
@@ -353,7 +354,8 @@ export function optimizeRegionVectorGridLayer(
     return layer;
   }
 
-  const originalGetVectorTilePromise = optimizableLayer._getVectorTilePromise.bind(optimizableLayer);
+  const originalGetVectorTilePromise =
+    optimizableLayer._getVectorTilePromise.bind(optimizableLayer);
   const originalCreateTile = optimizableLayer.createTile.bind(optimizableLayer);
   optimizableLayer._getVectorTilePromise = (coords: RegionTileCoords) =>
     fastFetchVectorTile(optimizableLayer, coords).catch(() => originalGetVectorTilePromise(coords));

@@ -1,5 +1,4 @@
 import L from 'leaflet';
-
 import { RegionTileElement, RegionVectorGridLayer } from './regionVectorGridRuntime';
 
 export function syncRegionPaneOpacity(
@@ -65,7 +64,9 @@ export function syncRenderedRegionPanePaths(
 
 function resetTileVisibility(pane: HTMLElement): void {
   pane
-    .querySelectorAll<RegionTileElement>('.leaflet-tile-container > svg, .leaflet-tile-container > canvas')
+    .querySelectorAll<RegionTileElement>(
+      '.leaflet-tile-container > svg, .leaflet-tile-container > canvas'
+    )
     .forEach((tile) => {
       tile.style.visibility = '';
     });

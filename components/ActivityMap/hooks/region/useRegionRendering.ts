@@ -12,7 +12,10 @@ import {
 import { getRegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { ensureMapPane } from '@/components/ActivityMap/hooks/activity/utils/ensureMapPane';
-import { applyRegionLayerStyles, shouldHideCoveredRegionTiles } from '@/components/ActivityMap/hooks/region/utils/regionLayerStyleSync';
+import {
+  applyRegionLayerStyles,
+  shouldHideCoveredRegionTiles,
+} from '@/components/ActivityMap/hooks/region/utils/regionLayerStyleSync';
 import {
   getBaseRegionStyle,
   getEffectiveColors,
@@ -23,16 +26,6 @@ import {
   serializeColorThresholds,
 } from '@/components/ActivityMap/hooks/region/utils/regionStyleHelpers';
 import {
-  commitPendingZoom,
-  clearPendingZoomState,
-  getVisibleStyleZoom,
-  markPendingTileReady,
-  preparePendingCommit,
-  RegionZoomAnimationEvent,
-  RegionZoomState,
-  syncVisibleZoom,
-} from '@/components/ActivityMap/hooks/region/utils/regionZoomState';
-import {
   clearRegionPaneOpacity,
   syncCoveredRegionTiles,
   syncRegionPaneOpacity,
@@ -42,6 +35,16 @@ import {
   RegionTileEvent,
   RegionVectorGridLayer,
 } from '@/components/ActivityMap/hooks/region/utils/regionVectorGridRuntime';
+import {
+  clearPendingZoomState,
+  commitPendingZoom,
+  getVisibleStyleZoom,
+  markPendingTileReady,
+  preparePendingCommit,
+  RegionZoomAnimationEvent,
+  RegionZoomState,
+  syncVisibleZoom,
+} from '@/components/ActivityMap/hooks/region/utils/regionZoomState';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import {

@@ -1,7 +1,6 @@
 'use client';
 
 import L from 'leaflet';
-
 import {
   REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   REGION_VISIT_STATIC_COLOR_THRESHOLDS,
