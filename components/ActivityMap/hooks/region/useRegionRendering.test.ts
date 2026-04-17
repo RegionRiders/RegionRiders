@@ -259,23 +259,9 @@ describe('useRegionRendering', () => {
     );
 
     expect((L as any).vectorGrid.protobuf).toHaveBeenCalledTimes(1);
-    expect((L as any).vectorGrid.protobuf).toHaveBeenCalledWith(
-      mockRegionTileConfig.sourceUrl,
-      expect.objectContaining({
-        getFeatureId: getRegionFeatureId,
-        maxZoom: 18,
-        maxNativeZoom: 12,
-        updateWhenZooming: true,
-        keepBuffer: 4,
-        rendererFactory: (L as any).canvas.tile,
-        vectorTileLayerStyles: {
-          regions: expect.any(Function),
-        },
-      })
-    );
     const baseStyleResolver = getBaseStyleResolver();
     expect(baseStyleResolver?.()).toEqual(
-      getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, 1, [], [], 12)
+      getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, [], [], 12)
     );
     expect(baseStyleResolver?.()).toEqual(expect.objectContaining({ fill: true }));
     expect(addTo).toHaveBeenCalledWith(mockMap);
@@ -301,7 +287,6 @@ describe('useRegionRendering', () => {
         { ...visitedRegion, visitCount: 2 },
         'static',
         2,
-        1,
         [],
         []
       )
@@ -312,7 +297,6 @@ describe('useRegionRendering', () => {
         { ...visitedRegion, visitCount: 2 },
         'static',
         2,
-        1,
         [],
         []
       )
@@ -569,7 +553,6 @@ describe('useRegionRendering', () => {
         mockRegionTileConfig,
         'static',
         2,
-        0.2,
         transparentPlaceholderThresholds,
         [],
         4
@@ -585,7 +568,7 @@ describe('useRegionRendering', () => {
   });
 
   it('keeps the default placeholder base fill visible and transparency-scaled', () => {
-    expect(getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, 0.35, [], [], 12)).toEqual(
+    expect(getUnvisitedRegionStyle(mockRegionTileConfig, 'static', 2, [], [], 12)).toEqual(
       expect.objectContaining({
         fill: true,
         fillColor: 'rgba(60,60,60,0.18)',
@@ -626,7 +609,6 @@ describe('useRegionRendering', () => {
         { ...visitedRegion, visitCount: 2 },
         'static',
         2,
-        1,
         [],
         [],
         4

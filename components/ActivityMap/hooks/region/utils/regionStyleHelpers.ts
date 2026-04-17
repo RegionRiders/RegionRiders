@@ -6,7 +6,7 @@ import {
   REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   REGION_VISIT_STATIC_COLOR_THRESHOLDS,
 } from '@/components/ActivityMap/config/mapConfig';
-import { getRegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
+import { RegionTileProfileConfig } from '@/components/ActivityMap/config/regionTileProfiles';
 import { RegionRenderMode } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { getRegionColorsHeatmap } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsHeatmap';
 import { getRegionColorsStatic } from '@/components/ActivityMap/hooks/region/renderingModes/getRegionColorsStatic';
@@ -14,7 +14,7 @@ import { calculateWeightForZoom } from '@/components/ActivityMap/hooks/region/ut
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
-export type RegionTileConfig = ReturnType<typeof getRegionTileProfileConfig>;
+export type RegionTileConfig = RegionTileProfileConfig;
 
 export type RegionTileFeature = {
   properties?: Record<string, unknown>;
@@ -176,7 +176,6 @@ export function getUnvisitedRegionStyle(
   config: RegionTileConfig,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = config.style.weight,
-  _regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom
@@ -199,7 +198,6 @@ export function getVisitedRegionStyle(
   visit: RegionVisitData,
   mode: RegionRenderMode = 'static',
   regionBorderThickness: number = config.style.weight,
-  _regionLayerTransparency: number = config.style.opacity,
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom

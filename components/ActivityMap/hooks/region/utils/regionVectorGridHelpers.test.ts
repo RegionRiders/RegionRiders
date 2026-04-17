@@ -1,4 +1,5 @@
-import { RegionVectorGridLayer, syncCoveredRegionTiles } from './regionVectorGridHelpers';
+import { syncCoveredRegionTiles } from './regionVectorGridHelpers';
+import { RegionVectorGridLayer } from './regionVectorGridRuntime';
 
 function createPane(): HTMLDivElement {
   return document.createElement('div');
