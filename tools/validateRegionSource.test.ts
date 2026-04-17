@@ -249,4 +249,35 @@ describe('validateRegionSource', () => {
       ])
     );
   });
+
+  it('treats whitespace-only required properties as missing', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'blank-required.geojson',
+      JSON.stringify(
+        createFeatureCollectionWithProperties({
+          region_id: 'RR1::PL::POM::001',
+          country_code: '   ',
+          admin_level: '\t',
+          name: '  ',
+        })
+      )
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+    const missingPropertyIssue = report.issues.find(
+      (issue) =>
+        issue.file === 'blank-required.geojson' && issue.code === 'missing_required_property'
+    );
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(missingPropertyIssue).toEqual(
+      expect.objectContaining({
+        file: 'blank-required.geojson',
+        code: 'missing_required_property',
+        message: expect.stringContaining('country_code, admin_level, name'),
+      })
+    );
+  });
 });

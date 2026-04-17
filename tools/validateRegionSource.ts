@@ -78,6 +78,18 @@ function getNormalizedRegionId(value: unknown): string | null {
   return normalizedValue.length > 0 ? normalizedValue : null;
 }
 
+function propertyIsMissing(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length === 0;
+  }
+
+  return false;
+}
+
 function hasAnyCoordinate(value: unknown): boolean {
   if (!Array.isArray(value) || value.length === 0) {
     return false;
@@ -199,7 +211,7 @@ export function validateRegionSource(
 
       const missingProps = REQUIRED_PROPERTIES.filter((key) => {
         const value = properties[key];
-        return value === undefined || value === null || value === '';
+        return propertyIsMissing(value);
       });
 
       if (missingProps.length > 0) {
