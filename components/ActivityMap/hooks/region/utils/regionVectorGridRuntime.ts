@@ -32,8 +32,15 @@ type RegionVectorTilePayload = {
   layers: Record<string, RegionVectorTileLayerData>;
 };
 
+type RegionRenderedFeatureEntry = {
+  layerName?: string;
+  feature: unknown;
+};
+
+type RegionRenderedFeatureBuckets = Record<string, RegionRenderedFeatureEntry[]>;
+
 type RegionTileRenderer = {
-  _features?: Record<string, { layerName?: string; feature: unknown }>;
+  _features?: RegionRenderedFeatureBuckets;
   _addPath: (featureLayer: {
     render: (renderer: unknown, style: L.PathOptions) => void;
     makeInteractive?: () => void;
@@ -98,17 +105,7 @@ export type RegionVectorGridLayer = L.Layer & {
   _vectorTiles?: Record<
     string,
     {
-      _features?: Record<
-        string,
-        | {
-            layerName?: string;
-            feature: unknown;
-          }
-        | Array<{
-            layerName?: string;
-            feature: unknown;
-          }>
-      >;
+      _features?: RegionRenderedFeatureBuckets;
     }
   >;
   options?: {
@@ -263,7 +260,7 @@ function fastFetchVectorTile(
     .then(normalizeFetchedVectorTile);
 }
 
-function renderVectorTileIntoRenderer(
+export function renderVectorTileIntoRenderer(
   layer: RegionVectorGridOptimizableLayer,
   renderer: RegionTileRenderer,
   vectorTile: RegionVectorTilePayload,
@@ -320,12 +317,17 @@ function renderVectorTileIntoRenderer(
       }
 
       if (storeFeatures && featureId !== undefined) {
+        const featureKey = String(featureId);
+        const existingFeatureEntries = renderer._features?.[featureKey] ?? [];
         renderer._features = {
           ...(renderer._features ?? {}),
-          [String(featureId)]: {
-            layerName,
-            feature: featureLayer,
-          },
+          [featureKey]: [
+            ...existingFeatureEntries,
+            {
+              layerName,
+              feature: featureLayer,
+            },
+          ],
         };
       }
     });

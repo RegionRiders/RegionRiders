@@ -1,5 +1,8 @@
 import L from 'leaflet';
-import { createRegionVectorGridLayer } from './regionVectorGridRuntime';
+import {
+  createRegionVectorGridLayer,
+  renderVectorTileIntoRenderer,
+} from './regionVectorGridRuntime';
 
 jest.mock('leaflet.vectorgrid', () => ({}));
 
@@ -76,5 +79,67 @@ describe('createRegionVectorGridLayer', () => {
         createBaseStyle: () => ({ weight: 2 }),
       })
     ).toBeNull();
+  });
+});
+
+describe('renderVectorTileIntoRenderer', () => {
+  it('stores every rendered fragment under the same feature id bucket', () => {
+    const firstFeatureLayer = {
+      render: jest.fn(),
+    };
+    const secondFeatureLayer = {
+      render: jest.fn(),
+    };
+    const createLayer = jest
+      .fn()
+      .mockReturnValueOnce(firstFeatureLayer)
+      .mockReturnValueOnce(secondFeatureLayer);
+    const renderer: any = {
+      _addPath: jest.fn(),
+      addTo: jest.fn(),
+      getContainer: jest.fn(() => document.createElement('canvas')),
+    };
+    const layer = {
+      _createLayer: createLayer,
+      _map: null,
+      getTileSize: jest.fn(() => L.point(256, 256)),
+      options: {
+        getFeatureId: (feature: { properties: { id: string } }) => feature.properties.id,
+        vectorTileLayerStyles: {
+          regions: () => ({ weight: 2, color: '#0A7E43' }),
+        },
+      },
+    } as any;
+
+    renderVectorTileIntoRenderer(
+      layer,
+      renderer,
+      {
+        layers: {
+          regions: {
+            extent: 4096,
+            features: [
+              { properties: { id: 'region-1' } },
+              { properties: { id: 'region-1' } },
+            ],
+          },
+        },
+      } as any,
+      { x: 1, y: 2, z: 8 }
+    );
+
+    expect(renderer._features).toEqual({
+      'region-1': [
+        {
+          layerName: 'regions',
+          feature: firstFeatureLayer,
+        },
+        {
+          layerName: 'regions',
+          feature: secondFeatureLayer,
+        },
+      ],
+    });
+    expect(renderer._addPath).toHaveBeenCalledTimes(2);
   });
 });
