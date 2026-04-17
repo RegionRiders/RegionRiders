@@ -79,6 +79,77 @@ function createMockVectorTiles() {
   };
 }
 
+function createPaneElement() {
+  const pane = document.createElement('div');
+  pane.style.zIndex = '';
+  pane.style.opacity = '';
+  return pane;
+}
+
+function seedPaneWithRegionPath(pane: HTMLElement, strokeWidth: string = '2') {
+  pane.innerHTML = `
+    <div class="leaflet-layer">
+      <div class="leaflet-tile-container leaflet-zoom-animated">
+        <svg>
+          <g>
+            <path
+              stroke="rgba(60,60,60,1)"
+              stroke-opacity="0.9"
+              stroke-width="${strokeWidth}"
+              fill="rgba(60,60,60,0.18)"
+              fill-opacity="1"
+            ></path>
+          </g>
+        </svg>
+      </div>
+    </div>
+  `;
+}
+
+function createTileContainer(
+  zIndex: string,
+  tileCount: number,
+  tileTag: 'svg' | 'canvas' = 'svg'
+) {
+  const container = document.createElement('div');
+  container.className = 'leaflet-tile-container';
+  container.style.zIndex = zIndex;
+
+  for (let index = 0; index < tileCount; index += 1) {
+    const tile =
+      tileTag === 'canvas'
+        ? document.createElement('canvas')
+        : document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+    if (tileTag === 'svg') {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      tile.appendChild(path);
+    }
+
+    container.appendChild(tile);
+  }
+
+  return container;
+}
+
+function mockTileBounds(tile: SVGSVGElement | HTMLCanvasElement): void {
+  Object.defineProperty(tile, 'getBoundingClientRect', {
+    configurable: true,
+    value: () =>
+      ({
+        x: 0,
+        y: 0,
+        width: 256,
+        height: 256,
+        top: 0,
+        right: 256,
+        bottom: 256,
+        left: 0,
+        toJSON: () => ({}),
+      }) satisfies DOMRect,
+  });
+}
+
 function getBaseStyleResolver(): (() => ReturnType<typeof getUnvisitedRegionStyle>) | undefined {
   return (L as any).vectorGrid.protobuf.mock.calls[0]?.[1]?.vectorTileLayerStyles?.regions as
     | (() => ReturnType<typeof getUnvisitedRegionStyle>)
@@ -115,7 +186,7 @@ describe('useRegionRendering', () => {
   const resetFeatureStyle = jest.fn();
   const mapOn = jest.fn();
   const mapOff = jest.fn();
-  let paneRegistry: Record<string, { style: { zIndex: string; opacity: string } }> = {};
+  let paneRegistry: Record<string, HTMLElement> = {};
   let visitData = new Map<string, RegionVisitData>();
   const onTileError = jest.fn();
 
@@ -124,6 +195,8 @@ describe('useRegionRendering', () => {
     on,
     off,
     redraw,
+    _tileZoom: 12,
+    _tiles: {},
     _updateStyles: updateStyles,
     _vectorTiles: createMockVectorTiles(),
     setFeatureStyle,
@@ -139,7 +212,7 @@ describe('useRegionRendering', () => {
     getZoom: jest.fn(() => 12),
     getPane: jest.fn((paneName: string) => paneRegistry[paneName] ?? null),
     createPane: jest.fn((paneName: string) => {
-      const pane = { style: { zIndex: '', opacity: '' } };
+      const pane = createPaneElement();
       paneRegistry[paneName] = pane;
       return pane;
     }),
@@ -148,11 +221,19 @@ describe('useRegionRendering', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     paneRegistry = {};
+    paneRegistry.regionsPane = createPaneElement();
+    seedPaneWithRegionPath(paneRegistry.regionsPane);
     visitData = new Map();
     mockLayer.options = {};
     mockLayer._vectorTiles = createMockVectorTiles();
     (L as any).vectorGrid = {
       protobuf: jest.fn(() => mockLayer),
+    };
+    (L as any).canvas = {
+      tile: jest.fn(() => 'canvas-renderer'),
+    };
+    (L as any).svg = {
+      tile: jest.fn(() => 'svg-renderer'),
     };
   });
 
@@ -184,8 +265,9 @@ describe('useRegionRendering', () => {
         getFeatureId: getRegionFeatureId,
         maxZoom: 18,
         maxNativeZoom: 12,
-        updateWhenZooming: false,
+        updateWhenZooming: true,
         keepBuffer: 4,
+        rendererFactory: (L as any).canvas.tile,
         vectorTileLayerStyles: {
           regions: expect.any(Function),
         },
@@ -286,6 +368,7 @@ describe('useRegionRendering', () => {
         fillOpacity: 1,
       })
     );
+    expect(paneRegistry.regionsPane?.querySelector('path')?.getAttribute('stroke-width')).toBe('6');
     expect(paneRegistry.regionsPane?.style.opacity).toBe('0.4');
   });
 
@@ -422,6 +505,9 @@ describe('useRegionRendering', () => {
         weight: calculateWeightForZoom(12, 6),
       })
     );
+    expect(paneRegistry.regionsPane?.querySelector('path')?.getAttribute('stroke-width')).toBe(
+      String(calculateWeightForZoom(12, 6))
+    );
 
     const zoomedBaseStyleResolver = mockLayer.options.vectorTileLayerStyles?.regions as
       | (() => ReturnType<typeof getUnvisitedRegionStyle>)
@@ -548,6 +634,65 @@ describe('useRegionRendering', () => {
     );
     expect(tileLoadHandler).toEqual(expect.any(Function));
     expect(loadHandler).toEqual(expect.any(Function));
+  });
+
+  it('promotes fresh canvas replacement tiles ahead of stale retained tiles during zoom-out', () => {
+    const pane = paneRegistry.regionsPane;
+    pane.innerHTML = '';
+    const staleContainer = createTileContainer('17', 2, 'canvas');
+    const freshContainer = createTileContainer('18', 1, 'canvas');
+    pane.appendChild(staleContainer);
+    pane.appendChild(freshContainer);
+
+    const [staleLeftTile, staleRightTile] = Array.from(staleContainer.children) as HTMLCanvasElement[];
+    const [freshTile] = Array.from(freshContainer.children) as HTMLCanvasElement[];
+
+    mockTileBounds(staleLeftTile);
+    mockTileBounds(staleRightTile);
+    mockTileBounds(freshTile);
+
+    mockLayer._tileZoom = 8;
+    mockLayer._tiles = {
+      staleLeft: {
+        el: staleLeftTile,
+        coords: { x: 4, y: 6, z: 9 },
+        current: false,
+        loaded: true,
+      },
+      staleRight: {
+        el: staleRightTile,
+        coords: { x: 5, y: 6, z: 9 },
+        current: false,
+        loaded: true,
+      },
+      freshParent: {
+        el: freshTile,
+        coords: { x: 2, y: 3, z: 8 },
+        current: true,
+        loaded: true,
+        active: true,
+      },
+    };
+
+    mockMap.getZoom.mockReturnValue(12);
+
+    renderHook(() =>
+      useRegionRendering(mockMap, visitData, true, 'static', 2, 1, [], [], onTileError)
+    );
+
+    const zoomHandler = mapOn.mock.calls.find(([eventName]) => eventName === 'zoomend')?.[1];
+    const tileLoadHandler = on.mock.calls.find(([eventName]) => eventName === 'tileload')?.[1];
+
+    mockMap.getZoom.mockReturnValue(8);
+
+    act(() => {
+      zoomHandler?.();
+      tileLoadHandler?.({ coords: { z: 8 } });
+    });
+
+    expect(freshTile.style.visibility).toBe('');
+    expect(staleLeftTile.style.visibility).toBe('hidden');
+    expect(staleRightTile.style.visibility).toBe('hidden');
   });
 
   it('resets style when a previously visited region is no longer visited', () => {

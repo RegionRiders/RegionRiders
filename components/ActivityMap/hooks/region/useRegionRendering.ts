@@ -37,6 +37,9 @@ import {
   getVisitedRegionIds,
   RegionTileEvent,
   RegionVectorGridLayer,
+  optimizeRegionVectorGridLayer,
+  syncCoveredRegionTiles,
+  syncRenderedRegionPanePaths,
   syncRegionPaneOpacity,
   updateRenderedTileStyles,
 } from '@/components/ActivityMap/hooks/region/utils/regionVectorGridHelpers';
@@ -52,6 +55,24 @@ import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 const logger = createComponentLogger('useRegionRendering');
 
 export { getRegionFeatureId, getUnvisitedRegionStyle, getVisitedRegionStyle };
+
+function getRegionRendererFactory() {
+  return (L as any).canvas?.tile ?? (L as any).svg?.tile;
+}
+
+function isRegionRenderingDebugEnabled(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return (
+    (
+      window as Window & {
+        __RR_ACTIVITY_MAP_DEBUG__?: boolean;
+      }
+    ).__RR_ACTIVITY_MAP_DEBUG__ === true
+  );
+}
 
 export function useRegionRendering(
   map: L.Map | null,
@@ -84,6 +105,18 @@ export function useRegionRendering(
     effectiveHeatmapColors: [],
   });
   const visitDataRef = useRef(visitData);
+  const debugLog = (message: string, payload?: Record<string, unknown>) => {
+    if (!isRegionRenderingDebugEnabled()) {
+      return;
+    }
+
+    if (payload) {
+      logger.info(message, JSON.stringify(payload));
+      return;
+    }
+
+    logger.info(message);
+  };
 
   styleSettingsRef.current = {
     mode,
@@ -129,6 +162,11 @@ export function useRegionRendering(
     previousVisitedIdsRef.current = nextVisitedIds;
   };
 
+  const shouldHideCoveredTiles = (visibleZoom: number) =>
+    visibleZoom < zoomStateRef.current.committedStyleZoom ||
+    (zoomStateRef.current.pendingCommitZoom !== null &&
+      zoomStateRef.current.pendingCommitZoom < zoomStateRef.current.committedStyleZoom);
+
   const applyLayerStyles = (layer: RegionVectorGridLayer, zoom: number) => {
     const visibleZoom = getVisibleStyleZoom(zoomStateRef.current, zoom);
     const baseStyle = getBaseRegionStyle(config, styleSettingsRef.current, visibleZoom);
@@ -145,8 +183,26 @@ export function useRegionRendering(
       };
     }
 
+    syncRenderedRegionPanePaths(map, config.paneName, baseStyle);
     updateRenderedTileStyles(layer, config.layerName, baseStyle);
     applyVisitedRegionStyles(layer, visibleZoom);
+    syncCoveredRegionTiles(layer, map, config.paneName, shouldHideCoveredTiles(visibleZoom));
+
+    debugLog('applyLayerStyles', {
+      zoom,
+      visibleZoom,
+      currentZoom: zoomStateRef.current.currentZoom,
+      committedStyleZoom: zoomStateRef.current.committedStyleZoom,
+      pendingCommitZoom: zoomStateRef.current.pendingCommitZoom,
+      pendingTileZoom: zoomStateRef.current.pendingTileZoom,
+      pendingTileReady: zoomStateRef.current.pendingTileReady,
+      weight: baseStyle.weight,
+      paneStrokeWidth:
+        map
+          ?.getPane?.(config.paneName)
+          ?.querySelector?.('path')
+          ?.getAttribute?.('stroke-width') ?? null,
+    });
   };
 
   useEffect(() => {
@@ -186,6 +242,15 @@ export function useRegionRendering(
     const handleTileLoad = () => {
       const nextZoomState = zoomStateRef.current;
 
+      debugLog('regionLayer:load', {
+        currentZoom: nextZoomState.currentZoom,
+        committedStyleZoom: nextZoomState.committedStyleZoom,
+        visibleStyleZoom: nextZoomState.visibleStyleZoom,
+        pendingCommitZoom: nextZoomState.pendingCommitZoom,
+        pendingTileZoom: nextZoomState.pendingTileZoom,
+        pendingTileReady: nextZoomState.pendingTileReady,
+      });
+
       if (!regionLayerRef.current) {
         markFirstRegionLayerAdded();
         onTileError?.('');
@@ -202,7 +267,21 @@ export function useRegionRendering(
     };
 
     const handlePerTileLoad = (event: RegionTileEvent) => {
+      debugLog('regionLayer:tileload', {
+        tileZoom: event.coords?.z,
+        pendingTileZoom: zoomStateRef.current.pendingTileZoom,
+        pendingCommitZoom: zoomStateRef.current.pendingCommitZoom,
+      });
       markPendingTileReady(zoomStateRef.current, event.coords?.z);
+
+      syncCoveredRegionTiles(
+        regionLayerRef.current,
+        map,
+        config.paneName,
+        shouldHideCoveredTiles(
+          getVisibleStyleZoom(zoomStateRef.current, zoomStateRef.current.currentZoom || config.detailCapZoom)
+        )
+      );
     };
 
     const handleTileError = (event: unknown) => {
@@ -216,6 +295,15 @@ export function useRegionRendering(
       syncVisibleZoom(nextZoomState, nextZoom);
       preparePendingCommit(nextZoom, nextZoomState, config.detailCapZoom);
 
+      debugLog('map:zoomend', {
+        nextZoom,
+        committedStyleZoom: nextZoomState.committedStyleZoom,
+        visibleStyleZoom: nextZoomState.visibleStyleZoom,
+        pendingCommitZoom: nextZoomState.pendingCommitZoom,
+        pendingTileZoom: nextZoomState.pendingTileZoom,
+        pendingTileReady: nextZoomState.pendingTileReady,
+      });
+
       if (regionLayerRef.current) {
         applyLayerStyles(regionLayerRef.current, nextZoom);
       }
@@ -228,6 +316,11 @@ export function useRegionRendering(
 
       const liveZoom = map.getZoom();
       syncVisibleZoom(zoomStateRef.current, liveZoom);
+      debugLog('map:zoom', {
+        liveZoom,
+        committedStyleZoom: zoomStateRef.current.committedStyleZoom,
+        visibleStyleZoom: zoomStateRef.current.visibleStyleZoom,
+      });
       applyLayerStyles(regionLayerRef.current, liveZoom);
     };
 
@@ -237,6 +330,11 @@ export function useRegionRendering(
       }
 
       syncVisibleZoom(zoomStateRef.current, event.zoom);
+      debugLog('map:zoomanim', {
+        animatedZoom: event.zoom,
+        committedStyleZoom: zoomStateRef.current.committedStyleZoom,
+        visibleStyleZoom: zoomStateRef.current.visibleStyleZoom,
+      });
       applyLayerStyles(regionLayerRef.current, event.zoom);
     };
 
@@ -250,8 +348,9 @@ export function useRegionRendering(
         minZoom: config.minZoom,
         maxZoom: config.displayMaxZoom,
         maxNativeZoom: config.detailCapZoom,
-        updateWhenZooming: false,
+        updateWhenZooming: true,
         keepBuffer: 4,
+        rendererFactory: getRegionRendererFactory(),
         getFeatureId: getRegionFeatureId,
         vectorTileLayerStyles: {
           [config.layerName]: () =>
@@ -269,11 +368,13 @@ export function useRegionRendering(
         },
       }) as RegionVectorGridLayer;
 
-      layer.on('load', handleTileLoad);
-      layer.on('tileload', handlePerTileLoad);
-      layer.on('tileerror', handleTileError);
-      layer.addTo(map);
-      regionLayerRef.current = layer;
+      const optimizedLayer = optimizeRegionVectorGridLayer(layer) as RegionVectorGridLayer;
+
+      optimizedLayer.on('load', handleTileLoad);
+      optimizedLayer.on('tileload', handlePerTileLoad);
+      optimizedLayer.on('tileerror', handleTileError);
+      optimizedLayer.addTo(map);
+      regionLayerRef.current = optimizedLayer;
       map.on('zoom', handleZoom);
       map.on('zoomanim', handleZoomAnim);
       map.on('zoomend', handleZoomEnd);
