@@ -1,19 +1,22 @@
 import * as dotenv from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
+import { resolveDatabaseEnv } from './lib/db/config/env';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
+
+const resolvedDatabaseEnv = resolveDatabaseEnv();
 
 export default defineConfig({
   dialect: 'postgresql',
   schema: './lib/db/schema/index.ts',
   out: './drizzle',
   dbCredentials: {
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    user: process.env.POSTGRES_USER || 'regionriders_user',
-    password: process.env.POSTGRES_PASSWORD || 'regionriders_pass',
-    database: process.env.POSTGRES_DB || 'regionriders',
+    host: resolvedDatabaseEnv.host,
+    port: resolvedDatabaseEnv.port,
+    user: resolvedDatabaseEnv.user,
+    password: resolvedDatabaseEnv.password,
+    database: resolvedDatabaseEnv.database,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
   },
   verbose: true,

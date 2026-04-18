@@ -3,6 +3,8 @@
  * Validates and provides database connection settings
  */
 
+import { resolveDatabaseEnv } from './env';
+
 export interface DatabaseConfig {
   host: string;
   port: number;
@@ -20,15 +22,7 @@ export interface DatabaseConfig {
  * @throws {Error} if required environment variables are missing
  */
 export function validateDatabaseEnv(): void {
-  const required = ['POSTGRES_HOST', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD'];
-  const missing = required.filter((key) => !process.env[key]);
-
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required database environment variables: ${missing.join(', ')}\n` +
-        'Please check your .env.local file and ensure all database variables are set.'
-    );
-  }
+  resolveDatabaseEnv();
 }
 
 /**
@@ -36,20 +30,18 @@ export function validateDatabaseEnv(): void {
  * @returns {DatabaseConfig} Database configuration object
  */
 export function getDatabaseConfig(): DatabaseConfig {
-  validateDatabaseEnv();
-
-  const host = process.env.POSTGRES_HOST!;
+  const resolvedEnv = resolveDatabaseEnv();
 
   // SSL is enabled in production, disabled otherwise
   // This provides encryption for production deployments while keeping local development simple
   const ssl = process.env.NODE_ENV === 'production';
 
   return {
-    host,
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    database: process.env.POSTGRES_DB!,
-    user: process.env.POSTGRES_USER!,
-    password: process.env.POSTGRES_PASSWORD!,
+    host: resolvedEnv.host,
+    port: resolvedEnv.port,
+    database: resolvedEnv.database,
+    user: resolvedEnv.user,
+    password: resolvedEnv.password,
     ssl,
     maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),

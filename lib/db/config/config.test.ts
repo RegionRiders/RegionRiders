@@ -40,6 +40,7 @@ describe('Database Configuration', () => {
 
   describe('validateDatabaseEnv', () => {
     it('should pass validation with all required env vars', () => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
       process.env.POSTGRES_USER = 'regionriders_user';
@@ -49,6 +50,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_HOST is missing', () => {
+      delete process.env.DATABASE_URL;
       delete process.env.POSTGRES_HOST;
       process.env.POSTGRES_DB = 'regionriders';
       process.env.POSTGRES_USER = 'regionriders_user';
@@ -58,6 +60,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_DB is missing', () => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       delete process.env.POSTGRES_DB;
       process.env.POSTGRES_USER = 'regionriders_user';
@@ -67,6 +70,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_USER is missing', () => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
       delete process.env.POSTGRES_USER;
@@ -76,6 +80,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_PASSWORD is missing', () => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
       process.env.POSTGRES_USER = 'regionriders_user';
@@ -87,6 +92,7 @@ describe('Database Configuration', () => {
 
   describe('getDatabaseConfig', () => {
     beforeEach(() => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
       process.env.POSTGRES_DB = 'regionriders';
@@ -108,6 +114,19 @@ describe('Database Configuration', () => {
       expect(config.user).toBe('regionriders_user');
       expect(config.password).toBe('regionriders_password');
       expect(config.ssl).toBe(false);
+    });
+
+    it('should prefer DATABASE_URL over POSTGRES_* env vars', () => {
+      process.env.DATABASE_URL =
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db';
+
+      const config = getDatabaseConfig();
+
+      expect(config.host).toBe('dokku-postgres-rr-staging-db');
+      expect(config.port).toBe(5432);
+      expect(config.database).toBe('rr_staging_db');
+      expect(config.user).toBe('dokku_user');
+      expect(config.password).toBe('secret-pass');
     });
 
     it('should enable SSL in production with localhost', () => {
@@ -167,6 +186,7 @@ describe('Database Configuration', () => {
 
   describe('getDatabaseUrl', () => {
     beforeEach(() => {
+      delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
       process.env.POSTGRES_DB = 'regionriders';
@@ -184,6 +204,17 @@ describe('Database Configuration', () => {
 
       expect(url).toBe(
         'postgresql://regionriders_user:regionriders_password@localhost:5432/regionriders'
+      );
+    });
+
+    it('should preserve DATABASE_URL connection details when available', () => {
+      process.env.DATABASE_URL =
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db';
+
+      const url = getDatabaseUrl();
+
+      expect(url).toBe(
+        'postgresql://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db'
       );
     });
 

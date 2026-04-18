@@ -16,6 +16,8 @@ describe('evaluateHealthStatus', () => {
     jest.clearAllMocks();
     process.env = {
       ...originalEnv,
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db',
       POSTGRES_HOST: 'localhost',
       POSTGRES_DB: 'regionriders',
       POSTGRES_USER: 'regionriders_user',
@@ -47,6 +49,7 @@ describe('evaluateHealthStatus', () => {
   });
 
   it('returns unhealthy when required database env is missing', async () => {
+    delete process.env.DATABASE_URL;
     delete process.env.POSTGRES_PASSWORD;
 
     const { report, statusCode } = await evaluateHealthStatus();
@@ -54,6 +57,19 @@ describe('evaluateHealthStatus', () => {
     expect(statusCode).toBe(503);
     expect(report.status).toBe('unhealthy');
     expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('reports healthy application status when only DATABASE_URL is available', async () => {
+    delete process.env.POSTGRES_HOST;
+    delete process.env.POSTGRES_DB;
+    delete process.env.POSTGRES_USER;
+    delete process.env.POSTGRES_PASSWORD;
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(200);
+    expect(report.status).toBe('healthy');
+    expect(report.checks.application).toBe('healthy');
   });
 
   it('returns unhealthy when encryption env is missing', async () => {
