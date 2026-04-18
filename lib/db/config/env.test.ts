@@ -25,6 +25,7 @@ describe('database env resolver', () => {
       database: 'rr_staging_db',
       user: 'dokku_user',
       password: 'secret-pass',
+      ssl: false,
       hasDatabaseConfig: true,
       source: 'database_url',
     });
@@ -45,9 +46,41 @@ describe('database env resolver', () => {
       database: 'regionriders',
       user: 'regionriders_user',
       password: 'regionriders_password',
+      ssl: false,
       hasDatabaseConfig: true,
       source: 'postgres_env',
     });
+  });
+
+  it('disables SSL for Dokku internal DATABASE_URL hosts in production', () => {
+    const env = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db',
+    });
+
+    expect(resolveDatabaseEnv(env).ssl).toBe(false);
+  });
+
+  it('enables SSL for remote DATABASE_URL hosts in production', () => {
+    const env = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@remote-postgres.example.com:5432/rr_staging_db',
+    });
+
+    expect(resolveDatabaseEnv(env).ssl).toBe(true);
+  });
+
+  it('allows explicit SSL override via POSTGRES_SSL', () => {
+    const env = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db',
+      POSTGRES_SSL: 'true',
+    });
+
+    expect(resolveDatabaseEnv(env).ssl).toBe(true);
   });
 
   it('reports missing DB env when neither DATABASE_URL nor POSTGRES_* is complete', () => {

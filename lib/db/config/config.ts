@@ -34,15 +34,13 @@ export function getDatabaseConfig(): DatabaseConfig {
 
   // SSL is enabled in production, disabled otherwise
   // This provides encryption for production deployments while keeping local development simple
-  const ssl = process.env.NODE_ENV === 'production';
-
   return {
     host: resolvedEnv.host,
     port: resolvedEnv.port,
     database: resolvedEnv.database,
     user: resolvedEnv.user,
     password: resolvedEnv.password,
-    ssl,
+    ssl: resolvedEnv.ssl,
     maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000', 10),

@@ -12,6 +12,12 @@ import {
 } from './index';
 
 describe('Database Configuration', () => {
+  function resetDatabaseSslEnv(): void {
+    delete process.env.POSTGRES_SSL;
+    delete process.env.DATABASE_SSL;
+    delete process.env.PGSSLMODE;
+  }
+
   beforeAll(() => {
     const REQUIRED_ENV = {
       POSTGRES_HOST: 'localhost',
@@ -40,6 +46,7 @@ describe('Database Configuration', () => {
 
   describe('validateDatabaseEnv', () => {
     it('should pass validation with all required env vars', () => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
@@ -50,6 +57,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_HOST is missing', () => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       delete process.env.POSTGRES_HOST;
       process.env.POSTGRES_DB = 'regionriders';
@@ -60,6 +68,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_DB is missing', () => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       delete process.env.POSTGRES_DB;
@@ -70,6 +79,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_USER is missing', () => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
@@ -80,6 +90,7 @@ describe('Database Configuration', () => {
     });
 
     it('should fail validation when POSTGRES_PASSWORD is missing', () => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_DB = 'regionriders';
@@ -92,6 +103,7 @@ describe('Database Configuration', () => {
 
   describe('getDatabaseConfig', () => {
     beforeEach(() => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
@@ -127,9 +139,10 @@ describe('Database Configuration', () => {
       expect(config.database).toBe('rr_staging_db');
       expect(config.user).toBe('dokku_user');
       expect(config.password).toBe('secret-pass');
+      expect(config.ssl).toBe(false);
     });
 
-    it('should enable SSL in production with localhost', () => {
+    it('should disable SSL in production with localhost', () => {
       Object.defineProperty(process.env, 'NODE_ENV', {
         value: 'production',
         writable: true,
@@ -139,7 +152,20 @@ describe('Database Configuration', () => {
 
       const config = getDatabaseConfig();
 
-      expect(config.ssl).toBe(true);
+      expect(config.ssl).toBe(false);
+    });
+
+    it('should disable SSL in production for Dokku internal hosts', () => {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
+      process.env.POSTGRES_HOST = 'dokku-postgres-rr-staging-db';
+
+      const config = getDatabaseConfig();
+
+      expect(config.ssl).toBe(false);
     });
 
     it('should enable SSL in production with remote host', () => {
@@ -149,6 +175,20 @@ describe('Database Configuration', () => {
         configurable: true,
       });
       process.env.POSTGRES_HOST = 'remote.example.com';
+
+      const config = getDatabaseConfig();
+
+      expect(config.ssl).toBe(true);
+    });
+
+    it('should allow explicit SSL override via POSTGRES_SSL', () => {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
+      process.env.POSTGRES_SSL = 'true';
+      process.env.POSTGRES_HOST = 'dokku-postgres-rr-staging-db';
 
       const config = getDatabaseConfig();
 
@@ -186,6 +226,7 @@ describe('Database Configuration', () => {
 
   describe('getDatabaseUrl', () => {
     beforeEach(() => {
+      resetDatabaseSslEnv();
       delete process.env.DATABASE_URL;
       process.env.POSTGRES_HOST = 'localhost';
       process.env.POSTGRES_PORT = '5432';
@@ -231,17 +272,17 @@ describe('Database Configuration', () => {
       expect(url).toContain('?sslmode=require');
     });
 
-    it('should include SSL parameter in production with local host', () => {
+    it('should omit SSL parameter for Dokku internal hosts in production', () => {
       Object.defineProperty(process.env, 'NODE_ENV', {
         value: 'production',
         writable: true,
         configurable: true,
       });
-      process.env.POSTGRES_HOST = 'localhost';
+      process.env.POSTGRES_HOST = 'dokku-postgres-rr-staging-db';
 
       const url = getDatabaseUrl();
 
-      expect(url).toContain('?sslmode=require');
+      expect(url).not.toContain('?sslmode=require');
     });
   });
 
