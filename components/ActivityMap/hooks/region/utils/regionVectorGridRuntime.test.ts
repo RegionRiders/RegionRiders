@@ -5,7 +5,15 @@ import {
   renderVectorTileIntoRenderer,
 } from './regionVectorGridRuntime';
 
-jest.mock('leaflet.vectorgrid', () => ({}));
+jest.mock('leaflet.vectorgrid', () => ({}), { virtual: true });
+jest.mock('pbf', () => jest.fn(), { virtual: true });
+jest.mock(
+  'vector-tile',
+  () => ({
+    VectorTile: jest.fn(),
+  }),
+  { virtual: true }
+);
 
 const mockRegionTileConfig = {
   sourceUrl: 'http://localhost:3000/api/regions/tiles/v1/{z}/{x}/{y}.pbf',
