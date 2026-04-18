@@ -81,6 +81,16 @@ jobs:
             exit 1
           fi
 
+          if [ -z "${{ secrets.STAGING_BASIC_AUTH_USER }}" ]; then
+            echo "Missing required secret: STAGING_BASIC_AUTH_USER" >&2
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}" ]; then
+            echo "Missing required secret: STAGING_BASIC_AUTH_PASSWORD" >&2
+            exit 1
+          fi
+
       - name: Configure SSH for Dokku deploy
         run: |
           mkdir -p ~/.ssh
@@ -107,7 +117,9 @@ jobs:
       - name: Verify staging health endpoint
         run: |
           for attempt in 1 2 3 4 5 6; do
-            if curl --fail --silent --show-error --max-time 10 "$STAGING_HEALTHCHECK_URL" > /tmp/staging-health-response.json; then
+            if curl --fail --silent --show-error --max-time 10 \
+              --user "${{ secrets.STAGING_BASIC_AUTH_USER }}:${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}" \
+              "$STAGING_HEALTHCHECK_URL" > /tmp/staging-health-response.json; then
               cat /tmp/staging-health-response.json
               exit 0
             fi
