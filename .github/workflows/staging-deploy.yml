@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: staging-deploy
+  group: staging-deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
