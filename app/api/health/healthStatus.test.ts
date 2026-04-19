@@ -22,6 +22,7 @@ describe('evaluateHealthStatus', () => {
       POSTGRES_DB: 'regionriders',
       POSTGRES_USER: 'regionriders_user',
       POSTGRES_PASSWORD: 'secret',
+      SESSION_SECRET: 'test-session-secret',
       OAUTH_ENCRYPTION_KEY: 'key',
       OAUTH_ENCRYPTION_SALT: 'salt',
     };
@@ -74,6 +75,16 @@ describe('evaluateHealthStatus', () => {
 
   it('returns unhealthy when encryption env is missing', async () => {
     delete process.env.OAUTH_ENCRYPTION_KEY;
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(503);
+    expect(report.status).toBe('unhealthy');
+    expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('returns unhealthy when session secret is missing', async () => {
+    delete process.env.SESSION_SECRET;
 
     const { report, statusCode } = await evaluateHealthStatus();
 

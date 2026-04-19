@@ -83,6 +83,55 @@ describe('database env resolver', () => {
     expect(resolveDatabaseEnv(env).ssl).toBe(true);
   });
 
+  it('honors sslmode from DATABASE_URL', () => {
+    const disabledSslEnv = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@remote-postgres.example.com:5432/rr_staging_db?sslmode=disable',
+    });
+    const requiredSslEnv = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@remote-postgres.example.com:5432/rr_staging_db?sslmode=require',
+    });
+
+    expect(resolveDatabaseEnv(disabledSslEnv).ssl).toBe(false);
+    expect(resolveDatabaseEnv(requiredSslEnv).ssl).toBe(true);
+  });
+
+  it('allows POSTGRES_SSL to override sslmode from DATABASE_URL', () => {
+    const env = createProcessEnv({
+      NODE_ENV: 'production',
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@remote-postgres.example.com:5432/rr_staging_db?sslmode=disable',
+      POSTGRES_SSL: 'true',
+    });
+
+    expect(resolveDatabaseEnv(env).ssl).toBe(true);
+  });
+
+  it('reports malformed DATABASE_URL as invalid database env', () => {
+    const env = createProcessEnv({
+      DATABASE_URL: 'not-a-postgres-url',
+    });
+
+    expect(hasDatabaseEnv(env)).toBe(false);
+    expect(() => resolveDatabaseEnv(env)).toThrow(/Invalid DATABASE_URL/);
+  });
+
+  it('rejects invalid POSTGRES_PORT values', () => {
+    const env = createProcessEnv({
+      POSTGRES_HOST: 'localhost',
+      POSTGRES_PORT: '5432abc',
+      POSTGRES_DB: 'regionriders',
+      POSTGRES_USER: 'regionriders_user',
+      POSTGRES_PASSWORD: 'regionriders_password',
+    });
+
+    expect(hasDatabaseEnv(env)).toBe(false);
+    expect(() => resolveDatabaseEnv(env)).toThrow(/Invalid POSTGRES_PORT/);
+  });
+
   it('reports missing DB env when neither DATABASE_URL nor POSTGRES_* is complete', () => {
     const env = createProcessEnv({
       POSTGRES_HOST: 'localhost',

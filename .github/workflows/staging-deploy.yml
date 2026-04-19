@@ -70,34 +70,42 @@ jobs:
         run: yarn build
 
       - name: Validate required deployment secrets
+        env:
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+          STAGING_BASIC_AUTH_USER: ${{ secrets.STAGING_BASIC_AUTH_USER }}
+          STAGING_BASIC_AUTH_PASSWORD: ${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}
         run: |
-          if [ -z "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" ]; then
+          if [ -z "$STAGING_SSH_PRIVATE_KEY" ]; then
             echo "Missing required secret: STAGING_SSH_PRIVATE_KEY" >&2
             exit 1
           fi
 
-          if [ -z "${{ secrets.STAGING_KNOWN_HOSTS }}" ]; then
+          if [ -z "$STAGING_KNOWN_HOSTS" ]; then
             echo "Missing required secret: STAGING_KNOWN_HOSTS" >&2
             exit 1
           fi
 
-          if [ -z "${{ secrets.STAGING_BASIC_AUTH_USER }}" ]; then
+          if [ -z "$STAGING_BASIC_AUTH_USER" ]; then
             echo "Missing required secret: STAGING_BASIC_AUTH_USER" >&2
             exit 1
           fi
 
-          if [ -z "${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}" ]; then
+          if [ -z "$STAGING_BASIC_AUTH_PASSWORD" ]; then
             echo "Missing required secret: STAGING_BASIC_AUTH_PASSWORD" >&2
             exit 1
           fi
 
       - name: Configure SSH for Dokku deploy
+        env:
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/staging_dokku
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/staging_dokku
           chmod 600 ~/.ssh/staging_dokku
-          printf '%s\n' "${{ secrets.STAGING_KNOWN_HOSTS }}" | tr -d '\r' > ~/.ssh/known_hosts
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
 
       - name: Log deployment target
         run: |
@@ -115,10 +123,13 @@ jobs:
           git push dokku HEAD:master
 
       - name: Verify staging health endpoint
+        env:
+          STAGING_BASIC_AUTH_USER: ${{ secrets.STAGING_BASIC_AUTH_USER }}
+          STAGING_BASIC_AUTH_PASSWORD: ${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}
         run: |
           for attempt in 1 2 3 4 5 6; do
             if curl --fail --silent --show-error --max-time 10 \
-              --user "${{ secrets.STAGING_BASIC_AUTH_USER }}:${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}" \
+              --user "$STAGING_BASIC_AUTH_USER:$STAGING_BASIC_AUTH_PASSWORD" \
               "$STAGING_HEALTHCHECK_URL" > /tmp/staging-health-response.json; then
               cat /tmp/staging-health-response.json
               exit 0

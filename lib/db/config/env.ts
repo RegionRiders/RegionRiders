@@ -13,6 +13,10 @@ function isTruthyEnvValue(value: string | undefined): boolean {
   return ['1', 'true', 'yes', 'on'].includes((value || '').toLowerCase());
 }
 
+function isExplicitSslMode(value: string): boolean {
+  return ['allow', 'prefer', 'require', 'verify-ca', 'verify-full'].includes(value);
+}
+
 function isInternalDokkuHost(host: string): boolean {
   return (
     host === 'localhost' ||
@@ -23,7 +27,7 @@ function isInternalDokkuHost(host: string): boolean {
   );
 }
 
-function resolveDatabaseSsl(host: string, env: NodeJS.ProcessEnv): boolean {
+function resolveDatabaseSsl(host: string, env: NodeJS.ProcessEnv, sslMode?: string): boolean {
   if (typeof env.POSTGRES_SSL !== 'undefined') {
     return isTruthyEnvValue(env.POSTGRES_SSL);
   }
@@ -32,8 +36,17 @@ function resolveDatabaseSsl(host: string, env: NodeJS.ProcessEnv): boolean {
     return isTruthyEnvValue(env.DATABASE_SSL);
   }
 
-  if (typeof env.PGSSLMODE !== 'undefined') {
-    return !['disable', 'allow', 'prefer'].includes(env.PGSSLMODE.toLowerCase());
+  const configuredSslMode = sslMode || env.PGSSLMODE;
+  if (typeof configuredSslMode !== 'undefined') {
+    const normalizedSslMode = configuredSslMode.toLowerCase();
+
+    if (normalizedSslMode === 'disable') {
+      return false;
+    }
+
+    if (isExplicitSslMode(normalizedSslMode)) {
+      return true;
+    }
   }
 
   if (env.NODE_ENV !== 'production') {
@@ -59,22 +72,56 @@ function parsePort(value: string | undefined, fallback: number): number {
     return fallback;
   }
 
+  if (!/^\d+$/.test(value)) {
+    return Number.NaN;
+  }
+
   const parsed = Number.parseInt(value, 10);
 
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+function assertValidPort(port: number, source: 'DATABASE_URL' | 'POSTGRES_PORT'): void {
+  if (Number.isNaN(port)) {
+    throw new Error(`Invalid ${source}: port must be a numeric value.`);
+  }
+}
+
+function assertValidDatabaseUrl(parsed: URL): void {
+  if (
+    !parsed.hostname ||
+    !parsed.username ||
+    !parsed.password ||
+    !parsed.pathname.replace(/^\//, '')
+  ) {
+    throw new Error(
+      'Invalid DATABASE_URL: expected host, username, password, and database name to be present.'
+    );
+  }
+}
+
 function resolveDatabaseUrlEnv(databaseUrl: string, env: NodeJS.ProcessEnv): ResolvedDatabaseEnv {
-  const parsed = new URL(databaseUrl);
+  let parsed: URL;
+
+  try {
+    parsed = new URL(databaseUrl);
+  } catch {
+    throw new Error('Invalid DATABASE_URL: expected a valid absolute PostgreSQL connection URL.');
+  }
+
+  assertValidDatabaseUrl(parsed);
   const host = parsed.hostname;
+  const port = parsePort(parsed.port, 5432);
+
+  assertValidPort(port, 'DATABASE_URL');
 
   return {
     host,
-    port: parsePort(parsed.port, 5432),
+    port,
     database: parsed.pathname.replace(/^\//, ''),
     user: decodeURIComponent(parsed.username),
     password: decodeURIComponent(parsed.password),
-    ssl: resolveDatabaseSsl(host, env),
+    ssl: resolveDatabaseSsl(host, env, parsed.searchParams.get('sslmode') ?? undefined),
     hasDatabaseConfig: true,
     source: 'database_url',
   };
@@ -90,9 +137,13 @@ function resolvePostgresEnv(env: NodeJS.ProcessEnv): ResolvedDatabaseEnv {
     );
   }
 
+  const port = parsePort(env.POSTGRES_PORT, 5432);
+
+  assertValidPort(port, 'POSTGRES_PORT');
+
   return {
     host: env.POSTGRES_HOST!,
-    port: parsePort(env.POSTGRES_PORT, 5432),
+    port,
     database: env.POSTGRES_DB!,
     user: env.POSTGRES_USER!,
     password: env.POSTGRES_PASSWORD!,
@@ -103,7 +154,12 @@ function resolvePostgresEnv(env: NodeJS.ProcessEnv): ResolvedDatabaseEnv {
 }
 
 export function hasDatabaseEnv(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(env.DATABASE_URL) || getMissingPostgresEnvKeys(env).length === 0;
+  try {
+    resolveDatabaseEnv(env);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function resolveDatabaseEnv(env: NodeJS.ProcessEnv = process.env): ResolvedDatabaseEnv {

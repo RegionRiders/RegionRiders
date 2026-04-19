@@ -3,6 +3,15 @@ import { Pool } from 'pg';
 import { closePool, getClient, getPool, query, testConnection } from './client';
 import { getDatabaseConfig } from './config';
 
+function restoreEnvVar(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}
+
 describe('Database Client Connection', () => {
   let pool: Pool;
 
@@ -155,7 +164,7 @@ describe('Database Client Connection', () => {
           writable: true,
           configurable: true,
         });
-        process.env.POSTGRES_HOST = originalHost;
+        restoreEnvVar('POSTGRES_HOST', originalHost);
       }
     });
 
@@ -221,7 +230,7 @@ describe('Database Client Connection', () => {
           writable: true,
           configurable: true,
         });
-        process.env.POSTGRES_HOST = originalHost;
+        restoreEnvVar('POSTGRES_HOST', originalHost);
       }
     });
   });

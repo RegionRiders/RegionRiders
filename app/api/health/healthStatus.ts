@@ -15,7 +15,11 @@ export interface HealthStatusReport {
   };
 }
 
-const REQUIRED_APP_ENV_VARS = ['OAUTH_ENCRYPTION_KEY', 'OAUTH_ENCRYPTION_SALT'] as const;
+const REQUIRED_APP_ENV_VARS = [
+  'SESSION_SECRET',
+  'OAUTH_ENCRYPTION_KEY',
+  'OAUTH_ENCRYPTION_SALT',
+] as const;
 
 export async function evaluateHealthStatus(): Promise<{
   report: HealthStatusReport;

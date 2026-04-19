@@ -32,8 +32,8 @@ export function validateDatabaseEnv(): void {
 export function getDatabaseConfig(): DatabaseConfig {
   const resolvedEnv = resolveDatabaseEnv();
 
-  // SSL is enabled in production, disabled otherwise
-  // This provides encryption for production deployments while keeping local development simple
+  // The ssl field follows resolvedEnv.ssl, which is derived from explicit overrides,
+  // sslmode hints, environment, and host classification such as local or Dokku-internal hosts.
   return {
     host: resolvedEnv.host,
     port: resolvedEnv.port,

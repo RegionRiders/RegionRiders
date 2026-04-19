@@ -17,7 +17,9 @@ export default defineConfig({
     user: resolvedDatabaseEnv.user,
     password: resolvedDatabaseEnv.password,
     database: resolvedDatabaseEnv.database,
-    ssl: resolvedDatabaseEnv.ssl ? { rejectUnauthorized: false } : false,
+    ssl: resolvedDatabaseEnv.ssl
+      ? { rejectUnauthorized: process.env.NODE_ENV === 'production' }
+      : false,
   },
   verbose: true,
   strict: true,
