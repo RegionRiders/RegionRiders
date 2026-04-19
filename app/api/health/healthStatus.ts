@@ -15,11 +15,15 @@ export interface HealthStatusReport {
   };
 }
 
-const REQUIRED_APP_ENV_VARS = [
-  'SESSION_SECRET',
-  'OAUTH_ENCRYPTION_KEY',
-  'OAUTH_ENCRYPTION_SALT',
-] as const;
+const REQUIRED_APP_ENV_VARS = ['OAUTH_ENCRYPTION_KEY', 'OAUTH_ENCRYPTION_SALT'] as const;
+
+function hasSessionSecret(): boolean {
+  if (process.env.SESSION_SECRET) {
+    return true;
+  }
+
+  return process.env.NODE_ENV !== 'production' && Boolean(process.env.SESSION_SECRET_DEV);
+}
 
 export async function evaluateHealthStatus(): Promise<{
   report: HealthStatusReport;
@@ -58,7 +62,7 @@ export async function evaluateHealthStatus(): Promise<{
 
   const missingEnvVars = REQUIRED_APP_ENV_VARS.filter((varName) => !process.env[varName]);
 
-  if (!hasDatabaseEnv() || missingEnvVars.length > 0) {
+  if (!hasDatabaseEnv() || !hasSessionSecret() || missingEnvVars.length > 0) {
     report.checks.application = 'unhealthy';
     report.status = 'unhealthy';
     statusCode = 503;

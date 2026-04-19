@@ -23,6 +23,7 @@ describe('evaluateHealthStatus', () => {
       POSTGRES_USER: 'regionriders_user',
       POSTGRES_PASSWORD: 'secret',
       SESSION_SECRET: 'test-session-secret',
+      SESSION_SECRET_DEV: 'test-session-secret-dev',
       OAUTH_ENCRYPTION_KEY: 'key',
       OAUTH_ENCRYPTION_SALT: 'salt',
     };
@@ -85,11 +86,27 @@ describe('evaluateHealthStatus', () => {
 
   it('returns unhealthy when session secret is missing', async () => {
     delete process.env.SESSION_SECRET;
+    delete process.env.SESSION_SECRET_DEV;
 
     const { report, statusCode } = await evaluateHealthStatus();
 
     expect(statusCode).toBe(503);
     expect(report.status).toBe('unhealthy');
     expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('allows SESSION_SECRET_DEV in non-production environments', async () => {
+    delete process.env.SESSION_SECRET;
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+      configurable: true,
+    });
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(200);
+    expect(report.status).toBe('healthy');
+    expect(report.checks.application).toBe('healthy');
   });
 });

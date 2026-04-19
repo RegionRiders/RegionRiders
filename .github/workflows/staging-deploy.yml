@@ -17,6 +17,7 @@ jobs:
   deploy_staging:
     name: Validate and deploy staging
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
     environment: staging
     timeout-minutes: 30
     services:
@@ -57,17 +58,20 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: yarn install --immutable
+        run: corepack yarn install --immutable
 
       - name: Run database migrations
-        run: yarn db:migrate
+        run: corepack yarn db:migrate
 
       - name: Run validation suite
-        run: yarn test:all
+        run: corepack yarn test:all
 
       - name: Run production build
-        run: yarn build
+        run: corepack yarn build
 
       - name: Validate required deployment secrets
         env:
