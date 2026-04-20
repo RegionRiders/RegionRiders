@@ -1534,9 +1534,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@deck.gl/layers@npm:^9.2.11":
-  version: 9.3.0
-  resolution: "@deck.gl/layers@npm:9.3.0"
+"@deck.gl/layers@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "@deck.gl/layers@npm:9.3.1"
   dependencies:
     "@loaders.gl/images": "npm:^4.4.1"
     "@loaders.gl/schema": "npm:^4.4.1"
@@ -1551,19 +1551,19 @@ __metadata:
     "@loaders.gl/core": ^4.4.1
     "@luma.gl/core": ~9.3.2
     "@luma.gl/engine": ~9.3.2
-  checksum: 10c0/27e9a658818b2cf6348274bd9d5a9aa761f2c8d1365434e0741d21d9452a24d264dcd146576790b17d48be7f292fe065c8a4c9507af94bbe19ccacd9316a75f6
+  checksum: 10c0/179f9a0be9e99e484957aaa4f7d3a5351ec2ee0e749ff2dd457a28ccd44a9eab470d36cd059b21afcbaa08630de420be195c4c388a5187ad91db3129813ef70b
   languageName: node
   linkType: hard
 
-"@deck.gl/react@npm:^9.2.11":
-  version: 9.3.0
-  resolution: "@deck.gl/react@npm:9.3.0"
+"@deck.gl/react@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "@deck.gl/react@npm:9.3.1"
   peerDependencies:
     "@deck.gl/core": ~9.3.0
     "@deck.gl/widgets": ~9.3.0
     react: ">=16.3.0"
     react-dom: ">=16.3.0"
-  checksum: 10c0/9bde6a0c6ebf1dcd691cb1b9dafa1acdc01e5166086f08e042eabfb92c28e27ce139a84fe09a439dbac7c723e93f46ea2b5e061e4e732525a3a5543b451a9077
+  checksum: 10c0/cccab6c9c2f91bc7e0e00dfe46130e7dff67573522ab9750ad746f396d7af058ae3d0f1b21946ad50299ea4d9becdcec082def51395fd617c9b2ae8a30bd1690
   languageName: node
   linkType: hard
 
@@ -9973,8 +9973,8 @@ __metadata:
   resolution: "mantine-next-template@workspace:."
   dependencies:
     "@babel/core": "npm:^7.28.4"
-    "@deck.gl/layers": "npm:^9.2.11"
-    "@deck.gl/react": "npm:^9.2.11"
+    "@deck.gl/layers": "npm:^9.3.1"
+    "@deck.gl/react": "npm:^9.3.1"
     "@eslint/eslintrc": "npm:^3"
     "@eslint/js": "npm:^9.39.1"
     "@ianvs/prettier-plugin-sort-imports": "npm:^4.7.0"
