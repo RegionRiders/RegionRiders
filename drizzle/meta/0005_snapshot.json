@@ -1,5 +1,5 @@
 {
-  "id": "6277bda8-fe1c-4b11-aec4-3b1594c0b34d",
+  "id": "7351f601-77fd-48fe-82b6-dea6b58457dd",
   "prevId": "83499c15-1f91-47ec-b5ab-fa98dadfaf01",
   "version": "7",
   "dialect": "postgresql",
@@ -378,7 +378,8 @@
         },
         "status": {
           "name": "status",
-          "type": "varchar(20)",
+          "type": "trip_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -499,6 +500,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "trips_one_active_per_user": {
+          "name": "trips_one_active_per_user",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"trips\".\"status\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -513,6 +530,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "trips_cover_activity_id_activities_id_fk": {
+          "name": "trips_cover_activity_id_activities_id_fk",
+          "tableFrom": "trips",
+          "tableTo": "activities",
+          "columnsFrom": [
+            "cover_activity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -856,7 +886,18 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.trip_status": {
+      "name": "trip_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "active",
+        "completed",
+        "archived"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},

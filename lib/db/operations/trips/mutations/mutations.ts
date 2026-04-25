@@ -19,6 +19,21 @@ const createTripError = (statusCode: number, message: string): TripOperationErro
   message,
 });
 
+const ACTIVE_TRIP_CONSTRAINT_NAME = 'trips_one_active_per_user';
+
+const isActiveTripUniqueViolation = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const dbError = error as { code?: string; constraint?: string; detail?: string };
+  return (
+    dbError.code === '23505' &&
+    (dbError.constraint === ACTIVE_TRIP_CONSTRAINT_NAME ||
+      dbError.detail?.includes(ACTIVE_TRIP_CONSTRAINT_NAME) === true)
+  );
+};
+
 const buildStatusForCreate = (input: CreateTripInput): TripStatus => {
   if (input.creationMode === 'active') {
     return 'active';
@@ -142,6 +157,25 @@ const deriveTripWindow = (
   endDate: selectedActivities[selectedActivities.length - 1]?.startDate ?? null,
 });
 
+const buildStatusTimestamps = (
+  trip: Trip,
+  nextStatus: TripStatus,
+  now: Date
+): { startedAt: Date | null; completedAt: Date | null } => ({
+  startedAt:
+    nextStatus === 'active'
+      ? (trip.startedAt ?? now)
+      : trip.status === 'active'
+        ? null
+        : trip.startedAt,
+  completedAt:
+    nextStatus === 'completed'
+      ? (trip.completedAt ?? now)
+      : trip.status === 'completed'
+        ? null
+        : trip.completedAt,
+});
+
 export async function createTrip(userId: string, input: CreateTripInput): Promise<TripDetail> {
   try {
     const db = getDb();
@@ -194,42 +228,46 @@ export async function createTrip(userId: string, input: CreateTripInput): Promis
 
     validateCoverActivity(input.coverActivityId, selectedActivities);
     const derivedWindow = deriveTripWindow(selectedActivities);
-    const [createdTrip] = await db
-      .insert(trips)
-      .values({
-        userId,
-        title: input.title,
-        description: input.description ?? null,
-        status,
-        startDate:
-          input.creationMode === 'manual' || input.creationMode === 'active'
-            ? (input.startDate ?? null)
-            : derivedWindow.startDate,
-        endDate:
-          input.creationMode === 'manual' || input.creationMode === 'active'
-            ? (input.endDate ?? null)
-            : derivedWindow.endDate,
-        startedAt: status === 'active' ? now : null,
-        completedAt: status === 'completed' ? now : null,
-        coverActivityId: input.coverActivityId ?? null,
-        metadata: input.metadata ?? null,
-      })
-      .returning();
-
-    if (selectedActivities.length > 0) {
-      await db
-        .update(activities)
-        .set({
-          tripId: createdTrip.id,
-          updatedAt: now,
+    const createdTrip = await db.transaction(async (tx) => {
+      const [insertedTrip] = await tx
+        .insert(trips)
+        .values({
+          userId,
+          title: input.title,
+          description: input.description ?? null,
+          status,
+          startDate:
+            input.creationMode === 'manual' || input.creationMode === 'active'
+              ? (input.startDate ?? null)
+              : derivedWindow.startDate,
+          endDate:
+            input.creationMode === 'manual' || input.creationMode === 'active'
+              ? (input.endDate ?? null)
+              : derivedWindow.endDate,
+          startedAt: status === 'active' ? now : null,
+          completedAt: status === 'completed' ? now : null,
+          coverActivityId: input.coverActivityId ?? null,
+          metadata: input.metadata ?? null,
         })
-        .where(
-          inArray(
-            activities.id,
-            selectedActivities.map((activity) => activity.id)
-          )
-        );
-    }
+        .returning();
+
+      if (selectedActivities.length > 0) {
+        await tx
+          .update(activities)
+          .set({
+            tripId: insertedTrip.id,
+            updatedAt: now,
+          })
+          .where(
+            inArray(
+              activities.id,
+              selectedActivities.map((activity) => activity.id)
+            )
+          );
+      }
+
+      return insertedTrip;
+    });
 
     const detail = await getTripDetailById(userId, createdTrip.id);
     if (!detail) {
@@ -238,6 +276,10 @@ export async function createTrip(userId: string, input: CreateTripInput): Promis
 
     return detail;
   } catch (error) {
+    if (isActiveTripUniqueViolation(error)) {
+      throw createTripError(409, 'Only one active trip is allowed per user');
+    }
+
     dbLogger.error({ error, userId, input }, 'Error creating trip');
     throw error;
   }
@@ -275,6 +317,8 @@ export async function updateTrip(
       }
     }
 
+    const now = new Date();
+    const statusTimestamps = buildStatusTimestamps(trip, nextStatus, now);
     await db
       .update(trips)
       .set({
@@ -283,18 +327,21 @@ export async function updateTrip(
         status: nextStatus,
         startDate: input.startDate === undefined ? trip.startDate : input.startDate,
         endDate: input.endDate === undefined ? trip.endDate : input.endDate,
-        startedAt: nextStatus === 'active' ? (trip.startedAt ?? new Date()) : trip.startedAt,
-        completedAt:
-          nextStatus === 'completed' ? (trip.completedAt ?? new Date()) : trip.completedAt,
+        startedAt: statusTimestamps.startedAt,
+        completedAt: statusTimestamps.completedAt,
         coverActivityId:
           input.coverActivityId === undefined ? trip.coverActivityId : input.coverActivityId,
         metadata: input.metadata === undefined ? trip.metadata : input.metadata,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(trips.id, trip.id));
 
     return await getTripDetailById(userId, trip.id);
   } catch (error) {
+    if (isActiveTripUniqueViolation(error)) {
+      throw createTripError(409, 'Only one active trip is allowed per user');
+    }
+
     dbLogger.error({ error, userId, tripId, input }, 'Error updating trip');
     throw error;
   }
@@ -311,18 +358,20 @@ export async function attachActivitiesToTrip(
     const selectedActivities = await validateSelectedActivities(userId, activityIds, tripId);
 
     if (selectedActivities.length > 0) {
-      await db
-        .update(activities)
-        .set({
-          tripId,
-          updatedAt: new Date(),
-        })
-        .where(
-          inArray(
-            activities.id,
-            selectedActivities.map((activity) => activity.id)
-          )
-        );
+      await db.transaction(async (tx) => {
+        await tx
+          .update(activities)
+          .set({
+            tripId,
+            updatedAt: new Date(),
+          })
+          .where(
+            inArray(
+              activities.id,
+              selectedActivities.map((activity) => activity.id)
+            )
+          );
+      });
     }
 
     return await getTripDetailById(userId, tripId);
@@ -356,23 +405,26 @@ export async function detachActivityFromTrip(
       throw createTripError(409, 'Activity is not linked to the specified trip');
     }
 
-    await db
-      .update(activities)
-      .set({
-        tripId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(activities.id, activity.id));
-
-    if (trip.coverActivityId === activity.id) {
-      await db
-        .update(trips)
+    await db.transaction(async (tx) => {
+      const now = new Date();
+      await tx
+        .update(activities)
         .set({
-          coverActivityId: null,
-          updatedAt: new Date(),
+          tripId: null,
+          updatedAt: now,
         })
-        .where(eq(trips.id, trip.id));
-    }
+        .where(eq(activities.id, activity.id));
+
+      if (trip.coverActivityId === activity.id) {
+        await tx
+          .update(trips)
+          .set({
+            coverActivityId: null,
+            updatedAt: now,
+          })
+          .where(eq(trips.id, trip.id));
+      }
+    });
 
     return await getTripDetailById(userId, trip.id);
   } catch (error) {

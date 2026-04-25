@@ -103,8 +103,12 @@ const tripStatusSchema = z.enum(['draft', 'active', 'completed', 'archived']);
 const creationModeSchema = z.enum(['manual', 'date_range', 'activity_selection', 'active']);
 const dayDateSchema = z.iso.date();
 const tripDateSchema = z
-  .union([z.iso.datetime({ offset: true }), z.iso.datetime({ local: true }), dayDateSchema])
+  .union([z.iso.datetime({ offset: true }), dayDateSchema])
   .transform((value) => new Date(value));
+const hasInvalidDateOrder = (startDate?: Date | null, endDate?: Date | null): boolean =>
+  Boolean(startDate && endDate && startDate.getTime() > endDate.getTime());
+const hasInvalidDayOrder = (startDate?: string, endDate?: string): boolean =>
+  Boolean(startDate && endDate && startDate > endDate);
 
 /**
  * User validation schemas
@@ -201,6 +205,8 @@ export const activitySchemas = {
 };
 
 export const tripSchemas = {
+  dayDate: dayDateSchema,
+
   create: z
     .object({
       creationMode: creationModeSchema,
@@ -217,6 +223,22 @@ export const tripSchemas = {
       allowEmptyRange: z.boolean().optional(),
     })
     .superRefine((value, ctx) => {
+      if (hasInvalidDateOrder(value.startDate, value.endDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'startDate must be before or equal to endDate',
+          path: ['startDate'],
+        });
+      }
+
+      if (hasInvalidDayOrder(value.rangeStart, value.rangeEnd)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'rangeStart must be before or equal to rangeEnd',
+          path: ['rangeStart'],
+        });
+      }
+
       if (
         value.creationMode === 'activity_selection' &&
         (!value.activityIds || value.activityIds.length === 0)
@@ -246,18 +268,30 @@ export const tripSchemas = {
       }
     }),
 
-  update: z.object({
-    title: z.string().min(1).max(255).optional(),
-    description: z.string().max(5000).optional().nullable(),
-    status: tripStatusSchema.optional(),
-    startDate: tripDateSchema.optional().nullable(),
-    endDate: tripDateSchema.optional().nullable(),
-    coverActivityId: z.uuid().optional().nullable(),
-    metadata: z.record(z.string(), z.unknown()).optional().nullable(),
-  }),
+  update: z
+    .object({
+      title: z.string().min(1).max(255).optional(),
+      description: z.string().max(5000).optional().nullable(),
+      status: tripStatusSchema.optional(),
+      startDate: tripDateSchema.optional().nullable(),
+      endDate: tripDateSchema.optional().nullable(),
+      coverActivityId: z.uuid().optional().nullable(),
+      metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+    })
+    .superRefine((value, ctx) => {
+      if (hasInvalidDateOrder(value.startDate, value.endDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'startDate must be before or equal to endDate',
+          path: ['startDate'],
+        });
+      }
+    }),
 
   listFilters: z.object({
     status: tripStatusSchema.optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    offset: z.coerce.number().int().min(0).optional(),
   }),
 
   attachActivities: z.object({

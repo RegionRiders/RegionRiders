@@ -1,4 +1,4 @@
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handleApiError } from '@/lib/api';
 import { deleteTrip, getTripDetailById, updateTrip } from '@/lib/db';
 import { tripSchemas } from '@/lib/validation/schemas';
 import { parseJsonBody, requireUserId } from '../_shared';
@@ -19,11 +19,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     return Response.json({ trip });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Get Trip');
-    }
-
-    return handle500Error(error, 'Trips API: Get Trip');
+    return handleApiError(error, 'Trips API: Get Trip');
   }
 }
 
@@ -43,11 +39,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return Response.json({ trip });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Update Trip');
-    }
-
-    return handle500Error(error, 'Trips API: Update Trip');
+    return handleApiError(error, 'Trips API: Update Trip');
   }
 }
 
@@ -59,10 +51,6 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     return Response.json({ deleted });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Delete Trip');
-    }
-
-    return handle500Error(error, 'Trips API: Delete Trip');
+    return handleApiError(error, 'Trips API: Delete Trip');
   }
 }

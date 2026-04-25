@@ -23,13 +23,17 @@ describe('app/api/trips/route', () => {
   it('lists trips for the current user', async () => {
     (listTripsByUserId as jest.Mock).mockResolvedValue([{ id: 'trip-1', title: 'Trip' }]);
 
-    const request = new Request('http://localhost/api/trips?status=active', {
+    const request = new Request('http://localhost/api/trips?status=active&limit=25&offset=5', {
       headers: { 'x-user-id': 'user-1' },
     });
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(listTripsByUserId).toHaveBeenCalledWith('user-1', { status: 'active' });
+    expect(listTripsByUserId).toHaveBeenCalledWith('user-1', {
+      status: 'active',
+      limit: 25,
+      offset: 5,
+    });
     await expect(response.json()).resolves.toEqual({
       trips: [{ id: 'trip-1', title: 'Trip' }],
     });

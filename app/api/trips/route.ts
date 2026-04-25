@@ -1,4 +1,4 @@
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handleApiError } from '@/lib/api';
 import { createTrip, listTripsByUserId } from '@/lib/db';
 import { tripSchemas } from '@/lib/validation/schemas';
 import { parseDayEnd, parseDayStart, parseJsonBody, requireUserId } from './_shared';
@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsedFilters = tripSchemas.listFilters.safeParse({
       status: searchParams.get('status') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      offset: searchParams.get('offset') ?? undefined,
     });
 
     if (!parsedFilters.success) {
@@ -24,11 +26,7 @@ export async function GET(request: Request) {
     const trips = await listTripsByUserId(userId, parsedFilters.data);
     return Response.json({ trips });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: List Trips');
-    }
-
-    return handle500Error(error, 'Trips API: List Trips');
+    return handleApiError(error, 'Trips API: List Trips');
   }
 }
 
@@ -44,10 +42,6 @@ export async function POST(request: Request) {
 
     return Response.json({ trip }, { status: 201 });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Create Trip');
-    }
-
-    return handle500Error(error, 'Trips API: Create Trip');
+    return handleApiError(error, 'Trips API: Create Trip');
   }
 }

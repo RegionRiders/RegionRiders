@@ -1,4 +1,4 @@
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handleApiError } from '@/lib/api';
 import { upsertTripDay } from '@/lib/db';
 import { tripSchemas } from '@/lib/validation/schemas';
 import { parseJsonBody, requireUserId } from '../../../_shared';
@@ -11,7 +11,7 @@ export async function PUT(request: Request, context: RouteContext) {
   try {
     const userId = requireUserId(request);
     const { id, date } = await context.params;
-    const parsedDate = tripSchemas.create.shape.rangeStart.safeParse(date);
+    const parsedDate = tripSchemas.dayDate.safeParse(date);
 
     if (!parsedDate.success) {
       return handleApiError(
@@ -32,10 +32,6 @@ export async function PUT(request: Request, context: RouteContext) {
 
     return Response.json({ day });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Upsert Day');
-    }
-
-    return handle500Error(error, 'Trips API: Upsert Day');
+    return handleApiError(error, 'Trips API: Upsert Day');
   }
 }

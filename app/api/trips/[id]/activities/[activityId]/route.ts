@@ -1,4 +1,4 @@
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handleApiError } from '@/lib/api';
 import { detachActivityFromTrip } from '@/lib/db';
 import { requireUserId } from '../../../_shared';
 
@@ -21,10 +21,6 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     return Response.json({ trip });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Detach Activity');
-    }
-
-    return handle500Error(error, 'Trips API: Detach Activity');
+    return handleApiError(error, 'Trips API: Detach Activity');
   }
 }

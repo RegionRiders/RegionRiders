@@ -1,4 +1,4 @@
-import { handle500Error, handleApiError } from '@/lib/api';
+import { handleApiError } from '@/lib/api';
 import { attachActivitiesToTrip } from '@/lib/db';
 import { tripSchemas } from '@/lib/validation/schemas';
 import { parseJsonBody, requireUserId } from '../../_shared';
@@ -23,10 +23,6 @@ export async function POST(request: Request, context: RouteContext) {
 
     return Response.json({ trip });
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      return handleApiError(error, 'Trips API: Attach Activities');
-    }
-
-    return handle500Error(error, 'Trips API: Attach Activities');
+    return handleApiError(error, 'Trips API: Attach Activities');
   }
 }

@@ -5,7 +5,8 @@
 
 export * from './users';
 export * from './userSettings';
-export * from './trips';
+export { trips, tripDays, tripStatusEnum, tripStatusValues } from './trips';
+export type { Trip, NewTrip, TripUpdate, TripDay, NewTripDay, TripDayUpdate } from './trips';
 export * from './activities';
 
 // Query helpers for selective field loading

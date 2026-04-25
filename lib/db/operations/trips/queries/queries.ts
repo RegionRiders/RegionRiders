@@ -13,6 +13,7 @@ import type {
   TripStats,
 } from '../types';
 
+// Trip days are bucketed in UTC until trips store an explicit timezone.
 const getActivityDayKey = (startDate: Date): string => startDate.toISOString().slice(0, 10);
 
 const buildTripStats = (tripActivities: Activity[]): TripStats => {

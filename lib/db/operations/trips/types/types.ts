@@ -1,5 +1,5 @@
 import type { Activity } from '../../../schema/activities';
-import type { Trip } from '../../../schema/trips';
+import type { TripStatus } from '../../../schema/trips';
 
 export type {
   Trip,
@@ -8,9 +8,9 @@ export type {
   TripDay,
   NewTripDay,
   TripDayUpdate,
+  TripStatus,
 } from '../../../schema/trips';
 
-export type TripStatus = Trip['status'];
 export type TripCreationMode = 'manual' | 'date_range' | 'activity_selection' | 'active';
 
 export interface GetTripsOptions {
