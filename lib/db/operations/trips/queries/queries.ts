@@ -51,11 +51,17 @@ const buildTripDays = (
   tripActivities: Activity[]
 ): TripDayDetail[] => {
   const dayByDate = new Map(persistedTripDays.map((day) => [day.dayDate, day]));
-  const activityDates = new Set(
-    tripActivities.map((activity) => getActivityDayKey(activity.startDate))
-  );
+  const activitiesByDate = new Map<string, Activity[]>();
+
+  for (const activity of tripActivities) {
+    const dayDate = getActivityDayKey(activity.startDate);
+    const dayActivities = activitiesByDate.get(dayDate) ?? [];
+    dayActivities.push(activity);
+    activitiesByDate.set(dayDate, dayActivities);
+  }
+
   const allDates = Array.from(
-    new Set([...Array.from(dayByDate.keys()), ...Array.from(activityDates)])
+    new Set([...Array.from(dayByDate.keys()), ...Array.from(activitiesByDate.keys())])
   ).sort();
 
   return allDates.map((dayDate) => {
@@ -68,9 +74,7 @@ const buildTripDays = (
       note: persisted?.note ?? null,
       createdAt: persisted?.createdAt ?? null,
       updatedAt: persisted?.updatedAt ?? null,
-      activities: tripActivities.filter(
-        (activity) => getActivityDayKey(activity.startDate) === dayDate
-      ),
+      activities: activitiesByDate.get(dayDate) ?? [],
     };
   });
 };
@@ -80,7 +84,7 @@ const toTripDetail = async (trip: Trip): Promise<TripDetail> => {
   const tripActivities = await db
     .select()
     .from(activities)
-    .where(eq(activities.tripId, trip.id))
+    .where(and(eq(activities.tripId, trip.id), eq(activities.userId, trip.userId)))
     .orderBy(asc(activities.startDate), asc(activities.createdAt));
   const persistedTripDays = await db
     .select()
@@ -160,7 +164,10 @@ export async function listTripsByUserId(
         updatedAt: trips.updatedAt,
       })
       .from(trips)
-      .leftJoin(activities, eq(activities.tripId, trips.id))
+      .leftJoin(
+        activities,
+        and(eq(activities.tripId, trips.id), eq(activities.userId, trips.userId))
+      )
       .where(whereClause)
       .groupBy(
         trips.id,
@@ -169,7 +176,8 @@ export async function listTripsByUserId(
         trips.startDate,
         trips.endDate,
         trips.coverActivityId,
-        trips.updatedAt
+        trips.updatedAt,
+        trips.createdAt
       )
       .orderBy(desc(trips.updatedAt), desc(trips.createdAt))
       .limit(safeLimit)
