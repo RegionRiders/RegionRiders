@@ -4,6 +4,7 @@
  */
 
 export * from './users';
+export * from './userSettings';
 export * from './trips';
 export * from './activities';
 

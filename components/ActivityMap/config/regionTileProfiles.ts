@@ -6,7 +6,11 @@ export interface RegionTileProfileConfig {
   layerName: string;
   paneName: string;
   minZoom: number;
-  maxZoom: number;
+  detailCapZoom: number;
+  displayMaxZoom: number;
+  strokeFadeStartZoom: number;
+  strokeHideBelowZoom: number;
+  minimumLowDetailFillOpacity: number;
   style: {
     color: string;
     weight: number;
@@ -22,7 +26,11 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 4,
-    maxZoom: 12,
+    detailCapZoom: 12,
+    displayMaxZoom: 18,
+    strokeFadeStartZoom: 7,
+    strokeHideBelowZoom: 5,
+    minimumLowDetailFillOpacity: 0.14,
     style: {
       color: '#0A7E43',
       weight: 1,
@@ -36,7 +44,11 @@ const REGION_TILE_PROFILES: Record<RegionRenderProfile, RegionTileProfileConfig>
     layerName: 'regions',
     paneName: 'regionsPane',
     minZoom: 3,
-    maxZoom: 12,
+    detailCapZoom: 12,
+    displayMaxZoom: 18,
+    strokeFadeStartZoom: 6,
+    strokeHideBelowZoom: 4,
+    minimumLowDetailFillOpacity: 0.14,
     style: {
       color: '#0A7E43',
       weight: 1.5,

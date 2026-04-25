@@ -3,16 +3,7 @@
  * Defines the users table structure using Drizzle ORM
  */
 
-import {
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { boolean, index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
   'users',
@@ -27,7 +18,6 @@ export const users = pgTable(
     refreshToken: text('refresh_token'),
     tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
     isActive: boolean('is_active').default(true).notNull(),
-    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

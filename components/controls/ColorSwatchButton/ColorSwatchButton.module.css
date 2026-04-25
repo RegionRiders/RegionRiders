@@ -1,0 +1,12 @@
+.button {
+    padding: 0;
+    border-radius: 3px;
+}
+
+.button:where([data-variant='default']) {
+    border: 1px solid var(--mantine-color-default-border);
+}
+
+.button:where([data-variant='filled']) {
+    border: 2px solid var(--mantine-primary-color-filled);
+}

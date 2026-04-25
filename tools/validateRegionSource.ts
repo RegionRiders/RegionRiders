@@ -44,12 +44,21 @@ function getDefaultSourceDirCandidates(): string[] {
 }
 
 function getArgValue(flag: string): string | undefined {
-  const index = process.argv.indexOf(flag);
+  return getArgValueFromArgv(process.argv, flag);
+}
+
+export function getArgValueFromArgv(argv: string[], flag: string): string | undefined {
+  const index = argv.indexOf(flag);
   if (index === -1) {
     return undefined;
   }
 
-  return process.argv[index + 1];
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith('-')) {
+    throw new Error(`Missing value for flag ${flag}`);
+  }
+
+  return value;
 }
 
 function addIssue(issues: ValidationIssue[], issue: ValidationIssue): void {
@@ -58,6 +67,27 @@ function addIssue(issues: ValidationIssue[], issue: ValidationIssue): void {
   }
 
   issues.push(issue);
+}
+
+function getNormalizedRegionId(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
+function propertyIsMissing(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length === 0;
+  }
+
+  return false;
 }
 
 function hasAnyCoordinate(value: unknown): boolean {
@@ -181,7 +211,7 @@ export function validateRegionSource(
 
       const missingProps = REQUIRED_PROPERTIES.filter((key) => {
         const value = properties[key];
-        return value === undefined || value === null || value === '';
+        return propertyIsMissing(value);
       });
 
       if (missingProps.length > 0) {
@@ -195,19 +225,31 @@ export function validateRegionSource(
       }
 
       const regionIdValue = properties.region_id;
-      if (typeof regionIdValue === 'string' && regionIdValue.length > 0) {
-        const firstSeenIn = seenRegionIds.get(regionIdValue);
+      const normalizedRegionId = getNormalizedRegionId(regionIdValue);
+
+      if (regionIdValue !== undefined && regionIdValue !== null && normalizedRegionId === null) {
+        missingRequiredFields += 1;
+        addIssue(issues, {
+          file: fileName,
+          featureIndex,
+          code: 'invalid_region_id',
+          message: 'region_id must be a non-empty string',
+        });
+      }
+
+      if (normalizedRegionId) {
+        const firstSeenIn = seenRegionIds.get(normalizedRegionId);
         if (firstSeenIn) {
           duplicateRegionIds += 1;
           addIssue(issues, {
             file: fileName,
             featureIndex,
-            regionId: regionIdValue,
+            regionId: normalizedRegionId,
             code: 'duplicate_region_id',
             message: `region_id already seen in ${firstSeenIn}`,
           });
         } else {
-          seenRegionIds.set(regionIdValue, fileName);
+          seenRegionIds.set(normalizedRegionId, fileName);
         }
       }
 
@@ -216,7 +258,7 @@ export function validateRegionSource(
         addIssue(issues, {
           file: fileName,
           featureIndex,
-          regionId: typeof regionIdValue === 'string' ? regionIdValue : undefined,
+          regionId: normalizedRegionId ?? undefined,
           code: 'invalid_geometry',
           message: 'Geometry is null or has empty coordinates',
         });

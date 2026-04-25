@@ -1,7 +1,11 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { resolveDefaultSourceDir, validateRegionSource } from './validateRegionSource';
+import {
+  getArgValueFromArgv,
+  resolveDefaultSourceDir,
+  validateRegionSource,
+} from './validateRegionSource';
 
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'validate-region-source-'));
@@ -22,6 +26,35 @@ function createFeatureCollection(regionId: string) {
           country_code: 'PL',
           admin_level: '4',
           name: 'Pomorskie',
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [18.0, 54.0],
+              [18.1, 54.0],
+              [18.1, 54.1],
+              [18.0, 54.1],
+              [18.0, 54.0],
+            ],
+          ],
+        },
+      },
+    ],
+  };
+}
+
+function createFeatureCollectionWithProperties(properties: Record<string, unknown>) {
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {
+          country_code: 'PL',
+          admin_level: '4',
+          name: 'Pomorskie',
+          ...properties,
         },
         geometry: {
           type: 'Polygon',
@@ -123,5 +156,128 @@ describe('validateRegionSource', () => {
         process.env.REGION_SOURCE_DIR = originalEnv;
       }
     }
+  });
+
+  it('fails fast when --source is present without a value', () => {
+    expect(() =>
+      getArgValueFromArgv(
+        ['node', 'tools/validateRegionSource.ts', '--source', '--report'],
+        '--source'
+      )
+    ).toThrow('Missing value for flag --source');
+  });
+
+  it('fails fast when --report is present without a value', () => {
+    expect(() =>
+      getArgValueFromArgv(['node', 'tools/validateRegionSource.ts', '--report'], '--report')
+    ).toThrow('Missing value for flag --report');
+  });
+
+  it('marks numeric region_id values as invalid', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'numeric-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 1234 }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'numeric-id.geojson', code: 'invalid_region_id' }),
+      ])
+    );
+  });
+
+  it('detects duplicate region_id values after normalization', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'a.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 'RR1::PL::POM::001' }))
+    );
+    writeGeoJsonFile(
+      sourceDir,
+      'b.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: 'RR1::PL::POM::001 ' }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.duplicateRegionIds).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'b.geojson', code: 'duplicate_region_id' }),
+      ])
+    );
+  });
+
+  it('marks empty region_id values as missing required data', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'empty-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: '   ' }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBeGreaterThan(0);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'empty-id.geojson', code: 'invalid_region_id' }),
+      ])
+    );
+  });
+
+  it('marks missing region_id values as missing required data', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'missing-id.geojson',
+      JSON.stringify(createFeatureCollectionWithProperties({ region_id: undefined }))
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: 'missing-id.geojson', code: 'missing_required_property' }),
+      ])
+    );
+  });
+
+  it('treats whitespace-only required properties as missing', () => {
+    writeGeoJsonFile(
+      sourceDir,
+      'blank-required.geojson',
+      JSON.stringify(
+        createFeatureCollectionWithProperties({
+          region_id: 'RR1::PL::POM::001',
+          country_code: '   ',
+          admin_level: '\t',
+          name: '  ',
+        })
+      )
+    );
+
+    const report = validateRegionSource(sourceDir, reportPath);
+    const missingPropertyIssue = report.issues.find(
+      (issue) =>
+        issue.file === 'blank-required.geojson' && issue.code === 'missing_required_property'
+    );
+
+    expect(report.isValid).toBe(false);
+    expect(report.missingRequiredFields).toBe(1);
+    expect(missingPropertyIssue).toEqual(
+      expect.objectContaining({
+        file: 'blank-required.geojson',
+        code: 'missing_required_property',
+        message: expect.stringContaining('country_code, admin_level, name'),
+      })
+    );
   });
 });

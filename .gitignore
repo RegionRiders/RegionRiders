@@ -157,7 +157,9 @@ postgres_data/
 .pgdata/
 
 test-results.txt
+package-lock.json
 
 # Region tiles artifacts (generated output, not source of truth)
 public/data/regions/tiles/v*/
 public/data/regions/tiles/.tmp_*
+.omx/

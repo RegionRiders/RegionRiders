@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { logger } from '@/lib/logger';
 
@@ -24,6 +25,14 @@ const DEFAULT_NORMALIZED_GPKG = path.join(
 );
 const DEFAULT_MIN_ZOOM = 3;
 const DEFAULT_MAX_ZOOM = 14;
+const TILE_WORK_ROOT = path.dirname(DEFAULT_OUTPUT_DIR);
+const TILE_OUTPUT_DIR_PATTERN = /^v\d+(?:[\w.-]*)?$/;
+const TILE_TEMP_FILE_PATTERN = /^\.tmp_regions_[\w.-]+\.gpkg$/;
+
+function isPathWithinScope(resolvedPath: string, scopeRoot: string): boolean {
+  return resolvedPath === scopeRoot || resolvedPath.startsWith(`${scopeRoot}${path.sep}`);
+}
+
 function getDefaultSourceDirCandidates(): string[] {
   return [process.env.REGION_SOURCE_DIR].filter((value): value is string => Boolean(value));
 }
@@ -55,7 +64,13 @@ function parseIntArg(value: string | undefined, fallback: number, name: string):
     return fallback;
   }
 
-  const parsed = Number.parseInt(value, 10);
+  const trimmedValue = value.trim();
+
+  if (!/^-?\d+$/.test(trimmedValue)) {
+    throw new Error(`Invalid ${name}: ${value}`);
+  }
+
+  const parsed = Number.parseInt(trimmedValue, 10);
   if (!Number.isFinite(parsed)) {
     throw new Error(`Invalid ${name}: ${value}`);
   }
@@ -105,7 +120,13 @@ function getArgValueFromArgv(argv: string[], flag: string): string | undefined {
     return undefined;
   }
 
-  return argv[index + 1];
+  const value = argv[index + 1];
+
+  if (value === undefined || value.startsWith('-')) {
+    throw new Error(`Missing value for flag ${flag}`);
+  }
+
+  return value;
 }
 
 function hasFlagInArgv(argv: string[], flag: string): boolean {
@@ -138,6 +159,110 @@ function removeIfExists(targetPath: string): void {
   fs.rmSync(targetPath, { recursive: true, force: true });
 }
 
+function assertExistingTargetType(targetPath: string, label: string): void {
+  if (!fs.existsSync(targetPath)) {
+    return;
+  }
+
+  const stats = fs.statSync(targetPath);
+
+  if (label === '--output' && !stats.isDirectory()) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label !== '--output' && stats.isDirectory()) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+}
+
+function assertSafeDeletionTarget(targetPath: string, label: string): void {
+  const trimmedPath = targetPath.trim();
+  if (trimmedPath.length === 0) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const resolvedPath = path.resolve(trimmedPath);
+  const fileSystemRoot = path.parse(resolvedPath).root;
+  const repoRoot = path.resolve(REPO_ROOT);
+  const homeDir = path.resolve(os.homedir());
+  const tempDir = path.resolve(os.tmpdir());
+  const tileWorkRoot = path.resolve(TILE_WORK_ROOT);
+
+  const blockedTargets = new Set([fileSystemRoot, repoRoot, path.resolve('.'), homeDir]);
+
+  if (blockedTargets.has(resolvedPath)) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const relativeToRepoRoot = path.relative(repoRoot, resolvedPath);
+  if (relativeToRepoRoot === '' || relativeToRepoRoot === '.' || relativeToRepoRoot === '..') {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  const isWithinTileWorkRoot = isPathWithinScope(resolvedPath, tileWorkRoot);
+  const isWithinTempDir = isPathWithinScope(resolvedPath, tempDir);
+  const baseName = path.basename(resolvedPath);
+
+  if (path.isAbsolute(trimmedPath)) {
+    const absoluteSegments = resolvedPath.split(path.sep).filter((segment) => segment.length > 0);
+
+    if (absoluteSegments.length < 3) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (label === '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (label !== '--output' && !isWithinTileWorkRoot && !isWithinTempDir) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+  } else {
+    const relativeSegments = relativeToRepoRoot
+      .split(path.sep)
+      .filter((segment) => segment !== '' && segment !== '.');
+
+    if (
+      trimmedPath === '..' ||
+      trimmedPath.startsWith(`..${path.sep}`) ||
+      relativeSegments.some((segment) => segment === '..')
+    ) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (relativeSegments.length <= 1) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+  }
+
+  if (!isWithinTileWorkRoot && !isWithinTempDir) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (label === '--output') {
+    if (!TILE_OUTPUT_DIR_PATTERN.test(baseName)) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    if (isWithinTileWorkRoot && path.dirname(resolvedPath) !== tileWorkRoot) {
+      throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+    }
+
+    assertExistingTargetType(resolvedPath, label);
+    return;
+  }
+
+  if (!TILE_TEMP_FILE_PATTERN.test(baseName)) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  if (isWithinTileWorkRoot && path.dirname(resolvedPath) !== tileWorkRoot) {
+    throw new Error(`Refusing unsafe deletion target for ${label}: ${targetPath}`);
+  }
+
+  assertExistingTargetType(resolvedPath, label);
+}
+
 function ensureParentDir(filePath: string): void {
   const parentDir = path.dirname(filePath);
   if (!fs.existsSync(parentDir)) {
@@ -151,6 +276,10 @@ export function runBuild(options: BuildOptions, sourceFiles: string[]): void {
       `Output directory already exists: ${options.outputDir}. Re-run with --force to overwrite.`
     );
   }
+
+  assertSafeDeletionTarget(options.outputDir, '--output');
+  assertSafeDeletionTarget(options.tempGpkg, '--temp');
+  assertSafeDeletionTarget(options.normalizedGpkg, '--normalized');
 
   removeIfExists(options.outputDir);
   removeIfExists(options.tempGpkg);
@@ -173,42 +302,47 @@ export function runBuild(options: BuildOptions, sourceFiles: string[]): void {
     ...sourceFiles,
   ];
 
-  runCommand('ogrmerge.py', mergeArgs);
+  try {
+    runCommand('ogrmerge.py', mergeArgs);
 
-  const normalizeArgs = [
-    '-f',
-    'GPKG',
-    options.normalizedGpkg,
-    options.tempGpkg,
-    'regions',
-    '-nln',
-    'regions',
-    '-nlt',
-    'PROMOTE_TO_MULTI',
-  ];
+    const normalizeArgs = [
+      '-f',
+      'GPKG',
+      options.normalizedGpkg,
+      options.tempGpkg,
+      'regions',
+      '-nln',
+      'regions',
+      '-nlt',
+      'PROMOTE_TO_MULTI',
+    ];
 
-  runCommand('ogr2ogr', normalizeArgs);
+    runCommand('ogr2ogr', normalizeArgs);
 
-  const tileArgs = [
-    '-f',
-    'MVT',
-    options.outputDir,
-    options.normalizedGpkg,
-    'regions',
-    '-nln',
-    'regions',
-    '-dsco',
-    'FORMAT=DIRECTORY',
-    '-dsco',
-    `MINZOOM=${options.minZoom}`,
-    '-dsco',
-    `MAXZOOM=${options.maxZoom}`,
-  ];
+    const tileArgs = [
+      '-f',
+      'MVT',
+      options.outputDir,
+      options.normalizedGpkg,
+      'regions',
+      '-nln',
+      'regions',
+      '-dsco',
+      'FORMAT=DIRECTORY',
+      '-dsco',
+      `MINZOOM=${options.minZoom}`,
+      '-dsco',
+      `MAXZOOM=${options.maxZoom}`,
+    ];
 
-  runCommand('ogr2ogr', tileArgs);
-
-  removeIfExists(options.tempGpkg);
-  removeIfExists(options.normalizedGpkg);
+    runCommand('ogr2ogr', tileArgs);
+  } catch (error) {
+    removeIfExists(options.outputDir);
+    throw error;
+  } finally {
+    removeIfExists(options.tempGpkg);
+    removeIfExists(options.normalizedGpkg);
+  }
 }
 
 function isExecutedAsScript(): boolean {

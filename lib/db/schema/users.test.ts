@@ -25,7 +25,6 @@ describe('Users Table Schema', () => {
       refreshToken: null,
       tokenExpiresAt: null,
       isActive: true,
-      metadata: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

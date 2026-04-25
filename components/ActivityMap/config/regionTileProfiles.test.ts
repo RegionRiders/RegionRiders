@@ -16,7 +16,8 @@ describe('regionTileProfiles', () => {
       expect.objectContaining({
         sourceUrl: TEST_REGION_TILE_URL,
         minZoom: 4,
-        maxZoom: 12,
+        detailCapZoom: 12,
+        displayMaxZoom: 18,
       })
     );
   });
@@ -25,7 +26,8 @@ describe('regionTileProfiles', () => {
     expect(getRegionTileProfileConfig('desktop')).toEqual(
       expect.objectContaining({
         minZoom: 3,
-        maxZoom: 12,
+        detailCapZoom: 12,
+        displayMaxZoom: 18,
       })
     );
   });
