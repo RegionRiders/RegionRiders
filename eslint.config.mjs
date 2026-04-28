@@ -7,6 +7,13 @@ export default defineConfig(
   tseslint.configs.recommended,
   ...mantine,
   {
+    settings: {
+      react: {
+        version: '19.2.4',
+      },
+    },
+  },
+  {
     ignores: [
       '**/*.{mjs,cjs,js,d.ts,d.mts}',
       '.next',

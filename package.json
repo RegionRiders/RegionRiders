@@ -82,7 +82,7 @@
     "babel-loader": "^10.1.1",
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^9.39.1",
+    "eslint": "^10.2.1",
     "eslint-config-mantine": "^4.0.3",
     "eslint-config-next": "16.2.4",
     "eslint-plugin-jsx-a11y": "^6.10.2",
