@@ -3965,7 +3965,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:^25.6.0":
   version: 25.6.0
   resolution: "@types/node@npm:25.6.0"
   dependencies:
@@ -3974,7 +3974,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^24.0.3, @types/node@npm:^24.7.1":
+"@types/node@npm:^24.0.3":
   version: 24.12.2
   resolution: "@types/node@npm:24.12.2"
   dependencies:
@@ -10249,7 +10249,7 @@ __metadata:
     "@types/jest": "npm:^30.0.0"
     "@types/leaflet": "npm:^1.9.21"
     "@types/leaflet.vectorgrid": "npm:^1"
-    "@types/node": "npm:^24.7.1"
+    "@types/node": "npm:^25.6.0"
     "@types/pg": "npm:^8.20.0"
     "@types/rbush": "npm:^4.0.0"
     "@types/react": "npm:19.2.14"
