@@ -135,6 +135,15 @@ jobs:
             if curl --fail --silent --show-error --max-time 10 \
               --user "$STAGING_BASIC_AUTH_USER:$STAGING_BASIC_AUTH_PASSWORD" \
               "$STAGING_HEALTHCHECK_URL" > /tmp/staging-health-response.json; then
+              unauth_status="$(curl --silent --show-error --output /tmp/staging-health-unauth-response.txt --write-out '%{http_code}' --max-time 10 "$STAGING_HEALTHCHECK_URL" || true)"
+
+              if [ "$unauth_status" != "401" ] && [ "$unauth_status" != "403" ]; then
+                echo "Expected staging health endpoint to reject unauthenticated requests, got HTTP $unauth_status" >&2
+                echo "Unauthenticated response body:" >&2
+                cat /tmp/staging-health-unauth-response.txt >&2
+                exit 1
+              fi
+
               cat /tmp/staging-health-response.json
               exit 0
             fi

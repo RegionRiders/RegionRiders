@@ -119,6 +119,19 @@ describe('database env resolver', () => {
     expect(() => resolveDatabaseEnv(env)).toThrow(/Invalid DATABASE_URL/);
   });
 
+  it('rejects non-PostgreSQL DATABASE_URL protocols', () => {
+    const env = createProcessEnv({
+      DATABASE_URL: 'mysql://dokku_user:secret-pass@remote-postgres.example.com:5432/rr_staging_db',
+      POSTGRES_HOST: 'localhost',
+      POSTGRES_DB: 'regionriders',
+      POSTGRES_USER: 'regionriders_user',
+      POSTGRES_PASSWORD: 'regionriders_password',
+    });
+
+    expect(hasDatabaseEnv(env)).toBe(false);
+    expect(() => resolveDatabaseEnv(env)).toThrow(/postgres:\/\/ or postgresql:\/\//);
+  });
+
   it('rejects invalid POSTGRES_PORT values', () => {
     const env = createProcessEnv({
       POSTGRES_HOST: 'localhost',

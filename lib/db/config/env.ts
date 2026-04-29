@@ -88,6 +88,10 @@ function assertValidPort(port: number, source: 'DATABASE_URL' | 'POSTGRES_PORT')
 }
 
 function assertValidDatabaseUrl(parsed: URL): void {
+  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) {
+    throw new Error('Invalid DATABASE_URL: expected postgres:// or postgresql:// protocol.');
+  }
+
   if (
     !parsed.hostname ||
     !parsed.username ||
