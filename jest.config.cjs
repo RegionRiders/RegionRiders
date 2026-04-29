@@ -37,6 +37,7 @@ const customJestConfig = {
       ? [
           '<rootDir>/lib/db/operations/users.test.ts',
           '<rootDir>/lib/db/operations/activities.test.ts',
+          '<rootDir>/lib/db/operations/trips.test.ts',
           '<rootDir>/lib/db/config/client.test.ts',
           '<rootDir>/lib/db/config/drizzle.test.ts',
         ]

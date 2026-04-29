@@ -16,9 +16,17 @@ export default defineConfig(
   {
     ignores: [
       '**/*.{mjs,cjs,js,d.ts,d.mts}',
-      '.next',
+      '.next/**',
+      'node_modules/**',
+      'public/data/**',
       'coverage/**',
-      'public/data/regions/tiles/**',
+      '.codenomad/**',
+      '.omx/**',
+      '.opencode/**',
+      '.planning/**',
+      '.tmp/**',
+      'cache-test/**',
+      'logs/**',
     ],
   },
   {
