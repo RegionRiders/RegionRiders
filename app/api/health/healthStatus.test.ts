@@ -16,10 +16,14 @@ describe('evaluateHealthStatus', () => {
     jest.clearAllMocks();
     process.env = {
       ...originalEnv,
+      DATABASE_URL:
+        'postgres://dokku_user:secret-pass@dokku-postgres-rr-staging-db:5432/rr_staging_db',
       POSTGRES_HOST: 'localhost',
       POSTGRES_DB: 'regionriders',
       POSTGRES_USER: 'regionriders_user',
       POSTGRES_PASSWORD: 'secret',
+      SESSION_SECRET: 'test-session-secret',
+      SESSION_SECRET_DEV: 'test-session-secret-dev',
       OAUTH_ENCRYPTION_KEY: 'key',
       OAUTH_ENCRYPTION_SALT: 'salt',
     };
@@ -47,6 +51,7 @@ describe('evaluateHealthStatus', () => {
   });
 
   it('returns unhealthy when required database env is missing', async () => {
+    delete process.env.DATABASE_URL;
     delete process.env.POSTGRES_PASSWORD;
 
     const { report, statusCode } = await evaluateHealthStatus();
@@ -54,6 +59,19 @@ describe('evaluateHealthStatus', () => {
     expect(statusCode).toBe(503);
     expect(report.status).toBe('unhealthy');
     expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('reports healthy application status when only DATABASE_URL is available', async () => {
+    delete process.env.POSTGRES_HOST;
+    delete process.env.POSTGRES_DB;
+    delete process.env.POSTGRES_USER;
+    delete process.env.POSTGRES_PASSWORD;
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(200);
+    expect(report.status).toBe('healthy');
+    expect(report.checks.application).toBe('healthy');
   });
 
   it('returns unhealthy when encryption env is missing', async () => {
@@ -64,5 +82,31 @@ describe('evaluateHealthStatus', () => {
     expect(statusCode).toBe(503);
     expect(report.status).toBe('unhealthy');
     expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('returns unhealthy when session secret is missing', async () => {
+    delete process.env.SESSION_SECRET;
+    delete process.env.SESSION_SECRET_DEV;
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(503);
+    expect(report.status).toBe('unhealthy');
+    expect(report.checks.application).toBe('unhealthy');
+  });
+
+  it('allows SESSION_SECRET_DEV in non-production environments', async () => {
+    delete process.env.SESSION_SECRET;
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+      configurable: true,
+    });
+
+    const { report, statusCode } = await evaluateHealthStatus();
+
+    expect(statusCode).toBe(200);
+    expect(report.status).toBe('healthy');
+    expect(report.checks.application).toBe('healthy');
   });
 });

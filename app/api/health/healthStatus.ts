@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
+import { hasDatabaseEnv } from '@/lib/db/config/env';
 
 export type HealthCheckState = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 
@@ -14,14 +15,15 @@ export interface HealthStatusReport {
   };
 }
 
-const REQUIRED_ENV_VARS = [
-  'POSTGRES_HOST',
-  'POSTGRES_DB',
-  'POSTGRES_USER',
-  'POSTGRES_PASSWORD',
-  'OAUTH_ENCRYPTION_KEY',
-  'OAUTH_ENCRYPTION_SALT',
-] as const;
+const REQUIRED_APP_ENV_VARS = ['OAUTH_ENCRYPTION_KEY', 'OAUTH_ENCRYPTION_SALT'] as const;
+
+function hasSessionSecret(): boolean {
+  if (process.env.SESSION_SECRET) {
+    return true;
+  }
+
+  return process.env.NODE_ENV !== 'production' && Boolean(process.env.SESSION_SECRET_DEV);
+}
 
 export async function evaluateHealthStatus(): Promise<{
   report: HealthStatusReport;
@@ -58,9 +60,9 @@ export async function evaluateHealthStatus(): Promise<{
     statusCode = 503;
   }
 
-  const missingEnvVars = REQUIRED_ENV_VARS.filter((varName) => !process.env[varName]);
+  const missingEnvVars = REQUIRED_APP_ENV_VARS.filter((varName) => !process.env[varName]);
 
-  if (missingEnvVars.length > 0) {
+  if (!hasDatabaseEnv() || !hasSessionSecret() || missingEnvVars.length > 0) {
     report.checks.application = 'unhealthy';
     report.status = 'unhealthy';
     statusCode = 503;

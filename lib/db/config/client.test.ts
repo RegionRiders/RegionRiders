@@ -3,6 +3,15 @@ import { Pool } from 'pg';
 import { closePool, getClient, getPool, query, testConnection } from './client';
 import { getDatabaseConfig } from './config';
 
+function restoreEnvVar(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}
+
 describe('Database Client Connection', () => {
   let pool: Pool;
 
@@ -127,14 +136,16 @@ describe('Database Client Connection', () => {
   });
 
   describe('SSL Configuration', () => {
-    it('should configure SSL in production mode', async () => {
+    it('should configure SSL in production for remote hosts', async () => {
       const originalEnv = process.env.NODE_ENV;
+      const originalHost = process.env.POSTGRES_HOST;
       try {
         Object.defineProperty(process.env, 'NODE_ENV', {
           value: 'production',
           writable: true,
           configurable: true,
         });
+        process.env.POSTGRES_HOST = 'remote.example.com';
 
         // Force pool recreation with production SSL settings
         await closePool();
@@ -153,6 +164,7 @@ describe('Database Client Connection', () => {
           writable: true,
           configurable: true,
         });
+        restoreEnvVar('POSTGRES_HOST', originalHost);
       }
     });
 
@@ -185,11 +197,12 @@ describe('Database Client Connection', () => {
       }
     });
 
-    it('should validate SSL configuration structure', () => {
+    it('should validate SSL configuration structure for remote production hosts', () => {
       // This test validates that our SSL configuration logic is correct
       // without requiring an actual database connection
 
       const originalEnv = process.env.NODE_ENV;
+      const originalHost = process.env.POSTGRES_HOST;
       try {
         // Test production SSL configuration
         Object.defineProperty(process.env, 'NODE_ENV', {
@@ -197,6 +210,7 @@ describe('Database Client Connection', () => {
           writable: true,
           configurable: true,
         });
+        process.env.POSTGRES_HOST = 'remote.example.com';
 
         const prodConfig = getDatabaseConfig();
         expect(prodConfig.ssl).toBe(true);
@@ -216,6 +230,7 @@ describe('Database Client Connection', () => {
           writable: true,
           configurable: true,
         });
+        restoreEnvVar('POSTGRES_HOST', originalHost);
       }
     });
   });

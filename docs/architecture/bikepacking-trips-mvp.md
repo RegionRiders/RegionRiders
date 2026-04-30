@@ -1,7 +1,7 @@
 # Bikepacking Trips MVP
 
-**Status:** Planned for issue #109  
-**Owner:** RegionRiders  
+**Status:** Planned for issue #109
+**Owner:** RegionRiders
 **Last updated:** 2026-04-09
 
 ## Context

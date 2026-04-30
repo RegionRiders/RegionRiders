@@ -10,7 +10,7 @@ import {
 } from './useRegionRendering';
 import { calculateWeightForZoom } from './utils/calculateWeightForZoom';
 
-jest.mock('leaflet.vectorgrid', () => ({}));
+jest.mock('leaflet.vectorgrid', () => ({}), { virtual: true });
 
 jest.mock('@/lib/services/maps/selectRenderProfile', () => ({
   selectRegionRenderProfile: jest.fn(() => 'mobile'),

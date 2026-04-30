@@ -1,0 +1,196 @@
+name: Staging Deploy
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy_staging:
+    name: Validate and deploy staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    environment: staging
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: regionriders
+          POSTGRES_USER: regionriders_user
+          POSTGRES_PASSWORD: regionriders_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: regionriders
+      POSTGRES_USER: regionriders_user
+      POSTGRES_PASSWORD: regionriders_pass
+      OAUTH_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      OAUTH_ENCRYPTION_SALT: 0123456789abcdef0123456789abcdef
+      DOKKU_HOST: 38.242.250.43
+      DOKKU_APP: rr-staging
+      STAGING_HEALTHCHECK_URL: https://rr-staging.404fra.pl/api/health
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Run database migrations
+        run: corepack yarn db:migrate
+
+      - name: Run validation suite
+        run: corepack yarn test:all
+
+      - name: Run production build
+        run: corepack yarn build
+
+      - name: Validate required deployment secrets
+        env:
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+          STAGING_BASIC_AUTH_USER: ${{ secrets.STAGING_BASIC_AUTH_USER }}
+          STAGING_BASIC_AUTH_PASSWORD: ${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}
+        run: |
+          if [ -z "$STAGING_SSH_PRIVATE_KEY" ]; then
+            echo "Missing required secret: STAGING_SSH_PRIVATE_KEY" >&2
+            exit 1
+          fi
+
+          if [ -z "$STAGING_KNOWN_HOSTS" ]; then
+            echo "Missing required secret: STAGING_KNOWN_HOSTS" >&2
+            exit 1
+          fi
+
+          if [ -z "$STAGING_BASIC_AUTH_USER" ]; then
+            echo "Missing required secret: STAGING_BASIC_AUTH_USER" >&2
+            exit 1
+          fi
+
+          if [ -z "$STAGING_BASIC_AUTH_PASSWORD" ]; then
+            echo "Missing required secret: STAGING_BASIC_AUTH_PASSWORD" >&2
+            exit 1
+          fi
+
+      - name: Configure SSH for Dokku deploy
+        env:
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/staging_dokku
+          chmod 600 ~/.ssh/staging_dokku
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+
+      - name: Validate Dokku runtime configuration
+        run: |
+          set -euo pipefail
+
+          remote_env="$(
+            ssh -i ~/.ssh/staging_dokku \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              "dokku@$DOKKU_HOST" config:export "$DOKKU_APP"
+          )"
+
+          has_non_empty_remote_env_key() {
+            local key="$1"
+            printf '%s\n' "$remote_env" | grep -Eq "^(export[[:space:]]+)?${key}=.+$" && \
+              ! printf '%s\n' "$remote_env" | grep -Eq "^(export[[:space:]]+)?${key}=(''|\"\")$"
+          }
+
+          missing_runtime_config=0
+
+          for key in SESSION_SECRET OAUTH_ENCRYPTION_KEY OAUTH_ENCRYPTION_SALT; do
+            if ! has_non_empty_remote_env_key "$key"; then
+              echo "Missing Dokku config: $key" >&2
+              missing_runtime_config=1
+            fi
+          done
+
+          if ! has_non_empty_remote_env_key DATABASE_URL; then
+            for key in POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
+              if ! has_non_empty_remote_env_key "$key"; then
+                echo "Missing Dokku database config: $key" >&2
+                missing_runtime_config=1
+              fi
+            done
+          fi
+
+          if [ "$missing_runtime_config" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Log deployment target
+        run: |
+          echo "Deploying commit $GITHUB_SHA"
+          echo "Dokku app: $DOKKU_APP"
+          echo "Dokku host: $DOKKU_HOST"
+          echo "Health check URL: $STAGING_HEALTHCHECK_URL"
+
+      - name: Deploy to Dokku staging
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/staging_dokku -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+        run: |
+          git remote remove dokku || true
+          git remote add dokku "dokku@$DOKKU_HOST:$DOKKU_APP"
+          git push dokku HEAD:master
+
+      - name: Verify staging health endpoint
+        env:
+          STAGING_BASIC_AUTH_USER: ${{ secrets.STAGING_BASIC_AUTH_USER }}
+          STAGING_BASIC_AUTH_PASSWORD: ${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --max-time 10 \
+              --user "$STAGING_BASIC_AUTH_USER:$STAGING_BASIC_AUTH_PASSWORD" \
+              "$STAGING_HEALTHCHECK_URL" > /tmp/staging-health-response.json; then
+              unauth_status="$(curl --silent --show-error --output /tmp/staging-health-unauth-response.txt --write-out '%{http_code}' --max-time 10 "$STAGING_HEALTHCHECK_URL" || true)"
+
+              if [ "$unauth_status" != "401" ] && [ "$unauth_status" != "403" ]; then
+                echo "Expected staging health endpoint to reject unauthenticated requests, got HTTP $unauth_status" >&2
+                echo "Unauthenticated response body:" >&2
+                cat /tmp/staging-health-unauth-response.txt >&2
+                exit 1
+              fi
+
+              cat /tmp/staging-health-response.json
+              exit 0
+            fi
+
+            echo "Health check attempt $attempt failed; retrying in 10 seconds..."
+            sleep 10
+          done
+
+          echo "Staging health check failed after multiple attempts" >&2
+          exit 1
