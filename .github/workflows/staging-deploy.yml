@@ -111,6 +111,46 @@ jobs:
           chmod 600 ~/.ssh/staging_dokku
           printf '%s\n' "$STAGING_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
 
+      - name: Validate Dokku runtime configuration
+        run: |
+          set -euo pipefail
+
+          remote_env="$(
+            ssh -i ~/.ssh/staging_dokku \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              "dokku@$DOKKU_HOST" config:export --format shell "$DOKKU_APP"
+          )"
+
+          has_non_empty_remote_env_key() {
+            local key="$1"
+            printf '%s\n' "$remote_env" | grep -Eq "^(export[[:space:]]+)?${key}=.+$" && \
+              ! printf '%s\n' "$remote_env" | grep -Eq "^(export[[:space:]]+)?${key}=(''|\"\")$"
+          }
+
+          missing_runtime_config=0
+
+          for key in SESSION_SECRET OAUTH_ENCRYPTION_KEY OAUTH_ENCRYPTION_SALT; do
+            if ! has_non_empty_remote_env_key "$key"; then
+              echo "Missing Dokku config: $key" >&2
+              missing_runtime_config=1
+            fi
+          done
+
+          if ! has_non_empty_remote_env_key DATABASE_URL; then
+            for key in POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
+              if ! has_non_empty_remote_env_key "$key"; then
+                echo "Missing Dokku database config: $key" >&2
+                missing_runtime_config=1
+              fi
+            done
+          fi
+
+          if [ "$missing_runtime_config" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Log deployment target
         run: |
           echo "Deploying commit $GITHUB_SHA"
