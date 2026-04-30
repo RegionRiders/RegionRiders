@@ -1,5 +1,9 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import bundleAnalyzer from '@next/bundle-analyzer';
 import { developmentCSP, productionCSP } from './lib/security/csp.mjs';
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -10,7 +14,9 @@ export default withBundleAnalyzer({
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
-  turbopack: {},
+  turbopack: {
+    root: projectRoot,
+  },
 
   images: {
     remotePatterns: [
