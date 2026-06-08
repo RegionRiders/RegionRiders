@@ -61,7 +61,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         # Skip upload for Dependabot PRs as secrets are not available
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
