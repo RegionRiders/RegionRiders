@@ -40,7 +40,7 @@ jobs:
       OAUTH_ENCRYPTION_SALT: 0123456789abcdef0123456789abcdef
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
