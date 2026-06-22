@@ -35,7 +35,7 @@ jobs:
       OAUTH_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       OAUTH_ENCRYPTION_SALT: 0123456789abcdef0123456789abcdef
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
