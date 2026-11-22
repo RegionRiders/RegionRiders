@@ -1,5 +1,5 @@
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
-import { ColorThreshold, LeafletConfig, RGBA } from '../mapTypes';
+import { ColorThreshold, MapEngineConfig, RGBA } from '../mapTypes';
 import { TILE_PRESETS } from './tilePresets';
 
 export const DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES: MapSettings['lineColorSwatches'] = [
@@ -165,11 +165,11 @@ export const DEFAULT_MAP_SETTINGS: MapSettings = {
   selectedMapTintSwatchIndex: 0,
 };
 
-export const DEFAULT_LEAFLET_CONFIG: LeafletConfig = {
+export const DEFAULT_MAP_CONFIG: MapEngineConfig = {
   center: [54.352375, 18.656686], // Skrót Pluty - Gdańsk, Poland
-  zoom: 11,
+  zoom: 10, // MapLibre 512px scale equivalent of legacy 256px zoom 11
   maxZoom: 18,
-  minZoom: 3,
+  minZoom: 2,
   tileLayerUrl: DEFAULT_MAP_SETTINGS.tileLayerUrl,
   attribution: DEFAULT_MAP_SETTINGS.attribution,
   overlayTileLayerUrl: DEFAULT_MAP_SETTINGS.overlayTileLayerUrl,

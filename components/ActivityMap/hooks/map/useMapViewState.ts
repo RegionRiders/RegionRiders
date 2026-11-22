@@ -1,7 +1,7 @@
 'use client';
 
 import { startTransition, useEffect, useRef, useState } from 'react';
-import type L from 'leaflet';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { latLngToTile } from '@/components/ActivityMap/utils/resolveTileUrl';
 import { createComponentLogger } from '@/lib/logger/client';
 
@@ -16,7 +16,7 @@ export interface MapViewState {
 }
 
 /**
- * Tracks the current center and zoom of a Leaflet map instance.
+ * Tracks the current center and zoom of a MapLibre map instance.
  * Updates on the `moveend` event with a debounce so rapid panning
  * cancels queued updates — only the final position triggers a render.
  *
@@ -25,7 +25,7 @@ export interface MapViewState {
  * - Skips re-render when the tile coordinates haven't changed
  * - Uses `startTransition` so updates never block user interactions
  */
-export function useMapViewState(map: L.Map | null): MapViewState | null {
+export function useMapViewState(map: MapLibreMap | null): MapViewState | null {
   const [viewState, setViewState] = useState<MapViewState | null>(null);
   const prevTileRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,7 +39,8 @@ export function useMapViewState(map: L.Map | null): MapViewState | null {
 
     const update = () => {
       const c = map.getCenter();
-      const zoom = Math.round(map.getZoom());
+      // MapLibre 512px zoom is 1 level lower than standard 256px raster tile zoom
+      const zoom = Math.max(0, Math.round(map.getZoom() + 1));
       const { x, y } = latLngToTile(c.lat, c.lng, zoom);
 
       const prev = prevTileRef.current;

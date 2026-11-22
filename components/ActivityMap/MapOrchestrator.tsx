@@ -5,7 +5,7 @@ import { useMemo } from 'react';
  * MapOrchestrator - Coordinates rendering of activities and regions on the map
  * Manages the lifecycle of map layers based on settings and data
  */
-import type { Map as LeafletMap } from 'leaflet';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
   ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
   DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES,
@@ -19,7 +19,7 @@ import { GPXTrack } from '@/lib/types';
 import type { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 interface MapOrchestratorProps {
-  map: LeafletMap | null;
+  map: MapLibreMap | null;
   tracks: Map<string, GPXTrack>;
   settings: MapSettings;
   onRegionTileError?: (message: string) => void;
@@ -27,7 +27,7 @@ interface MapOrchestratorProps {
 
 /**
  * MapOrchestrator orchestrates all map rendering hooks
- * @param map - Leaflet map instance
+ * @param map - MapLibre map instance
  * @param tracks - Collection of GPX tracks to render
  * @param settings - Map display settings
  * @returns null (renders through side effects on the map)

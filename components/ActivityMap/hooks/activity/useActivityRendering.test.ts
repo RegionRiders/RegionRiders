@@ -1,177 +1,103 @@
 import { renderHook } from '@testing-library/react';
-import L from 'leaflet';
+import { MAP_LAYER_IDS } from '@/components/ActivityMap/config/mapLayerIds';
+import { WebGL2HeatmapLayer } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/WebGL2HeatmapLayer';
+import { mountActivityLinesLayer } from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
+import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { GPXTrack } from '@/lib/types';
-// Import mocked functions for assertions
-import { drawActivitiesAsHeatmap } from './activitiesHeatmap/drawActivitiesAsHeatmap';
-import { drawActivitiesAsLines } from './activitiesLines/drawActivitiesAsLines';
-import { useActivityRendering } from './useActivityRendering';
+import { createMockMapLibreInstance } from '@/test-utils/maplibreMock';
 
-// Mock dependencies
-jest.mock('leaflet');
-jest.mock('./activitiesHeatmap/drawActivitiesAsHeatmap', () => ({
-  drawActivitiesAsHeatmap: jest.fn(),
-}));
-jest.mock('./activitiesLines/drawActivitiesAsLines', () => ({
-  drawActivitiesAsLines: jest.fn(),
-}));
-jest.mock('@/lib/logger/client', () => ({
-  createComponentLogger: jest.fn(() => ({
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  })),
+jest.mock('@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer', () => ({
+  mountActivityLinesLayer: jest.fn(() => jest.fn()),
 }));
 
 describe('useActivityRendering', () => {
-  let mockMap: L.Map;
-  let mockTracks: Map<string, GPXTrack>;
+  const sampleTracks = new Map<string, GPXTrack>([
+    [
+      'track-1',
+      {
+        id: 'track-1',
+        name: 'Test Ride',
+        points: [
+          { lat: 54.35, lon: 18.65 },
+          { lat: 54.36, lon: 18.66 },
+        ],
+      },
+    ],
+  ]);
 
   beforeEach(() => {
-    // Reset mocks
     jest.clearAllMocks();
-
-    // Create mock map
-    mockMap = {} as L.Map;
-
-    // Create mock tracks
-    mockTracks = new Map<string, GPXTrack>();
-    mockTracks.set('track1', {
-      id: 'track1',
-      name: 'Test Track',
-      points: [],
-    } as GPXTrack);
   });
 
-  it('should call drawActivitiesAsHeatmap when mode is heatmap', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
+  it('does not mount any layers when map is null, showActivities is false, or tracks are empty', () => {
+    const mockMap = createMockMapLibreInstance();
 
-    renderHook(() => useActivityRendering(mockMap, mockTracks, true, 'heatmap'));
+    renderHook(() => useActivityRendering(null, sampleTracks, true, 'heatmap'));
+    renderHook(() => useActivityRendering(mockMap as any, sampleTracks, false, 'heatmap'));
+    renderHook(() => useActivityRendering(mockMap as any, new Map(), true, 'lines'));
 
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
-      mockMap,
-      mockTracks,
+    expect(mockMap.addLayer).not.toHaveBeenCalled();
+    expect(mountActivityLinesLayer).not.toHaveBeenCalled();
+  });
+
+  it('mounts WebGL2HeatmapLayer in heatmap mode and updates options without recreating the layer', () => {
+    const mockMap = createMockMapLibreInstance();
+    const updateOptionsSpy = jest.spyOn(WebGL2HeatmapLayer.prototype, 'updateOptions');
+
+    const { rerender, unmount } = renderHook(
+      ({ thickness, transparency }) =>
+        useActivityRendering(
+          mockMap as any,
+          sampleTracks,
+          true,
+          'heatmap',
+          thickness,
+          transparency,
+          1.5
+        ),
+      { initialProps: { thickness: 2, transparency: 1 } }
+    );
+
+    expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+    expect(mockMap.addLayer.mock.calls[0][0]).toBeInstanceOf(WebGL2HeatmapLayer);
+
+    // Changing slider values updates options in-place without re-adding the custom layer
+    rerender({ thickness: 5, transparency: 0.6 });
+    expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+    expect(updateOptionsSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        currentImageLayerRef: expect.any(Object),
-        currentImageUrlRef: expect.any(Object),
-        activeRenderIdRef: expect.any(Object),
-        renderAbortRef: expect.any(Object),
-        renderTimeoutRef: expect.any(Object),
-        layerTransparency: 1,
+        lineThickness: 5,
+        layerTransparency: 0.6,
+        heatmapDensity: 1.5,
       })
-    );
-  });
-
-  it('should call drawActivitiesAsLines when mode is lines', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsLines as jest.Mock).mockReturnValue(mockCleanup);
-
-    renderHook(() => useActivityRendering(mockMap, mockTracks, true, 'lines'));
-
-    expect(drawActivitiesAsLines).toHaveBeenCalledWith(
-      mockMap,
-      mockTracks,
-      expect.objectContaining({
-        renderAbortRef: expect.any(Object),
-        renderTimeoutRef: expect.any(Object),
-        layerTransparency: 1,
-      })
-    );
-  });
-
-  it('should not call drawing functions when map is null', () => {
-    renderHook(() => useActivityRendering(null, mockTracks, true, 'heatmap'));
-
-    expect(drawActivitiesAsHeatmap).not.toHaveBeenCalled();
-    expect(drawActivitiesAsLines).not.toHaveBeenCalled();
-  });
-
-  it('should not call drawing functions when showActivities is false', () => {
-    renderHook(() => useActivityRendering(mockMap, mockTracks, false, 'heatmap'));
-
-    expect(drawActivitiesAsHeatmap).not.toHaveBeenCalled();
-    expect(drawActivitiesAsLines).not.toHaveBeenCalled();
-  });
-
-  it('should not call drawing functions when tracks is empty', () => {
-    const emptyTracks = new Map<string, GPXTrack>();
-
-    renderHook(() => useActivityRendering(mockMap, emptyTracks, true, 'heatmap'));
-
-    expect(drawActivitiesAsHeatmap).not.toHaveBeenCalled();
-    expect(drawActivitiesAsLines).not.toHaveBeenCalled();
-  });
-
-  it('should use default values for optional parameters', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
-
-    renderHook(() => useActivityRendering(mockMap, mockTracks));
-
-    // Default mode is 'heatmap'
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalled();
-  });
-
-  it('should re-render when mode changes', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
-    (drawActivitiesAsLines as jest.Mock).mockReturnValue(mockCleanup);
-
-    const { rerender } = renderHook(
-      ({ map, tracks, showActivities, mode }) =>
-        useActivityRendering(map, tracks, showActivities, mode),
-      {
-        initialProps: {
-          map: mockMap,
-          tracks: mockTracks,
-          showActivities: true,
-          mode: 'heatmap' as 'heatmap' | 'lines',
-        },
-      }
-    );
-
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalledTimes(1);
-
-    // Change mode
-    rerender({
-      map: mockMap,
-      tracks: mockTracks,
-      showActivities: true,
-      mode: 'lines' as 'heatmap' | 'lines',
-    });
-
-    expect(drawActivitiesAsLines).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call cleanup function on unmount', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
-
-    const { unmount } = renderHook(() =>
-      useActivityRendering(mockMap, mockTracks, true, 'heatmap')
     );
 
     unmount();
-
-    expect(mockCleanup).toHaveBeenCalled();
+    expect(mockMap.removeLayer).toHaveBeenCalledWith(MAP_LAYER_IDS.ACTIVITIES_HEATMAP);
+    updateOptionsSpy.mockRestore();
   });
 
-  it('should handle multiple tracks correctly', () => {
-    const mockCleanup = jest.fn();
-    (drawActivitiesAsHeatmap as jest.Mock).mockReturnValue(mockCleanup);
+  it('mounts activityLinesLayer in lines mode with normalized thickness', () => {
+    const mockMap = createMockMapLibreInstance();
 
-    const multipleTracks = new Map<string, GPXTrack>();
-    multipleTracks.set('track1', { id: 'track1', name: 'Track 1' } as GPXTrack);
-    multipleTracks.set('track2', { id: 'track2', name: 'Track 2' } as GPXTrack);
-    multipleTracks.set('track3', { id: 'track3', name: 'Track 3' } as GPXTrack);
+    renderHook(() =>
+      useActivityRendering(
+        mockMap as any,
+        sampleTracks,
+        true,
+        'lines',
+        99, // clamped to MAX_ACTIVITY_THICKNESS_CONTROL (10)
+        0.75
+      )
+    );
 
-    renderHook(() => useActivityRendering(mockMap, multipleTracks, true, 'heatmap'));
-
-    expect(drawActivitiesAsHeatmap).toHaveBeenCalledWith(
+    expect(mountActivityLinesLayer).toHaveBeenCalledWith(
       mockMap,
-      multipleTracks,
-      expect.any(Object)
+      sampleTracks,
+      expect.objectContaining({
+        lineThickness: 10,
+        layerTransparency: 0.75,
+      })
     );
   });
 });

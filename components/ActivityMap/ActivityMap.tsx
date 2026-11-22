@@ -2,11 +2,11 @@
 
 /**
  * ActivityMap - Main map component for displaying GPX tracks and regions
- * Integrates Leaflet map with activity heatmap/lines rendering and region analysis
+ * Integrates MapLibre GL JS map with GPU activity heatmap/lines rendering and vector tile regions
  */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
-import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
+import { useMapLibreMap } from '@/components/ActivityMap/hooks/map/useMapLibreMap';
 import {
   isUnauthenticatedMapSettingsResult,
   loadAuthenticatedUserIdFromApi,
@@ -25,7 +25,7 @@ import MapContainer from './MapContainer';
 import MapOrchestrator from './MapOrchestrator';
 import styles from './ActivityMap.module.css';
 
-import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import LayersPanel from '@/components/ActivityMap/controls/LayersPanel/LayersPanel';
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
@@ -301,7 +301,7 @@ export default function ActivityMap() {
     settings.selectedMapTintSwatchIndex ?? 0
   ] ?? [0, 0, 0, 0];
 
-  const { map, isReady, error } = useLeafletMap(mapContainerRef, {
+  const { map, isReady, error } = useMapLibreMap(mapContainerRef, {
     tileLayerUrl: settings.tileLayerUrl,
     attribution: settings.attribution,
     overlayTileLayerUrl: settings.overlayTileLayerUrl,

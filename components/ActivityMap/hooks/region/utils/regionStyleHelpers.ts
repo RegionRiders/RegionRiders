@@ -1,6 +1,5 @@
 'use client';
 
-import L from 'leaflet';
 import {
   REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   REGION_VISIT_STATIC_COLOR_THRESHOLDS,
@@ -14,6 +13,15 @@ import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 export type RegionTileConfig = RegionTileProfileConfig;
+
+export interface RegionPathStyle {
+  color: string;
+  weight: number;
+  fill: boolean;
+  fillColor: string;
+  fillOpacity: number;
+  opacity: number;
+}
 
 export type RegionTileFeature = {
   properties?: Record<string, unknown>;
@@ -143,7 +151,7 @@ export function getRegionPathStyle(
     effectiveHeatmapColors,
   }: RegionStyleSettings,
   currentZoom: number
-): L.PathOptions {
+): RegionPathStyle {
   const { fillColor, strokeColor } = getRegionStyleColors(
     mode,
     visit,
@@ -167,7 +175,7 @@ export function getBaseRegionStyle(
   config: RegionTileConfig,
   styleSettings: RegionStyleSettings,
   zoom: number
-): L.PathOptions {
+): RegionPathStyle {
   return getRegionPathStyle(config, undefined, styleSettings, zoom);
 }
 
@@ -178,7 +186,7 @@ export function getUnvisitedRegionStyle(
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom
-): L.PathOptions {
+): RegionPathStyle {
   return getRegionPathStyle(
     config,
     undefined,
@@ -200,7 +208,7 @@ export function getVisitedRegionStyle(
   regionStaticColor: ColorThreshold[] = REGION_VISIT_STATIC_COLOR_THRESHOLDS,
   regionHeatmapColor: ColorThreshold[] = REGION_VISIT_HEATMAP_COLOR_THRESHOLDS,
   currentZoom: number = config.detailCapZoom
-): L.PathOptions {
+): RegionPathStyle {
   return getRegionPathStyle(
     config,
     visit,

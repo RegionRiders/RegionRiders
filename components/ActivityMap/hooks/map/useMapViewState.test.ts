@@ -25,10 +25,10 @@ describe('useMapViewState', () => {
     expect(result.current).toBeNull();
   });
 
-  it('returns initial center and zoom from map', () => {
+  it('returns initial center and 256px-aligned tile zoom from map', () => {
     const mockMap = {
       getCenter: jest.fn(() => ({ lat: 54.352, lng: 18.656 })),
-      getZoom: jest.fn(() => 11),
+      getZoom: jest.fn(() => 10),
       on: jest.fn(),
       off: jest.fn(),
     } as any;
@@ -45,7 +45,7 @@ describe('useMapViewState', () => {
     let moveendHandler: (() => void) | null = null;
     const mockMap = {
       getCenter: jest.fn(() => ({ lat: 54.352, lng: 18.656 })),
-      getZoom: jest.fn(() => 11),
+      getZoom: jest.fn(() => 10),
       on: jest.fn((event: string, handler: () => void) => {
         if (event === 'moveend') {
           moveendHandler = handler;
@@ -58,7 +58,7 @@ describe('useMapViewState', () => {
 
     // Simulate map pan to a different tile
     mockMap.getCenter.mockReturnValue({ lat: 55.0, lng: 19.0 });
-    mockMap.getZoom.mockReturnValue(12);
+    mockMap.getZoom.mockReturnValue(11);
 
     act(() => {
       moveendHandler!();
@@ -75,7 +75,7 @@ describe('useMapViewState', () => {
     let moveendHandler: (() => void) | null = null;
     const mockMap = {
       getCenter: jest.fn(() => ({ lat: 54.352, lng: 18.656 })),
-      getZoom: jest.fn(() => 11),
+      getZoom: jest.fn(() => 10),
       on: jest.fn((event: string, handler: () => void) => {
         if (event === 'moveend') {
           moveendHandler = handler;
@@ -88,19 +88,19 @@ describe('useMapViewState', () => {
 
     // Rapid scrolling: fire several moveend events before debounce resolves
     mockMap.getCenter.mockReturnValue({ lat: 55.0, lng: 19.0 });
-    mockMap.getZoom.mockReturnValue(12);
+    mockMap.getZoom.mockReturnValue(11);
     act(() => {
       moveendHandler!();
     });
 
     mockMap.getCenter.mockReturnValue({ lat: 56.0, lng: 20.0 });
-    mockMap.getZoom.mockReturnValue(13);
+    mockMap.getZoom.mockReturnValue(12);
     act(() => {
       moveendHandler!();
     });
 
     mockMap.getCenter.mockReturnValue({ lat: 57.0, lng: 21.0 });
-    mockMap.getZoom.mockReturnValue(14);
+    mockMap.getZoom.mockReturnValue(13);
     act(() => {
       moveendHandler!();
     });
@@ -127,7 +127,7 @@ describe('useMapViewState', () => {
     const initialCenter = { lat: 54.352, lng: 18.656 };
     const mockMap = {
       getCenter: jest.fn(() => initialCenter),
-      getZoom: jest.fn(() => 11),
+      getZoom: jest.fn(() => 10),
       on: jest.fn((event: string, handler: () => void) => {
         if (event === 'moveend') {
           moveendHandler = handler;
@@ -174,7 +174,7 @@ describe('useMapViewState', () => {
   it('rounds fractional zoom values', () => {
     const mockMap = {
       getCenter: jest.fn(() => ({ lat: 0, lng: 0 })),
-      getZoom: jest.fn(() => 10.7),
+      getZoom: jest.fn(() => 9.7),
       on: jest.fn(),
       off: jest.fn(),
     } as any;
