@@ -34,8 +34,7 @@ type StaticColorSchemeSwatchesGridProps = {
 };
 
 type ColorSchemeSwatchesGridProps =
-  | ThresholdedColorSchemeSwatchesGridProps
-  | StaticColorSchemeSwatchesGridProps;
+  ThresholdedColorSchemeSwatchesGridProps | StaticColorSchemeSwatchesGridProps;
 
 export function ColorSchemeSwatchesGrid(props: ColorSchemeSwatchesGridProps) {
   const {

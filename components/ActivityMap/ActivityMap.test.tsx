@@ -228,8 +228,7 @@ describe('ActivityMap', () => {
     render(<ActivityMap />);
 
     const reportError = (globalThis as any).__mockOnRegionTileError as
-      | ((message: string) => void)
-      | undefined;
+      ((message: string) => void) | undefined;
 
     expect(reportError).toBeDefined();
 
@@ -245,8 +244,7 @@ describe('ActivityMap', () => {
     render(<ActivityMap />);
 
     const reportError = (globalThis as any).__mockOnRegionTileError as
-      | ((message: string) => void)
-      | undefined;
+      ((message: string) => void) | undefined;
 
     act(() => {
       reportError?.('Region overlay unavailable');
@@ -260,8 +258,7 @@ describe('ActivityMap', () => {
     render(<ActivityMap />);
 
     const reportError = (globalThis as any).__mockOnRegionTileError as
-      | ((message: string) => void)
-      | undefined;
+      ((message: string) => void) | undefined;
 
     act(() => {
       reportError?.('Region overlay unavailable');
@@ -280,8 +277,7 @@ describe('ActivityMap', () => {
     render(<ActivityMap />);
 
     const reportError = (globalThis as any).__mockOnRegionTileError as
-      | ((message: string) => void)
-      | undefined;
+      ((message: string) => void) | undefined;
 
     act(() => {
       reportError?.('Region overlay unavailable');
@@ -295,8 +291,7 @@ describe('ActivityMap', () => {
     render(<ActivityMap />);
 
     const reportError = (globalThis as any).__mockOnRegionTileError as
-      | ((message: string) => void)
-      | undefined;
+      ((message: string) => void) | undefined;
 
     act(() => {
       reportError?.('Region overlay unavailable');

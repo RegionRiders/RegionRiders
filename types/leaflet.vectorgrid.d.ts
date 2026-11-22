@@ -2,8 +2,7 @@ declare module 'leaflet.vectorgrid' {
   import * as L from 'leaflet';
 
   type VectorTileStyle =
-    | L.PathOptions
-    | ((properties: Record<string, unknown>, zoom: number) => L.PathOptions);
+    L.PathOptions | ((properties: Record<string, unknown>, zoom: number) => L.PathOptions);
 
   interface VectorTileOptions {
     interactive?: boolean;

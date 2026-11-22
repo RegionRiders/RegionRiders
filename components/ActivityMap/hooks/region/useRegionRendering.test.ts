@@ -148,8 +148,7 @@ function mockTileBounds(tile: SVGSVGElement | HTMLCanvasElement): void {
 
 function getBaseStyleResolver(): (() => ReturnType<typeof getUnvisitedRegionStyle>) | undefined {
   return (L as any).vectorGrid.protobuf.mock.calls[0]?.[1]?.vectorTileLayerStyles?.regions as
-    | (() => ReturnType<typeof getUnvisitedRegionStyle>)
-    | undefined;
+    (() => ReturnType<typeof getUnvisitedRegionStyle>) | undefined;
 }
 
 describe('useRegionRendering', () => {
@@ -421,8 +420,7 @@ describe('useRegionRendering', () => {
     );
     expect(mockLayer.options.vectorTileLayerStyles?.regions).toEqual(expect.any(Function));
     const updatedBaseStyleResolver = mockLayer.options.vectorTileLayerStyles?.regions as
-      | (() => ReturnType<typeof getUnvisitedRegionStyle>)
-      | undefined;
+      (() => ReturnType<typeof getUnvisitedRegionStyle>) | undefined;
     expect(updatedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
         color: 'rgba(12,12,12,1)',
@@ -490,8 +488,7 @@ describe('useRegionRendering', () => {
     );
 
     const zoomedBaseStyleResolver = mockLayer.options.vectorTileLayerStyles?.regions as
-      | (() => ReturnType<typeof getUnvisitedRegionStyle>)
-      | undefined;
+      (() => ReturnType<typeof getUnvisitedRegionStyle>) | undefined;
     expect(zoomedBaseStyleResolver?.()).toEqual(
       expect.objectContaining({
         fill: true,
