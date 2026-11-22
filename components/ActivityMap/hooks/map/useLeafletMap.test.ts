@@ -94,6 +94,7 @@ describe('useLeafletMap', () => {
         mockContainer,
         expect.objectContaining({
           center: expect.any(Array),
+          fadeAnimation: false,
           zoom: expect.any(Number),
         })
       );
@@ -116,6 +117,7 @@ describe('useLeafletMap', () => {
         mockContainer,
         expect.objectContaining({
           center: [50, 10],
+          fadeAnimation: false,
           zoom: 15,
         })
       );

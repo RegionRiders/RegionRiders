@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 import { exchangeToken, StravaTokenResponse } from '@/lib/strava';
-import { getStravaClient } from '../config';
+import { getStravaOAuthClient } from '../config';
 
 // Mock the config module
 jest.mock('../config', () => ({
-  getStravaClient: jest.fn(),
+  getStravaOAuthClient: jest.fn(),
 }));
 
 describe('exchangeToken', () => {
@@ -31,7 +31,7 @@ describe('exchangeToken', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getStravaClient as jest.Mock).mockReturnValue(mockStravaClient);
+    (getStravaOAuthClient as jest.Mock).mockReturnValue(mockStravaClient);
   });
 
   it('should exchange authorization code for tokens', async () => {
@@ -40,7 +40,7 @@ describe('exchangeToken', () => {
 
     const result = await exchangeToken(authCode);
 
-    expect(getStravaClient).toHaveBeenCalledTimes(1);
+    expect(getStravaOAuthClient).toHaveBeenCalledTimes(1);
     expect(mockGetToken).toHaveBeenCalledWith(authCode);
     expect(result).toEqual(mockTokenResponse);
   });

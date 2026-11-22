@@ -15,6 +15,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { trips } from './trips';
 import { users } from './users';
 
 export const activities = pgTable(
@@ -25,6 +26,7 @@ export const activities = pgTable(
     userId: uuid('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'set null' }),
     stravaActivityId: varchar('strava_activity_id', { length: 50 }).unique(),
 
     // Basic information (always required)
@@ -79,6 +81,7 @@ export const activities = pgTable(
   },
   (table) => [
     index('activities_user_id_idx').on(table.userId),
+    index('activities_trip_id_idx').on(table.tripId),
     index('activities_strava_activity_id_idx').on(table.stravaActivityId),
     index('activities_start_date_idx').on(table.startDate),
     index('activities_type_idx').on(table.type),

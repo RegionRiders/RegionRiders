@@ -1,0 +1,73 @@
+/**
+ * @jest-environment node
+ */
+
+import { beforeEach } from '@jest/globals';
+import { upsertTripDay } from '@/lib/db';
+import { PUT } from './route';
+
+jest.mock('@/lib/db', () => ({
+  upsertTripDay: jest.fn(),
+}));
+
+describe('app/api/trips/[id]/days/[date]/route', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('upserts a trip day note', async () => {
+    (upsertTripDay as jest.Mock).mockResolvedValue({ id: 'day-1', dayDate: '2026-04-09' });
+
+    const response = await PUT(
+      new Request('http://localhost/api/trips/trip-1/days/2026-04-09', {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({ note: 'Strong headwinds today' }),
+      }),
+      { params: Promise.resolve({ id: 'trip-1', date: '2026-04-09' }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(upsertTripDay).toHaveBeenCalledWith('user-1', 'trip-1', '2026-04-09', {
+      note: 'Strong headwinds today',
+    });
+  });
+
+  it('rejects invalid trip day dates before touching the database', async () => {
+    const response = await PUT(
+      new Request('http://localhost/api/trips/trip-1/days/not-a-date', {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({ note: 'Bad date input' }),
+      }),
+      { params: Promise.resolve({ id: 'trip-1', date: 'not-a-date' }) }
+    );
+
+    expect(response.status).toBe(400);
+    expect(upsertTripDay).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when the trip does not exist', async () => {
+    (upsertTripDay as jest.Mock).mockResolvedValue(undefined);
+
+    const response = await PUT(
+      new Request('http://localhost/api/trips/trip-1/days/2026-04-09', {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'x-user-id': 'user-1',
+        },
+        body: JSON.stringify({ note: 'Missing trip' }),
+      }),
+      { params: Promise.resolve({ id: 'trip-1', date: '2026-04-09' }) }
+    );
+
+    expect(response.status).toBe(404);
+  });
+});

@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { DEFAULT_LEAFLET_CONFIG } from '@/components/ActivityMap/config/mapConfig';
 import { LeafletConfig, RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
+import { markRegionMapReady, resetRegionPerfMetrics } from '@/lib/services/maps/regionPerfMetrics';
 
 const logger = createComponentLogger('useLeafletMap');
 const TRANSPARENT_TINT: RGBA = [0, 0, 0, 0];
@@ -115,6 +116,8 @@ export function useLeafletMap(
         zoom: config.zoom,
         maxZoom: config.maxZoom,
         minZoom: config.minZoom,
+        // Prevent GridLayer cross-fades from briefly stacking old/new vector tiles.
+        fadeAnimation: false,
       });
 
       if (config.tileLayerUrl) {
@@ -133,8 +136,10 @@ export function useLeafletMap(
       }
       updateTintOverlay(config.mapTintColor);
       appliedTileConfigRef.current = getTileConfigKey(config);
+      resetRegionPerfMetrics();
 
       mapRef.current.whenReady(() => {
+        markRegionMapReady();
         setIsReady(true);
         setError(null);
         logger.info('Map initialized and ready');

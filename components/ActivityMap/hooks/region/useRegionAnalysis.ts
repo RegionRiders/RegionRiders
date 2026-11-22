@@ -20,6 +20,15 @@ export function useRegionAnalysis(tracks: Map<string, GPXTrack>, regions: Region
 
   useEffect(() => {
     if (tracks.size === 0 || regions.length === 0) {
+      if (analysisTimeoutRef.current) {
+        clearTimeout(analysisTimeoutRef.current);
+      }
+      lastTrackKeysRef.current = '';
+      lastRegionKeysRef.current = '';
+      setIsAnalyzing(false);
+      setVisitData((currentVisitData) =>
+        currentVisitData.size === 0 ? currentVisitData : new Map<string, RegionVisitData>()
+      );
       return;
     }
 

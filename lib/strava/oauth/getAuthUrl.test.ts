@@ -2,12 +2,11 @@
  * @jest-environment node
  */
 
-import { getStravaClient } from '../config';
+import { getStravaOAuthClient } from '../config/client';
 import { getAuthorizationUrl } from './getAuthUrl';
 
-// Mock the config module
-jest.mock('../config', () => ({
-  getStravaClient: jest.fn(),
+jest.mock('../config/client', () => ({
+  getStravaOAuthClient: jest.fn(),
 }));
 
 describe('getAuthorizationUrl', () => {
@@ -20,7 +19,7 @@ describe('getAuthorizationUrl', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getStravaClient as jest.Mock).mockReturnValue(mockStravaClient);
+    (getStravaOAuthClient as jest.Mock).mockReturnValue(mockStravaClient);
     // Set environment variable for tests
     process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3000';
   });
@@ -36,7 +35,7 @@ describe('getAuthorizationUrl', () => {
 
     const result = await getAuthorizationUrl();
 
-    expect(getStravaClient).toHaveBeenCalledTimes(1);
+    expect(getStravaOAuthClient).toHaveBeenCalledTimes(1);
     expect(mockGetRequestAccessURL).toHaveBeenCalledWith({
       scope: 'read,activity:read_all',
     });
@@ -61,7 +60,7 @@ describe('getAuthorizationUrl', () => {
     mockGetRequestAccessURL.mockRejectedValue(new Error(errorMessage));
 
     await expect(getAuthorizationUrl()).rejects.toThrow(errorMessage);
-    expect(getStravaClient).toHaveBeenCalledTimes(1);
+    expect(getStravaOAuthClient).toHaveBeenCalledTimes(1);
   });
 
   it('should pass through various scope combinations', async () => {

@@ -5,6 +5,7 @@ describe('Activities Table Schema', () => {
   it('has all required columns', () => {
     expect(activities.name).toBeDefined();
     expect(activities.userId).toBeDefined();
+    expect(activities.tripId).toBeDefined();
     expect(activities.stravaActivityId).toBeDefined();
     expect(activities.type).toBeDefined();
     expect(activities.startDate).toBeDefined();
@@ -16,6 +17,7 @@ describe('Activities Table Schema', () => {
     const activity: Activity = {
       id: 'uuid',
       userId: 'uuid',
+      tripId: null,
       stravaActivityId: 'strava_id',
       name: 'Ride',
       type: 'Ride',
@@ -62,6 +64,7 @@ describe('Activities Table Schema', () => {
     const update: ActivityUpdate = {
       name: 'Updated Ride',
       description: 'desc',
+      tripId: 'trip-id',
       updatedAt: new Date(),
     };
     expect(update).toBeDefined();

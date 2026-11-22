@@ -3,8 +3,8 @@
  */
 
 import strava from 'strava-v3';
-import { validateStravaEnv } from '@/lib/strava';
-import { createStravaClient, getStravaClient } from './client';
+import { createStravaClient, getStravaClient, getStravaOAuthClient } from './client';
+import { validateStravaEnv, validateStravaOAuthEnv } from './validateEnv';
 
 jest.mock('./validateEnv');
 jest.mock('strava-v3');
@@ -128,5 +128,40 @@ describe('getStravaClient', () => {
     expect(client1).not.toBe(client2);
     expect(client1).not.toBe(strava);
     expect(client2).not.toBe(strava);
+  });
+});
+
+describe('getStravaOAuthClient', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.STRAVA_CLIENT_ID = 'test_id';
+    process.env.STRAVA_CLIENT_SECRET = 'test_secret';
+    process.env.STRAVA_REDIRECT_URI = 'http://test.com';
+    delete process.env.STRAVA_CLIENT_ACCESS_TOKEN;
+  });
+
+  it('validates only OAuth env before configuring', () => {
+    (validateStravaOAuthEnv as jest.Mock).mockImplementation(() => {});
+    const mockClient = { config: jest.fn() };
+    jest.spyOn(Object, 'create').mockReturnValue(mockClient);
+
+    getStravaOAuthClient();
+
+    expect(validateStravaOAuthEnv).toHaveBeenCalledTimes(1);
+    expect(validateStravaEnv).not.toHaveBeenCalled();
+  });
+
+  it('configures client without access token for auth bootstrap', () => {
+    (validateStravaOAuthEnv as jest.Mock).mockImplementation(() => {});
+    const mockClient = { config: jest.fn() };
+    jest.spyOn(Object, 'create').mockReturnValue(mockClient);
+
+    getStravaOAuthClient();
+
+    expect(mockClient.config).toHaveBeenCalledWith({
+      client_id: 'test_id',
+      client_secret: 'test_secret',
+      redirect_uri: 'http://test.com',
+    });
   });
 });
