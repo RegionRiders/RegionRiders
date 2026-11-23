@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 /**
  * MapOrchestrator - Coordinates rendering of activities and regions on the map
  * Manages the lifecycle of map layers based on settings and data
@@ -15,8 +14,8 @@ import {
 import { MapSettings } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { useRegionRendering } from '@/components/ActivityMap/hooks/region/useRegionRendering';
+import { useVectorTileRegionAnalysis } from '@/components/ActivityMap/hooks/region/useVectorTileRegionAnalysis';
 import { GPXTrack } from '@/lib/types';
-import type { RegionVisitData } from '@/lib/utils/regionVisitAnalyzer';
 
 interface MapOrchestratorProps {
   map: MapLibreMap | null;
@@ -38,9 +37,7 @@ export default function MapOrchestrator({
   settings,
   onRegionTileError,
 }: MapOrchestratorProps) {
-  // Region visit status delivery is intentionally deferred to the server-side follow-up plan.
-  // Until that API exists, the VectorGrid path stays on a styling-only placeholder fill model.
-  const visitData = useMemo<Map<string, RegionVisitData>>(() => new Map(), []);
+  const visitData = useVectorTileRegionAnalysis(map, tracks, settings.showRegions);
 
   useActivityRendering(
     map,

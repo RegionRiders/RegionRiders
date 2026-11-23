@@ -35,7 +35,7 @@ precision highp float;
 
 // Per-vertex quad corner: x in [-1, 1] along segment, y in [-1, 1] across segment
 layout(location = 0) in vec2 a_corner;
-// Per-instance Mercator segment [x0, y0, x1, y1]
+// Per-instance Mercator segment [x0, y0, x1, y1] in [0..1]
 layout(location = 1) in vec4 a_segment;
 
 uniform mat4 u_matrix;
@@ -61,6 +61,20 @@ void main() {
 
   vec2 ndc0 = clip0.xy / clip0.w;
   vec2 ndc1 = clip1.xy / clip1.w;
+
+  // Quick offscreen frustum reject when both endpoints are far outside NDC [-1..1]
+  if (
+    (ndc0.x < -1.2 && ndc1.x < -1.2) ||
+    (ndc0.x >  1.2 && ndc1.x >  1.2) ||
+    (ndc0.y < -1.2 && ndc1.y < -1.2) ||
+    (ndc0.y >  1.2 && ndc1.y >  1.2)
+  ) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    v_localPx = vec2(0.0);
+    v_halfLenPx = 0.0;
+    v_radiusPx = u_radiusPx;
+    return;
+  }
 
   vec2 p0 = (ndc0 * 0.5 + 0.5) * u_viewport;
   vec2 p1 = (ndc1 * 0.5 + 0.5) * u_viewport;
@@ -245,6 +259,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   private fboWidth = 0;
   private fboHeight = 0;
   private usesFloatFbo = false;
+  private hasFloatLinear = false;
 
   private lutTex: WebGLTexture | null = null;
   private lutData: HeatmapLutData;
@@ -252,6 +267,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   private packedGeometry: PackedHeatmapGeometry;
   private geometryDirty = true;
   private lutDirty = true;
+  private readonly matrixF32 = new Float32Array(16);
 
   private options: WebGL2HeatmapOptions;
 
@@ -292,10 +308,14 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return;
     }
 
-    // Check float FBO support for high-dynamic-range additive density accumulation
+    // Check float FBO support and linear float filtering support
     const floatExt =
       gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float');
+    const floatLinearExt =
+      gl.getExtension('OES_texture_float_linear') ||
+      gl.getExtension('OES_texture_half_float_linear');
     this.usesFloatFbo = Boolean(floatExt);
+    this.hasFloatLinear = Boolean(floatLinearExt);
 
     this.quadVbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVbo);
@@ -394,9 +414,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return true;
     }
 
+    // RGBA16F requires OES_texture_float_linear for LINEAR filtering; otherwise use NEAREST
+    // so the texture is always complete across all GPUs.
+    const filter = !this.usesFloatFbo || this.hasFloatLinear ? gl.LINEAR : gl.NEAREST;
+
     gl.bindTexture(gl.TEXTURE_2D, this.densityTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -480,6 +504,8 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.viewport(0, 0, this.fboWidth, this.fboHeight);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.colorMask(true, true, true, true);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -487,11 +513,19 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE, gl.ONE);
 
+    // MapLibre v6 provides `defaultProjectionData.mainMatrix` scaled for [0..1] Mercator coordinates
+    // as a Float64Array(16). Convert into our preallocated Float32Array(16) for WebGL2 uniformMatrix4fv.
+    const rawMatrix =
+      options.defaultProjectionData?.mainMatrix ?? options.modelViewProjectionMatrix;
+    for (let i = 0; i < 16; i++) {
+      this.matrixF32[i] = Number(rawMatrix[i] ?? 0);
+    }
+
     gl.useProgram(this.capsuleProgram);
     gl.uniformMatrix4fv(
       gl.getUniformLocation(this.capsuleProgram, 'u_matrix'),
       false,
-      options.modelViewProjectionMatrix
+      this.matrixF32
     );
     gl.uniform2f(
       gl.getUniformLocation(this.capsuleProgram, 'u_viewport'),
@@ -537,6 +571,10 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return;
     }
 
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.STENCIL_TEST);
+    gl.disable(gl.CULL_FACE);
+
     gl.useProgram(this.compositeProgram);
 
     gl.activeTexture(gl.TEXTURE0);
@@ -560,6 +598,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_transparency'), transparency);
 
     gl.enable(gl.BLEND);
+    gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.bindVertexArray(this.compositeVao);

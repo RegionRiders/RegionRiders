@@ -2,6 +2,7 @@
     position: relative;
     width: 100%;
     height: 100vh;
+    overflow: hidden;
 }
 
 .error {
@@ -53,9 +54,11 @@
 }
 
 .wrapper {
-    position: relative;
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none;
 }
 
 .controls {
@@ -63,6 +66,7 @@
     bottom: 32px;
     left: 32px;
     z-index: 10000;
+    pointer-events: auto;
 }
 
 .saveErrorToast {
