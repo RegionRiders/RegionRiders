@@ -19,6 +19,7 @@ export interface MockMapLibreInstance {
   getCenter: jest.Mock;
   getZoom: jest.Mock;
   getCanvas: jest.Mock;
+  queryRenderedFeatures: jest.Mock;
   triggerRepaint: jest.Mock;
   _emit: (event: string, ...args: any[]) => void;
   _emitLayer: (event: string, layerId: string, ...args: any[]) => void;
@@ -137,6 +138,7 @@ export function createMockMapLibreInstance(
     getCenter: jest.fn(() => overrides.center ?? { lat: 54.352375, lng: 18.656686 }),
     getZoom: jest.fn(() => overrides.zoom ?? 10),
     getCanvas: jest.fn(() => canvas),
+    queryRenderedFeatures: jest.fn(() => []),
     triggerRepaint: jest.fn(),
     _emit: (event: string, ...args: any[]) => {
       listeners.get(event)?.forEach((fn) => fn(...args));

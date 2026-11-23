@@ -2,9 +2,12 @@
 
 import {
   Popup,
+  type ExpressionSpecification,
   type GeoJSONSource,
   type MapLayerMouseEvent,
   type Map as MapLibreMap,
+  type MapMouseEvent,
+  type PointLike,
 } from 'maplibre-gl';
 import { MAP_LAYER_IDS, MAP_SOURCE_IDS } from '@/components/ActivityMap/config/mapLayerIds';
 import { getActivityLinePixelWidthFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
@@ -184,17 +187,37 @@ export function buildActivityLinesPaint(options: ActivityLinesStyleOptions) {
   const normalColor = rgbaToCss(options.lineColor);
   const hoverColor = rgbaToCss(options.lineHoverColor);
   const opacity = Math.max(0, Math.min(1, options.layerTransparency ?? 1));
+  const hoverOpacity = opacity === 0 ? 0 : Math.min(1, Math.max(opacity, 0.85));
 
   return {
     base: {
       'line-color': normalColor,
       'line-width': baseWidth,
-      'line-opacity': opacity,
+      // Hide the hovered feature in the base layer on the exact same frame it appears
+      // in the top hover layer so the line is replaced rather than double-rendered.
+      'line-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'hover'], false],
+        0,
+        opacity,
+      ] as ExpressionSpecification,
     },
     hover: {
       'line-color': hoverColor,
-      'line-width': hoverWidth,
-      'line-opacity': opacity === 0 ? 0 : Math.min(1, Math.max(opacity, 0.85)),
+      // Zero width + zero opacity for non-hovered features so the GPU culls them
+      // while sharing the exact same LineBucket geometry (no filter -> zero worker re-tiling).
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'hover'], false],
+        hoverWidth,
+        0,
+      ] as ExpressionSpecification,
+      'line-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'hover'], false],
+        hoverOpacity,
+        0,
+      ] as ExpressionSpecification,
     },
   };
 }
@@ -239,7 +262,12 @@ export function updateActivityLinesPaint(
 }
 
 /**
- * Mounts the GPU GeoJSON line layer and a top-most hover highlight layer sharing the same source.
+ * Mounts the GPU GeoJSON line layer and a top-most hover highlight layer sharing the same
+ * source and LineBucket geometry. Hover state is driven exclusively via synchronous
+ * `feature-state` updates coalesced to one `requestAnimationFrame` per frame so hovering is
+ * instantaneous across all tiles, replaces the base line cleanly, and never queues worker
+ * re-tiling on rapid cursor sweeps.
+ *
  * Returns a cleanup function that removes listeners, popup, layers, and source.
  */
 export function mountActivityLinesLayer(
@@ -249,7 +277,9 @@ export function mountActivityLinesLayer(
 ): () => void {
   const geojson = tracksToGeoJson(tracks);
   const paint = buildActivityLinesPaint(options);
-  let hoveredTrackId: string | null = null;
+  let hoveredId: string | number | null = null;
+  let pendingPoint: PointLike | null = null;
+  let rafId: number | null = null;
   let activePopup: Popup | null = null;
 
   const existingSource = map.getSource(MAP_SOURCE_IDS.ACTIVITIES_LINES) as
@@ -257,6 +287,7 @@ export function mountActivityLinesLayer(
     | undefined;
 
   if (existingSource && typeof existingSource.setData === 'function') {
+    map.removeFeatureState?.({ source: MAP_SOURCE_IDS.ACTIVITIES_LINES });
     existingSource.setData(geojson);
   } else {
     map.addSource(MAP_SOURCE_IDS.ACTIVITIES_LINES, {
@@ -282,13 +313,14 @@ export function mountActivityLinesLayer(
     updateActivityLinesPaint(map, options);
   }
 
-  // Dedicated hover layer placed strictly ABOVE all other lines (zero duplicated geometry)
+  // Dedicated hover layer placed strictly ABOVE all other lines.
+  // Intentionally omits `filter` and matches `layout` so MapLibre shares a single LineBucket
+  // between base and hover layers, and `setFeatureState` updates both in <1ms on the GPU.
   if (!map.getLayer(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER)) {
     map.addLayer({
       id: MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER,
       type: 'line',
       source: MAP_SOURCE_IDS.ACTIVITIES_LINES,
-      filter: ['==', ['get', 'trackId'], ''],
       layout: {
         'line-cap': 'round',
         'line-join': 'round',
@@ -297,47 +329,87 @@ export function mountActivityLinesLayer(
     });
   }
 
-  const clearHover = () => {
-    if (hoveredTrackId !== null) {
-      hoveredTrackId = null;
-      if (map.getLayer(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER)) {
-        map.setFilter(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER, ['==', ['get', 'trackId'], '']);
-      }
+  const cancelPendingHoverFrame = () => {
+    pendingPoint = null;
+    if (rafId !== null && typeof globalThis.cancelAnimationFrame === 'function') {
+      globalThis.cancelAnimationFrame(rafId);
     }
+    rafId = null;
+  };
+
+  const applyHover = (nextHoveredId: string | number | null) => {
+    if (hoveredId === nextHoveredId) {
+      return;
+    }
+
+    const hasSource = Boolean(map.getSource(MAP_SOURCE_IDS.ACTIVITIES_LINES));
+
+    if (hoveredId !== null && hasSource) {
+      map.setFeatureState(
+        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: hoveredId },
+        { hover: false }
+      );
+    }
+
+    hoveredId = nextHoveredId;
+
+    if (hoveredId !== null && hasSource) {
+      map.setFeatureState(
+        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: hoveredId },
+        { hover: true }
+      );
+    }
+
     const canvas = map.getCanvas?.();
     if (canvas) {
-      canvas.style.cursor = '';
+      canvas.style.cursor = hoveredId !== null ? 'pointer' : '';
     }
   };
 
-  const handleMouseMove = (event: MapLayerMouseEvent) => {
-    const feature = event.features?.[0];
-    const nextTrackId =
-      feature?.properties?.trackId !== undefined ? String(feature.properties.trackId) : null;
+  const clearHover = () => {
+    cancelPendingHoverFrame();
+    applyHover(null);
+  };
 
-    if (!nextTrackId) {
+  const flushPendingHover = () => {
+    rafId = null;
+    const point = pendingPoint;
+    pendingPoint = null;
+
+    if (!point || !map.getLayer(MAP_LAYER_IDS.ACTIVITIES_LINES)) {
+      return;
+    }
+
+    const features = map.queryRenderedFeatures(point, {
+      layers: [MAP_LAYER_IDS.ACTIVITIES_LINES],
+    });
+    const feature = features[0];
+    const nextHoveredId = feature?.id !== undefined && feature.id !== null ? feature.id : null;
+    applyHover(nextHoveredId);
+  };
+
+  const handleMouseMove = (event: MapMouseEvent) => {
+    if (event.originalEvent?.buttons) {
       clearHover();
       return;
     }
 
-    if (hoveredTrackId !== nextTrackId) {
-      hoveredTrackId = nextTrackId;
-      if (map.getLayer(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER)) {
-        map.setFilter(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER, [
-          '==',
-          ['get', 'trackId'],
-          nextTrackId,
-        ]);
-      }
-    }
+    pendingPoint = event.point;
 
-    const canvas = map.getCanvas?.();
-    if (canvas) {
-      canvas.style.cursor = 'pointer';
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      if (rafId === null) {
+        rafId = globalThis.requestAnimationFrame(flushPendingHover);
+      }
+    } else {
+      flushPendingHover();
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseOut = () => {
+    clearHover();
+  };
+
+  const handleDragStart = () => {
     clearHover();
   };
 
@@ -366,16 +438,18 @@ export function mountActivityLinesLayer(
       .addTo(map);
   };
 
-  map.on('mousemove', MAP_LAYER_IDS.ACTIVITIES_LINES, handleMouseMove);
-  map.on('mouseleave', MAP_LAYER_IDS.ACTIVITIES_LINES, handleMouseLeave);
+  map.on('mousemove', handleMouseMove);
+  map.on('mouseout', handleMouseOut);
+  map.on('dragstart', handleDragStart);
   map.on('click', MAP_LAYER_IDS.ACTIVITIES_LINES, handleClick);
 
   return () => {
     clearHover();
     activePopup?.remove();
     activePopup = null;
-    map.off('mousemove', MAP_LAYER_IDS.ACTIVITIES_LINES, handleMouseMove);
-    map.off('mouseleave', MAP_LAYER_IDS.ACTIVITIES_LINES, handleMouseLeave);
+    map.off('mousemove', handleMouseMove);
+    map.off('mouseout', handleMouseOut);
+    map.off('dragstart', handleDragStart);
     map.off('click', MAP_LAYER_IDS.ACTIVITIES_LINES, handleClick);
 
     if (map.getLayer(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER)) {
