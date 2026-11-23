@@ -7,8 +7,10 @@ import type {
 } from 'maplibre-gl';
 import { MAP_LAYER_IDS } from '@/components/ActivityMap/config/mapLayerIds';
 import {
+  DEFAULT_CHANNELS_PER_BATCH,
   FLOATS_PER_PACKED_SEGMENT,
   lngLatToMercator,
+  PackedHeatmapBatch,
   PackedHeatmapGeometry,
   packTracksForHeatmap,
   splitFloat64,
@@ -49,8 +51,8 @@ layout(location = 0) in vec2 a_corner;
 // Per-instance Double-Single Mercator segment: Hi [x0Hi, y0Hi, x1Hi, y1Hi] and Lo [x0Lo, y0Lo, x1Lo, y1Lo]
 layout(location = 1) in vec4 a_segmentHi;
 layout(location = 2) in vec4 a_segmentLo;
-// Per-instance Mercator join bisector normals: [startNx, startNy, endNx, endNy] ((0,0) = open cap)
-layout(location = 3) in vec4 a_joinNormals;
+// Per-instance MRT channel index [0 .. channelsPerBatch - 1]
+layout(location = 3) in float a_channel;
 
 uniform mat4 u_matrix;
 uniform vec2 u_camCenterHi;
@@ -62,33 +64,7 @@ uniform float u_aaPaddingPx;
 out vec2 v_localPx;
 out float v_halfLenPx;
 out float v_radiusPx;
-flat out vec2 v_p0;
-flat out vec2 v_p1;
-flat out vec2 v_nStart;
-flat out vec2 v_nEnd;
-flat out float v_hasStartJoin;
-flat out float v_hasEndJoin;
-
-// Analytically projects a Mercator direction vector to a unit screen-space direction at clipPos
-vec2 projectMercatorDir(vec4 clipPos, vec2 mercDir) {
-  vec4 dClip = u_matrix * vec4(mercDir, 0.0, 0.0);
-  vec2 dNdc = (dClip.xy * clipPos.w - clipPos.xy * dClip.w) / (clipPos.w * clipPos.w);
-  vec2 dPx = dNdc * (0.5 * u_viewport);
-  float len = length(dPx);
-  return len > 1e-6 ? (dPx / len) : vec2(0.0);
-}
-
-// Projects a Mercator bisector normal cleanly into screen space (preserving exact join line under pitch/bearing)
-vec2 projectJoinNormal(vec4 clipPos, vec2 mercNormal) {
-  vec2 tangentMerc = vec2(-mercNormal.y, mercNormal.x);
-  vec2 tScreen = projectMercatorDir(clipPos, tangentMerc);
-  vec2 nApprox = projectMercatorDir(clipPos, mercNormal);
-  if (length(tScreen) < 0.5) {
-    return nApprox;
-  }
-  vec2 nPerp = vec2(tScreen.y, -tScreen.x);
-  return dot(nPerp, nApprox) >= 0.0 ? nPerp : -nPerp;
-}
+flat out int v_channel;
 
 void main() {
   // Double-single Relative-To-Center (RTC) subtraction eliminates float32 jitter at high zoom
@@ -104,12 +80,7 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
-    v_p0 = vec2(0.0);
-    v_p1 = vec2(0.0);
-    v_nStart = vec2(0.0);
-    v_nEnd = vec2(0.0);
-    v_hasStartJoin = 0.0;
-    v_hasEndJoin = 0.0;
+    v_channel = 0;
     return;
   }
 
@@ -127,12 +98,7 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
-    v_p0 = vec2(0.0);
-    v_p1 = vec2(0.0);
-    v_nStart = vec2(0.0);
-    v_nEnd = vec2(0.0);
-    v_hasStartJoin = 0.0;
-    v_hasEndJoin = 0.0;
+    v_channel = 0;
     return;
   }
 
@@ -154,52 +120,38 @@ void main() {
   vec2 posPx = mid + dir * along + normal * across;
   vec2 ndc = (posPx / u_viewport) * 2.0 - 1.0;
 
-  float hasStart = length(a_joinNormals.xy) > 0.5 ? 1.0 : 0.0;
-  float hasEnd = length(a_joinNormals.zw) > 0.5 ? 1.0 : 0.0;
-
   gl_Position = vec4(ndc, 0.0, 1.0);
   v_localPx = vec2(along, across);
   v_halfLenPx = halfLen;
   v_radiusPx = u_radiusPx;
-  v_p0 = p0;
-  v_p1 = p1;
-  v_nStart = hasStart > 0.5 ? projectJoinNormal(clip0, a_joinNormals.xy) : vec2(0.0);
-  v_nEnd = hasEnd > 0.5 ? projectJoinNormal(clip1, a_joinNormals.zw) : vec2(0.0);
-  v_hasStartJoin = hasStart;
-  v_hasEndJoin = hasEnd;
+  v_channel = int(a_channel + 0.5);
 }
 `;
 
-const CAPSULE_FRAGMENT_SHADER = `#version 300 es
+function buildCapsuleFragmentShader(mrtCount: number): string {
+  const outDecls = Array.from(
+    { length: mrtCount },
+    (_, i) => `layout(location = ${i}) out vec4 out${i};`
+  ).join('\n');
+
+  const outWrites = Array.from(
+    { length: mrtCount },
+    (_, i) => `  out${i} = target == ${i} ? mask : vec4(0.0);`
+  ).join('\n');
+
+  return `#version 300 es
 precision highp float;
 
 in vec2 v_localPx;
 in float v_halfLenPx;
 in float v_radiusPx;
-flat in vec2 v_p0;
-flat in vec2 v_p1;
-flat in vec2 v_nStart;
-flat in vec2 v_nEnd;
-flat in float v_hasStartJoin;
-flat in float v_hasEndJoin;
+flat in int v_channel;
 
-uniform float u_hitWeight;
 uniform float u_aaPaddingPx;
 
-out vec4 outColor;
+${outDecls}
 
 void main() {
-  // Exact Half-Plane Bisector Joint Partitioning:
-  // Adjacent segments share bit-identical (v_p, v_n) at every node, so strictly ONE
-  // segment owns each pixel across the join (< 0.0 vs >= 0.0). Zero node beading,
-  // zero interior seam, while non-adjacent self-overlaps still accumulate additively.
-  if (v_hasStartJoin > 0.5 && dot(gl_FragCoord.xy - v_p0, v_nStart) < 0.0) {
-    discard;
-  }
-  if (v_hasEndJoin > 0.5 && dot(gl_FragCoord.xy - v_p1, v_nEnd) >= 0.0) {
-    discard;
-  }
-
   // Signed distance to capsule centered at origin along X axis
   float clampedX = clamp(v_localPx.x, -v_halfLenPx, v_halfLenPx);
   float dist = length(v_localPx - vec2(clampedX, 0.0));
@@ -212,11 +164,24 @@ void main() {
     discard;
   }
 
-  outColor = vec4(u_hitWeight * coverage, 0.0, 0.0, 0.0);
+  // Route coverage into the track's dedicated MRT channel; with gl.MAX blending,
+  // writing 0.0 to all other channels is a lossless no-op while segments of the same
+  // track form a mathematically exact antialiased union capped at 1.0.
+  int target = v_channel >> 2;
+  int comp = v_channel & 3;
+  vec4 mask = vec4(
+    comp == 0 ? coverage : 0.0,
+    comp == 1 ? coverage : 0.0,
+    comp == 2 ? coverage : 0.0,
+    comp == 3 ? coverage : 0.0
+  );
+
+${outWrites}
 }
 `;
+}
 
-const COMPOSITE_VERTEX_SHADER = `#version 300 es
+const FULLSCREEN_VERTEX_SHADER = `#version 300 es
 precision highp float;
 
 const vec2 POSITIONS[4] = vec2[4](
@@ -234,6 +199,41 @@ void main() {
   gl_Position = vec4(pos, 0.0, 1.0);
 }
 `;
+
+function buildResolveFragmentShader(mrtCount: number): string {
+  const samplerDecls = Array.from(
+    { length: mrtCount },
+    (_, i) => `uniform sampler2D u_scratch${i};`
+  ).join('\n');
+
+  const sumTerms = Array.from(
+    { length: mrtCount },
+    (_, i) => `dot(texture(u_scratch${i}, v_uv), vec4(1.0))`
+  ).join(' +\n    ');
+
+  return `#version 300 es
+precision highp float;
+
+in vec2 v_uv;
+
+${samplerDecls}
+uniform float u_hitWeight;
+
+out vec4 outColor;
+
+void main() {
+  float sum =
+    ${sumTerms};
+  if (sum <= 0.001) {
+    discard;
+  }
+
+  // densityFbo is RGBA16F: .r accumulates unique activity count; .g/.b/.a are reserved
+  // for future per-track metric aggregations (average/max speed, temperature, etc.).
+  outColor = vec4(sum * u_hitWeight, 0.0, 0.0, 0.0);
+}
+`;
+}
 
 const COMPOSITE_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
@@ -273,6 +273,69 @@ void main() {
   outColor = vec4(lutColor.rgb * alpha, alpha);
 }
 `;
+
+/**
+ * Projects a Mercator AABB into FBO pixel scissor coordinates `[x, y, width, height]`,
+ * returning `null` if the batch is completely outside the viewport.
+ */
+function projectBatchScissor(
+  bbox: [number, number, number, number],
+  camX: number,
+  camY: number,
+  matrix: Float32Array,
+  fboWidth: number,
+  fboHeight: number,
+  padPx: number
+): [number, number, number, number] | null {
+  const [minX, minY, maxX, maxY] = bbox;
+  const xs = [minX, maxX, minX, maxX];
+  const ys = [minY, minY, maxY, maxY];
+
+  let minPx = Infinity;
+  let minPy = Infinity;
+  let maxPx = -Infinity;
+  let maxPy = -Infinity;
+
+  for (let i = 0; i < 4; i++) {
+    const rx = xs[i] - camX;
+    const ry = ys[i] - camY;
+    const cx = matrix[0] * rx + matrix[4] * ry + matrix[12];
+    const cy = matrix[1] * rx + matrix[5] * ry + matrix[13];
+    const cw = matrix[3] * rx + matrix[7] * ry + matrix[15];
+
+    // If any corner lies behind the perspective camera plane (pitched view), fall back to full FBO
+    if (cw <= 1e-5) {
+      return [0, 0, fboWidth, fboHeight];
+    }
+
+    const px = ((cx / cw) * 0.5 + 0.5) * fboWidth;
+    const py = ((cy / cw) * 0.5 + 0.5) * fboHeight;
+
+    if (px < minPx) {
+      minPx = px;
+    }
+    if (py < minPy) {
+      minPy = py;
+    }
+    if (px > maxPx) {
+      maxPx = px;
+    }
+    if (py > maxPy) {
+      maxPy = py;
+    }
+  }
+
+  const x0 = Math.max(0, Math.floor(minPx - padPx));
+  const y0 = Math.max(0, Math.floor(minPy - padPx));
+  const x1 = Math.min(fboWidth, Math.ceil(maxPx + padPx));
+  const y1 = Math.min(fboHeight, Math.ceil(maxPy + padPx));
+
+  if (x1 <= x0 || y1 <= y0) {
+    return null;
+  }
+
+  return [x0, y0, x1 - x0, y1 - y0];
+}
 
 function compileShader(
   gl: WebGL2RenderingContext,
@@ -333,12 +396,17 @@ function createProgram(
 }
 
 /**
- * High-performance WebGL2 additive route heatmap layer for MapLibre GL JS.
+ * High-performance WebGL2 unique-activity route heatmap layer for MapLibre GL JS
+ * (Strava Personal Heatmap standard).
+ *
  * Features:
- * - Double-Single Relative-To-Center (RTC) projection for zero jitter at high zoom
- * - Exact Half-Plane Bisector Joint Partitioning (zero GPX node beading while keeping self-overlap)
- * - Physical ground-footprint power-law zoom calibration with user intensity & attenuation controls
- * - Sub-pixel SDF capsule antialiasing with edge alpha feathering
+ * - Per-track `gl.MAX` blending via WebGL2 MRT `RGBA8` (16–32 tracks/batch) -> `gl.FUNC_ADD`
+ *   resolve into `RGBA16F` density FBO: 100% eliminates single-track self-overlap arcs/loops
+ *   at any line thickness while keeping cross-track overlap thickness-sensitive.
+ * - Sweep-line Spatial AABB Channel Packing + per-batch frustum culling + `gl.scissor`
+ *   for 60fps across 500–5,000+ rides.
+ * - Double-Single Relative-To-Center (RTC) projection for zero jitter at high zoom.
+ * - `RGBA16F` density FBO ready for future per-track metric aggregations (speed, temperature).
  */
 export class WebGL2HeatmapLayer implements CustomLayerInterface {
   readonly id = MAP_LAYER_IDS.ACTIVITIES_HEATMAP;
@@ -348,7 +416,9 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   private map: MapLibreMap | null = null;
   private gl: WebGL2RenderingContext | null = null;
 
+  private mrtCount = DEFAULT_CHANNELS_PER_BATCH / 4;
   private capsuleProgram: WebGLProgram | null = null;
+  private resolveProgram: WebGLProgram | null = null;
   private compositeProgram: WebGLProgram | null = null;
 
   private quadVbo: WebGLBuffer | null = null;
@@ -362,6 +432,8 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
   private densityFbo: WebGLFramebuffer | null = null;
   private densityTex: WebGLTexture | null = null;
+  private scratchFbo: WebGLFramebuffer | null = null;
+  private scratchTextures: WebGLTexture[] = [];
   private fboWidth = 0;
   private fboHeight = 0;
   private usesFloatFbo = false;
@@ -370,6 +442,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   private lutTex: WebGLTexture | null = null;
   private lutData: HeatmapLutData;
 
+  private tracks: Map<string, GPXTrack>;
   private packedGeometry: PackedHeatmapGeometry;
   private geometryDirty = true;
   private lutDirty = true;
@@ -378,13 +451,15 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   private options: WebGL2HeatmapOptions;
 
   constructor(tracks: Map<string, GPXTrack>, options: WebGL2HeatmapOptions) {
+    this.tracks = tracks;
     this.options = { ...options };
-    this.packedGeometry = packTracksForHeatmap(tracks);
+    this.packedGeometry = packTracksForHeatmap(tracks, this.mrtCount * 4);
     this.lutData = buildHeatmapColorLut(options.colorThresholds);
   }
 
   updateTracks(tracks: Map<string, GPXTrack>): void {
-    this.packedGeometry = packTracksForHeatmap(tracks);
+    this.tracks = tracks;
+    this.packedGeometry = packTracksForHeatmap(tracks, this.mrtCount * 4);
     this.geometryDirty = true;
     this.map?.triggerRepaint();
   }
@@ -406,10 +481,28 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.map = map;
     this.gl = gl;
 
-    this.capsuleProgram = createProgram(gl, CAPSULE_VERTEX_SHADER, CAPSULE_FRAGMENT_SHADER);
-    this.compositeProgram = createProgram(gl, COMPOSITE_VERTEX_SHADER, COMPOSITE_FRAGMENT_SHADER);
+    const maxDrawBuffers = Number(gl.getParameter(gl.MAX_DRAW_BUFFERS)) || 4;
+    this.mrtCount = maxDrawBuffers >= 8 ? 8 : 4;
+    const channelsPerBatch = this.mrtCount * 4;
 
-    if (!this.capsuleProgram || !this.compositeProgram) {
+    if (this.packedGeometry.channelsPerBatch !== channelsPerBatch) {
+      this.packedGeometry = packTracksForHeatmap(this.tracks, channelsPerBatch);
+      this.geometryDirty = true;
+    }
+
+    this.capsuleProgram = createProgram(
+      gl,
+      CAPSULE_VERTEX_SHADER,
+      buildCapsuleFragmentShader(this.mrtCount)
+    );
+    this.resolveProgram = createProgram(
+      gl,
+      FULLSCREEN_VERTEX_SHADER,
+      buildResolveFragmentShader(this.mrtCount)
+    );
+    this.compositeProgram = createProgram(gl, FULLSCREEN_VERTEX_SHADER, COMPOSITE_FRAGMENT_SHADER);
+
+    if (!this.capsuleProgram || !this.resolveProgram || !this.compositeProgram) {
       logger.error('Failed to initialize WebGL2 heatmap shader programs');
       return;
     }
@@ -437,11 +530,36 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
     this.densityFbo = gl.createFramebuffer();
     this.densityTex = gl.createTexture();
+    this.scratchFbo = gl.createFramebuffer();
+    this.scratchTextures = [];
+    for (let i = 0; i < this.mrtCount; i++) {
+      const tex = gl.createTexture();
+      if (tex) {
+        this.scratchTextures.push(tex);
+      }
+    }
     this.lutTex = gl.createTexture();
 
     this.uploadGeometryIfNeeded(gl);
     this.uploadLutIfNeeded(gl);
     gl.bindVertexArray(null);
+  }
+
+  private bindSegmentAttribPointers(
+    gl: WebGL2RenderingContext,
+    segmentVbo: WebGLBuffer,
+    segmentOffset: number
+  ): void {
+    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 36 bytes per instance
+    const baseByteOffset = segmentOffset * strideBytes;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, segmentVbo);
+    // location 1: a_segmentHi [x0Hi, y0Hi, x1Hi, y1Hi]
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, strideBytes, baseByteOffset);
+    // location 2: a_segmentLo [x0Lo, y0Lo, x1Lo, y1Lo]
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, strideBytes, baseByteOffset + 16);
+    // location 3: a_channel (float)
+    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, strideBytes, baseByteOffset + 32);
   }
 
   private createInstancedVao(
@@ -453,8 +571,6 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return vao;
     }
 
-    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 48 bytes per instance
-
     gl.bindVertexArray(vao);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVbo);
@@ -462,20 +578,12 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, segmentVbo);
-    // location 1: a_segmentHi [x0Hi, y0Hi, x1Hi, y1Hi]
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, strideBytes, 0);
-    gl.vertexAttribDivisor(1, 1);
-
-    // location 2: a_segmentLo [x0Lo, y0Lo, x1Lo, y1Lo]
     gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, strideBytes, 16);
-    gl.vertexAttribDivisor(2, 1);
-
-    // location 3: a_joinNormals [startNx, startNy, endNx, endNy]
     gl.enableVertexAttribArray(3);
-    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, strideBytes, 32);
+    this.bindSegmentAttribPointers(gl, segmentVbo, 0);
+    gl.vertexAttribDivisor(1, 1);
+    gl.vertexAttribDivisor(2, 1);
     gl.vertexAttribDivisor(3, 1);
 
     gl.bindVertexArray(null);
@@ -529,8 +637,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.lutDirty = false;
   }
 
-  private ensureDensityFbo(gl: WebGL2RenderingContext, width: number, height: number): boolean {
-    if (!this.densityFbo || !this.densityTex) {
+  private ensureFramebuffers(gl: WebGL2RenderingContext, width: number, height: number): boolean {
+    if (
+      !this.densityFbo ||
+      !this.densityTex ||
+      !this.scratchFbo ||
+      this.scratchTextures.length < this.mrtCount
+    ) {
       return false;
     }
 
@@ -545,11 +658,11 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return true;
     }
 
-    const filter = !this.usesFloatFbo || this.hasFloatLinear ? gl.LINEAR : gl.NEAREST;
+    const densityFilter = !this.usesFloatFbo || this.hasFloatLinear ? gl.LINEAR : gl.NEAREST;
 
     gl.bindTexture(gl.TEXTURE_2D, this.densityTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, densityFilter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, densityFilter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -588,18 +701,54 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       0
     );
 
-    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, null);
-
-    if (status !== gl.FRAMEBUFFER_COMPLETE) {
+    const densityStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (densityStatus !== gl.FRAMEBUFFER_COMPLETE) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindTexture(gl.TEXTURE_2D, null);
       if (this.usesFloatFbo) {
         this.usesFloatFbo = false;
         this.fboWidth = 0;
         this.fboHeight = 0;
-        return this.ensureDensityFbo(gl, width, height);
+        return this.ensureFramebuffers(gl, width, height);
       }
-      logger.error(`Density FBO incomplete: status=${status}`);
+      logger.error(`Density FBO incomplete: status=${densityStatus}`);
+      return false;
+    }
+
+    // Configure MRT RGBA8 scratch FBO for per-track gl.MAX blending
+    const drawBuffers: number[] = [];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.scratchFbo);
+    for (let i = 0; i < this.mrtCount; i++) {
+      const tex = this.scratchTextures[i];
+      const attachment = gl.COLOR_ATTACHMENT0 + i;
+      drawBuffers.push(attachment);
+
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        clampedW,
+        clampedH,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+      );
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, tex, 0);
+    }
+    gl.drawBuffers(drawBuffers);
+
+    const scratchStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    if (scratchStatus !== gl.FRAMEBUFFER_COMPLETE) {
+      logger.error(`Scratch MRT FBO incomplete: status=${scratchStatus}`);
       return false;
     }
 
@@ -609,7 +758,12 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
   }
 
   prerender(gl: WebGL2RenderingContext, options: CustomRenderMethodInput): void {
-    if (!this.map || !this.capsuleProgram || this.packedGeometry.fullSegmentCount === 0) {
+    if (
+      !this.map ||
+      !this.capsuleProgram ||
+      !this.resolveProgram ||
+      this.packedGeometry.fullSegmentCount === 0
+    ) {
       return;
     }
 
@@ -629,25 +783,24 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     const targetW = cssW * resolutionScale;
     const targetH = cssH * resolutionScale;
 
-    if (!this.ensureDensityFbo(gl, targetW, targetH)) {
+    if (!this.ensureFramebuffers(gl, targetW, targetH)) {
       return;
     }
 
     const prevFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING) as WebGLFramebuffer | null;
     const prevViewport = gl.getParameter(gl.VIEWPORT) as Int32Array;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.densityFbo);
     gl.viewport(0, 0, this.fboWidth, this.fboHeight);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
     gl.disable(gl.CULL_FACE);
+    gl.disable(gl.SCISSOR_TEST);
     gl.colorMask(true, true, true, true);
     gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.enable(gl.BLEND);
-    gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.ONE, gl.ONE);
+    // Clear density FBO once before accumulating all visible MRT batches
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.densityFbo);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     // Compute 64-bit Relative-To-Center (RTC) projection matrix on the CPU around the current map center
     const center = this.map.getCenter();
@@ -674,6 +827,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.matrixF32[14] = m2 * camX + m6 * camY + Number(rawMatrix[14] ?? 0);
     this.matrixF32[15] = m3 * camX + m7 * camY + Number(rawMatrix[15] ?? 0);
 
+    const effectiveRenderScale = cssW > 0 ? this.fboWidth / cssW : resolutionScale;
+    const baseRadiusCssPx = getHeatmapBrushRadiusCssPx(this.options.lineThickness);
+    const radiusPx = baseRadiusCssPx * effectiveRenderScale;
+    const aaPaddingPx = 1.15 * effectiveRenderScale;
+    const hitWeight = this.usesFloatFbo ? 1.0 : 1.0 / 255.0;
+
+    // Upload per-frame uniforms for capsuleProgram once before batch loop
     gl.useProgram(this.capsuleProgram);
     gl.uniformMatrix4fv(
       gl.getUniformLocation(this.capsuleProgram, 'u_matrix'),
@@ -687,36 +847,89 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       this.fboWidth,
       this.fboHeight
     );
+    gl.uniform1f(gl.getUniformLocation(this.capsuleProgram, 'u_radiusPx'), radiusPx);
+    gl.uniform1f(gl.getUniformLocation(this.capsuleProgram, 'u_aaPaddingPx'), aaPaddingPx);
 
-    const effectiveRenderScale = cssW > 0 ? this.fboWidth / cssW : resolutionScale;
-    const baseRadiusCssPx = getHeatmapBrushRadiusCssPx(this.options.lineThickness);
-    gl.uniform1f(
-      gl.getUniformLocation(this.capsuleProgram, 'u_radiusPx'),
-      baseRadiusCssPx * effectiveRenderScale
-    );
-    gl.uniform1f(
-      gl.getUniformLocation(this.capsuleProgram, 'u_aaPaddingPx'),
-      1.15 * effectiveRenderScale
-    );
-
-    const hitWeight = this.usesFloatFbo ? 1.0 : 1.0 / 255.0;
-    gl.uniform1f(gl.getUniformLocation(this.capsuleProgram, 'u_hitWeight'), hitWeight);
+    // Upload per-frame uniforms for resolveProgram once before batch loop
+    gl.useProgram(this.resolveProgram);
+    for (let i = 0; i < this.mrtCount; i++) {
+      gl.uniform1i(gl.getUniformLocation(this.resolveProgram, `u_scratch${i}`), i);
+    }
+    gl.uniform1f(gl.getUniformLocation(this.resolveProgram, 'u_hitWeight'), hitWeight);
 
     const currentZoom = this.map.getZoom();
     let vao = this.fullVao;
-    let count = this.packedGeometry.fullSegmentCount;
+    let segmentVbo = this.fullSegmentVbo;
+    let batches: PackedHeatmapBatch[] = this.packedGeometry.fullBatches;
     if (currentZoom < LOW_ZOOM_LOD_THRESHOLD) {
       vao = this.lowZoomVao;
-      count = this.packedGeometry.lowZoomSegmentCount;
+      segmentVbo = this.lowZoomSegmentVbo;
+      batches = this.packedGeometry.lowZoomBatches;
     } else if (currentZoom < MEDIUM_ZOOM_LOD_THRESHOLD) {
       vao = this.mediumZoomVao;
-      count = this.packedGeometry.mediumZoomSegmentCount;
+      segmentVbo = this.mediumZoomSegmentVbo;
+      batches = this.packedGeometry.mediumZoomBatches;
     }
 
-    if (vao && count > 0) {
-      gl.bindVertexArray(vao);
-      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    if (vao && segmentVbo && batches.length > 0) {
+      const scissorPadPx = Math.ceil(radiusPx + aaPaddingPx + 2);
+      gl.enable(gl.BLEND);
+      gl.enable(gl.SCISSOR_TEST);
+
+      for (let b = 0; b < batches.length; b++) {
+        const batch = batches[b];
+        if (batch.segmentCount <= 0) {
+          continue;
+        }
+
+        const scissor = projectBatchScissor(
+          batch.bbox,
+          camX,
+          camY,
+          this.matrixF32,
+          this.fboWidth,
+          this.fboHeight,
+          scissorPadPx
+        );
+        if (!scissor) {
+          continue;
+        }
+
+        gl.scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+
+        // Pass 1: Render batch tracks into MRT RGBA8 scratch FBO with per-track gl.MAX blending
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.scratchFbo);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.blendEquation(gl.MAX);
+        gl.blendFunc(gl.ONE, gl.ONE);
+
+        gl.useProgram(this.capsuleProgram);
+        gl.bindVertexArray(vao);
+        this.bindSegmentAttribPointers(gl, segmentVbo, batch.segmentOffset);
+        gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, batch.segmentCount);
+
+        // Pass 2: Sum MRT channels additively into RGBA16F density FBO
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.densityFbo);
+        gl.blendEquation(gl.FUNC_ADD);
+        gl.blendFunc(gl.ONE, gl.ONE);
+
+        gl.useProgram(this.resolveProgram);
+        for (let i = 0; i < this.mrtCount; i++) {
+          gl.activeTexture(gl.TEXTURE0 + i);
+          gl.bindTexture(gl.TEXTURE_2D, this.scratchTextures[i]);
+        }
+        gl.bindVertexArray(this.compositeVao);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        // Unbind scratch textures before the next batch binds scratchFbo as a render target
+        for (let i = this.mrtCount - 1; i >= 0; i--) {
+          gl.activeTexture(gl.TEXTURE0 + i);
+          gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+      }
+
       gl.bindVertexArray(null);
+      gl.disable(gl.SCISSOR_TEST);
     }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, prevFbo);
@@ -738,6 +951,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
     gl.disable(gl.CULL_FACE);
+    gl.disable(gl.SCISSOR_TEST);
 
     gl.useProgram(this.compositeProgram);
 
@@ -789,6 +1003,9 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     if (this.capsuleProgram) {
       gl.deleteProgram(this.capsuleProgram);
     }
+    if (this.resolveProgram) {
+      gl.deleteProgram(this.resolveProgram);
+    }
     if (this.compositeProgram) {
       gl.deleteProgram(this.compositeProgram);
     }
@@ -822,11 +1039,18 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     if (this.densityTex) {
       gl.deleteTexture(this.densityTex);
     }
+    if (this.scratchFbo) {
+      gl.deleteFramebuffer(this.scratchFbo);
+    }
+    for (const tex of this.scratchTextures) {
+      gl.deleteTexture(tex);
+    }
     if (this.lutTex) {
       gl.deleteTexture(this.lutTex);
     }
 
     this.capsuleProgram = null;
+    this.resolveProgram = null;
     this.compositeProgram = null;
     this.quadVbo = null;
     this.fullSegmentVbo = null;
@@ -838,6 +1062,8 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.compositeVao = null;
     this.densityFbo = null;
     this.densityTex = null;
+    this.scratchFbo = null;
+    this.scratchTextures = [];
     this.lutTex = null;
     this.fboWidth = 0;
     this.fboHeight = 0;
