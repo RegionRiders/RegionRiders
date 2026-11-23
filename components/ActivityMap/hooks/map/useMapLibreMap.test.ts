@@ -9,6 +9,7 @@ let lastConstructorOptions: any = null;
 
 jest.mock('maplibre-gl', () => ({
   __esModule: true,
+  setWorkerUrl: jest.fn(),
   Map: jest.fn((options: any) => {
     lastConstructorOptions = options;
     const instance = createMockMapLibreInstance({ loaded: false });

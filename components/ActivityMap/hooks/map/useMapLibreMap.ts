@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Map as MapLibreMap,
+  setWorkerUrl,
   type LayerSpecification,
   type SourceSpecification,
   type StyleSpecification,
@@ -182,6 +183,7 @@ export function useMapLibreMap(
     logger.info('Initializing MapLibre GL JS map...');
 
     try {
+      setWorkerUrl('/maplibre-gl-worker.mjs');
       const [lat, lng] = config.center;
       const mapInstance = new MapLibreMap({
         container: containerRef.current,
