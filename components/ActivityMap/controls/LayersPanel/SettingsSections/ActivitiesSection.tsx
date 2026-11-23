@@ -8,6 +8,16 @@ import {
 import { ColorPickerModalButton } from '@/components/ActivityMap/controls/LayersPanel/SettingsSections/utils/ColorPickerModalButton/ColorPickerModalButton';
 import { LayersPanelProps } from '@/components/ActivityMap/controls/LayersPanel/types';
 import {
+  clampHeatmapIntensity,
+  clampHeatmapZoomAttenuation,
+  DEFAULT_HEATMAP_INTENSITY,
+  DEFAULT_HEATMAP_ZOOM_ATTENUATION,
+  MAX_HEATMAP_INTENSITY,
+  MAX_HEATMAP_ZOOM_ATTENUATION,
+  MIN_HEATMAP_INTENSITY,
+  MIN_HEATMAP_ZOOM_ATTENUATION,
+} from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapLutBuilder';
+import {
   MAX_ACTIVITY_THICKNESS_CONTROL,
   MIN_ACTIVITY_THICKNESS_CONTROL,
   normalizeActivityThicknessControl,
@@ -181,17 +191,63 @@ export function ActivitiesSection({
           </div>
 
           {settings.activityMode === 'heatmap' && (
-            <div>
-              <Text size="sm"> Heatmap pixel density: {settings.heatmapDensity ?? 2}</Text>
-              <Slider
-                w="100%"
-                min={0.25}
-                max={3}
-                step={0.25}
-                value={settings.heatmapDensity ?? 2}
-                onChange={(value) => onSettingChange('heatmapDensity', value)}
-              />
-            </div>
+            <>
+              <div>
+                <Text size="sm"> Heatmap pixel density: {settings.heatmapDensity ?? 2}</Text>
+                <Slider
+                  w="100%"
+                  min={0.25}
+                  max={3}
+                  step={0.25}
+                  value={settings.heatmapDensity ?? 2}
+                  onChange={(value) => onSettingChange('heatmapDensity', value)}
+                />
+              </div>
+
+              <div>
+                <Group justify="space-between" mb={4}>
+                  <Text size="sm">
+                    Heatmap intensity: {clampHeatmapIntensity(settings.heatmapIntensity).toFixed(2)}
+                    x
+                  </Text>
+                  <Button
+                    size="compact-xs"
+                    variant="subtle"
+                    onClick={() => {
+                      onSettingChange('heatmapIntensity', DEFAULT_HEATMAP_INTENSITY);
+                      onSettingChange('heatmapZoomAttenuation', DEFAULT_HEATMAP_ZOOM_ATTENUATION);
+                    }}
+                  >
+                    Reset
+                  </Button>
+                </Group>
+                <Slider
+                  w="100%"
+                  min={MIN_HEATMAP_INTENSITY}
+                  max={MAX_HEATMAP_INTENSITY}
+                  step={0.05}
+                  value={clampHeatmapIntensity(settings.heatmapIntensity)}
+                  onChange={(value) => onSettingChange('heatmapIntensity', value)}
+                  aria-label="Heatmap intensity"
+                />
+              </div>
+
+              <div>
+                <Text size="sm">
+                  Zoom attenuation:{' '}
+                  {clampHeatmapZoomAttenuation(settings.heatmapZoomAttenuation).toFixed(2)}
+                </Text>
+                <Slider
+                  w="100%"
+                  min={MIN_HEATMAP_ZOOM_ATTENUATION}
+                  max={MAX_HEATMAP_ZOOM_ATTENUATION}
+                  step={0.01}
+                  value={clampHeatmapZoomAttenuation(settings.heatmapZoomAttenuation)}
+                  onChange={(value) => onSettingChange('heatmapZoomAttenuation', value)}
+                  aria-label="Zoom attenuation"
+                />
+              </div>
+            </>
           )}
 
           {settings.activityMode === 'lines' && (

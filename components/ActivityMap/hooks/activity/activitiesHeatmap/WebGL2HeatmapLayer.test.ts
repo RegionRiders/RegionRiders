@@ -167,6 +167,8 @@ describe('WebGL2HeatmapLayer', () => {
     expect(gl.drawArraysInstanced).toHaveBeenCalledWith(gl.TRIANGLE_STRIP, 0, 4, 1);
 
     layer.render(gl);
+    expect(gl.uniform1f).toHaveBeenCalledWith('u_intensity', 1.0);
+    expect(gl.uniform1f).toHaveBeenCalledWith('u_gamma', expect.any(Number));
     expect(gl.drawArrays).toHaveBeenCalledWith(gl.TRIANGLE_STRIP, 0, 4);
 
     layer.onRemove(mockMap as any, gl);

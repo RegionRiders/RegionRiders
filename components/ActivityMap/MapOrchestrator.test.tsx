@@ -75,7 +75,9 @@ describe('MapOrchestrator', () => {
       defaultSettings.lineColorSwatches[defaultSettings.selectedLineSwatchIndex],
       defaultSettings.activityHeatmapColorSwatches?.[
         defaultSettings.selectedActivityHeatmapSwatchIndex ?? 0
-      ]
+      ],
+      undefined,
+      undefined
     );
   });
 
@@ -134,7 +136,9 @@ describe('MapOrchestrator', () => {
       customSettings.lineColorSwatches[customSettings.selectedLineSwatchIndex],
       customSettings.activityHeatmapColorSwatches?.[
         customSettings.selectedActivityHeatmapSwatchIndex ?? 0
-      ]
+      ],
+      undefined,
+      undefined
     );
 
     expect(mockUseRegionRendering).toHaveBeenCalledWith(

@@ -50,7 +50,9 @@ export default function MapOrchestrator({
     settings.lineColorSwatches?.[settings.selectedLineSwatchIndex] ??
       DEFAULT_ACTIVITY_LINE_COLOR_SWATCHES[0],
     settings.activityHeatmapColorSwatches?.[settings.selectedActivityHeatmapSwatchIndex ?? 0] ??
-      ACTIVITY_HEATMAP_COLOR_THRESHOLDS
+      ACTIVITY_HEATMAP_COLOR_THRESHOLDS,
+    settings.heatmapIntensity,
+    settings.heatmapZoomAttenuation
   );
   useRegionRendering(
     map,

@@ -28,7 +28,9 @@ export function useActivityRendering(
     normal: [255, 0, 0, 0.5],
     hover: [255, 100, 100, 0.7],
   },
-  heatmapColorThresholds?: ColorThreshold[]
+  heatmapColorThresholds?: ColorThreshold[],
+  heatmapIntensity?: number,
+  heatmapZoomAttenuation?: number
 ) {
   const normalizedThickness = normalizeActivityThicknessControl(activityThickness);
   const heatmapLayerRef = useRef<WebGL2HeatmapLayer | null>(null);
@@ -36,12 +38,16 @@ export function useActivityRendering(
     lineThickness: normalizedThickness,
     layerTransparency: activityLayerTransparency,
     heatmapDensity,
+    heatmapIntensity,
+    heatmapZoomAttenuation,
     colorThresholds: heatmapColorThresholds,
   });
   latestOptionsRef.current = {
     lineThickness: normalizedThickness,
     layerTransparency: activityLayerTransparency,
     heatmapDensity,
+    heatmapIntensity,
+    heatmapZoomAttenuation,
     colorThresholds: heatmapColorThresholds,
   };
 
@@ -80,6 +86,8 @@ export function useActivityRendering(
       lineThickness: normalizedThickness,
       layerTransparency: activityLayerTransparency,
       heatmapDensity,
+      heatmapIntensity,
+      heatmapZoomAttenuation,
       colorThresholds: heatmapColorThresholds,
     });
   }, [
@@ -88,6 +96,8 @@ export function useActivityRendering(
     normalizedThickness,
     activityLayerTransparency,
     heatmapDensity,
+    heatmapIntensity,
+    heatmapZoomAttenuation,
     heatmapColorThresholds,
   ]);
 

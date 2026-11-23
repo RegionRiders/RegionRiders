@@ -15,10 +15,14 @@ import {
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapGeometryPacker';
 import {
   buildHeatmapColorLut,
-  getHeatmapZoomScale,
+  clampHeatmapIntensity,
+  clampHeatmapZoomAttenuation,
+  DEFAULT_HEATMAP_INTENSITY,
+  DEFAULT_HEATMAP_ZOOM_ATTENUATION,
+  getHeatmapBrushRadiusCssPx,
+  getHeatmapGamma,
   HeatmapLutData,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapLutBuilder';
-import { getActivityLineRadiusFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
@@ -32,6 +36,8 @@ export interface WebGL2HeatmapOptions {
   lineThickness: number;
   layerTransparency: number;
   heatmapDensity: number;
+  heatmapIntensity?: number;
+  heatmapZoomAttenuation?: number;
   colorThresholds?: ColorThreshold[];
 }
 
@@ -43,6 +49,8 @@ layout(location = 0) in vec2 a_corner;
 // Per-instance Double-Single Mercator segment: Hi [x0Hi, y0Hi, x1Hi, y1Hi] and Lo [x0Lo, y0Lo, x1Lo, y1Lo]
 layout(location = 1) in vec4 a_segmentHi;
 layout(location = 2) in vec4 a_segmentLo;
+// Per-instance Mercator join bisector normals: [startNx, startNy, endNx, endNy] ((0,0) = open cap)
+layout(location = 3) in vec4 a_joinNormals;
 
 uniform mat4 u_matrix;
 uniform vec2 u_camCenterHi;
@@ -54,16 +62,38 @@ uniform float u_aaPaddingPx;
 out vec2 v_localPx;
 out float v_halfLenPx;
 out float v_radiusPx;
-out float v_segWeight;
-out float v_isDot;
+flat out vec2 v_p0;
+flat out vec2 v_p1;
+flat out vec2 v_nStart;
+flat out vec2 v_nEnd;
+flat out float v_hasStartJoin;
+flat out float v_hasEndJoin;
+
+// Analytically projects a Mercator direction vector to a unit screen-space direction at clipPos
+vec2 projectMercatorDir(vec4 clipPos, vec2 mercDir) {
+  vec4 dClip = u_matrix * vec4(mercDir, 0.0, 0.0);
+  vec2 dNdc = (dClip.xy * clipPos.w - clipPos.xy * dClip.w) / (clipPos.w * clipPos.w);
+  vec2 dPx = dNdc * (0.5 * u_viewport);
+  float len = length(dPx);
+  return len > 1e-6 ? (dPx / len) : vec2(0.0);
+}
+
+// Projects a Mercator bisector normal cleanly into screen space (preserving exact join line under pitch/bearing)
+vec2 projectJoinNormal(vec4 clipPos, vec2 mercNormal) {
+  vec2 tangentMerc = vec2(-mercNormal.y, mercNormal.x);
+  vec2 tScreen = projectMercatorDir(clipPos, tangentMerc);
+  vec2 nApprox = projectMercatorDir(clipPos, mercNormal);
+  if (length(tScreen) < 0.5) {
+    return nApprox;
+  }
+  vec2 nPerp = vec2(tScreen.y, -tScreen.x);
+  return dot(nPerp, nApprox) >= 0.0 ? nPerp : -nPerp;
+}
 
 void main() {
   // Double-single Relative-To-Center (RTC) subtraction eliminates float32 jitter at high zoom
   vec2 rel0 = (a_segmentHi.xy - u_camCenterHi) + (a_segmentLo.xy - u_camCenterLo);
   vec2 rel1 = (a_segmentHi.zw - u_camCenterHi) + (a_segmentLo.zw - u_camCenterLo);
-
-  vec2 rawDelta = rel1 - rel0;
-  float isDot = (abs(rawDelta.x) + abs(rawDelta.y)) < 1e-11 ? 1.0 : 0.0;
 
   vec4 clip0 = u_matrix * vec4(rel0, 0.0, 1.0);
   vec4 clip1 = u_matrix * vec4(rel1, 0.0, 1.0);
@@ -74,8 +104,12 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
-    v_segWeight = 0.0;
-    v_isDot = 0.0;
+    v_p0 = vec2(0.0);
+    v_p1 = vec2(0.0);
+    v_nStart = vec2(0.0);
+    v_nEnd = vec2(0.0);
+    v_hasStartJoin = 0.0;
+    v_hasEndJoin = 0.0;
     return;
   }
 
@@ -93,8 +127,12 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
-    v_segWeight = 0.0;
-    v_isDot = 0.0;
+    v_p0 = vec2(0.0);
+    v_p1 = vec2(0.0);
+    v_nStart = vec2(0.0);
+    v_nEnd = vec2(0.0);
+    v_hasStartJoin = 0.0;
+    v_hasEndJoin = 0.0;
     return;
   }
 
@@ -116,18 +154,19 @@ void main() {
   vec2 posPx = mid + dir * along + normal * across;
   vec2 ndc = (posPx / u_viewport) * 2.0 - 1.0;
 
-  // Normalize along-track self-overlap: when multiple short GPS segments fall inside
-  // one brush diameter (2 * u_radiusPx), scale each segment's weight by segLen / brushDiameter
-  // so a single ride always integrates to ~1.0 regardless of zoom level or GPS sampling rate.
-  float brushDiameterPx = max(2.0, 2.0 * u_radiusPx);
-  float segWeight = isDot > 0.5 ? 1.0 : clamp(segLen / brushDiameterPx, 0.02, 1.0);
+  float hasStart = length(a_joinNormals.xy) > 0.5 ? 1.0 : 0.0;
+  float hasEnd = length(a_joinNormals.zw) > 0.5 ? 1.0 : 0.0;
 
   gl_Position = vec4(ndc, 0.0, 1.0);
   v_localPx = vec2(along, across);
   v_halfLenPx = halfLen;
   v_radiusPx = u_radiusPx;
-  v_segWeight = segWeight;
-  v_isDot = isDot;
+  v_p0 = p0;
+  v_p1 = p1;
+  v_nStart = hasStart > 0.5 ? projectJoinNormal(clip0, a_joinNormals.xy) : vec2(0.0);
+  v_nEnd = hasEnd > 0.5 ? projectJoinNormal(clip1, a_joinNormals.zw) : vec2(0.0);
+  v_hasStartJoin = hasStart;
+  v_hasEndJoin = hasEnd;
 }
 `;
 
@@ -137,8 +176,12 @@ precision highp float;
 in vec2 v_localPx;
 in float v_halfLenPx;
 in float v_radiusPx;
-in float v_segWeight;
-in float v_isDot;
+flat in vec2 v_p0;
+flat in vec2 v_p1;
+flat in vec2 v_nStart;
+flat in vec2 v_nEnd;
+flat in float v_hasStartJoin;
+flat in float v_hasEndJoin;
 
 uniform float u_hitWeight;
 uniform float u_aaPaddingPx;
@@ -146,11 +189,22 @@ uniform float u_aaPaddingPx;
 out vec4 outColor;
 
 void main() {
+  // Exact Half-Plane Bisector Joint Partitioning:
+  // Adjacent segments share bit-identical (v_p, v_n) at every node, so strictly ONE
+  // segment owns each pixel across the join (< 0.0 vs >= 0.0). Zero node beading,
+  // zero interior seam, while non-adjacent self-overlaps still accumulate additively.
+  if (v_hasStartJoin > 0.5 && dot(gl_FragCoord.xy - v_p0, v_nStart) < 0.0) {
+    discard;
+  }
+  if (v_hasEndJoin > 0.5 && dot(gl_FragCoord.xy - v_p1, v_nEnd) >= 0.0) {
+    discard;
+  }
+
   // Signed distance to capsule centered at origin along X axis
   float clampedX = clamp(v_localPx.x, -v_halfLenPx, v_halfLenPx);
   float dist = length(v_localPx - vec2(clampedX, 0.0));
 
-  // Wide, smooth Hermite antialiasing profile across the capsule edge
+  // Smooth Hermite antialiasing profile across the outer radial stroke edge
   float innerEdge = max(0.0, v_radiusPx - u_aaPaddingPx * 0.75);
   float outerEdge = v_radiusPx + u_aaPaddingPx * 0.85;
   float coverage = 1.0 - smoothstep(innerEdge, outerEdge, dist);
@@ -158,14 +212,7 @@ void main() {
     discard;
   }
 
-  // Attenuate rounded end-caps on connected segments so adjacent segment joints
-  // sum to 1.0 instead of 2.0 ("beading" prevention at high zoom).
-  float capOverhang = abs(v_localPx.x) - v_halfLenPx;
-  float capFactor = (v_isDot < 0.5 && v_halfLenPx > v_radiusPx && capOverhang > 0.0)
-    ? mix(1.0, 0.5, clamp(capOverhang / max(0.5, v_radiusPx), 0.0, 1.0))
-    : 1.0;
-
-  outColor = vec4(u_hitWeight * v_segWeight * capFactor * coverage, 0.0, 0.0, 0.0);
+  outColor = vec4(u_hitWeight * coverage, 0.0, 0.0, 0.0);
 }
 `;
 
@@ -196,7 +243,8 @@ in vec2 v_uv;
 uniform sampler2D u_densityTex;
 uniform sampler2D u_lutTex;
 uniform float u_densityScale;
-uniform float u_zoomScale;
+uniform float u_intensity;
+uniform float u_gamma;
 uniform float u_logMaxThreshold;
 uniform float u_transparency;
 
@@ -208,17 +256,16 @@ void main() {
     discard;
   }
 
-  // Anchor a single ride (rawDensity == 1.0) to uniqueActivities == 1.0 at all zoom levels,
-  // and scale excess multi-track overlap above 1.0 by u_zoomScale.
-  float uniqueActivities = rawDensity <= 1.0
-    ? rawDensity
-    : 1.0 + (rawDensity - 1.0) * u_zoomScale;
+  // Apply user intensity gain and physical ground-footprint power-law compression (gamma = 1 at street zoom)
+  float adjusted = rawDensity * u_intensity;
+  float uniqueActivities = adjusted <= 1.0
+    ? adjusted
+    : pow(adjusted, u_gamma);
 
   float u = clamp(log(1.0 + uniqueActivities) / max(0.0001, u_logMaxThreshold), 1.0 / 511.0, 1.0);
   vec4 lutColor = texture(u_lutTex, vec2(u, 0.5));
 
-  // Smoothly fade alpha along the outer antialiased fringe of strokes (0 < rawDensity < 0.9)
-  // so threshold 1's full alpha does not turn SDF antialiasing into a hard staircase edge.
+  // Smoothly feather alpha along the outer antialiased fringe of strokes (0 < rawDensity < 0.88)
   float edgeAa = smoothstep(0.0, 0.88, rawDensity);
   float alpha = lutColor.a * u_transparency * edgeAa;
 
@@ -289,7 +336,8 @@ function createProgram(
  * High-performance WebGL2 additive route heatmap layer for MapLibre GL JS.
  * Features:
  * - Double-Single Relative-To-Center (RTC) projection for zero jitter at high zoom
- * - 3-tier LOD with screen-space segment-length normalization for consistent zoom intensity
+ * - Exact Half-Plane Bisector Joint Partitioning (zero GPX node beading while keeping self-overlap)
+ * - Physical ground-footprint power-law zoom calibration with user intensity & attenuation controls
  * - Sub-pixel SDF capsule antialiasing with edge alpha feathering
  */
 export class WebGL2HeatmapLayer implements CustomLayerInterface {
@@ -405,7 +453,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return vao;
     }
 
-    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 32 bytes per instance
+    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 48 bytes per instance
 
     gl.bindVertexArray(vao);
 
@@ -424,6 +472,11 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 4, gl.FLOAT, false, strideBytes, 16);
     gl.vertexAttribDivisor(2, 1);
+
+    // location 3: a_joinNormals [startNx, startNy, endNx, endNy]
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, strideBytes, 32);
+    gl.vertexAttribDivisor(3, 1);
 
     gl.bindVertexArray(null);
     return vao;
@@ -568,7 +621,6 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
         ? Math.min(Math.max(window.devicePixelRatio, 1), 2)
         : 1;
-    // Calibrate default heatmapDensity (0.75) to full 1.0 * dpr resolution so edges are crisp
     const normalizedDensity = Math.max(0.25, Math.min(3, this.options.heatmapDensity || 0.75));
     const resolutionScale = Math.min(2.0, dpr * Math.sqrt(normalizedDensity / 0.75));
 
@@ -637,10 +689,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     );
 
     const effectiveRenderScale = cssW > 0 ? this.fboWidth / cssW : resolutionScale;
-    const baseRadiusCssPx = Math.max(
-      0.85,
-      getActivityLineRadiusFromControl(this.options.lineThickness) + 0.75
-    );
+    const baseRadiusCssPx = getHeatmapBrushRadiusCssPx(this.options.lineThickness);
     gl.uniform1f(
       gl.getUniformLocation(this.capsuleProgram, 'u_radiusPx'),
       baseRadiusCssPx * effectiveRenderScale
@@ -701,11 +750,21 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.uniform1i(gl.getUniformLocation(this.compositeProgram, 'u_lutTex'), 1);
 
     const densityScale = this.usesFloatFbo ? 1.0 : 255.0;
-    const zoomScale = getHeatmapZoomScale(this.map.getZoom());
+    const intensity = clampHeatmapIntensity(
+      this.options.heatmapIntensity ?? DEFAULT_HEATMAP_INTENSITY
+    );
+    const gamma = getHeatmapGamma(
+      this.map.getZoom(),
+      this.options.lineThickness,
+      clampHeatmapZoomAttenuation(
+        this.options.heatmapZoomAttenuation ?? DEFAULT_HEATMAP_ZOOM_ATTENUATION
+      )
+    );
     const transparency = Math.max(0, Math.min(1, this.options.layerTransparency ?? 1));
 
     gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_densityScale'), densityScale);
-    gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_zoomScale'), zoomScale);
+    gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_intensity'), intensity);
+    gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_gamma'), gamma);
     gl.uniform1f(
       gl.getUniformLocation(this.compositeProgram, 'u_logMaxThreshold'),
       Math.log1p(this.lutData.maxThreshold)

@@ -147,6 +147,8 @@ export const DEFAULT_MAP_SETTINGS: MapSettings = {
   activityHeatmapColorSwatches: DEFAULT_ACTIVITY_HEATMAP_COLOR_SWATCHES,
   selectedActivityHeatmapSwatchIndex: 0,
   heatmapDensity: 0.75,
+  heatmapIntensity: 1.0,
+  heatmapZoomAttenuation: 0.08,
   regionMode: 'static',
   showRegions: true,
   regionBorderThickness: 2,

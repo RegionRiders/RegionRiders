@@ -26,6 +26,8 @@ export const mapSettingsSchema = z
     activityLayerTransparency: z.number().min(0).max(1).optional(),
     activityThickness: z.number().min(0).max(100).optional(),
     heatmapDensity: z.number().min(0).max(10).optional(),
+    heatmapIntensity: z.number().min(0.25).max(3).optional(),
+    heatmapZoomAttenuation: z.number().min(0).max(0.25).optional(),
     lineColorSwatches: z.array(lineColorSwatchSchema).optional(),
     selectedLineSwatchIndex: z.number().int().min(0).optional(),
     activityHeatmapColorSwatches: z.array(z.array(colorThresholdSchema)).optional(),
