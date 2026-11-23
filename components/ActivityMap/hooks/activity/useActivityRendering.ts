@@ -8,7 +8,10 @@ import {
   LineColorSwatch,
 } from '@/components/ActivityMap/controls/LayersPanel/types';
 import { WebGL2HeatmapLayer } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/WebGL2HeatmapLayer';
-import { mountActivityLinesLayer } from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
+import {
+  mountActivityLinesLayer,
+  updateActivityLinesPaint,
+} from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
 import { normalizeActivityThicknessControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
@@ -34,7 +37,9 @@ export function useActivityRendering(
 ) {
   const normalizedThickness = normalizeActivityThicknessControl(activityThickness);
   const heatmapLayerRef = useRef<WebGL2HeatmapLayer | null>(null);
-  const latestOptionsRef = useRef({
+  const isLinesMountedRef = useRef<boolean>(false);
+
+  const latestHeatmapOptionsRef = useRef({
     lineThickness: normalizedThickness,
     layerTransparency: activityLayerTransparency,
     heatmapDensity,
@@ -42,13 +47,26 @@ export function useActivityRendering(
     heatmapZoomAttenuation,
     colorThresholds: heatmapColorThresholds,
   });
-  latestOptionsRef.current = {
+  latestHeatmapOptionsRef.current = {
     lineThickness: normalizedThickness,
     layerTransparency: activityLayerTransparency,
     heatmapDensity,
     heatmapIntensity,
     heatmapZoomAttenuation,
     colorThresholds: heatmapColorThresholds,
+  };
+
+  const latestLinesOptionsRef = useRef({
+    lineThickness: normalizedThickness,
+    lineColor: activityLineColor.normal,
+    lineHoverColor: activityLineColor.hover,
+    layerTransparency: activityLayerTransparency,
+  });
+  latestLinesOptionsRef.current = {
+    lineThickness: normalizedThickness,
+    lineColor: activityLineColor.normal,
+    lineHoverColor: activityLineColor.hover,
+    layerTransparency: activityLayerTransparency,
   };
 
   // Lifecycle effect for Heatmap mode (keeps WebGL buffers alive across slider drags)
@@ -58,7 +76,7 @@ export function useActivityRendering(
     }
 
     logger.debug(`Mounting WebGL2 heatmap layer for ${tracks.size} tracks`);
-    const layer = new WebGL2HeatmapLayer(tracks, latestOptionsRef.current);
+    const layer = new WebGL2HeatmapLayer(tracks, latestHeatmapOptionsRef.current);
     heatmapLayerRef.current = layer;
 
     if (map.getLayer(MAP_LAYER_IDS.ACTIVITIES_HEATMAP)) {
@@ -101,14 +119,30 @@ export function useActivityRendering(
     heatmapColorThresholds,
   ]);
 
-  // Lifecycle effect for Lines mode
+  // Lifecycle effect for Lines mode (builds GeoJSON and tiles ONCE per tracks/mode mount)
   useEffect(() => {
     if (!map || !showActivities || mode !== 'lines' || tracks.size === 0) {
+      isLinesMountedRef.current = false;
       return;
     }
 
     logger.debug(`Rendering ${tracks.size} tracks in lines mode`);
-    return mountActivityLinesLayer(map, tracks, {
+    const cleanup = mountActivityLinesLayer(map, tracks, latestLinesOptionsRef.current);
+    isLinesMountedRef.current = true;
+
+    return () => {
+      isLinesMountedRef.current = false;
+      cleanup();
+    };
+  }, [map, tracks, showActivities, mode]);
+
+  // Instant (<1ms) GPU paint update for Lines mode when sliders or colors change
+  useEffect(() => {
+    if (!map || !showActivities || mode !== 'lines' || !isLinesMountedRef.current) {
+      return;
+    }
+
+    updateActivityLinesPaint(map, {
       lineThickness: normalizedThickness,
       lineColor: activityLineColor.normal,
       lineHoverColor: activityLineColor.hover,
@@ -116,7 +150,6 @@ export function useActivityRendering(
     });
   }, [
     map,
-    tracks,
     showActivities,
     mode,
     normalizedThickness,

@@ -1,13 +1,17 @@
 import { renderHook } from '@testing-library/react';
 import { MAP_LAYER_IDS } from '@/components/ActivityMap/config/mapLayerIds';
 import { WebGL2HeatmapLayer } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/WebGL2HeatmapLayer';
-import { mountActivityLinesLayer } from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
+import {
+  mountActivityLinesLayer,
+  updateActivityLinesPaint,
+} from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
 import { useActivityRendering } from '@/components/ActivityMap/hooks/activity/useActivityRendering';
 import { GPXTrack } from '@/lib/types';
 import { createMockMapLibreInstance } from '@/test-utils/maplibreMock';
 
 jest.mock('@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer', () => ({
   mountActivityLinesLayer: jest.fn(() => jest.fn()),
+  updateActivityLinesPaint: jest.fn(),
 }));
 
 describe('useActivityRendering', () => {
@@ -77,26 +81,33 @@ describe('useActivityRendering', () => {
     updateOptionsSpy.mockRestore();
   });
 
-  it('mounts activityLinesLayer in lines mode with normalized thickness', () => {
+  it('mounts activityLinesLayer once and updates slider/color changes via GPU-only updateActivityLinesPaint', () => {
     const mockMap = createMockMapLibreInstance();
 
-    renderHook(() =>
-      useActivityRendering(
-        mockMap as any,
-        sampleTracks,
-        true,
-        'lines',
-        99, // clamped to MAX_ACTIVITY_THICKNESS_CONTROL (10)
-        0.75
-      )
+    const { rerender } = renderHook(
+      ({ thickness, transparency }) =>
+        useActivityRendering(mockMap as any, sampleTracks, true, 'lines', thickness, transparency),
+      { initialProps: { thickness: 99, transparency: 0.75 } }
     );
 
+    expect(mountActivityLinesLayer).toHaveBeenCalledTimes(1);
     expect(mountActivityLinesLayer).toHaveBeenCalledWith(
       mockMap,
       sampleTracks,
       expect.objectContaining({
         lineThickness: 10,
         layerTransparency: 0.75,
+      })
+    );
+
+    // Dragging sliders updates paint on GPU without re-mounting or re-tiling GeoJSON
+    rerender({ thickness: 4, transparency: 0.4 });
+    expect(mountActivityLinesLayer).toHaveBeenCalledTimes(1);
+    expect(updateActivityLinesPaint).toHaveBeenCalledWith(
+      mockMap,
+      expect.objectContaining({
+        lineThickness: 4,
+        layerTransparency: 0.4,
       })
     );
   });

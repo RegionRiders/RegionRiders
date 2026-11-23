@@ -8,6 +8,7 @@ export interface MockMapLibreInstance {
   removeLayer: jest.Mock;
   getLayer: jest.Mock;
   setPaintProperty: jest.Mock;
+  setFilter: jest.Mock;
   setFeatureState: jest.Mock;
   removeFeatureState: jest.Mock;
   on: jest.Mock;
@@ -79,6 +80,7 @@ export function createMockMapLibreInstance(
       existing[prop] = value;
       paint.set(layerId, existing);
     }),
+    setFilter: jest.fn(),
     setFeatureState: jest.fn(
       (
         target: { source: string; sourceLayer?: string; id: string | number },

@@ -17,4 +17,5 @@ export const MAP_LAYER_IDS = {
   REGIONS_LINE: 'rr-regions-line',
   ACTIVITIES_HEATMAP: 'rr-activities-heatmap',
   ACTIVITIES_LINES: 'rr-activities-lines',
+  ACTIVITIES_LINES_HOVER: 'rr-activities-lines-hover',
 } as const;
