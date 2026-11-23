@@ -1,8 +1,9 @@
 import {
-  DEFAULT_CHANNELS_PER_BATCH,
+  computeAdjacentJoinDirs,
   FLOATS_PER_PACKED_SEGMENT,
   lngLatToMercator,
   packTracksForHeatmap,
+  simplifyMercatorRdp,
   splitFloat64,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapGeometryPacker';
 import { GPXTrack } from '@/lib/types';
@@ -29,7 +30,38 @@ describe('heatmapGeometryPacker', () => {
     expect(Math.abs(yHi + yLo - y)).toBeLessThan(1e-12);
   });
 
-  it('packs multi-point tracks into 9-float segments with MRT channel index and batch metadata across 3 LOD tiers', () => {
+  it('simplifies collinear GPS micro-jitter via iterative RDP while preserving true corners', () => {
+    const simplified = simplifyMercatorRdp(
+      [0.5, 0.5005, 0.501, 0.502],
+      [0.3, 0.30050001, 0.301, 0.3],
+      1e-10
+    );
+
+    expect(simplified.vx).toEqual([0.5, 0.501, 0.502]);
+    expect(simplified.vy).toEqual([0.3, 0.301, 0.3]);
+  });
+
+  it('computes symmetric adjacent join directions for bends and flush-start U-turns', () => {
+    // 90° bend East -> South: both segments receive exact adjacent directions for seamless miter
+    const corner = computeAdjacentJoinDirs(1, 0, 0, 1);
+    expect(corner).toEqual({
+      endNextDx: 0,
+      endNextDy: 1,
+      startPrevDx: 1,
+      startPrevDy: 0,
+    });
+
+    // 180° U-turn East -> West: incoming gets open round cap (0, 0), outgoing starts flush (prev = next)
+    const uturn = computeAdjacentJoinDirs(1, 0, -1, 0);
+    expect(uturn).toEqual({
+      endNextDx: 0,
+      endNextDy: 0,
+      startPrevDx: -1,
+      startPrevDy: 0,
+    });
+  });
+
+  it('packs RDP-simplified multi-point tracks into 12-float ribbon segments across 3 LOD tiers', () => {
     const tracks = new Map<string, GPXTrack>([
       [
         'track-1',
@@ -38,103 +70,33 @@ describe('heatmapGeometryPacker', () => {
           name: 'Ride 1',
           points: [
             { lat: 54.35, lon: 18.65 },
-            { lat: 54.3502, lon: 18.6502 }, // included in fullSegments, skipped in medium/low
-            { lat: 54.3525, lon: 18.6525 }, // included in mediumZoomSegments, skipped in low
-            { lat: 54.38, lon: 18.68 }, // included in all tiers
+            { lat: 54.35001, lon: 18.65001 }, // collinear micro-jitter -> removed by RDP
+            { lat: 54.3515, lon: 18.6505 }, // ~50m corner -> kept in full, dropped in medium/low
+            { lat: 54.365, lon: 18.662 }, // ~200m corner -> kept in full & medium, dropped in low
+            { lat: 54.38, lon: 18.68 }, // endpoint -> kept in all tiers
           ],
         },
       ],
     ]);
 
     const packed = packTracksForHeatmap(tracks);
-    expect(packed.channelsPerBatch).toBe(DEFAULT_CHANNELS_PER_BATCH);
     expect(packed.fullSegmentCount).toBe(3);
     expect(packed.fullSegments).toHaveLength(3 * FLOATS_PER_PACKED_SEGMENT);
-    expect(packed.fullBatches).toHaveLength(1);
-    expect(packed.fullBatches[0].segmentOffset).toBe(0);
-    expect(packed.fullBatches[0].segmentCount).toBe(3);
     expect(packed.mediumZoomSegmentCount).toBe(2);
     expect(packed.lowZoomSegmentCount).toBe(1);
 
-    // Every segment of track-1 is assigned to channel 0
-    for (let s = 0; s < 3; s++) {
-      expect(packed.fullSegments[s * FLOATS_PER_PACKED_SEGMENT + 8]).toBe(0);
-    }
+    // First segment has open start cap (0, 0) and non-zero outgoing direction at its end
+    expect(packed.fullSegments[8]).toBe(0);
+    expect(packed.fullSegments[9]).toBe(0);
+    expect(Math.hypot(packed.fullSegments[10], packed.fullSegments[11])).toBeCloseTo(1, 5);
+
+    // Last segment has open end cap (0, 0)
+    const lastBase = (packed.fullSegmentCount - 1) * FLOATS_PER_PACKED_SEGMENT;
+    expect(packed.fullSegments[lastBase + 10]).toBe(0);
+    expect(packed.fullSegments[lastBase + 11]).toBe(0);
   });
 
-  it('packs geographically distant non-overlapping tracks into the same MRT channel while separating overlapping tracks', () => {
-    const tracks = new Map<string, GPXTrack>([
-      [
-        'gdansk-1',
-        {
-          id: 'gdansk-1',
-          name: 'Gdansk 1',
-          points: [
-            { lat: 54.35, lon: 18.65 },
-            { lat: 54.36, lon: 18.66 },
-          ],
-        },
-      ],
-      [
-        'gdansk-2',
-        {
-          id: 'gdansk-2',
-          name: 'Gdansk 2 (overlaps gdansk-1)',
-          points: [
-            { lat: 54.351, lon: 18.651 },
-            { lat: 54.361, lon: 18.661 },
-          ],
-        },
-      ],
-      [
-        'krakow-1',
-        {
-          id: 'krakow-1',
-          name: 'Krakow 1 (far away)',
-          points: [
-            { lat: 50.06, lon: 19.94 },
-            { lat: 50.07, lon: 19.95 },
-          ],
-        },
-      ],
-    ]);
-
-    // With 2 channels/batch, all 3 tracks still fit in 1 batch because Krakow shares channel 0 with Gdansk-1
-    const packed = packTracksForHeatmap(tracks, 2);
-    expect(packed.fullBatches).toHaveLength(1);
-    expect(packed.fullSegmentCount).toBe(3);
-
-    const channels = [
-      packed.fullSegments[8],
-      packed.fullSegments[FLOATS_PER_PACKED_SEGMENT + 8],
-      packed.fullSegments[2 * FLOATS_PER_PACKED_SEGMENT + 8],
-    ].sort((a, b) => a - b);
-    expect(channels).toEqual([0, 0, 1]);
-  });
-
-  it('spills overlapping tracks into multiple contiguous batches when exceeding channelsPerBatch', () => {
-    const tracks = new Map<string, GPXTrack>();
-    for (let i = 0; i < 5; i++) {
-      tracks.set(`overlap-${i}`, {
-        id: `overlap-${i}`,
-        name: `Overlap ${i}`,
-        points: [
-          { lat: 54.35, lon: 18.65 },
-          { lat: 54.36, lon: 18.66 },
-        ],
-      });
-    }
-
-    const packed = packTracksForHeatmap(tracks, 2);
-    expect(packed.fullBatches).toHaveLength(3);
-    expect(packed.fullBatches.map((b) => [b.segmentOffset, b.segmentCount])).toEqual([
-      [0, 2],
-      [2, 2],
-      [4, 1],
-    ]);
-  });
-
-  it('preserves single-point tracks as zero-length segments (#165)', () => {
+  it('preserves single-point tracks as zero-length segments with open caps (#165)', () => {
     const tracks = new Map<string, GPXTrack>([
       [
         'dot-track',
@@ -151,5 +113,8 @@ describe('heatmapGeometryPacker', () => {
     expect(packed.fullSegments[0]).toBe(packed.fullSegments[2]);
     expect(packed.fullSegments[1]).toBe(packed.fullSegments[3]);
     expect(packed.fullSegments[8]).toBe(0);
+    expect(packed.fullSegments[9]).toBe(0);
+    expect(packed.fullSegments[10]).toBe(0);
+    expect(packed.fullSegments[11]).toBe(0);
   });
 });
