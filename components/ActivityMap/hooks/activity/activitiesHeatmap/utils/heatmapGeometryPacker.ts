@@ -1,28 +1,25 @@
 import { GPXTrack } from '@/lib/types';
 
 /**
- * Each packed ribbon segment consists of 12 float32 values (48 bytes):
- * - [0..3]  a_segmentHi: [x0Hi, y0Hi, x1Hi, y1Hi] (Double-Single hi Mercator coords)
- * - [4..7]  a_segmentLo: [x0Lo, y0Lo, x1Lo, y1Lo] (Double-Single lo Mercator coords)
- * - [8..11] a_adjDirs:   [prevDx, prevDy, nextDx, nextDy]
- *           Unit Mercator directions of the incoming segment at p0 and outgoing segment at p1,
- *           used by the vertex shader to extrude a continuous miter/bevel polyline ribbon with
- *           zero circular end-cap overlap at intermediate vertices.
- *           (0, 0) indicates an open round cap (track start/end, U-turn tip, or single-point dot).
+ * Each packed hairline segment consists of 8 float32 values (32 bytes):
+ * - [0..3] a_segmentHi: [x0Hi, y0Hi, x1Hi, y1Hi] (Double-Single hi Mercator coords)
+ * - [4..7] a_segmentLo: [x0Lo, y0Lo, x1Lo, y1Lo] (Double-Single lo Mercator coords)
  *
- * Future metric overlays (speed, temperature, heart rate) can attach a parallel 1-float-per-segment
- * VBO to the same VAO without altering this geometry layout.
+ * Approach A renders 1px analytic Gaussian hairlines via exact erf/erfc integration along each
+ * segment (telescoping seamlessly across shared vertices without miter/join geometry) followed by
+ * conditional separable Gaussian blur. Future metric overlays (speed, temperature, heart rate)
+ * can attach a parallel 1-float-per-segment VBO to the same VAO without altering this layout.
  */
-export const FLOATS_PER_PACKED_SEGMENT = 12;
+export const FLOATS_PER_PACKED_SEGMENT = 8;
 
 export interface PackedHeatmapGeometry {
-  /** High-detail RDP-simplified ribbon segments (~6m tolerance) for close/city zoom (z >= 10.5) */
+  /** High-detail RDP-simplified segments (~6m tolerance) for close/city zoom (z >= 10.5) */
   fullSegments: Float32Array;
   fullSegmentCount: number;
-  /** Regional-detail RDP-simplified ribbon segments (~80m tolerance) for regional zoom (7.5 <= z < 10.5) */
+  /** Regional-detail RDP-simplified segments (~80m tolerance) for regional zoom (7.5 <= z < 10.5) */
   mediumZoomSegments: Float32Array;
   mediumZoomSegmentCount: number;
-  /** Country/continent-detail RDP-simplified ribbon segments (~500m tolerance) for low zoom (z < 7.5) */
+  /** Country/continent-detail RDP-simplified segments (~500m tolerance) for low zoom (z < 7.5) */
   lowZoomSegments: Float32Array;
   lowZoomSegmentCount: number;
 }
@@ -33,9 +30,6 @@ const MAX_MERCATOR_LAT = 85.05112877980659;
 const HIGH_DETAIL_RDP_TOLERANCE_SQ = 2.2e-14; // ~6m
 const MEDIUM_ZOOM_RDP_TOLERANCE_SQ = 4.0e-12; // ~80m
 const LOW_ZOOM_RDP_TOLERANCE_SQ = 1.6e-10; // ~500m
-
-/** Dot product below which two consecutive segments form a near-180° U-turn reversal (~148°). */
-const UTURN_DOT_THRESHOLD = -0.85;
 
 /**
  * Splits a 64-bit IEEE 754 float into two 32-bit floats [hi, lo] such that hi + lo ≈ value
@@ -90,7 +84,7 @@ function sqPointToSegmentDist(
 /**
  * Iterative Ramer-Douglas-Peucker simplification in Mercator coordinates.
  * Removes 1-second GPS micro-jitter and collinear vertices while preserving true corners
- * and hairpins for clean polyline ribbon extrusion.
+ * and hairpins across all 3 LOD levels.
  */
 export function simplifyMercatorRdp(
   vx: number[],
@@ -144,55 +138,12 @@ export function simplifyMercatorRdp(
   return { vx: outX, vy: outY };
 }
 
-/**
- * Computes the adjacent unit directions stored at the shared vertex between `dPrev` and `dNext`:
- * - Normal bend (`dot >= -0.85`): both segments share exact `(dPrev, dNext)` so their ribbon
- *   miter/bevel edges meet seamlessly with zero overlap and zero circular cap.
- * - Near-180° U-turn (`dot < -0.85`): incoming segment gets a clean round cap (`next = [0, 0]`)
- *   while outgoing segment starts flush (`prev = dNext`, no backward protrusion past the tip)
- *   so the return leg cleanly sums additively to 2.0.
- */
-export function computeAdjacentJoinDirs(
-  prevDx: number,
-  prevDy: number,
-  nextDx: number,
-  nextDy: number
-): { endNextDx: number; endNextDy: number; startPrevDx: number; startPrevDy: number } {
-  const dot = prevDx * nextDx + prevDy * nextDy;
-
-  if (dot < UTURN_DOT_THRESHOLD) {
-    return {
-      endNextDx: 0,
-      endNextDy: 0,
-      startPrevDx: nextDx,
-      startPrevDy: nextDy,
-    };
-  }
-
-  return {
-    endNextDx: nextDx,
-    endNextDy: nextDy,
-    startPrevDx: prevDx,
-    startPrevDy: prevDy,
-  };
-}
-
-function pushPackedSegment(
-  values: number[],
-  x0: number,
-  y0: number,
-  x1: number,
-  y1: number,
-  prevDx: number,
-  prevDy: number,
-  nextDx: number,
-  nextDy: number
-): void {
+function pushPackedSegment(values: number[], x0: number, y0: number, x1: number, y1: number): void {
   const [x0Hi, x0Lo] = splitFloat64(x0);
   const [y0Hi, y0Lo] = splitFloat64(y0);
   const [x1Hi, x1Lo] = splitFloat64(x1);
   const [y1Hi, y1Lo] = splitFloat64(y1);
-  values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo, prevDx, prevDy, nextDx, nextDy);
+  values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo);
 }
 
 function packTrackSegments(tracks: Map<string, GPXTrack>, toleranceSq: number): Float32Array {
@@ -231,7 +182,7 @@ function packTrackSegments(tracks: Map<string, GPXTrack>, toleranceSq: number): 
 
     // Preserve single-point or zero-length tracks as a visible round dot (#165)
     if (rawX.length === 1) {
-      pushPackedSegment(values, rawX[0], rawY[0], rawX[0], rawY[0], 0, 0, 0, 0);
+      pushPackedSegment(values, rawX[0], rawY[0], rawX[0], rawY[0]);
       return;
     }
 
@@ -239,52 +190,34 @@ function packTrackSegments(tracks: Map<string, GPXTrack>, toleranceSq: number): 
     const { vx, vy } = simplifyMercatorRdp(rawX, rawY, toleranceSq);
     const vertCount = vx.length;
 
-    if (vertCount === 1) {
-      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0], 0, 0, 0, 0);
+    if (vertCount === 0) {
       return;
     }
 
-    const segCount = vertCount - 1;
-    const dirX = new Float64Array(segCount);
-    const dirY = new Float64Array(segCount);
+    if (vertCount === 1) {
+      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0]);
+      return;
+    }
 
-    for (let s = 0; s < segCount; s++) {
-      const dx = vx[s + 1] - vx[s];
-      const dy = vy[s + 1] - vy[s];
-      const len = Math.hypot(dx, dy);
-      if (len > 0) {
-        dirX[s] = dx / len;
-        dirY[s] = dy / len;
+    // 3. Emit packed segments, skipping accidental zero-length interior segments after Double-Single quantization
+    let emittedForTrack = 0;
+    for (let s = 0; s < vertCount - 1; s++) {
+      const [x0Hi, x0Lo] = splitFloat64(vx[s]);
+      const [y0Hi, y0Lo] = splitFloat64(vy[s]);
+      const [x1Hi, x1Lo] = splitFloat64(vx[s + 1]);
+      const [y1Hi, y1Lo] = splitFloat64(vy[s + 1]);
+
+      if (x0Hi === x1Hi && y0Hi === y1Hi && x0Lo === x1Lo && y0Lo === y1Lo) {
+        continue;
       }
+
+      values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo);
+      emittedForTrack += 1;
     }
 
-    // 3. Compute adjacent directions for seamless ribbon miter/bevel joins
-    const prevDxArr = new Float64Array(segCount);
-    const prevDyArr = new Float64Array(segCount);
-    const nextDxArr = new Float64Array(segCount);
-    const nextDyArr = new Float64Array(segCount);
-
-    for (let s = 0; s < segCount - 1; s++) {
-      const join = computeAdjacentJoinDirs(dirX[s], dirY[s], dirX[s + 1], dirY[s + 1]);
-      nextDxArr[s] = join.endNextDx;
-      nextDyArr[s] = join.endNextDy;
-      prevDxArr[s + 1] = join.startPrevDx;
-      prevDyArr[s + 1] = join.startPrevDy;
-    }
-
-    // 4. Emit packed ribbon segments
-    for (let s = 0; s < segCount; s++) {
-      pushPackedSegment(
-        values,
-        vx[s],
-        vy[s],
-        vx[s + 1],
-        vy[s + 1],
-        prevDxArr[s],
-        prevDyArr[s],
-        nextDxArr[s],
-        nextDyArr[s]
-      );
+    // Preserve collapsed loops (e.g. [A, B, A] smaller than toleranceSq) or quantized duplicates as a single #165 dot
+    if (emittedForTrack === 0) {
+      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0]);
     }
   });
 
@@ -292,8 +225,8 @@ function packTrackSegments(tracks: Map<string, GPXTrack>, toleranceSq: number): 
 }
 
 /**
- * Packs GPX tracks into flat GPU-ready Double-Single Mercator polyline ribbon buffers
- * with RDP simplification and adjacent join directions across 3 LOD tiers.
+ * Packs GPX tracks into flat GPU-ready 8-float Double-Single Mercator hairline segment buffers
+ * with iterative RDP simplification across 3 LOD tiers.
  */
 export function packTracksForHeatmap(tracks: Map<string, GPXTrack>): PackedHeatmapGeometry {
   const fullSegments = packTrackSegments(tracks, HIGH_DETAIL_RDP_TOLERANCE_SQ);
