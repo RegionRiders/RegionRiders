@@ -85,47 +85,8 @@ function buildZoomStrokeOpacityExpression(
 }
 
 /**
- * Builds a MapLibre-valid `fill-opacity` expression where `["zoom"]` is strictly
- * at the top level of a `step` expression (MapLibre forbids `["zoom"]` nested inside `["case"]`).
- */
-function buildFillOpacityExpression(
-  config: RegionTileProfileConfig,
-  isVisitedExpr: ExpressionSpecification,
-  visitedOpacity: number,
-  unvisitedAlpha: number,
-  layerTransparency: number
-): DataDrivenPropertyValueSpecification<number> {
-  const transparency = clampOpacity(layerTransparency);
-
-  if (unvisitedAlpha > 0) {
-    const explicitUnvisitedOpacity = clampOpacity(unvisitedAlpha * transparency);
-    return [
-      'case',
-      isVisitedExpr,
-      visitedOpacity,
-      explicitUnvisitedOpacity,
-    ] as ExpressionSpecification;
-  }
-
-  // When unvisited alpha is 0, keep low-zoom placeholder fill coherent using a top-level ["step", ["zoom"], ...]
-  const lowDetailOpacity =
-    clampOpacity(Math.max(config.style.fillOpacity, config.minimumLowDetailFillOpacity)) *
-    transparency;
-  const normalOpacity = clampOpacity(config.style.fillOpacity) * transparency;
-  const fadeStartZoom = Math.max(0, config.strokeFadeStartZoom - 1);
-
-  return [
-    'step',
-    ['zoom'],
-    ['case', isVisitedExpr, visitedOpacity, lowDetailOpacity],
-    fadeStartZoom,
-    ['case', isVisitedExpr, visitedOpacity, normalOpacity],
-  ] as ExpressionSpecification;
-}
-
-/**
  * Builds native GPU MapLibre paint expressions for region fill and border layers.
- * Uses `feature-state` (`visited`, `visitCount`) so thousands of regions restyle in <1ms.
+ * Strictly honors the user's selected unvisited and visited color swatches and alpha values.
  */
 export function buildRegionPaintExpressions(input: RegionPaintInput): RegionPaintSpecs {
   const {
@@ -161,9 +122,9 @@ export function buildRegionPaintExpressions(input: RegionPaintInput): RegionPain
     const unvisitedColorTuple = sorted[0]?.color ?? [60, 60, 60, 0];
     const visitedStops = sorted.filter((t) => t.threshold > 0);
 
-    const unvisitedFillColor =
-      unvisitedColorTuple[3] > 0 ? rgbToSolidCss(unvisitedColorTuple) : config.style.fillColor;
+    const unvisitedFillColor = rgbToSolidCss(unvisitedColorTuple);
     const unvisitedStrokeColor = rgbToSolidCss(unvisitedColorTuple);
+    const unvisitedFillOpacity = clampOpacity(unvisitedColorTuple[3] * transparency);
 
     let visitedFillExpr: DataDrivenPropertyValueSpecification<string>;
     let visitedStrokeExpr: DataDrivenPropertyValueSpecification<string>;
@@ -203,13 +164,7 @@ export function buildRegionPaintExpressions(input: RegionPaintInput): RegionPain
           visitedFillExpr,
           unvisitedFillColor,
         ] as ExpressionSpecification,
-        'fill-opacity': buildFillOpacityExpression(
-          config,
-          isVisitedExpr,
-          1,
-          unvisitedColorTuple[3],
-          transparency
-        ),
+        'fill-opacity': ['case', isVisitedExpr, 1, unvisitedFillOpacity] as ExpressionSpecification,
       },
       linePaint: {
         'line-color': [
@@ -228,13 +183,13 @@ export function buildRegionPaintExpressions(input: RegionPaintInput): RegionPain
   const unvisitedTuple = staticThresholds[0]?.color ?? [60, 60, 60, 0];
   const visitedTuple = staticThresholds[1]?.color ?? unvisitedTuple;
 
-  const unvisitedFillColor =
-    unvisitedTuple[3] > 0 ? rgbToSolidCss(unvisitedTuple) : config.style.fillColor;
+  const unvisitedFillColor = rgbToSolidCss(unvisitedTuple);
   const visitedFillColor = rgbToSolidCss(visitedTuple);
 
   const unvisitedStrokeColor = rgbToSolidCss(unvisitedTuple);
   const visitedStrokeColor = rgbToSolidCss(visitedTuple);
 
+  const unvisitedOpacity = clampOpacity(unvisitedTuple[3] * transparency);
   const visitedOpacity = clampOpacity(visitedTuple[3] * transparency);
 
   return {
@@ -245,13 +200,12 @@ export function buildRegionPaintExpressions(input: RegionPaintInput): RegionPain
         visitedFillColor,
         unvisitedFillColor,
       ] as ExpressionSpecification,
-      'fill-opacity': buildFillOpacityExpression(
-        config,
+      'fill-opacity': [
+        'case',
         isVisitedExpr,
         visitedOpacity,
-        unvisitedTuple[3],
-        transparency
-      ),
+        unvisitedOpacity,
+      ] as ExpressionSpecification,
     },
     linePaint: {
       'line-color': [
