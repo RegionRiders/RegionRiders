@@ -7,8 +7,11 @@ import type {
 } from 'maplibre-gl';
 import { MAP_LAYER_IDS } from '@/components/ActivityMap/config/mapLayerIds';
 import {
+  FLOATS_PER_PACKED_SEGMENT,
+  lngLatToMercator,
   PackedHeatmapGeometry,
   packTracksForHeatmap,
+  splitFloat64,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapGeometryPacker';
 import {
   buildHeatmapColorLut,
@@ -21,7 +24,9 @@ import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
 const logger = createComponentLogger('WebGL2HeatmapLayer');
+const MEDIUM_ZOOM_LOD_THRESHOLD = 10.5;
 const LOW_ZOOM_LOD_THRESHOLD = 7.5;
+const MAX_MOBILE_SAFE_FBO_DIM = 2560;
 
 export interface WebGL2HeatmapOptions {
   lineThickness: number;
@@ -35,20 +40,33 @@ precision highp float;
 
 // Per-vertex quad corner: x in [-1, 1] along segment, y in [-1, 1] across segment
 layout(location = 0) in vec2 a_corner;
-// Per-instance Mercator segment [x0, y0, x1, y1] in [0..1]
-layout(location = 1) in vec4 a_segment;
+// Per-instance Double-Single Mercator segment: Hi [x0Hi, y0Hi, x1Hi, y1Hi] and Lo [x0Lo, y0Lo, x1Lo, y1Lo]
+layout(location = 1) in vec4 a_segmentHi;
+layout(location = 2) in vec4 a_segmentLo;
 
 uniform mat4 u_matrix;
+uniform vec2 u_camCenterHi;
+uniform vec2 u_camCenterLo;
 uniform vec2 u_viewport;
 uniform float u_radiusPx;
+uniform float u_aaPaddingPx;
 
 out vec2 v_localPx;
 out float v_halfLenPx;
 out float v_radiusPx;
+out float v_segWeight;
+out float v_isDot;
 
 void main() {
-  vec4 clip0 = u_matrix * vec4(a_segment.xy, 0.0, 1.0);
-  vec4 clip1 = u_matrix * vec4(a_segment.zw, 0.0, 1.0);
+  // Double-single Relative-To-Center (RTC) subtraction eliminates float32 jitter at high zoom
+  vec2 rel0 = (a_segmentHi.xy - u_camCenterHi) + (a_segmentLo.xy - u_camCenterLo);
+  vec2 rel1 = (a_segmentHi.zw - u_camCenterHi) + (a_segmentLo.zw - u_camCenterLo);
+
+  vec2 rawDelta = rel1 - rel0;
+  float isDot = (abs(rawDelta.x) + abs(rawDelta.y)) < 1e-11 ? 1.0 : 0.0;
+
+  vec4 clip0 = u_matrix * vec4(rel0, 0.0, 1.0);
+  vec4 clip1 = u_matrix * vec4(rel1, 0.0, 1.0);
 
   // Guard against degenerate perspective w
   if (clip0.w <= 0.0 || clip1.w <= 0.0) {
@@ -56,13 +74,15 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
+    v_segWeight = 0.0;
+    v_isDot = 0.0;
     return;
   }
 
   vec2 ndc0 = clip0.xy / clip0.w;
   vec2 ndc1 = clip1.xy / clip1.w;
 
-  // Quick offscreen frustum reject when both endpoints are far outside NDC [-1..1]
+  // Quick offscreen frustum reject when both endpoints are outside NDC [-1.2..1.2]
   if (
     (ndc0.x < -1.2 && ndc1.x < -1.2) ||
     (ndc0.x >  1.2 && ndc1.x >  1.2) ||
@@ -73,6 +93,8 @@ void main() {
     v_localPx = vec2(0.0);
     v_halfLenPx = 0.0;
     v_radiusPx = u_radiusPx;
+    v_segWeight = 0.0;
+    v_isDot = 0.0;
     return;
   }
 
@@ -85,7 +107,7 @@ void main() {
   vec2 normal = vec2(-dir.y, dir.x);
 
   float halfLen = segLen * 0.5;
-  float padRadius = u_radiusPx + 1.0; // +1px AA fringe
+  float padRadius = u_radiusPx + u_aaPaddingPx;
   vec2 mid = (p0 + p1) * 0.5;
 
   float along = a_corner.x * (halfLen + padRadius);
@@ -94,10 +116,18 @@ void main() {
   vec2 posPx = mid + dir * along + normal * across;
   vec2 ndc = (posPx / u_viewport) * 2.0 - 1.0;
 
+  // Normalize along-track self-overlap: when multiple short GPS segments fall inside
+  // one brush diameter (2 * u_radiusPx), scale each segment's weight by segLen / brushDiameter
+  // so a single ride always integrates to ~1.0 regardless of zoom level or GPS sampling rate.
+  float brushDiameterPx = max(2.0, 2.0 * u_radiusPx);
+  float segWeight = isDot > 0.5 ? 1.0 : clamp(segLen / brushDiameterPx, 0.02, 1.0);
+
   gl_Position = vec4(ndc, 0.0, 1.0);
   v_localPx = vec2(along, across);
   v_halfLenPx = halfLen;
   v_radiusPx = u_radiusPx;
+  v_segWeight = segWeight;
+  v_isDot = isDot;
 }
 `;
 
@@ -107,8 +137,11 @@ precision highp float;
 in vec2 v_localPx;
 in float v_halfLenPx;
 in float v_radiusPx;
+in float v_segWeight;
+in float v_isDot;
 
 uniform float u_hitWeight;
+uniform float u_aaPaddingPx;
 
 out vec4 outColor;
 
@@ -116,12 +149,23 @@ void main() {
   // Signed distance to capsule centered at origin along X axis
   float clampedX = clamp(v_localPx.x, -v_halfLenPx, v_halfLenPx);
   float dist = length(v_localPx - vec2(clampedX, 0.0));
-  // Smooth 1px edge antialiasing (replaces CPU smoothHeatmapEdges)
-  float coverage = 1.0 - smoothstep(max(0.0, v_radiusPx - 0.65), v_radiusPx + 0.65, dist);
+
+  // Wide, smooth Hermite antialiasing profile across the capsule edge
+  float innerEdge = max(0.0, v_radiusPx - u_aaPaddingPx * 0.75);
+  float outerEdge = v_radiusPx + u_aaPaddingPx * 0.85;
+  float coverage = 1.0 - smoothstep(innerEdge, outerEdge, dist);
   if (coverage <= 0.001) {
     discard;
   }
-  outColor = vec4(u_hitWeight * coverage, 0.0, 0.0, 0.0);
+
+  // Attenuate rounded end-caps on connected segments so adjacent segment joints
+  // sum to 1.0 instead of 2.0 ("beading" prevention at high zoom).
+  float capOverhang = abs(v_localPx.x) - v_halfLenPx;
+  float capFactor = (v_isDot < 0.5 && v_halfLenPx > v_radiusPx && capOverhang > 0.0)
+    ? mix(1.0, 0.5, clamp(capOverhang / max(0.5, v_radiusPx), 0.0, 1.0))
+    : 1.0;
+
+  outColor = vec4(u_hitWeight * v_segWeight * capFactor * coverage, 0.0, 0.0, 0.0);
 }
 `;
 
@@ -160,14 +204,24 @@ out vec4 outColor;
 
 void main() {
   float rawDensity = texture(u_densityTex, v_uv).r * u_densityScale;
-  if (rawDensity <= 0.001) {
+  if (rawDensity <= 0.002) {
     discard;
   }
 
-  float uniqueActivities = rawDensity * u_zoomScale;
+  // Anchor a single ride (rawDensity == 1.0) to uniqueActivities == 1.0 at all zoom levels,
+  // and scale excess multi-track overlap above 1.0 by u_zoomScale.
+  float uniqueActivities = rawDensity <= 1.0
+    ? rawDensity
+    : 1.0 + (rawDensity - 1.0) * u_zoomScale;
+
   float u = clamp(log(1.0 + uniqueActivities) / max(0.0001, u_logMaxThreshold), 1.0 / 511.0, 1.0);
   vec4 lutColor = texture(u_lutTex, vec2(u, 0.5));
-  float alpha = lutColor.a * u_transparency;
+
+  // Smoothly fade alpha along the outer antialiased fringe of strokes (0 < rawDensity < 0.9)
+  // so threshold 1's full alpha does not turn SDF antialiasing into a hard staircase edge.
+  float edgeAa = smoothstep(0.0, 0.88, rawDensity);
+  float alpha = lutColor.a * u_transparency * edgeAa;
+
   // MapLibre custom layer render() expects premultiplied alpha
   outColor = vec4(lutColor.rgb * alpha, alpha);
 }
@@ -233,8 +287,10 @@ function createProgram(
 
 /**
  * High-performance WebGL2 additive route heatmap layer for MapLibre GL JS.
- * Uses MapLibre's `prerender` hook for offscreen additive density accumulation
- * and `render` for logarithmic Color LUT compositing at 60 FPS during pan & zoom.
+ * Features:
+ * - Double-Single Relative-To-Center (RTC) projection for zero jitter at high zoom
+ * - 3-tier LOD with screen-space segment-length normalization for consistent zoom intensity
+ * - Sub-pixel SDF capsule antialiasing with edge alpha feathering
  */
 export class WebGL2HeatmapLayer implements CustomLayerInterface {
   readonly id = MAP_LAYER_IDS.ACTIVITIES_HEATMAP;
@@ -249,8 +305,10 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
   private quadVbo: WebGLBuffer | null = null;
   private fullSegmentVbo: WebGLBuffer | null = null;
+  private mediumZoomSegmentVbo: WebGLBuffer | null = null;
   private lowZoomSegmentVbo: WebGLBuffer | null = null;
   private fullVao: WebGLVertexArrayObject | null = null;
+  private mediumZoomVao: WebGLVertexArrayObject | null = null;
   private lowZoomVao: WebGLVertexArrayObject | null = null;
   private compositeVao: WebGLVertexArrayObject | null = null;
 
@@ -308,7 +366,6 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return;
     }
 
-    // Check float FBO support and linear float filtering support
     const floatExt =
       gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float');
     const floatLinearExt =
@@ -322,9 +379,11 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 
     this.fullSegmentVbo = gl.createBuffer();
+    this.mediumZoomSegmentVbo = gl.createBuffer();
     this.lowZoomSegmentVbo = gl.createBuffer();
 
     this.fullVao = this.createInstancedVao(gl, this.fullSegmentVbo);
+    this.mediumZoomVao = this.createInstancedVao(gl, this.mediumZoomSegmentVbo);
     this.lowZoomVao = this.createInstancedVao(gl, this.lowZoomSegmentVbo);
     this.compositeVao = gl.createVertexArray();
 
@@ -346,6 +405,8 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return vao;
     }
 
+    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 32 bytes per instance
+
     gl.bindVertexArray(vao);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVbo);
@@ -354,21 +415,35 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.vertexAttribDivisor(0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, segmentVbo);
+    // location 1: a_segmentHi [x0Hi, y0Hi, x1Hi, y1Hi]
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, strideBytes, 0);
     gl.vertexAttribDivisor(1, 1);
+
+    // location 2: a_segmentLo [x0Lo, y0Lo, x1Lo, y1Lo]
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, strideBytes, 16);
+    gl.vertexAttribDivisor(2, 1);
 
     gl.bindVertexArray(null);
     return vao;
   }
 
   private uploadGeometryIfNeeded(gl: WebGL2RenderingContext): void {
-    if (!this.geometryDirty || !this.fullSegmentVbo || !this.lowZoomSegmentVbo) {
+    if (
+      !this.geometryDirty ||
+      !this.fullSegmentVbo ||
+      !this.mediumZoomSegmentVbo ||
+      !this.lowZoomSegmentVbo
+    ) {
       return;
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.fullSegmentVbo);
     gl.bufferData(gl.ARRAY_BUFFER, this.packedGeometry.fullSegments, gl.STATIC_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.mediumZoomSegmentVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, this.packedGeometry.mediumZoomSegments, gl.STATIC_DRAW);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.lowZoomSegmentVbo);
     gl.bufferData(gl.ARRAY_BUFFER, this.packedGeometry.lowZoomSegments, gl.STATIC_DRAW);
@@ -406,7 +481,10 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return false;
     }
 
-    const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
+    const maxTexSize = Math.min(
+      MAX_MOBILE_SAFE_FBO_DIM,
+      (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || MAX_MOBILE_SAFE_FBO_DIM
+    );
     const clampedW = Math.max(1, Math.min(maxTexSize, Math.round(width)));
     const clampedH = Math.max(1, Math.min(maxTexSize, Math.round(height)));
 
@@ -414,8 +492,6 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return true;
     }
 
-    // RGBA16F requires OES_texture_float_linear for LINEAR filtering; otherwise use NEAREST
-    // so the texture is always complete across all GPUs.
     const filter = !this.usesFloatFbo || this.hasFloatLinear ? gl.LINEAR : gl.NEAREST;
 
     gl.bindTexture(gl.TEXTURE_2D, this.densityTex);
@@ -465,7 +541,6 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
     if (status !== gl.FRAMEBUFFER_COMPLETE) {
       if (this.usesFloatFbo) {
-        // Fallback to RGBA8 if RGBA16F attachment is unsupported on this device
         this.usesFloatFbo = false;
         this.fboWidth = 0;
         this.fboHeight = 0;
@@ -489,9 +564,18 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.uploadLutIfNeeded(gl);
 
     const canvas = this.map.getCanvas();
-    const densityFactor = Math.max(0.25, Math.min(3, this.options.heatmapDensity || 1));
-    const targetW = canvas.clientWidth > 0 ? canvas.clientWidth * densityFactor : canvas.width;
-    const targetH = canvas.clientHeight > 0 ? canvas.clientHeight * densityFactor : canvas.height;
+    const dpr =
+      typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
+        ? Math.min(Math.max(window.devicePixelRatio, 1), 2)
+        : 1;
+    // Calibrate default heatmapDensity (0.75) to full 1.0 * dpr resolution so edges are crisp
+    const normalizedDensity = Math.max(0.25, Math.min(3, this.options.heatmapDensity || 0.75));
+    const resolutionScale = Math.min(2.0, dpr * Math.sqrt(normalizedDensity / 0.75));
+
+    const cssW = canvas.clientWidth > 0 ? canvas.clientWidth : canvas.width;
+    const cssH = canvas.clientHeight > 0 ? canvas.clientHeight : canvas.height;
+    const targetW = cssW * resolutionScale;
+    const targetH = cssH * resolutionScale;
 
     if (!this.ensureDensityFbo(gl, targetW, targetH)) {
       return;
@@ -513,13 +597,30 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE, gl.ONE);
 
-    // MapLibre v6 provides `defaultProjectionData.mainMatrix` scaled for [0..1] Mercator coordinates
-    // as a Float64Array(16). Convert into our preallocated Float32Array(16) for WebGL2 uniformMatrix4fv.
+    // Compute 64-bit Relative-To-Center (RTC) projection matrix on the CPU around the current map center
+    const center = this.map.getCenter();
+    const [camX, camY] = lngLatToMercator(center.lng, center.lat);
+    const [camXHi, camXLo] = splitFloat64(camX);
+    const [camYHi, camYLo] = splitFloat64(camY);
+
     const rawMatrix =
       options.defaultProjectionData?.mainMatrix ?? options.modelViewProjectionMatrix;
-    for (let i = 0; i < 16; i++) {
+    const m0 = Number(rawMatrix[0] ?? 0);
+    const m1 = Number(rawMatrix[1] ?? 0);
+    const m2 = Number(rawMatrix[2] ?? 0);
+    const m3 = Number(rawMatrix[3] ?? 0);
+    const m4 = Number(rawMatrix[4] ?? 0);
+    const m5 = Number(rawMatrix[5] ?? 0);
+    const m6 = Number(rawMatrix[6] ?? 0);
+    const m7 = Number(rawMatrix[7] ?? 0);
+
+    for (let i = 0; i < 12; i++) {
       this.matrixF32[i] = Number(rawMatrix[i] ?? 0);
     }
+    this.matrixF32[12] = m0 * camX + m4 * camY + Number(rawMatrix[12] ?? 0);
+    this.matrixF32[13] = m1 * camX + m5 * camY + Number(rawMatrix[13] ?? 0);
+    this.matrixF32[14] = m2 * camX + m6 * camY + Number(rawMatrix[14] ?? 0);
+    this.matrixF32[15] = m3 * camX + m7 * camY + Number(rawMatrix[15] ?? 0);
 
     gl.useProgram(this.capsuleProgram);
     gl.uniformMatrix4fv(
@@ -527,27 +628,41 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       false,
       this.matrixF32
     );
+    gl.uniform2f(gl.getUniformLocation(this.capsuleProgram, 'u_camCenterHi'), camXHi, camYHi);
+    gl.uniform2f(gl.getUniformLocation(this.capsuleProgram, 'u_camCenterLo'), camXLo, camYLo);
     gl.uniform2f(
       gl.getUniformLocation(this.capsuleProgram, 'u_viewport'),
       this.fboWidth,
       this.fboHeight
     );
 
-    const baseRadiusPx = getActivityLineRadiusFromControl(this.options.lineThickness) + 0.5;
+    const effectiveRenderScale = cssW > 0 ? this.fboWidth / cssW : resolutionScale;
+    const baseRadiusCssPx = Math.max(
+      0.85,
+      getActivityLineRadiusFromControl(this.options.lineThickness) + 0.75
+    );
     gl.uniform1f(
       gl.getUniformLocation(this.capsuleProgram, 'u_radiusPx'),
-      baseRadiusPx * densityFactor
+      baseRadiusCssPx * effectiveRenderScale
+    );
+    gl.uniform1f(
+      gl.getUniformLocation(this.capsuleProgram, 'u_aaPaddingPx'),
+      1.15 * effectiveRenderScale
     );
 
-    // In RGBA8 fallback, scale each hit by 1/255 so up to 255 overlapping passes fit without clipping
     const hitWeight = this.usesFloatFbo ? 1.0 : 1.0 / 255.0;
     gl.uniform1f(gl.getUniformLocation(this.capsuleProgram, 'u_hitWeight'), hitWeight);
 
-    const useLowZoom = this.map.getZoom() < LOW_ZOOM_LOD_THRESHOLD;
-    const vao = useLowZoom ? this.lowZoomVao : this.fullVao;
-    const count = useLowZoom
-      ? this.packedGeometry.lowZoomSegmentCount
-      : this.packedGeometry.fullSegmentCount;
+    const currentZoom = this.map.getZoom();
+    let vao = this.fullVao;
+    let count = this.packedGeometry.fullSegmentCount;
+    if (currentZoom < LOW_ZOOM_LOD_THRESHOLD) {
+      vao = this.lowZoomVao;
+      count = this.packedGeometry.lowZoomSegmentCount;
+    } else if (currentZoom < MEDIUM_ZOOM_LOD_THRESHOLD) {
+      vao = this.mediumZoomVao;
+      count = this.packedGeometry.mediumZoomSegmentCount;
+    }
 
     if (vao && count > 0) {
       gl.bindVertexArray(vao);
@@ -624,11 +739,17 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     if (this.fullSegmentVbo) {
       gl.deleteBuffer(this.fullSegmentVbo);
     }
+    if (this.mediumZoomSegmentVbo) {
+      gl.deleteBuffer(this.mediumZoomSegmentVbo);
+    }
     if (this.lowZoomSegmentVbo) {
       gl.deleteBuffer(this.lowZoomSegmentVbo);
     }
     if (this.fullVao) {
       gl.deleteVertexArray(this.fullVao);
+    }
+    if (this.mediumZoomVao) {
+      gl.deleteVertexArray(this.mediumZoomVao);
     }
     if (this.lowZoomVao) {
       gl.deleteVertexArray(this.lowZoomVao);
@@ -650,8 +771,10 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.compositeProgram = null;
     this.quadVbo = null;
     this.fullSegmentVbo = null;
+    this.mediumZoomSegmentVbo = null;
     this.lowZoomSegmentVbo = null;
     this.fullVao = null;
+    this.mediumZoomVao = null;
     this.lowZoomVao = null;
     this.compositeVao = null;
     this.densityFbo = null;

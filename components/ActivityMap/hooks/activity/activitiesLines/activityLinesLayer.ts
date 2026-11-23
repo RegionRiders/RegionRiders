@@ -120,6 +120,8 @@ export function mountActivityLinesLayer(
     map.addSource(MAP_SOURCE_IDS.ACTIVITIES_LINES, {
       type: 'geojson',
       data: geojson,
+      maxzoom: 18,
+      tolerance: 0.02,
     });
   }
 

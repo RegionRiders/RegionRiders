@@ -117,20 +117,23 @@ describe('WebGL2HeatmapLayer', () => {
     ],
   ]);
 
-  it('converts MapLibre v6 Float64Array defaultProjectionData.mainMatrix to Float32Array in prerender and draws instanced capsules + LUT composite', () => {
-    const mockMap = createMockMapLibreInstance({ zoom: 11 });
+  it('computes 64-bit Relative-To-Center (RTC) Float32Array matrix and Double-Single camera uniforms in prerender', () => {
+    const mockMap = createMockMapLibreInstance({
+      center: { lat: 54.352375, lng: 18.656686 },
+      zoom: 14,
+    });
     const gl = createMockWebGL2Context();
 
     const layer = new WebGL2HeatmapLayer(sampleTracks, {
       lineThickness: 3,
       layerTransparency: 0.85,
-      heatmapDensity: 1.5,
+      heatmapDensity: 0.75,
     });
 
     layer.onAdd(mockMap as any, gl);
 
     // MapLibre v6 passes Float64Array(16) in defaultProjectionData.mainMatrix
-    const mainMatrixF64 = new Float64Array([2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, -0.5, -0.5, 0, 1]);
+    const mainMatrixF64 = new Float64Array([2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, -1.0, -0.5, 0, 1]);
 
     layer.prerender(gl, {
       farZ: 1000,
@@ -151,9 +154,16 @@ describe('WebGL2HeatmapLayer', () => {
     });
 
     expect(gl.uniformMatrix4fv).toHaveBeenCalledWith('u_matrix', false, expect.any(Float32Array));
-    const passedMatrix = (gl.uniformMatrix4fv as jest.Mock).mock.calls[0][2] as Float32Array;
-    expect(passedMatrix[0]).toBe(2);
-    expect(passedMatrix[12]).toBe(-0.5);
+    expect(gl.uniform2f).toHaveBeenCalledWith(
+      'u_camCenterHi',
+      expect.any(Number),
+      expect.any(Number)
+    );
+    expect(gl.uniform2f).toHaveBeenCalledWith(
+      'u_camCenterLo',
+      expect.any(Number),
+      expect.any(Number)
+    );
     expect(gl.drawArraysInstanced).toHaveBeenCalledWith(gl.TRIANGLE_STRIP, 0, 4, 1);
 
     layer.render(gl);
@@ -161,5 +171,6 @@ describe('WebGL2HeatmapLayer', () => {
 
     layer.onRemove(mockMap as any, gl);
     expect(gl.deleteProgram).toHaveBeenCalledTimes(2);
+    expect(gl.deleteBuffer).toHaveBeenCalledTimes(4);
   });
 });
