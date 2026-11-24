@@ -190,7 +190,7 @@ describe('ActivitiesSection', () => {
   });
 
   describe('heatmap mode', () => {
-    it('should show heatmap density, intensity, and zoom attenuation sliders in heatmap mode', () => {
+    it('should show heatmap intensity and zoom attenuation sliders (and no pixel density slider) in heatmap mode', () => {
       render(
         <ActivitiesSectionWrapper
           settings={defaultSettings}
@@ -198,7 +198,7 @@ describe('ActivitiesSection', () => {
         />
       );
 
-      expect(screen.getByText(/Heatmap pixel density:/)).toBeInTheDocument();
+      expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
       expect(screen.getByText(/Heatmap intensity: 1\.00x/)).toBeInTheDocument();
       expect(screen.getByText(/Zoom attenuation: 0\.08/)).toBeInTheDocument();
     });

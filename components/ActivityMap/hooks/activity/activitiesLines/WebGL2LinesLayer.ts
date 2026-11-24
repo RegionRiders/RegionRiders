@@ -11,6 +11,7 @@ import {
   lngLatToMercator,
   splitFloat64,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapGeometryPacker';
+import { computeActivityFboResolution } from '@/components/ActivityMap/hooks/activity/utils/activityFboResolution';
 import { getActivityLinePixelWidthFromControl } from '@/components/ActivityMap/hooks/activity/utils/activityThickness';
 import { RGBA } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
@@ -18,7 +19,6 @@ import { GPXTrack } from '@/lib/types';
 
 const logger = createComponentLogger('WebGL2LinesLayer');
 
-const MAX_MOBILE_SAFE_FBO_DIM = 2560;
 const FLOATS_PER_LINE_SEGMENT = 9;
 const STRIDE_BYTES = FLOATS_PER_LINE_SEGMENT * 4;
 
@@ -761,25 +761,14 @@ export class WebGL2LinesLayer implements CustomLayerInterface {
     this.uploadGeometryIfNeeded(gl);
 
     const canvas = this.map.getCanvas();
-    const dpr =
-      typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
-        ? Math.min(Math.max(window.devicePixelRatio, 1), 2)
-        : 1;
-
     const cssW = canvas.clientWidth > 0 ? canvas.clientWidth : canvas.width;
     const cssH = canvas.clientHeight > 0 ? canvas.clientHeight : canvas.height;
-    const targetW = cssW * dpr;
-    const targetH = cssH * dpr;
-
-    const maxTexSize = Math.min(
-      MAX_MOBILE_SAFE_FBO_DIM,
-      (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || MAX_MOBILE_SAFE_FBO_DIM
-    );
-    const maxTargetDim = Math.max(targetW, targetH);
-    const clampRatio = maxTargetDim > maxTexSize ? maxTexSize / maxTargetDim : 1;
-    const fboW = Math.max(1, Math.min(maxTexSize, Math.round(targetW * clampRatio)));
-    const fboH = Math.max(1, Math.min(maxTexSize, Math.round(targetH * clampRatio)));
-    const effectiveRenderScale = cssW > 0 ? fboW / cssW : dpr;
+    const glMaxTexSize = (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || 0;
+    const {
+      width: fboW,
+      height: fboH,
+      effectiveScale: effectiveRenderScale,
+    } = computeActivityFboResolution(cssW, cssH, glMaxTexSize, 'lines');
 
     const prevFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING) as WebGLFramebuffer | null;
     const prevViewport = gl.getParameter(gl.VIEWPORT) as Int32Array | number[] | null;

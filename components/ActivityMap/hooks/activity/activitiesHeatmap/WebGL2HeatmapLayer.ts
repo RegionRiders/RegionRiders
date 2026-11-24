@@ -23,6 +23,7 @@ import {
   getHeatmapGamma,
   HeatmapLutData,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapLutBuilder';
+import { computeActivityFboResolution } from '@/components/ActivityMap/hooks/activity/utils/activityFboResolution';
 import { ColorThreshold } from '@/components/ActivityMap/mapTypes';
 import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
@@ -30,7 +31,6 @@ import { GPXTrack } from '@/lib/types';
 const logger = createComponentLogger('WebGL2HeatmapLayer');
 const MEDIUM_ZOOM_LOD_THRESHOLD = 9.0;
 const LOW_ZOOM_LOD_THRESHOLD = 6.0;
-const MAX_MOBILE_SAFE_FBO_DIM = 2560;
 const RGBA8_DENSITY_SCALE = 32.0;
 
 /** Stage 1 analytic Gaussian hairline standard deviation in FBO pixels. */
@@ -139,7 +139,7 @@ export function computeGaussianBlurTaps(sigma1: number): GaussianBlurTaps {
 export interface WebGL2HeatmapOptions {
   lineThickness: number;
   layerTransparency: number;
-  heatmapDensity: number;
+  heatmapDensity?: number;
   heatmapIntensity?: number;
   heatmapZoomAttenuation?: number;
   colorThresholds?: ColorThreshold[];
@@ -908,28 +908,15 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     this.uploadLutIfNeeded(gl);
 
     const canvas = this.map.getCanvas();
-    const dpr =
-      typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
-        ? Math.min(Math.max(window.devicePixelRatio, 1), 2)
-        : 1;
-    const normalizedDensity = Math.max(0.25, Math.min(3, this.options.heatmapDensity || 0.75));
-    const resolutionScale = Math.min(2.0, dpr * Math.sqrt(normalizedDensity / 0.75));
-
     const cssW = canvas.clientWidth > 0 ? canvas.clientWidth : canvas.width;
     const cssH = canvas.clientHeight > 0 ? canvas.clientHeight : canvas.height;
-    const targetW = cssW * resolutionScale;
-    const targetH = cssH * resolutionScale;
-
-    const maxTexSize = Math.min(
-      MAX_MOBILE_SAFE_FBO_DIM,
-      (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || MAX_MOBILE_SAFE_FBO_DIM
-    );
-    const maxTargetDim = Math.max(targetW, targetH);
-    const clampRatio = maxTargetDim > maxTexSize ? maxTexSize / maxTargetDim : 1;
-    const clampedW = Math.max(1, Math.min(maxTexSize, Math.round(targetW * clampRatio)));
-    const clampedH = Math.max(1, Math.min(maxTexSize, Math.round(targetH * clampRatio)));
-
-    const effectiveRenderScale = cssW > 0 ? clampedW / cssW : resolutionScale;
+    const glMaxTexSize = (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || 0;
+    const {
+      width: clampedW,
+      height: clampedH,
+      effectiveScale: effectiveRenderScale,
+      maxTextureDim: maxTexSize,
+    } = computeActivityFboResolution(cssW, cssH, glMaxTexSize, 'heatmap');
     const radiusCssPx = getHeatmapBrushRadiusCssPx(this.options.lineThickness);
     const radiusFboPx = radiusCssPx * effectiveRenderScale;
     const edgeDivisor = this.options.edgeStyle === 'glow' ? 1.8 : 1.55;

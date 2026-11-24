@@ -193,18 +193,6 @@ export function ActivitiesSection({
           {settings.activityMode === 'heatmap' && (
             <>
               <div>
-                <Text size="sm"> Heatmap pixel density: {settings.heatmapDensity ?? 2}</Text>
-                <Slider
-                  w="100%"
-                  min={0.25}
-                  max={3}
-                  step={0.25}
-                  value={settings.heatmapDensity ?? 2}
-                  onChange={(value) => onSettingChange('heatmapDensity', value)}
-                />
-              </div>
-
-              <div>
                 <Group justify="space-between" mb={4}>
                   <Text size="sm">
                     Heatmap intensity: {clampHeatmapIntensity(settings.heatmapIntensity).toFixed(2)}
