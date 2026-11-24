@@ -138,6 +138,8 @@ uniform mat4 u_matrix;
 uniform vec2 u_camCenterHi;
 uniform vec2 u_camCenterLo;
 uniform vec2 u_viewport;
+uniform vec2 u_fboSize;
+uniform float u_gutterPx;
 uniform float u_padPx;
 
 out float v_alongPx;
@@ -165,7 +167,8 @@ void main() {
   vec2 ndc0 = clip0.xy / clip0.w;
   vec2 ndc1 = clip1.xy / clip1.w;
   vec2 safeViewport = max(u_viewport, vec2(1.0));
-  vec2 padNdc = (2.0 * u_padPx) / safeViewport + 0.05;
+  vec2 safeFboSize = max(u_fboSize, vec2(1.0));
+  vec2 padNdc = (2.0 * (u_padPx + u_gutterPx)) / safeViewport + 0.05;
 
   if (
     (ndc0.x < -1.0 - padNdc.x && ndc1.x < -1.0 - padNdc.x) ||
@@ -197,7 +200,7 @@ void main() {
   vec2 localPx = vec2(a_corner.x * (halfLen + u_padPx), a_corner.y * u_padPx);
   vec2 posPx = mid + dir * localPx.x + normal * localPx.y;
 
-  gl_Position = vec4((posPx / safeViewport) * 2.0 - 1.0, 0.0, 1.0);
+  gl_Position = vec4(((posPx + u_gutterPx) / safeFboSize) * 2.0 - 1.0, 0.0, 1.0);
   v_alongPx = localPx.x;
   v_acrossPx = localPx.y;
   v_halfLenPx = halfLen;
@@ -305,6 +308,8 @@ in vec2 v_uv;
 
 uniform sampler2D u_srcTex;
 uniform vec2 u_texelStep;
+uniform vec2 u_uvScale;
+uniform vec2 u_uvOffset;
 uniform float u_centerWeight;
 uniform int u_pairCount;
 uniform float u_tapWeights[MAX_BLUR_PAIRS];
@@ -314,13 +319,14 @@ uniform float u_outputScale;
 out vec4 outColor;
 
 void main() {
-  float accum = texture(u_srcTex, v_uv).r * u_centerWeight;
+  vec2 baseUv = v_uv * u_uvScale + u_uvOffset;
+  float accum = texture(u_srcTex, baseUv).r * u_centerWeight;
   for (int i = 0; i < MAX_BLUR_PAIRS; i++) {
     if (i >= u_pairCount) {
       break;
     }
     vec2 offset = u_texelStep * u_tapOffsets[i];
-    float pairSum = texture(u_srcTex, v_uv + offset).r + texture(u_srcTex, v_uv - offset).r;
+    float pairSum = texture(u_srcTex, baseUv + offset).r + texture(u_srcTex, baseUv - offset).r;
     accum += pairSum * u_tapWeights[i];
   }
   outColor = vec4(accum * u_outputScale, 0.0, 0.0, 0.0);
@@ -706,14 +712,16 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
   private ensureFbosForFrame(
     gl: WebGL2RenderingContext,
-    clampedW: number,
-    clampedH: number,
+    rawW: number,
+    rawH: number,
+    destW: number,
+    destH: number,
     needsBlur: boolean,
     restoreFbo: WebGLFramebuffer | null
   ): boolean {
     const rawReady =
-      this.rawFboWidth === clampedW &&
-      this.rawFboHeight === clampedH &&
+      this.rawFboWidth === rawW &&
+      this.rawFboHeight === rawH &&
       this.rawFboFloat === this.usesFloatFbo;
 
     if (!rawReady) {
@@ -726,8 +734,8 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
           gl,
           this.rawDensityFbo,
           this.rawDensityTex,
-          clampedW,
-          clampedH,
+          rawW,
+          rawH,
           restoreFbo
         )
       ) {
@@ -737,13 +745,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
           this.rawFboHeight = 0;
           this.blurFboWidth = 0;
           this.blurFboHeight = 0;
-          return this.ensureFbosForFrame(gl, clampedW, clampedH, needsBlur, restoreFbo);
+          return this.ensureFbosForFrame(gl, rawW, rawH, destW, destH, needsBlur, restoreFbo);
         }
         return false;
       }
 
-      this.rawFboWidth = clampedW;
-      this.rawFboHeight = clampedH;
+      this.rawFboWidth = rawW;
+      this.rawFboHeight = rawH;
       this.rawFboFloat = this.usesFloatFbo;
     }
 
@@ -765,28 +773,22 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       }
 
       const blurReady =
-        this.blurFboWidth === clampedW &&
-        this.blurFboHeight === clampedH &&
-        this.blurFboFloat === this.usesFloatFbo;
+        this.blurFboWidth === destW &&
+        this.blurFboHeight === destH &&
+        this.blurFboFloat === this.usesFloatFbo &&
+        rawReady;
 
       if (!blurReady) {
         const tempOk = this.configureFboTexture(
           gl,
           this.blurTempFbo,
           this.blurTempTex,
-          clampedW,
-          clampedH,
+          rawW,
+          rawH,
           restoreFbo
         );
         const destOk = tempOk
-          ? this.configureFboTexture(
-              gl,
-              this.densityFbo,
-              this.densityTex,
-              clampedW,
-              clampedH,
-              restoreFbo
-            )
+          ? this.configureFboTexture(gl, this.densityFbo, this.densityTex, destW, destH, restoreFbo)
           : false;
 
         if (!tempOk || !destOk) {
@@ -796,13 +798,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
             this.rawFboHeight = 0;
             this.blurFboWidth = 0;
             this.blurFboHeight = 0;
-            return this.ensureFbosForFrame(gl, clampedW, clampedH, needsBlur, restoreFbo);
+            return this.ensureFbosForFrame(gl, rawW, rawH, destW, destH, needsBlur, restoreFbo);
           }
           return false;
         }
 
-        this.blurFboWidth = clampedW;
-        this.blurFboHeight = clampedH;
+        this.blurFboWidth = destW;
+        this.blurFboHeight = destH;
         this.blurFboFloat = this.usesFloatFbo;
       }
     }
@@ -860,11 +862,18 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     const sigma1 = needsBlur
       ? Math.sqrt(Math.max(0, sigmaTot * sigmaTot - SIGMA_0_PX * SIGMA_0_PX))
       : 0;
+    const maxAllowedGutter = Math.max(
+      0,
+      Math.floor((maxTexSize - Math.max(clampedW, clampedH)) / 2)
+    );
+    const gutterPx = needsBlur ? Math.min(maxAllowedGutter, Math.ceil(3.5 * sigma1)) : 0;
+    const rawW = clampedW + 2 * gutterPx;
+    const rawH = clampedH + 2 * gutterPx;
 
     const prevFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING) as WebGLFramebuffer | null;
     const prevViewport = gl.getParameter(gl.VIEWPORT) as Int32Array | number[] | null;
 
-    if (!this.ensureFbosForFrame(gl, clampedW, clampedH, needsBlur, prevFbo)) {
+    if (!this.ensureFbosForFrame(gl, rawW, rawH, clampedW, clampedH, needsBlur, prevFbo)) {
       return;
     }
 
@@ -912,11 +921,13 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     );
     gl.uniform2f(gl.getUniformLocation(this.hairlineProgram, 'u_camCenterHi'), camXHi, camYHi);
     gl.uniform2f(gl.getUniformLocation(this.hairlineProgram, 'u_camCenterLo'), camXLo, camYLo);
+    gl.uniform2f(gl.getUniformLocation(this.hairlineProgram, 'u_viewport'), clampedW, clampedH);
     gl.uniform2f(
-      gl.getUniformLocation(this.hairlineProgram, 'u_viewport'),
+      gl.getUniformLocation(this.hairlineProgram, 'u_fboSize'),
       this.rawFboWidth,
       this.rawFboHeight
     );
+    gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_gutterPx'), gutterPx);
     gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_sigma0'), SIGMA_0_PX);
     gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_padPx'), STAGE1_PAD_PX);
 
@@ -970,20 +981,34 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
 
       gl.bindVertexArray(this.compositeVao);
 
-      // Pass 2a: Horizontal blur (rawDensityTex -> blurTempFbo)
+      // Pass 2a: Horizontal blur (rawDensityTex -> blurTempFbo, keeping gutter)
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.blurTempFbo);
+      gl.viewport(0, 0, this.rawFboWidth, this.rawFboHeight);
       gl.bindTexture(gl.TEXTURE_2D, this.rawDensityTex);
       gl.uniform2f(gl.getUniformLocation(this.blurProgram, 'u_texelStep'), 1 / this.rawFboWidth, 0);
+      gl.uniform2f(gl.getUniformLocation(this.blurProgram, 'u_uvScale'), 1, 1);
+      gl.uniform2f(gl.getUniformLocation(this.blurProgram, 'u_uvOffset'), 0, 0);
       gl.uniform1f(gl.getUniformLocation(this.blurProgram, 'u_outputScale'), perPassScale);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-      // Pass 2b: Vertical blur + final normalization (blurTempTex -> densityFbo)
+      // Pass 2b: Vertical blur + final normalization + crop gutter (blurTempTex -> densityFbo)
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.densityFbo);
+      gl.viewport(0, 0, this.blurFboWidth, this.blurFboHeight);
       gl.bindTexture(gl.TEXTURE_2D, this.blurTempTex);
       gl.uniform2f(
         gl.getUniformLocation(this.blurProgram, 'u_texelStep'),
         0,
         1 / this.rawFboHeight
+      );
+      gl.uniform2f(
+        gl.getUniformLocation(this.blurProgram, 'u_uvScale'),
+        this.blurFboWidth / this.rawFboWidth,
+        this.blurFboHeight / this.rawFboHeight
+      );
+      gl.uniform2f(
+        gl.getUniformLocation(this.blurProgram, 'u_uvOffset'),
+        gutterPx / this.rawFboWidth,
+        gutterPx / this.rawFboHeight
       );
       gl.uniform1f(gl.getUniformLocation(this.blurProgram, 'u_outputScale'), finalPassScale);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

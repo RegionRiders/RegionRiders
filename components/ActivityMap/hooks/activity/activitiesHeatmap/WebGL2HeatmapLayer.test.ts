@@ -775,13 +775,17 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
         const fboW = 800 * dpr;
         const fboH = 600 * dpr;
         const sigmaTot = (getHeatmapBrushRadiusCssPx(10) * dpr) / 1.55;
+        const sigma1 = Math.sqrt(sigmaTot * sigmaTot - SIGMA_0_PX * SIGMA_0_PX);
+        const gutterPx = Math.ceil(3.5 * sigma1);
+        const rawW = fboW + 2 * gutterPx;
+        const rawH = fboH + 2 * gutterPx;
 
-        // Draw 0: Stage 1 hairline -> rawDensityFbo
+        // Draw 0: Stage 1 hairline -> rawDensityFbo (overscan gutter)
         const stage1 = drawCalls[0];
         expect(stage1.api).toBe('drawArraysInstanced');
         expect(stage1.blendEnabled).toBe(true);
         expect(stage1.blendFunc).toEqual([gl.ONE, gl.ONE]);
-        expect(stage1.viewport).toEqual([0, 0, fboW, fboH]);
+        expect(stage1.viewport).toEqual([0, 0, rawW, rawH]);
         expect(stage1.uniforms.u_pointScale).toBeCloseTo(sigmaTot / SIGMA_0_PX, 4);
 
         // Draw 1: Stage 2a horizontal blur -> blurTempFbo
@@ -795,7 +799,7 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
         expect(pass2a.fbo).not.toBe(stage1.fbo);
         expect(pass2a.textures[0]).toBe(stage1.targetTex);
         const step2a = pass2a.uniforms.u_texelStep as number[];
-        expect(step2a[0]).toBeCloseTo(1 / fboW, 8);
+        expect(step2a[0]).toBeCloseTo(1 / rawW, 8);
         expect(step2a[1]).toBeCloseTo(0, 8);
         expect(pass2a.uniforms.u_outputScale).toBeCloseTo(1.0, 6);
 
@@ -821,7 +825,7 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
         expect(pass2b.textures[0]).toBe(pass2a.targetTex);
         const step2b = pass2b.uniforms.u_texelStep as number[];
         expect(step2b[0]).toBeCloseTo(0, 8);
-        expect(step2b[1]).toBeCloseTo(1 / fboH, 8);
+        expect(step2b[1]).toBeCloseTo(1 / rawH, 8);
         expect(pass2b.uniforms.u_outputScale).toBeCloseTo(Math.sqrt(2 * Math.PI) * sigmaTot, 4);
         expect(pass2b.uniforms.u_pairCount).toBe(pairCount);
 
@@ -929,7 +933,7 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
         expect(errors).toEqual([]);
 
         const expectedFboTexCount = thickness === 10 ? 3 : 1;
-        const fboTextures = Array.from(textureMeta.values()).filter((m) => m.height === 600);
+        const fboTextures = Array.from(textureMeta.values()).filter((m) => (m.height ?? 0) >= 600);
         expect(fboTextures).toHaveLength(expectedFboTexCount);
 
         for (const meta of fboTextures) {
