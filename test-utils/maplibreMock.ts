@@ -21,6 +21,8 @@ export interface MockMapLibreInstance {
   getCanvas: jest.Mock;
   queryRenderedFeatures: jest.Mock;
   triggerRepaint: jest.Mock;
+  project: jest.Mock;
+  unproject: jest.Mock;
   _emit: (event: string, ...args: any[]) => void;
   _emitLayer: (event: string, layerId: string, ...args: any[]) => void;
   _sources: Map<string, any>;
@@ -140,6 +142,16 @@ export function createMockMapLibreInstance(
     getCanvas: jest.fn(() => canvas),
     queryRenderedFeatures: jest.fn(() => []),
     triggerRepaint: jest.fn(),
+    project: jest.fn((lngLat: [number, number] | { lng: number; lat: number }) => {
+      const lng = Array.isArray(lngLat) ? lngLat[0] : lngLat.lng;
+      const lat = Array.isArray(lngLat) ? lngLat[1] : lngLat.lat;
+      return { x: lng * 100, y: lat * 100 };
+    }),
+    unproject: jest.fn((point: [number, number] | { x: number; y: number }) => {
+      const x = Array.isArray(point) ? point[0] : point.x;
+      const y = Array.isArray(point) ? point[1] : point.y;
+      return { lng: x / 100, lat: y / 100 };
+    }),
     _emit: (event: string, ...args: any[]) => {
       listeners.get(event)?.forEach((fn) => fn(...args));
     },

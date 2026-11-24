@@ -1,10 +1,10 @@
-import { MAP_LAYER_IDS, MAP_SOURCE_IDS } from '@/components/ActivityMap/config/mapLayerIds';
+import { MAP_LAYER_IDS } from '@/components/ActivityMap/config/mapLayerIds';
 import {
   mountActivityLinesLayer,
   simplifyCoordinatesRdp,
-  tracksToGeoJson,
   updateActivityLinesPaint,
 } from '@/components/ActivityMap/hooks/activity/activitiesLines/activityLinesLayer';
+import { WebGL2LinesLayer } from '@/components/ActivityMap/hooks/activity/activitiesLines/WebGL2LinesLayer';
 import { GPXTrack } from '@/lib/types';
 import { createMockMapLibreInstance } from '@/test-utils/maplibreMock';
 
@@ -55,19 +55,7 @@ describe('activityLinesLayer', () => {
     ]);
   });
 
-  it('converts GPX tracks to simplified GeoJSON LineStrings in [lon, lat] order', () => {
-    const geojson = tracksToGeoJson(sampleTracks);
-    expect(geojson.features).toHaveLength(1);
-    expect(geojson.features[0].geometry).toEqual({
-      type: 'LineString',
-      coordinates: [
-        [18.65, 54.35],
-        [18.66, 54.36],
-      ],
-    });
-  });
-
-  it('mounts shared-bucket base + top-most hover layers using feature-state replacement (never setFilter), updates paint in-place, and cleans up', () => {
+  it('mounts WebGL2LinesLayer, updates options in-place, handles hover & click, and cleans up', () => {
     const mockMap = createMockMapLibreInstance();
     const rafQueue: FrameRequestCallback[] = [];
     const rafSpy = jest
@@ -88,109 +76,70 @@ describe('activityLinesLayer', () => {
         layerTransparency: 0.8,
       });
 
-      expect(mockMap.addSource).toHaveBeenCalledWith(
-        MAP_SOURCE_IDS.ACTIVITIES_LINES,
-        expect.objectContaining({ type: 'geojson', maxzoom: 16 })
-      );
+      expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+      const addedLayer = mockMap.addLayer.mock.calls[0][0] as WebGL2LinesLayer;
+      expect(addedLayer).toBeInstanceOf(WebGL2LinesLayer);
+      expect(addedLayer.id).toBe(MAP_LAYER_IDS.ACTIVITIES_LINES);
 
-      // Base layer hides hovered line via feature-state opacity=0 so it is replaced cleanly
-      expect(mockMap.addLayer).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining({
-          id: MAP_LAYER_IDS.ACTIVITIES_LINES,
-          type: 'line',
-          source: MAP_SOURCE_IDS.ACTIVITIES_LINES,
-          paint: expect.objectContaining({
-            'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0, 0.8],
-          }),
-        })
-      );
+      // Simulate onAdd so hitTest has access to map.project/unproject
+      const hitTestSpy = jest.spyOn(addedLayer, 'hitTest').mockReturnValue({
+        trackIndex: 0,
+        trackId: 'ride-1',
+        name: 'Morning <Ride>',
+      });
+      const setHoveredSpy = jest.spyOn(addedLayer, 'setHoveredTrackIndex');
+      const updateOptionsSpy = jest.spyOn(addedLayer, 'updateOptions');
 
-      // Hover layer omits `filter` so MapLibre shares one LineBucket with base layer
-      const hoverLayerSpec = mockMap.addLayer.mock.calls[1][0];
-      expect(hoverLayerSpec).toEqual(
-        expect.objectContaining({
-          id: MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER,
-          type: 'line',
-          source: MAP_SOURCE_IDS.ACTIVITIES_LINES,
-          paint: expect.objectContaining({
-            'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 6, 0],
-            'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.85, 0],
-          }),
-        })
-      );
-      expect(hoverLayerSpec.filter).toBeUndefined();
-
-      // Simulate hover -> uses GPU setFeatureState (never setFilter)
-      mockMap.queryRenderedFeatures.mockReturnValueOnce([
-        { id: 1, properties: { trackId: 'ride-1', name: 'Morning <Ride>' } },
-      ]);
-      mockMap._emit('mousemove', { point: { x: 100, y: 120 }, originalEvent: { buttons: 0 } });
+      // Simulate hover -> coalesced via rAF and updates layer hoveredTrackIndex
+      mockMap._emit('mousemove', { point: { x: 1865, y: 5435 }, originalEvent: { buttons: 0 } });
       expect(rafQueue).toHaveLength(1);
       rafQueue.shift()!(16);
 
-      expect(mockMap.setFilter).not.toHaveBeenCalled();
-      expect(mockMap.setFeatureState).toHaveBeenCalledWith(
-        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: 1 },
-        { hover: true }
-      );
+      expect(hitTestSpy).toHaveBeenCalledWith({ x: 1865, y: 5435 });
+      expect(setHoveredSpy).toHaveBeenCalledWith(0);
       expect(mockMap.getCanvas().style.cursor).toBe('pointer');
 
       // Simulate mouseout -> clears hover state and resets cursor
       mockMap._emit('mouseout');
-      expect(mockMap.setFeatureState).toHaveBeenCalledWith(
-        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: 1 },
-        { hover: false }
-      );
+      expect(setHoveredSpy).toHaveBeenCalledWith(-1);
       expect(mockMap.getCanvas().style.cursor).toBe('');
 
-      // Simulate in-place paint update without re-tiling source
+      // Simulate in-place paint/transparency update without re-mounting layer
       updateActivityLinesPaint(mockMap as any, {
         lineThickness: 5,
         lineColor: [0, 255, 0, 0.6],
         lineHoverColor: [100, 255, 100, 1],
-        layerTransparency: 0.5,
+        layerTransparency: 0.35,
       });
-      expect(mockMap.addSource).toHaveBeenCalledTimes(1);
-      expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        MAP_LAYER_IDS.ACTIVITIES_LINES,
-        'line-width',
-        9
-      );
-      expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        MAP_LAYER_IDS.ACTIVITIES_LINES,
-        'line-opacity',
-        ['case', ['boolean', ['feature-state', 'hover'], false], 0, 0.5]
-      );
-      expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER,
-        'line-width',
-        ['case', ['boolean', ['feature-state', 'hover'], false], 18, 0]
-      );
+      expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+      expect(updateOptionsSpy).toHaveBeenCalledWith({
+        lineThickness: 5,
+        lineColor: [0, 255, 0, 0.6],
+        lineHoverColor: [100, 255, 100, 1],
+        layerTransparency: 0.35,
+      });
 
-      // Simulate click
-      mockMap._emitLayer('click', MAP_LAYER_IDS.ACTIVITIES_LINES, {
+      // Simulate click -> opens sanitized popup for hit track
+      mockMap._emit('click', {
         lngLat: { lng: 18.65, lat: 54.35 },
-        features: [{ id: 1, properties: { trackId: 'ride-1', name: 'Morning <Ride>' } }],
+        point: { x: 1865, y: 5435 },
       });
       expect(mockPopupInstance.setHTML).toHaveBeenCalledWith(
         expect.stringContaining('Morning &lt;Ride&gt;')
       );
       expect(mockPopupInstance.addTo).toHaveBeenCalledWith(mockMap);
 
-      // Cleanup removes both hover and base layers, source, and popup
+      // Cleanup removes layer, listeners, and popup
       cleanup();
       expect(mockPopupInstance.remove).toHaveBeenCalled();
-      expect(mockMap.removeLayer).toHaveBeenCalledWith(MAP_LAYER_IDS.ACTIVITIES_LINES_HOVER);
       expect(mockMap.removeLayer).toHaveBeenCalledWith(MAP_LAYER_IDS.ACTIVITIES_LINES);
-      expect(mockMap.removeSource).toHaveBeenCalledWith(MAP_SOURCE_IDS.ACTIVITIES_LINES);
     } finally {
       rafSpy.mockRestore();
       cancelRafSpy.mockRestore();
     }
   });
 
-  it('coalesces rapid mouse sweeps across many lines into a single frame query for only the latest hovered line', () => {
+  it('coalesces rapid mouse sweeps into a single frame query for only the latest cursor position', () => {
     const mockMap = createMockMapLibreInstance();
     const rafQueue: FrameRequestCallback[] = [];
     const rafSpy = jest
@@ -211,7 +160,12 @@ describe('activityLinesLayer', () => {
         layerTransparency: 0.8,
       });
 
-      // Sweep rapidly across 50 positions within a single frame
+      const addedLayer = mockMap.addLayer.mock.calls[0][0] as WebGL2LinesLayer;
+      const hitTestSpy = jest
+        .spyOn(addedLayer, 'hitTest')
+        .mockReturnValue({ trackIndex: 0, trackId: 'ride-1', name: 'Morning <Ride>' });
+      const setHoveredSpy = jest.spyOn(addedLayer, 'setHoveredTrackIndex');
+
       for (let i = 1; i <= 50; i++) {
         mockMap._emit('mousemove', {
           point: { x: i * 10, y: 50 },
@@ -219,37 +173,20 @@ describe('activityLinesLayer', () => {
         });
       }
 
-      // Only ONE animation frame should have been scheduled
       expect(rafSpy).toHaveBeenCalledTimes(1);
-      expect(mockMap.queryRenderedFeatures).not.toHaveBeenCalled();
-      expect(mockMap.setFeatureState).not.toHaveBeenCalled();
+      expect(hitTestSpy).not.toHaveBeenCalled();
 
-      // Flush the single animation frame -> only the 50th point is queried and highlighted
-      mockMap.queryRenderedFeatures.mockReturnValueOnce([
-        { id: 50, properties: { trackId: 'ride-50', name: 'Ride 50' } },
-      ]);
       rafQueue.shift()!(16);
 
-      expect(mockMap.queryRenderedFeatures).toHaveBeenCalledTimes(1);
-      expect(mockMap.queryRenderedFeatures).toHaveBeenCalledWith(
-        { x: 500, y: 50 },
-        { layers: [MAP_LAYER_IDS.ACTIVITIES_LINES] }
-      );
-      expect(mockMap.setFeatureState).toHaveBeenCalledTimes(1);
-      expect(mockMap.setFeatureState).toHaveBeenCalledWith(
-        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: 50 },
-        { hover: true }
-      );
-      expect(mockMap.setFilter).not.toHaveBeenCalled();
+      expect(hitTestSpy).toHaveBeenCalledTimes(1);
+      expect(hitTestSpy).toHaveBeenCalledWith({ x: 500, y: 50 });
+      expect(setHoveredSpy).toHaveBeenCalledWith(0);
 
       // Starting a map drag immediately clears the hovered line and cancels pending frames
       mockMap._emit('mousemove', { point: { x: 520, y: 50 }, originalEvent: { buttons: 0 } });
       mockMap._emit('dragstart');
       expect(cancelRafSpy).toHaveBeenCalled();
-      expect(mockMap.setFeatureState).toHaveBeenCalledWith(
-        { source: MAP_SOURCE_IDS.ACTIVITIES_LINES, id: 50 },
-        { hover: false }
-      );
+      expect(setHoveredSpy).toHaveBeenCalledWith(-1);
 
       cleanup();
     } finally {
