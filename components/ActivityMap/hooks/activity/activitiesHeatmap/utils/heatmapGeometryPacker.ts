@@ -1,25 +1,28 @@
 import { GPXTrack } from '@/lib/types';
 
 /**
- * Each packed hairline segment consists of 8 float32 values (32 bytes):
+ * Each packed hairline segment consists of 10 float32 values (40 bytes):
  * - [0..3] a_segmentHi: [x0Hi, y0Hi, x1Hi, y1Hi] (Double-Single hi Mercator coords)
  * - [4..7] a_segmentLo: [x0Lo, y0Lo, x1Lo, y1Lo] (Double-Single lo Mercator coords)
+ * - [8..9] a_segmentMeta: [segArcMerc, trackExtentMerc]
  *
  * Approach A renders 1px analytic Gaussian hairlines via exact erf/erfc integration along each
  * segment (telescoping seamlessly across shared vertices without miter/join geometry) followed by
- * conditional separable Gaussian blur. Future metric overlays (speed, temperature, heart rate)
- * can attach a parallel 1-float-per-segment VBO to the same VAO without altering this layout.
+ * conditional separable Gaussian blur. `segArcMerc` preserves true clean polyline arc length across
+ * LOD simplification, and `trackExtentMerc = min(totalArcMerc, bboxPerimeterMerc)` lets the vertex
+ * shader compensate sub-kernel 2D Gaussian dilution when zoomed far out so small-area activities
+ * remain visible as crisp dots.
  */
-export const FLOATS_PER_PACKED_SEGMENT = 8;
+export const FLOATS_PER_PACKED_SEGMENT = 10;
 
 export interface PackedHeatmapGeometry {
-  /** High-detail RDP-simplified segments (~6m tolerance) for close/city zoom (z >= 10.5) */
+  /** High-detail RDP-simplified segments (~6m tolerance) for close/city zoom (z >= 9.0) */
   fullSegments: Float32Array;
   fullSegmentCount: number;
-  /** Regional-detail RDP-simplified segments (~80m tolerance) for regional zoom (7.5 <= z < 10.5) */
+  /** Regional-detail RDP-simplified segments (~80m tolerance) for regional zoom (6.0 <= z < 9.0) */
   mediumZoomSegments: Float32Array;
   mediumZoomSegmentCount: number;
-  /** Country/continent-detail RDP-simplified segments (~500m tolerance) for low zoom (z < 7.5) */
+  /** Country/continent-detail RDP-simplified segments (~500m tolerance) for low zoom (z < 6.0) */
   lowZoomSegments: Float32Array;
   lowZoomSegmentCount: number;
 }
@@ -82,18 +85,19 @@ function sqPointToSegmentDist(
 }
 
 /**
- * Iterative Ramer-Douglas-Peucker simplification in Mercator coordinates.
- * Removes 1-second GPS micro-jitter and collinear vertices while preserving true corners
- * and hairpins across all 3 LOD levels.
+ * Iterative Ramer-Douglas-Peucker simplification returning kept indices into (vx, vy).
  */
-export function simplifyMercatorRdp(
+export function simplifyMercatorRdpIndices(
   vx: number[],
   vy: number[],
   toleranceSq: number
-): { vx: number[]; vy: number[] } {
+): number[] {
   const len = vx.length;
+  if (len === 0) {
+    return [];
+  }
   if (len <= 2 || toleranceSq <= 0) {
-    return { vx, vy };
+    return Array.from({ length: len }, (_, i) => i);
   }
 
   const keep = new Uint8Array(len);
@@ -127,111 +131,219 @@ export function simplifyMercatorRdp(
     }
   }
 
-  const outX: number[] = [];
-  const outY: number[] = [];
+  const keptIndices: number[] = [];
   for (let i = 0; i < len; i++) {
     if (keep[i]) {
-      outX.push(vx[i]);
-      outY.push(vy[i]);
+      keptIndices.push(i);
     }
   }
-  return { vx: outX, vy: outY };
+  return keptIndices;
 }
 
-function pushPackedSegment(values: number[], x0: number, y0: number, x1: number, y1: number): void {
+/**
+ * Iterative Ramer-Douglas-Peucker simplification in Mercator coordinates.
+ * Removes 1-second GPS micro-jitter and collinear vertices while preserving true corners
+ * and hairpins across all 3 LOD levels.
+ */
+export function simplifyMercatorRdp(
+  vx: number[],
+  vy: number[],
+  toleranceSq: number
+): { vx: number[]; vy: number[] } {
+  const keptIndices = simplifyMercatorRdpIndices(vx, vy, toleranceSq);
+  return {
+    vx: keptIndices.map((i) => vx[i]),
+    vy: keptIndices.map((i) => vy[i]),
+  };
+}
+
+function pushPackedSegment(
+  values: number[],
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  segArcMerc: number,
+  trackExtentMerc: number
+): void {
   const [x0Hi, x0Lo] = splitFloat64(x0);
   const [y0Hi, y0Lo] = splitFloat64(y0);
   const [x1Hi, x1Lo] = splitFloat64(x1);
   const [y1Hi, y1Lo] = splitFloat64(y1);
-  values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo);
+  values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo, segArcMerc, trackExtentMerc);
 }
 
-function packTrackSegments(tracks: Map<string, GPXTrack>, toleranceSq: number): Float32Array {
+interface CleanTrackData {
+  vx: number[];
+  vy: number[];
+  cumArc: number[];
+  totalArcMerc: number;
+  trackExtentMerc: number;
+}
+
+function buildCleanTrackData(track: GPXTrack): CleanTrackData | null {
+  const points = track.points;
+  if (!points || points.length === 0) {
+    return null;
+  }
+
+  const rawX: number[] = [];
+  const rawY: number[] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon)) {
+      continue;
+    }
+
+    const [x, y] = lngLatToMercator(p.lon, p.lat);
+    const count = rawX.length;
+
+    if (count > 0 && x === rawX[count - 1] && y === rawY[count - 1]) {
+      continue;
+    }
+
+    rawX.push(x);
+    rawY.push(y);
+  }
+
+  if (rawX.length === 0) {
+    return null;
+  }
+
+  if (rawX.length === 1) {
+    return {
+      vx: rawX,
+      vy: rawY,
+      cumArc: [0],
+      totalArcMerc: 0,
+      trackExtentMerc: 0,
+    };
+  }
+
+  // Clean GPS micro-jitter once at ~6m tolerance so jitter does not inflate arc length
+  const { vx, vy } = simplifyMercatorRdp(rawX, rawY, HIGH_DETAIL_RDP_TOLERANCE_SQ);
+  const vertCount = vx.length;
+
+  if (vertCount === 0) {
+    return null;
+  }
+
+  const cumArc: number[] = new Array(vertCount);
+  cumArc[0] = 0;
+
+  let minX = vx[0];
+  let maxX = vx[0];
+  let minY = vy[0];
+  let maxY = vy[0];
+
+  for (let i = 1; i < vertCount; i++) {
+    const x = vx[i];
+    const y = vy[i];
+    if (x < minX) {
+      minX = x;
+    } else if (x > maxX) {
+      maxX = x;
+    }
+    if (y < minY) {
+      minY = y;
+    } else if (y > maxY) {
+      maxY = y;
+    }
+    cumArc[i] = cumArc[i - 1] + Math.hypot(x - vx[i - 1], y - vy[i - 1]);
+  }
+
+  const totalArcMerc = cumArc[vertCount - 1];
+  const bboxPerimeterMerc = 2 * (maxX - minX + (maxY - minY));
+  const trackExtentMerc = Math.min(totalArcMerc, bboxPerimeterMerc);
+
+  return {
+    vx,
+    vy,
+    cumArc,
+    totalArcMerc,
+    trackExtentMerc,
+  };
+}
+
+function packCleanTracksForLod(cleanTracks: CleanTrackData[], toleranceSq: number): Float32Array {
   const values: number[] = [];
 
-  tracks.forEach((track) => {
-    const points = track.points;
-    if (!points || points.length === 0) {
-      return;
+  for (let t = 0; t < cleanTracks.length; t++) {
+    const { vx, vy, cumArc, totalArcMerc, trackExtentMerc } = cleanTracks[t];
+
+    if (vx.length === 1) {
+      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0], 0, 0);
+      continue;
     }
 
-    // 1. Collect deduplicated Mercator vertices for this track
-    const rawX: number[] = [];
-    const rawY: number[] = [];
+    const keptIndices =
+      toleranceSq <= HIGH_DETAIL_RDP_TOLERANCE_SQ
+        ? Array.from({ length: vx.length }, (_, i) => i)
+        : simplifyMercatorRdpIndices(vx, vy, toleranceSq);
 
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i];
-      if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon)) {
-        continue;
-      }
-
-      const [x, y] = lngLatToMercator(p.lon, p.lat);
-      const count = rawX.length;
-
-      if (count > 0 && x === rawX[count - 1] && y === rawY[count - 1]) {
-        continue;
-      }
-
-      rawX.push(x);
-      rawY.push(y);
+    if (keptIndices.length === 0) {
+      continue;
     }
 
-    if (rawX.length === 0) {
-      return;
+    if (keptIndices.length === 1) {
+      const idx = keptIndices[0];
+      pushPackedSegment(values, vx[idx], vy[idx], vx[idx], vy[idx], totalArcMerc, trackExtentMerc);
+      continue;
     }
 
-    // Preserve single-point or zero-length tracks as a visible round dot (#165)
-    if (rawX.length === 1) {
-      pushPackedSegment(values, rawX[0], rawY[0], rawX[0], rawY[0]);
-      return;
-    }
-
-    // 2. Simplify via iterative RDP to remove GPS micro-jitter while preserving corners
-    const { vx, vy } = simplifyMercatorRdp(rawX, rawY, toleranceSq);
-    const vertCount = vx.length;
-
-    if (vertCount === 0) {
-      return;
-    }
-
-    if (vertCount === 1) {
-      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0]);
-      return;
-    }
-
-    // 3. Emit packed segments, skipping accidental zero-length interior segments after Double-Single quantization
     let emittedForTrack = 0;
-    for (let s = 0; s < vertCount - 1; s++) {
-      const [x0Hi, x0Lo] = splitFloat64(vx[s]);
-      const [y0Hi, y0Lo] = splitFloat64(vy[s]);
-      const [x1Hi, x1Lo] = splitFloat64(vx[s + 1]);
-      const [y1Hi, y1Lo] = splitFloat64(vy[s + 1]);
+    let pendingArc = 0;
+
+    for (let s = 0; s < keptIndices.length - 1; s++) {
+      const i0 = keptIndices[s];
+      const i1 = keptIndices[s + 1];
+      const segArcMerc = cumArc[i1] - cumArc[i0] + pendingArc;
+
+      const [x0Hi, x0Lo] = splitFloat64(vx[i0]);
+      const [y0Hi, y0Lo] = splitFloat64(vy[i0]);
+      const [x1Hi, x1Lo] = splitFloat64(vx[i1]);
+      const [y1Hi, y1Lo] = splitFloat64(vy[i1]);
 
       if (x0Hi === x1Hi && y0Hi === y1Hi && x0Lo === x1Lo && y0Lo === y1Lo) {
+        pendingArc = segArcMerc;
         continue;
       }
 
-      values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo);
+      pendingArc = 0;
+      values.push(x0Hi, y0Hi, x1Hi, y1Hi, x0Lo, y0Lo, x1Lo, y1Lo, segArcMerc, trackExtentMerc);
       emittedForTrack += 1;
     }
 
-    // Preserve collapsed loops (e.g. [A, B, A] smaller than toleranceSq) or quantized duplicates as a single #165 dot
+    // Preserve collapsed loops (e.g. [A, B, A] smaller than toleranceSq) as a #165 dot with full track mass
     if (emittedForTrack === 0) {
-      pushPackedSegment(values, vx[0], vy[0], vx[0], vy[0]);
+      const idx = keptIndices[0];
+      pushPackedSegment(values, vx[idx], vy[idx], vx[idx], vy[idx], totalArcMerc, trackExtentMerc);
+    } else if (pendingArc > 0) {
+      // Fold any trailing quantized zero-length arc into the last emitted segment
+      values[values.length - 2] += pendingArc;
     }
-  });
+  }
 
   return new Float32Array(values);
 }
 
 /**
- * Packs GPX tracks into flat GPU-ready 8-float Double-Single Mercator hairline segment buffers
- * with iterative RDP simplification across 3 LOD tiers.
+ * Packs GPX tracks into flat GPU-ready 10-float Double-Single Mercator hairline segment buffers
+ * with iterative RDP simplification across 3 LOD tiers and exact arc-length conservation.
  */
 export function packTracksForHeatmap(tracks: Map<string, GPXTrack>): PackedHeatmapGeometry {
-  const fullSegments = packTrackSegments(tracks, HIGH_DETAIL_RDP_TOLERANCE_SQ);
-  const mediumZoomSegments = packTrackSegments(tracks, MEDIUM_ZOOM_RDP_TOLERANCE_SQ);
-  const lowZoomSegments = packTrackSegments(tracks, LOW_ZOOM_RDP_TOLERANCE_SQ);
+  const cleanTracks: CleanTrackData[] = [];
+  tracks.forEach((track) => {
+    const clean = buildCleanTrackData(track);
+    if (clean) {
+      cleanTracks.push(clean);
+    }
+  });
+
+  const fullSegments = packCleanTracksForLod(cleanTracks, HIGH_DETAIL_RDP_TOLERANCE_SQ);
+  const mediumZoomSegments = packCleanTracksForLod(cleanTracks, MEDIUM_ZOOM_RDP_TOLERANCE_SQ);
+  const lowZoomSegments = packCleanTracksForLod(cleanTracks, LOW_ZOOM_RDP_TOLERANCE_SQ);
 
   return {
     fullSegments,

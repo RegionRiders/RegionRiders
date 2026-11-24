@@ -28,8 +28,8 @@ import { createComponentLogger } from '@/lib/logger/client';
 import { GPXTrack } from '@/lib/types';
 
 const logger = createComponentLogger('WebGL2HeatmapLayer');
-const MEDIUM_ZOOM_LOD_THRESHOLD = 10.5;
-const LOW_ZOOM_LOD_THRESHOLD = 7.5;
+const MEDIUM_ZOOM_LOD_THRESHOLD = 9.0;
+const LOW_ZOOM_LOD_THRESHOLD = 6.0;
 const MAX_MOBILE_SAFE_FBO_DIM = 2560;
 const RGBA8_DENSITY_SCALE = 32.0;
 
@@ -60,6 +60,27 @@ export function erfcApprox(z: number): number {
     t *
     (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
   return poly * Math.exp(-(z * z));
+}
+
+/**
+ * Computes the sub-kernel 2D Gaussian dilution compensation factor `1 / erf(extentPx / (2*sqrt(2)*sigmaTot))`.
+ * - For large tracks (extentPx >> sigmaTot), returns 1.000 (no effect on long routes).
+ * - For small-area tracks at low zoom (extentPx << sigmaTot), converges to sqrt(2*pi)*sigmaTot / extentPx
+ *   so a single activity remains a crisp 1.0-peak dot and multi-loop city walks preserve cumulative heat.
+ */
+export function computeLowZoomTrackBoost(extentPx: number, sigmaTot: number): number {
+  if (!Number.isFinite(extentPx) || !Number.isFinite(sigmaTot) || extentPx <= 0 || sigmaTot <= 0) {
+    return 1;
+  }
+  const uExt = extentPx / (2 * Math.SQRT2 * sigmaTot);
+  if (uExt < 0.05) {
+    return 0.886226925452758 / Math.max(1e-6, uExt * (1 - (uExt * uExt) / 3));
+  }
+  if (uExt < 4.5) {
+    const erfExt = 1 - erfcApprox(uExt);
+    return 1 / Math.max(1e-4, erfExt);
+  }
+  return 1;
 }
 
 /**
@@ -133,6 +154,8 @@ layout(location = 0) in vec2 a_corner;
 // Per-instance Double-Single Mercator segment: Hi [x0Hi, y0Hi, x1Hi, y1Hi] and Lo [x0Lo, y0Lo, x1Lo, y1Lo]
 layout(location = 1) in vec4 a_segmentHi;
 layout(location = 2) in vec4 a_segmentLo;
+// Per-instance metadata: [segArcMerc, trackExtentMerc]
+layout(location = 3) in vec2 a_segmentMeta;
 
 uniform mat4 u_matrix;
 uniform vec2 u_camCenterHi;
@@ -141,11 +164,26 @@ uniform vec2 u_viewport;
 uniform vec2 u_fboSize;
 uniform float u_gutterPx;
 uniform float u_padPx;
+uniform float u_pxPerMerc;
+uniform float u_sigmaTot;
+uniform float u_sigma0;
 
 out float v_alongPx;
 out float v_acrossPx;
 flat out float v_halfLenPx;
 flat out float v_isPoint;
+flat out float v_segWeight;
+flat out float v_segArcPx;
+
+float vsErfcApprox(float z) {
+  float x = max(z, 0.0);
+  float t = 1.0 / (1.0 + 0.3275911 * x);
+  float poly = t * (
+    0.254829592 +
+    t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429)))
+  );
+  return poly * exp(-(x * x));
+}
 
 void main() {
   // Double-Single Relative-To-Center (RTC) subtraction eliminates float32 jitter at high zoom
@@ -161,6 +199,8 @@ void main() {
     v_acrossPx = 0.0;
     v_halfLenPx = 0.0;
     v_isPoint = 0.0;
+    v_segWeight = 0.0;
+    v_segArcPx = 0.0;
     return;
   }
 
@@ -181,6 +221,8 @@ void main() {
     v_acrossPx = 0.0;
     v_halfLenPx = 0.0;
     v_isPoint = 0.0;
+    v_segWeight = 0.0;
+    v_segArcPx = 0.0;
     return;
   }
 
@@ -200,11 +242,33 @@ void main() {
   vec2 localPx = vec2(a_corner.x * (halfLen + u_padPx), a_corner.y * u_padPx);
   vec2 posPx = mid + dir * localPx.x + normal * localPx.y;
 
+  float segArcMerc = a_segmentMeta.x;
+  float trackExtentMerc = a_segmentMeta.y;
+  float trackBoost = 1.0;
+  if (trackExtentMerc > 0.0) {
+    float extentPx = trackExtentMerc * u_pxPerMerc;
+    float uExt = extentPx / (2.82842712475 * max(u_sigmaTot, 1e-4));
+    if (uExt < 0.05) {
+      trackBoost = 0.88622692545 / max(1e-6, uExt * (1.0 - (uExt * uExt) / 3.0));
+    } else if (uExt < 4.5) {
+      float erfExt = 1.0 - vsErfcApprox(uExt);
+      trackBoost = 1.0 / max(1e-4, erfExt);
+    }
+  }
+
+  float segArcPx = segArcMerc * u_pxPerMerc;
+  bool useShortLimit = !isSinglePoint && halfLen < 0.05 * max(u_sigma0, 1e-4);
+  float arcScale = (!isSinglePoint && !useShortLimit && segArcPx > 0.0)
+    ? max(1.0, segArcPx / max(segLen, 1e-4))
+    : 1.0;
+
   gl_Position = vec4(((posPx + u_gutterPx) / safeFboSize) * 2.0 - 1.0, 0.0, 1.0);
   v_alongPx = localPx.x;
   v_acrossPx = localPx.y;
   v_halfLenPx = halfLen;
   v_isPoint = isSinglePoint ? 1.0 : 0.0;
+  v_segWeight = trackBoost * arcScale;
+  v_segArcPx = segArcPx;
 }
 `;
 
@@ -215,6 +279,8 @@ in float v_alongPx;
 in float v_acrossPx;
 flat in float v_halfLenPx;
 flat in float v_isPoint;
+flat in float v_segWeight;
+flat in float v_segArcPx;
 
 uniform float u_sigma0;
 uniform float u_hitWeight;
@@ -242,14 +308,19 @@ void main() {
   float density = 0.0;
 
   if (v_isPoint > 0.5) {
-    // Single-point #165 track scaled by u_pointScale = sigmaTot / sigma0 so peak = 1.000 after 2D blur
     float rSq = v_alongPx * v_alongPx + v_acrossPx * v_acrossPx;
-    density = u_pointScale * (INV_SQRT_2PI / sigma0) * exp(-rSq * invTwoSigma0Sq);
+    if (v_segArcPx > 0.0) {
+      // Collapsed small-area loop from medium/low LOD preserving full track mass
+      density = v_segWeight * (v_segArcPx * INV_2PI / (sigma0 * sigma0)) * exp(-rSq * invTwoSigma0Sq);
+    } else {
+      // Single-point #165 track scaled by u_pointScale = sigmaTot / sigma0 so peak = 1.000 after 2D blur
+      density = u_pointScale * (INV_SQRT_2PI / sigma0) * exp(-rSq * invTwoSigma0Sq);
+    }
   } else if (v_halfLenPx < 0.05 * sigma0) {
-    // Cancellation-free short-segment limit (L < 0.1 * sigma0): L / (2*pi*sigma0^2) * exp(-r^2 / (2*sigma0^2))
+    // Cancellation-free short-segment limit (L < 0.1 * sigma0) using exact Mercator arc length
     float rSq = v_alongPx * v_alongPx + v_acrossPx * v_acrossPx;
-    float segLen = 2.0 * v_halfLenPx;
-    density = (segLen * INV_2PI / (sigma0 * sigma0)) * exp(-rSq * invTwoSigma0Sq);
+    float segLen = v_segArcPx > 0.0 ? v_segArcPx : (2.0 * v_halfLenPx);
+    density = v_segWeight * (segLen * INV_2PI / (sigma0 * sigma0)) * exp(-rSq * invTwoSigma0Sq);
   } else {
     // Sign-split analytic Gaussian segment integral along u in [u0, u1]
     float invSqrt2Sigma0 = INV_SQRT_2 / sigma0;
@@ -264,6 +335,7 @@ void main() {
       erfDiff = (1.0 - erfcApprox(u1)) + (1.0 - erfcApprox(-u0));
     }
     density =
+      v_segWeight *
       0.5 *
       max(0.0, erfDiff) *
       (INV_SQRT_2PI / sigma0) *
@@ -591,7 +663,7 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       return vao;
     }
 
-    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 32 bytes per instance
+    const strideBytes = FLOATS_PER_PACKED_SEGMENT * 4; // 40 bytes per instance
 
     gl.bindVertexArray(vao);
 
@@ -610,6 +682,11 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 4, gl.FLOAT, false, strideBytes, 16);
     gl.vertexAttribDivisor(2, 1);
+
+    // location 3: a_segmentMeta [segArcMerc, trackExtentMerc]
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 2, gl.FLOAT, false, strideBytes, 32);
+    gl.vertexAttribDivisor(3, 1);
 
     gl.bindVertexArray(null);
     return vao;
@@ -930,6 +1007,14 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
     gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_gutterPx'), gutterPx);
     gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_sigma0'), SIGMA_0_PX);
     gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_padPx'), STAGE1_PAD_PX);
+
+    const wCenter = this.matrixF32[15] || 1;
+    const invWSq = 1 / (wCenter * wCenter);
+    const dNdcX = (m0 * wCenter - this.matrixF32[12] * m3) * invWSq;
+    const dNdcY = (m1 * wCenter - this.matrixF32[13] * m3) * invWSq;
+    const pxPerMerc = Math.max(1e-6, Math.hypot(dNdcX * 0.5 * clampedW, dNdcY * 0.5 * clampedH));
+    gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_pxPerMerc'), pxPerMerc);
+    gl.uniform1f(gl.getUniformLocation(this.hairlineProgram, 'u_sigmaTot'), sigmaTot);
 
     const hitWeight = this.usesFloatFbo
       ? 1.0

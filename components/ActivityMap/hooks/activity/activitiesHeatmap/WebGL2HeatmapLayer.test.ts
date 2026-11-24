@@ -2,6 +2,7 @@ import type { CustomRenderMethodInput } from 'maplibre-gl';
 import { getHeatmapBrushRadiusCssPx } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapLutBuilder';
 import {
   computeGaussianBlurTaps,
+  computeLowZoomTrackBoost,
   erfcApprox,
   MAX_BLUR_PAIRS,
   SIGMA_0_PX,
@@ -730,7 +731,7 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
   });
 
   it.each([1, 2])(
-    'runs full 2-stage KDE pipeline at thickness=10, dpr=%i with 32B VAO, <=24 blur pairs, and disabled blur blending',
+    'runs full 2-stage KDE pipeline at thickness=10, dpr=%i with 40B VAO, <=24 blur pairs, and disabled blur blending',
     (dpr) => {
       withDevicePixelRatio(dpr, () => {
         const mockMap = createMockMapLibreInstance({
@@ -746,18 +747,22 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
 
         layer.onAdd(mockMap as never, gl);
 
-        // Verify 32-byte (8-float) instanced VAO layout with a_adjDirs (location 3) removed
+        // Verify 40-byte (10-float) instanced VAO layout including a_segmentMeta (location 3)
         expect(
           gl._state.vertexAttribPointers.some(
-            (p) => p.index === 1 && p.stride === 32 && p.offset === 0
+            (p) => p.index === 1 && p.stride === 40 && p.offset === 0
           )
         ).toBe(true);
         expect(
           gl._state.vertexAttribPointers.some(
-            (p) => p.index === 2 && p.stride === 32 && p.offset === 16
+            (p) => p.index === 2 && p.stride === 40 && p.offset === 16
           )
         ).toBe(true);
-        expect(gl._state.vertexAttribPointers.some((p) => p.index === 3)).toBe(false);
+        expect(
+          gl._state.vertexAttribPointers.some(
+            (p) => p.index === 3 && p.size === 2 && p.stride === 40 && p.offset === 32
+          )
+        ).toBe(true);
 
         layer.prerender(gl, createRenderInput());
 
@@ -771,6 +776,8 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
         expect(errors).toEqual([]);
         expect(drawCalls).toHaveLength(4);
         expect(new Set(drawCalls.map((d) => d.program?.id)).size).toBe(3);
+        expect(Number(drawCalls[0].uniforms.u_pxPerMerc)).toBeGreaterThan(0);
+        expect(Number(drawCalls[0].uniforms.u_sigmaTot)).toBeGreaterThanOrEqual(SIGMA_0_PX);
 
         const fboW = 800 * dpr;
         const fboH = 600 * dpr;
@@ -1234,6 +1241,73 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
           expect(Math.abs(centerlineDensity - 1.0)).toBeLessThan(thickness === 2 ? 5e-3 : 2e-3);
         }
       }
+    });
+
+    it('keeps small-area tracks at ~1.000 peak and preserves multi-loop city heat at low zoom without altering long routes', () => {
+      // 1. Long cycling route (extentPx >> sigmaTot) receives 1.000 boost (no change)
+      expect(computeLowZoomTrackBoost(500, 6.0)).toBe(1);
+      expect(computeLowZoomTrackBoost(0, 6.0)).toBe(1);
+
+      // 2. Short 500m / 2km walk at Europe/World zoom (extentPx = 0.08..1.2 px, thickness = 1..10):
+      //    after 2D Gaussian blur, peak density stays ~1.000 (well above edgeAa=0.18 cutoff).
+      const size = 65;
+      const center = Math.floor(size / 2);
+
+      for (const extentPx of [0.08, 0.4, 1.2]) {
+        for (const thickness of [1, 5, 10]) {
+          const radiusPx = getHeatmapBrushRadiusCssPx(thickness);
+          const sigmaTotRaw = radiusPx / 1.55;
+          const needsBlur = sigmaTotRaw > SIGMA_0_PX + 1e-3;
+          const sigmaTot = Math.max(SIGMA_0_PX, sigmaTotRaw);
+          const sigma1 = needsBlur ? Math.sqrt(sigmaTot * sigmaTot - SIGMA_0_PX * SIGMA_0_PX) : 0;
+
+          const boost = computeLowZoomTrackBoost(extentPx, sigmaTot);
+          const halfLen = extentPx * 0.5;
+          const stage1Grid = new Float32Array(size * size);
+
+          for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+              stage1Grid[y * size + x] =
+                boost * evalStage1SegmentDensityFloat32(x - center, y - center, halfLen);
+            }
+          }
+
+          const outGrid = needsBlur
+            ? applySeparableBlurGrid(stage1Grid, size, sigma1, Math.sqrt(2 * Math.PI) * sigmaTot)
+            : stage1Grid.map((v) => v * Math.sqrt(2 * Math.PI) * SIGMA_0_PX);
+
+          const peakDensity = outGrid[center * size + center];
+          expect(peakDensity).toBeGreaterThan(0.95);
+          expect(peakDensity).toBeLessThan(1.05);
+        }
+      }
+
+      // 3. Multi-loop Vienna city walk (totalArc = 20km inside 1km x 1km -> extent = 4km -> 5x overlap):
+      //    at z=4 (1px ≈ 3.3km => extentPx ≈ 1.2px, arcPx ≈ 6.0px), peak density preserves ~5.0x heat.
+      const viennaExtentPx = 1.2;
+      const viennaArcPx = 6.0;
+      const sigmaTot = Math.max(SIGMA_0_PX, getHeatmapBrushRadiusCssPx(5) / 1.55);
+      const sigma1 = Math.sqrt(sigmaTot * sigmaTot - SIGMA_0_PX * SIGMA_0_PX);
+      const boost = computeLowZoomTrackBoost(viennaExtentPx, sigmaTot);
+      const arcScale = viennaArcPx / viennaExtentPx; // 5.0x
+
+      const viennaStage1 = new Float32Array(size * size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          viennaStage1[y * size + x] =
+            boost *
+            arcScale *
+            evalStage1SegmentDensityFloat32(x - center, y - center, viennaExtentPx * 0.5);
+        }
+      }
+      const viennaOut = applySeparableBlurGrid(
+        viennaStage1,
+        size,
+        sigma1,
+        Math.sqrt(2 * Math.PI) * sigmaTot
+      );
+      expect(viennaOut[center * size + center]).toBeGreaterThan(4.75);
+      expect(viennaOut[center * size + center]).toBeLessThan(5.25);
     });
   });
 });

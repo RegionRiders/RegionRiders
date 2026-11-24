@@ -50,8 +50,8 @@ describe('heatmapGeometryPacker', () => {
     expect(simplified.vy).toEqual([0.3, 0.301, 0.3]);
   });
 
-  it('packs RDP-simplified multi-point tracks into 8-float segments across 3 LOD tiers', () => {
-    expect(FLOATS_PER_PACKED_SEGMENT).toBe(8);
+  it('packs RDP-simplified multi-point tracks into 10-float segments across 3 LOD tiers', () => {
+    expect(FLOATS_PER_PACKED_SEGMENT).toBe(10);
 
     const tracks = new Map<string, GPXTrack>([
       [
@@ -96,10 +96,10 @@ describe('heatmapGeometryPacker', () => {
     );
 
     // Consecutive segments share bitwise-identical Double-Single endpoints
-    expect(packed.fullSegments[2]).toBe(packed.fullSegments[8]);
-    expect(packed.fullSegments[3]).toBe(packed.fullSegments[9]);
-    expect(packed.fullSegments[6]).toBe(packed.fullSegments[12]);
-    expect(packed.fullSegments[7]).toBe(packed.fullSegments[13]);
+    expect(packed.fullSegments[2]).toBe(packed.fullSegments[10]);
+    expect(packed.fullSegments[3]).toBe(packed.fullSegments[11]);
+    expect(packed.fullSegments[6]).toBe(packed.fullSegments[14]);
+    expect(packed.fullSegments[7]).toBe(packed.fullSegments[15]);
 
     for (let i = 0; i < packed.fullSegmentCount; i++) {
       expect(isZeroLengthPackedSegment(packed.fullSegments, i)).toBe(false);
@@ -264,5 +264,58 @@ describe('heatmapGeometryPacker', () => {
     expect(packed.fullSegmentCount).toBe(0);
     expect(packed.mediumZoomSegmentCount).toBe(0);
     expect(packed.lowZoomSegmentCount).toBe(0);
+  });
+
+  it('conserves exact clean arc length across all 3 LOD tiers and computes trackExtentMerc = min(totalArc, bboxPerimeter)', () => {
+    const sumSegArc = (buf: Float32Array, count: number): number => {
+      let total = 0;
+      for (let i = 0; i < count; i++) {
+        total += buf[i * FLOATS_PER_PACKED_SEGMENT + 8];
+      }
+      return total;
+    };
+
+    // Dense multi-loop walk in a ~400m x 400m Vienna square:
+    // totalArcMerc >> bboxPerimeterMerc, and lowZoom collapses intermediate zig-zags.
+    const zigZagPoints = [];
+    for (let i = 0; i < 20; i++) {
+      const lat = 48.2082 + (i % 2 === 0 ? 0 : 0.003);
+      const lon = 16.3738 + (i % 4 < 2 ? 0 : 0.004);
+      zigZagPoints.push({ lat, lon });
+    }
+    const viennaWalk = new Map<string, GPXTrack>([
+      ['vienna-walk', { id: 'vienna-walk', name: 'Vienna Old Town', points: zigZagPoints }],
+    ]);
+
+    const packedWalk = packTracksForHeatmap(viennaWalk);
+    const fullArc = sumSegArc(packedWalk.fullSegments, packedWalk.fullSegmentCount);
+    const mediumArc = sumSegArc(packedWalk.mediumZoomSegments, packedWalk.mediumZoomSegmentCount);
+    const lowArc = sumSegArc(packedWalk.lowZoomSegments, packedWalk.lowZoomSegmentCount);
+
+    expect(fullArc).toBeGreaterThan(0);
+    expect(mediumArc).toBeCloseTo(fullArc, 7);
+    expect(lowArc).toBeCloseTo(fullArc, 7);
+
+    // trackExtentMerc must equal bboxPerimeterMerc (< totalArcMerc) for multi-loop city walking
+    const extentWalk = packedWalk.lowZoomSegments[9];
+    expect(extentWalk).toBeGreaterThan(0);
+    expect(fullArc / extentWalk).toBeGreaterThan(2.5);
+
+    // Single straight segment: trackExtentMerc === totalArcMerc
+    const straightRide = new Map<string, GPXTrack>([
+      [
+        'straight',
+        {
+          id: 'straight',
+          name: 'Straight',
+          points: [
+            { lat: 48.2, lon: 16.3 },
+            { lat: 48.25, lon: 16.35 },
+          ],
+        },
+      ],
+    ]);
+    const packedStraight = packTracksForHeatmap(straightRide);
+    expect(packedStraight.fullSegments[8]).toBeCloseTo(packedStraight.fullSegments[9], 8);
   });
 });
