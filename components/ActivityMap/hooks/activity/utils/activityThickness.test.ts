@@ -26,4 +26,11 @@ describe('activityThickness utils', () => {
     expect(getActivityLineRadiusFromControl(3)).toBe(2);
     expect(getActivityLinePixelWidthFromControl(3)).toBe(5);
   });
+
+  it('supports fractional (0.1) control values between 1 and 10', () => {
+    expect(normalizeActivityThicknessControl(2.5)).toBe(2.5);
+    expect(normalizeActivityThicknessControl(2.54)).toBe(2.5);
+    expect(getActivityLineRadiusFromControl(1.5)).toBeCloseTo(0.5, 5);
+    expect(getActivityLinePixelWidthFromControl(1.5)).toBeCloseTo(2, 5);
+  });
 });

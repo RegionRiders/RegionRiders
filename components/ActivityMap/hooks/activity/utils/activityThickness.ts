@@ -8,7 +8,7 @@ export function normalizeActivityThicknessControl(thickness: number): number {
 
   return Math.min(
     MAX_ACTIVITY_THICKNESS_CONTROL,
-    Math.max(MIN_ACTIVITY_THICKNESS_CONTROL, Math.round(thickness))
+    Math.max(MIN_ACTIVITY_THICKNESS_CONTROL, Math.round(thickness * 10) / 10)
   );
 }
 

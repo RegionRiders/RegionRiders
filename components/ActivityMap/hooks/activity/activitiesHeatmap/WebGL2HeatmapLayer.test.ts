@@ -691,8 +691,6 @@ describe('WebGL2HeatmapLayer (Approach A: 2-stage GPU KDE)', () => {
       expect(composite.blendEnabled).toBe(true);
       expect(composite.blendFunc).toEqual([gl.ONE, gl.ONE_MINUS_SRC_ALPHA]);
       expect(composite.uniforms.u_densityScale).toBeCloseTo(Math.sqrt(2 * Math.PI) * SIGMA_0_PX, 5);
-      expect(composite.uniforms.u_intensity).toBe(1.0);
-      expect(composite.uniforms.u_gamma).toBe(1.0);
       expect(composite.uniforms.u_transparency).toBe(0.85);
       expect(composite.uniforms.u_edgeLow).toBeCloseTo(0.42, 4);
       expect(composite.uniforms.u_edgeHigh).toBeCloseTo(0.78, 4);

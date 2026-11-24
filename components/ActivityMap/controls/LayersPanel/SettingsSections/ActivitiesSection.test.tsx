@@ -190,7 +190,7 @@ describe('ActivitiesSection', () => {
   });
 
   describe('heatmap mode', () => {
-    it('should show heatmap intensity and zoom attenuation sliders (and no pixel density slider) in heatmap mode', () => {
+    it('should not show removed density, intensity, or zoom attenuation sliders in heatmap mode', () => {
       render(
         <ActivitiesSectionWrapper
           settings={defaultSettings}
@@ -199,35 +199,17 @@ describe('ActivitiesSection', () => {
       );
 
       expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
-      expect(screen.getByText(/Heatmap intensity: 1\.00x/)).toBeInTheDocument();
-      expect(screen.getByText(/Zoom attenuation: 0\.08/)).toBeInTheDocument();
-    });
-
-    it('should reset heatmap intensity and zoom attenuation to defaults on Reset click', () => {
-      const settings = {
-        ...defaultSettings,
-        heatmapIntensity: 2.0,
-        heatmapZoomAttenuation: 0.2,
-      };
-      render(
-        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
-
-      expect(mockOnSettingChange).toHaveBeenCalledWith('heatmapIntensity', 1.0);
-      expect(mockOnSettingChange).toHaveBeenCalledWith('heatmapZoomAttenuation', 0.08);
-    });
-
-    it('should not show heatmap sliders in lines mode', () => {
-      const settings = { ...defaultSettings, activityMode: 'lines' as const };
-      render(
-        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
-      );
-
-      expect(screen.queryByText(/Heatmap pixel density:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Heatmap intensity:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Zoom attenuation:/)).not.toBeInTheDocument();
+    });
+
+    it('should render fractional line thickness values', () => {
+      const settings = { ...defaultSettings, activityThickness: 2.5 };
+      render(
+        <ActivitiesSectionWrapper settings={settings} onSettingChange={mockOnSettingChange} />
+      );
+
+      expect(screen.getByText('Line thickness: 2.5px')).toBeInTheDocument();
     });
 
     it('should show heatmap color scheme section in heatmap mode', () => {

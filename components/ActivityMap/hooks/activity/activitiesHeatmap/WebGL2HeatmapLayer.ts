@@ -15,12 +15,7 @@ import {
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapGeometryPacker';
 import {
   buildHeatmapColorLut,
-  clampHeatmapIntensity,
-  clampHeatmapZoomAttenuation,
-  DEFAULT_HEATMAP_INTENSITY,
-  DEFAULT_HEATMAP_ZOOM_ATTENUATION,
   getHeatmapBrushRadiusCssPx,
-  getHeatmapGamma,
   HeatmapLutData,
 } from '@/components/ActivityMap/hooks/activity/activitiesHeatmap/utils/heatmapLutBuilder';
 import { computeActivityFboResolution } from '@/components/ActivityMap/hooks/activity/utils/activityFboResolution';
@@ -140,8 +135,6 @@ export interface WebGL2HeatmapOptions {
   lineThickness: number;
   layerTransparency: number;
   heatmapDensity?: number;
-  heatmapIntensity?: number;
-  heatmapZoomAttenuation?: number;
   colorThresholds?: ColorThreshold[];
   edgeStyle?: 'crisp' | 'glow';
 }
@@ -413,8 +406,6 @@ in vec2 v_uv;
 uniform sampler2D u_densityTex;
 uniform sampler2D u_lutTex;
 uniform float u_densityScale;
-uniform float u_intensity;
-uniform float u_gamma;
 uniform float u_logMaxThreshold;
 uniform float u_transparency;
 uniform float u_edgeLow;
@@ -428,13 +419,7 @@ void main() {
     discard;
   }
 
-  // Apply user intensity gain and physical ground-footprint power-law compression (gamma = 1 at street zoom)
-  float adjusted = rawDensity * u_intensity;
-  float uniqueActivities = adjusted <= 1.0
-    ? adjusted
-    : pow(adjusted, u_gamma);
-
-  float u = clamp(log(1.0 + uniqueActivities) / max(0.0001, u_logMaxThreshold), 1.0 / 511.0, 1.0);
+  float u = clamp(log(1.0 + rawDensity) / max(0.0001, u_logMaxThreshold), 1.0 / 511.0, 1.0);
   vec4 lutColor = texture(u_lutTex, vec2(u, 0.5));
 
   float edgeAa = smoothstep(u_edgeLow, u_edgeHigh, rawDensity);
@@ -1145,21 +1130,9 @@ export class WebGL2HeatmapLayer implements CustomLayerInterface {
       edgeHigh = 0.42 + 0.36 * clampT;
     }
 
-    const intensity = clampHeatmapIntensity(
-      this.options.heatmapIntensity ?? DEFAULT_HEATMAP_INTENSITY
-    );
-    const gamma = getHeatmapGamma(
-      this.map.getZoom(),
-      this.options.lineThickness,
-      clampHeatmapZoomAttenuation(
-        this.options.heatmapZoomAttenuation ?? DEFAULT_HEATMAP_ZOOM_ATTENUATION
-      )
-    );
     const transparency = Math.max(0, Math.min(1, this.options.layerTransparency ?? 1));
 
     gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_densityScale'), densityScale);
-    gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_intensity'), intensity);
-    gl.uniform1f(gl.getUniformLocation(this.compositeProgram, 'u_gamma'), gamma);
     gl.uniform1f(
       gl.getUniformLocation(this.compositeProgram, 'u_logMaxThreshold'),
       Math.log1p(this.lutData.maxThreshold)
