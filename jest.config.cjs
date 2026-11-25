@@ -25,6 +25,7 @@ const customJestConfig = {
     '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
     '^@/theme$': '<rootDir>/theme.ts',
     '^rbush$': '<rootDir>/node_modules/rbush/rbush.js',
+    '^maplibre-gl$': '<rootDir>/node_modules/maplibre-gl/dist/maplibre-gl.mjs',
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],

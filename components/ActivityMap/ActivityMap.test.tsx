@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react';
 import { DEFAULT_MAP_SETTINGS } from '@/components/ActivityMap/config/mapConfig';
-import { useLeafletMap } from '@/components/ActivityMap/hooks/map/useLeafletMap';
+import { useMapLibreMap } from '@/components/ActivityMap/hooks/map/useMapLibreMap';
 import {
   loadAuthenticatedUserIdFromApi,
   loadMapSettingsFromApi,
@@ -35,8 +35,8 @@ jest.mock('../../hooks/useGPXData', () => ({
   useGPXData: jest.fn(),
 }));
 
-jest.mock('@/components/ActivityMap/hooks/map/useLeafletMap', () => ({
-  useLeafletMap: jest.fn(),
+jest.mock('@/components/ActivityMap/hooks/map/useMapLibreMap', () => ({
+  useMapLibreMap: jest.fn(),
 }));
 
 jest.mock('@/components/ActivityMap/storage/mapSettingsApi', () => ({
@@ -113,7 +113,7 @@ jest.mock('./controls/LayersPanel/LayersPanel', () => ({
 }));
 
 const mockUseGPXData = useGPXData as jest.MockedFunction<typeof useGPXData>;
-const mockUseLeafletMap = useLeafletMap as jest.MockedFunction<typeof useLeafletMap>;
+const mockUseLeafletMap = useMapLibreMap as jest.MockedFunction<typeof useMapLibreMap>;
 const mockLoadMapSettingsFromApi = loadMapSettingsFromApi as jest.MockedFunction<
   typeof loadMapSettingsFromApi
 >;

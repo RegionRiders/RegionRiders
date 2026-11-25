@@ -313,6 +313,6 @@ describe('MapOrchestrator', () => {
       ],
       onRegionTileError
     );
-    expect(DEFAULT_REGION_STATIC_COLOR_SWATCHES[0]?.[0]?.color[3]).toBeGreaterThan(0);
+    expect(DEFAULT_REGION_STATIC_COLOR_SWATCHES[0]?.[0]?.color[3]).toBe(0);
   });
 });

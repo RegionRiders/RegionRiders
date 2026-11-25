@@ -1,6 +1,6 @@
 # Region Tiles v1 Runbook
 
-This runbook defines how to validate source region data, generate local vector tiles for the current Leaflet VectorGrid
+This runbook defines how to validate source region data, generate local vector tiles for the current MapLibre GL JS
 integration, configure the runtime tile source, and measure release gates.
 
 ## Scope

@@ -38,4 +38,13 @@ describe('region tile source and CSP parity', () => {
 
     expect(productionCSP['connect-src']).not.toContain(TEST_RELATIVE_REGION_TILE_URL);
   });
+
+  it('allows blob web workers and raster tile preset origins for MapLibre GL JS', async () => {
+    const { productionCSP } = await import('./csp.mjs');
+
+    expect(productionCSP['worker-src']).toEqual(["'self'", 'blob:']);
+    expect(productionCSP['child-src']).toEqual(["'self'", 'blob:']);
+    expect(productionCSP['connect-src']).toContain('https://*.tile.openstreetmap.org');
+    expect(productionCSP['connect-src']).not.toContain('https://api.mapbox.com');
+  });
 });

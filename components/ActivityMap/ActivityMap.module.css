@@ -1,93 +1,97 @@
 .container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .error {
-    padding: 2rem;
-    text-align: center;
-    color: var(--color-error, #dc2626);
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-error, #dc2626);
 }
 
 .errorTitle {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
 }
 
 .errorMessage {
-    color: var(--color-error-dark, #991b1b);
+  color: var(--color-error-dark, #991b1b);
 }
 
 .modeSelector {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    background: var(--color-bg-control, white);
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    box-shadow: var(--shadow-sm, 0 2px 4px rgb(0, 0, 0, 0.1));
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: var(--color-bg-control, white);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-sm, 0 2px 4px rgb(0, 0, 0, 0.1));
 }
 
 .radioGroup {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .radioOption {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-.radioOption input[type="radio"] {
-    cursor: pointer;
+.radioOption input[type='radio'] {
+  cursor: pointer;
 }
 
 .radioOption label {
-    cursor: pointer;
-    user-select: none;
+  cursor: pointer;
+  user-select: none;
 }
 
 .wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .controls {
-    position: absolute;
-    bottom: 32px;
-    left: 32px;
-    z-index: 10000;
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  z-index: 10000;
+  pointer-events: auto;
 }
 
 .saveErrorToast {
-    position: fixed;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 11000;
-    width: max-content;
-    max-width: calc(100vw - 24px);
-    background-color: #c92a2a;
-    color: #fff;
-    padding: 10px 36px 10px 14px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11000;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  background-color: #c92a2a;
+  color: #fff;
+  padding: 10px 36px 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
 }
 
 .saveErrorToastClose {
-    position: absolute;
-    top: 4px;
-    right: 8px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
 }

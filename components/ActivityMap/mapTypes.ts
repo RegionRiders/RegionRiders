@@ -19,11 +19,12 @@ export interface ColorThreshold {
 }
 
 /**
- * Leaflet map initialization options
+ * MapLibre GL JS map initialization options
  */
-export interface LeafletConfig {
+export interface MapEngineConfig {
   /** Default map center [lat, lng] */
   center: [number, number];
+  /** Initial zoom level in MapLibre 512px scale */
   zoom: number;
   maxZoom: number;
   minZoom: number;
