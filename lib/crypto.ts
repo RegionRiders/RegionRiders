@@ -115,11 +115,12 @@ export function decryptToken(encryptedData: string): string {
     return decrypted;
   } catch (error) {
     if (process.env.NODE_ENV === 'production') {
+      // eslint-disable-next-line preserve-caught-error -- Intentionally omit internal crypto error details in production
       throw new Error('Invalid encrypted data format');
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid encrypted data format: ${errorMessage}`);
+    throw new Error(`Invalid encrypted data format: ${errorMessage}`, { cause: error });
   }
 }
 

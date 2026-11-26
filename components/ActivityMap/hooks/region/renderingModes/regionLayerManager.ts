@@ -284,8 +284,7 @@ export class RegionLayerManager {
       | undefined;
     const currentRegion = layerWithMetadata[this.REGION_CLICK_REGION_KEY] as Regions | undefined;
     const currentVisit = layerWithMetadata[this.REGION_CLICK_VISIT_KEY] as
-      | RegionVisitData
-      | undefined;
+      RegionVisitData | undefined;
 
     if (callback && currentRegion) {
       callback(currentRegion, currentVisit, layer);

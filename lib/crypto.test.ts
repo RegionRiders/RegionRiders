@@ -230,7 +230,19 @@ describe('Cryptography Utilities', () => {
           configurable: true,
         });
 
-        expect(() => decryptToken('invalid:format:data')).toThrow(/Invalid encrypted data format:/);
+        let caughtError: unknown;
+        try {
+          decryptToken('invalid:format:data');
+        } catch (error) {
+          caughtError = error;
+        }
+
+        const cause = (caughtError as Error).cause as Error | undefined;
+        expect(caughtError).toBeInstanceOf(Error);
+        expect((caughtError as Error).message).toMatch(/Invalid encrypted data format:/);
+        expect(cause).toBeDefined();
+        expect(typeof cause?.message).toBe('string');
+        expect((caughtError as Error).message).toContain(cause?.message);
       } finally {
         Object.defineProperty(process.env, 'NODE_ENV', {
           value: originalEnv,
@@ -250,7 +262,16 @@ describe('Cryptography Utilities', () => {
           configurable: true,
         });
 
-        expect(() => decryptToken('invalid:format:data')).toThrow('Invalid encrypted data format');
+        let caughtError: unknown;
+        try {
+          decryptToken('invalid:format:data');
+        } catch (error) {
+          caughtError = error;
+        }
+
+        expect(caughtError).toBeInstanceOf(Error);
+        expect((caughtError as Error).message).toBe('Invalid encrypted data format');
+        expect((caughtError as Error).cause).toBeUndefined();
       } finally {
         Object.defineProperty(process.env, 'NODE_ENV', {
           value: originalEnv,
