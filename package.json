@@ -96,7 +96,7 @@
     "prettier": "^3.9.5",
     "storybook": "^10.5.0",
     "stylelint": "^17.10.0",
-    "stylelint-config-standard-scss": "^17.0.0",
+    "stylelint-config-standard-scss": "^18.0.0",
     "ts-jest": "^29.4.11",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.63.0",
