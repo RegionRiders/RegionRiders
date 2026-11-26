@@ -11,8 +11,6 @@ updates:
     reviewers:
       - "4fra"
       - "Danrejk"
-    assignees:
-      - "4fra"
     labels:
       - "type: Dependencies"
       - "automated"
