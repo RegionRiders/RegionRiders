@@ -1,13 +1,44 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "schedule": ["before 5am on sunday"],
-  "groupName": "all dependencies",
+  "extends": ["config:recommended"],
+  "timezone": "UTC",
+  "schedule": ["before 5am on monday"],
+  "dependencyDashboard": true,
+  "labels": ["type: Dependencies", "automated"],
+  "reviewers": ["4fra", "Danrejk"],
+  "minimumReleaseAge": "7 days",
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["type: Dependencies", "security"]
+  },
   "packageRules": [
     {
-      "matchPackagePatterns": ["*"],
-      "groupName": "all dependencies"
+      "description": "Keep Node (.nvmrc) updates in their own PR",
+      "matchManagers": ["nvm"],
+      "groupName": "node"
+    },
+    {
+      "description": "Keep Postgres updates in their own PR",
+      "matchPackageNames": ["postgres"],
+      "groupName": "postgres"
+    },
+    {
+      "description": "Group all other non-major updates into one weekly PR",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchPackageNames": ["!postgres"],
+      "matchManagers": ["!nvm"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
+    },
+    {
+      "description": "Group all other major updates into one weekly PR",
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": ["!postgres"],
+      "matchManagers": ["!nvm"],
+      "groupName": "all major dependencies",
+      "groupSlug": "all-major"
     }
-  ],
-  "prHourlyLimit": 0,
-  "prConcurrentLimit": 0
+  ]
 }
